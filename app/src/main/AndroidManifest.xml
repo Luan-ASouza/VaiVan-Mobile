@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
         <activity
+            android:name=".PesquisarRotasResponsavel"
+            android:exported="false" />
+        <activity
             android:name=".ValidacaoTelefoneResponsavel"
             android:exported="false" />
         <activity
