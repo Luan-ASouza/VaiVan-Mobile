@@ -11,9 +11,20 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
+        <activity
+            android:name=".ValidacaoTelefoneResponsavel"
+            android:exported="false" />
+        <activity
+            android:name=".InformacoesPessoais"
+            android:exported="false" />
+        <activity
+            android:name=".DadosDeAcessoResponsavel"
+            android:exported="false" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA"/>
+            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" />
+
         <activity
             android:name=".MotoristaActivity"
             android:exported="false" />
