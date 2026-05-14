@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+
+    <ScrollView
+        android:id="@+id/scrollCadastro"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="#F6B12F"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:id="@+id/containerPrincipal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:background="@drawable/bg_white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtTitulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="32dp"
+                    android:text="Dados de acesso"
+                    android:textColor="#1E1E1E"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+
+                <LinearLayout
+                    android:id="@+id/containerFormulario"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp">
+
+                    <!-- EMAIL -->
+
+                    <TextView
+                        android:id="@+id/txtLabelEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white_red"
+                        app:boxBackgroundMode="none"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="Digite seu email"
+                            android:inputType="textEmailAddress"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtErroEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*Email já cadastrado no sistema"
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- DDD + TELEFONE -->
+
+                    <LinearLayout
+                        android:id="@+id/containerTelefone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                        <!-- DDD -->
+
+                        <LinearLayout
+                            android:layout_width="90dp"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtLabelDDD"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DDD"
+                                android:textColor="#1E1E1E"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                            <Spinner
+                                android:id="@+id/spinnerDDD"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_white"
+                                android:paddingHorizontal="10dp"/>
+                        </LinearLayout>
+
+                        <!-- TELEFONE -->
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtLabelTelefone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Telefone"
+                                android:textColor="#1E1E1E"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/layoutTelefone"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_white"
+                                app:boxBackgroundMode="none"
+                                app:hintEnabled="false">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edtTelefone"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="48dp"
+                                    android:hint="Telefone"
+                                    android:inputType="phone"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="12dp"
+                                    android:textColor="@color/gray"
+                                    android:textColorHint="@color/light_gray"
+                                    android:textSize="14sp"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- SENHA -->
+
+                    <TextView
+                        android:id="@+id/txtLabelSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Senha"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutSenha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        app:boxBackgroundMode="none"
+                        app:endIconMode="password_toggle"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtSenha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="*****"
+                            android:inputType="textPassword"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtInfoSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*A senha deve conter:\n- Mínimo 8 caracteres;\n- Mínimo 1 caracter especial;\n- Mínimo 1 número."
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- CONFIRMAR SENHA -->
+
+                    <TextView
+                        android:id="@+id/txtLabelConfirmarSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Confirmar Senha"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutConfirmarSenha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white_red"
+                        app:boxBackgroundMode="none"
+                        app:endIconMode="password_toggle"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtConfirmarSenha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="*****"
+                            android:inputType="textPassword"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtErroSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*As senhas devem ser iguais"
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- TERMOS -->
+
+                    <LinearLayout
+                        android:id="@+id/containerTermos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/imgCheckTermos"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:layout_marginEnd="8dp"
+                            android:src="@drawable/icon_check"/>
+
+                        <TextView
+                            android:id="@+id/txtTermos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aceito os Termos de Uso"
+                            android:textColor="@color/black"
+                            android:textSize="10sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- BOTÃO -->
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCadastrar"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Cadastrar"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="12dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
