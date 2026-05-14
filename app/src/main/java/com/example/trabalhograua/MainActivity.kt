@@ -21,5 +21,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
+        btnCadastrar.setOnClickListener {
+
+            startActivity(
+                Intent(this, DadosDeAcessoResponsavel::class.java)
+            )
+
+        }
+
     }
 }
