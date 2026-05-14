@@ -34,11 +34,58 @@
         app:layout_constraintTop_toBottomOf="@id/header">
 
         <LinearLayout
+        <EditText
+            android:id="@+id/edtNomePassageiro"
             android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_button_white"
+            android:hint="Nome Completo"
+            android:paddingStart="15dp"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/edtNascimento"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_button_white"
+            android:hint="Nascimento (DD/MM/AAAA)"
+            android:paddingStart="15dp"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp"
-            android:gravity="center_horizontal">
+            android:text="Necessidades especiais?"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:layout_width="60dp" android:layout_height="40dp" android:text="Sim" android:backgroundTint="@color/orange"/>
+            <Button android:layout_width="60dp" android:layout_height="40dp" android:text="Não" android:backgroundTint="@color/light_gray" android:layout_marginStart="5dp"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/edtNecessidades"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@drawable/bg_button_white"
+            android:hint="Descreva as necessidades"
+            android:gravity="top"
+            android:padding="10dp"
+            android:layout_marginTop="10dp"/>
+
+        <EditText
+            android:id="@+id/edtObservacoes"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@drawable/bg_button_white"
+            android:hint="Observações"
+            android:gravity="top"
+            android:padding="10dp"
+            android:layout_marginTop="10dp"/>
 
             <ImageView
                 android:layout_width="100dp"
