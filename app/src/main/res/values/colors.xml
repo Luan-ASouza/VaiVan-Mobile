@@ -5,5 +5,6 @@
     <color name="gray">#1E1E1E</color>
     <color name="orange">#F6B12F</color>
     <color name="light_gray">#AFAFAF</color>
+    <color name="background_card">#E5E0DA</color>
 
 </resources>
