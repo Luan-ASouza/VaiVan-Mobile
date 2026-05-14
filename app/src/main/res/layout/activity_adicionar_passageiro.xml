@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
@@ -18,7 +19,8 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginStart="16dp"
-        android:src="@drawable/ic_back"
+        android:contentDescription="Botão voltar"
+        android:src="@android:drawable/ic_menu_revert"
         app:layout_constraintBottom_toBottomOf="@id/header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/header" />
@@ -34,7 +36,8 @@
         app:layout_constraintBottom_toBottomOf="@id/header"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/header" />
+        app:layout_constraintTop_toTopOf="@id/header"
+        tools:ignore="HardcodedText" />
 
     <androidx.cardview.widget.CardView
         android:layout_width="0dp"
@@ -59,6 +62,7 @@
                 android:layout_height="100dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_button_white"
+                android:contentDescription="Foto do passageiro"
                 android:padding="20dp"
                 android:src="@android:drawable/ic_menu_camera" />
 
@@ -69,7 +73,11 @@
                 android:layout_marginBottom="10dp"
                 android:background="@drawable/bg_button_white"
                 android:hint="Nome Completo"
-                android:paddingStart="15dp" />
+                android:inputType="textPersonName"
+                android:autofillHints="name"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                tools:ignore="HardcodedText" />
 
             <EditText
                 android:id="@+id/edtNascimento"
@@ -79,7 +87,10 @@
                 android:background="@drawable/bg_button_white"
                 android:hint="Nascimento (DD/MM/AAAA)"
                 android:inputType="date"
-                android:paddingStart="15dp" />
+                android:autofillHints="birthDate"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -87,7 +98,8 @@
                 android:layout_marginTop="10dp"
                 android:text="Necessidades especiais?"
                 android:textColor="#000000"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -101,7 +113,8 @@
                     android:layout_height="40dp"
                     android:backgroundTint="@color/orange"
                     android:text="Sim"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
 
                 <Button
                     android:id="@+id/btnNaoNecessidade"
@@ -110,7 +123,8 @@
                     android:layout_marginStart="5dp"
                     android:backgroundTint="@color/light_gray"
                     android:text="Não"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
             </LinearLayout>
 
             <EditText
@@ -121,7 +135,10 @@
                 android:background="@drawable/bg_button_white"
                 android:gravity="top"
                 android:hint="Descreva as necessidades"
-                android:padding="10dp" />
+                android:inputType="textMultiLine"
+                android:padding="10dp"
+                android:autofillHints="none"
+                tools:ignore="HardcodedText" />
 
             <EditText
                 android:id="@+id/edtObservacoes"
@@ -131,7 +148,10 @@
                 android:background="@drawable/bg_button_white"
                 android:gravity="top"
                 android:hint="Observações"
-                android:padding="10dp" />
+                android:inputType="textMultiLine"
+                android:padding="10dp"
+                android:autofillHints="none"
+                tools:ignore="HardcodedText" />
 
             <Button
                 android:id="@+id/btnSalvar"
@@ -141,7 +161,8 @@
                 android:backgroundTint="@color/orange"
                 android:text="Salvar"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
