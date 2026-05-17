@@ -16,7 +16,6 @@ class TipoCadastroActivity : AppCompatActivity() {
 
         val btnMotorista = findViewById<Button>(R.id.btnMotorista)
         val btnResponsavel = findViewById<Button>(R.id.btnResponsavel)
-        val btnVoltar = findViewById<ImageView>(R.id.btnVoltar)
 
         btnMotorista.setOnClickListener {
 
@@ -32,8 +31,5 @@ class TipoCadastroActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        btnVoltar.setOnClickListener {
-            finish()
-        }
     }
 }
