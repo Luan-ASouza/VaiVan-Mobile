@@ -1,69 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.trabalhograua"> <application
-    android:allowBackup="true"
-    android:dataExtractionRules="@xml/data_extraction_rules"
-    android:fullBackupContent="@xml/backup_rules"
-    android:icon="@mipmap/ic_launcher"
-    android:label="@string/app_name"
-    android:roundIcon="@mipmap/ic_launcher_round"
-    android:supportsRtl="true"
-    android:theme="@style/Theme.TrabalhoGrauA">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <activity
-        android:name=".PesquisarRotasResponsavel"
-        android:exported="false" />
-    <activity
-        android:name=".ValidacaoTelefoneResponsavel"
-        android:exported="false" />
-    <activity
-        android:name=".InformacoesPessoais"
-        android:exported="false" />
-    <activity
-        android:name=".DadosDeAcessoResponsavel"
-        android:exported="false" />
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TrabalhoGrauA">
+        <activity
+            android:name=".CadastroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TipoCadastroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PesquisarRotasResponsavel"
+            android:exported="false" />
+        <activity
+            android:name=".ValidacaoTelefoneResponsavel"
+            android:exported="false" />
+        <activity
+            android:name=".InformacoesPessoais"
+            android:exported="false" />
+        <activity
+            android:name=".DadosDeAcessoResponsavel"
+            android:exported="false" />
 
-    <meta-data
-        android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" />
 
-    <activity
-        android:name=".MotoristaActivity"
-        android:exported="false" />
-    <activity
-        android:name=".EstudanteActivity"
-        android:exported="false" />
-    <activity
-        android:name=".PerfilActivity"
-        android:exported="false" />
-    <activity
-        android:name=".LoginActivity"
-        android:exported="false"
-        android:label="@string/title_activity_login"
-        android:theme="@style/Theme.TrabalhoGrauA" />
+        <activity
+            android:name=".MotoristaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EstudanteActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PerfilActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.TrabalhoGrauA" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-    <activity
-        android:name=".CadastroActivity"
-        android:exported="false" />
-
-    <activity
-        android:name=".MainActivity"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
-
-    <activity
-        android:name=".ListaPassageirosActivity"
-        android:exported="false" />
-
-    <activity
-        android:name=".AdicionarPassageiroActivity"
-        android:exported="false" />
-
-</application>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 
 </manifest>

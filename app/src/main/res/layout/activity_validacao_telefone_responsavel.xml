@@ -1,240 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+<!-- TELA COMPLETA COM ROLAGEM -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="#F5F5F5">
 
-    <ScrollView
-        android:id="@+id/scrollValidacaoEmail"
+    <!-- CONTAINER PRINCIPAL -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="#F6B12F"
-        android:padding="10dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="36dp"
+        android:paddingTop="200dp">
 
-        <LinearLayout
-            android:id="@+id/containerPrincipal"
+        <!-- TÍTULO DA TELA -->
+        <TextView
+            android:id="@+id/txtTituloValidacaoTelefone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Validação de Telefone"
+            android:textColor="#111111"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- TEXTO EXPLICATIVO -->
+        <TextView
+            android:id="@+id/txtInstrucaoTelefone"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="10dp"
-            android:background="@drawable/bg_white">
+            android:layout_height="wrap_content"
+            android:text="Enviamos um código para seu telefone.\nDigite abaixo para continuar."
+            android:textColor="#777777"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="26dp" />
 
-            <!-- CARD -->
+        <!-- CONTAINER DOS CAMPOS DO CÓDIGO -->
+        <LinearLayout
+            android:id="@+id/layoutCodigoTelefone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
 
-            <LinearLayout
-                android:id="@+id/containerCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="40dp">
+            <!-- CAMPO CÓDIGO 1 -->
+            <EditText
+                android:id="@+id/editTelefoneCodigo1"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:background="@drawable/bg_code_box"
+                android:gravity="center"
+                android:inputType="number"
+                android:maxLength="1"
+                android:textColor="#111111"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <!-- TÍTULO -->
+            <!-- CAMPO CÓDIGO 2 -->
+            <EditText
+                android:id="@+id/editTelefoneCodigo2"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_code_box"
+                android:gravity="center"
+                android:inputType="number"
+                android:maxLength="1"
+                android:textColor="#111111"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/txtTitulo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="20dp"
-                    android:text="Validação de Email"
-                    android:textColor="#1E1E1E"
-                    android:textSize="20sp"
-                    android:textStyle="bold"/>
+            <!-- CAMPO CÓDIGO 3 -->
+            <EditText
+                android:id="@+id/editTelefoneCodigo3"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_code_box"
+                android:gravity="center"
+                android:inputType="number"
+                android:maxLength="1"
+                android:textColor="#111111"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <!-- DESCRIÇÃO -->
-
-                <TextView
-                    android:id="@+id/txtDescricao"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:gravity="center"
-                    android:text="Enviamos um código para seu e-mail.\nDigite abaixo para continuar."
-                    android:textColor="@color/gray"
-                    android:textSize="12sp"
-                    android:textStyle="bold"/>
-
-                <!-- CAMPOS CÓDIGO -->
-
-                <LinearLayout
-                    android:id="@+id/containerCodigo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:orientation="horizontal">
-
-                    <!-- DIGITO 1 -->
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCodigo1"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_input_white"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/edtCodigo1"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:hint="0"
-                            android:inputType="number"
-                            android:maxLength="1"
-                            android:minHeight="56dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="@color/black"
-                            android:textColorHint="@color/light_gray"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- DIGITO 2 -->
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCodigo2"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_input_white"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/edtCodigo2"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:hint="0"
-                            android:inputType="number"
-                            android:maxLength="1"
-                            android:minHeight="56dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="@color/black"
-                            android:textColorHint="@color/light_gray"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- DIGITO 3 -->
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCodigo3"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_input_white"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/edtCodigo3"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:hint="0"
-                            android:inputType="number"
-                            android:maxLength="1"
-                            android:minHeight="56dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="@color/black"
-                            android:textColorHint="@color/light_gray"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- DIGITO 4 -->
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCodigo4"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_input_white"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/edtCodigo4"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:hint="0"
-                            android:inputType="number"
-                            android:maxLength="1"
-                            android:minHeight="56dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="@color/black"
-                            android:textColorHint="@color/light_gray"
-                            android:textSize="20sp"
-                            android:textStyle="bold"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                </LinearLayout>
-
-                <!-- ERRO + REENVIAR -->
-
-                <LinearLayout
-                    android:id="@+id/containerInfoCodigo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/txtErroCodigo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="*Código inválido ou expirado."
-                        android:textColor="#F40707"
-                        android:textSize="10sp"
-                        android:textStyle="bold"/>
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"/>
-
-                    <TextView
-                        android:id="@+id/txtReenviarCodigo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Reenviar código"
-                        android:textColor="#1E1E1E"
-                        android:textSize="10sp"
-                        android:textStyle="bold"/>
-                </LinearLayout>
-
-                <!-- BOTÃO -->
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnContinuar"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/btn_gray_filled"
-                    android:text="Continuar"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="12dp"/>
-
-            </LinearLayout>
+            <!-- CAMPO CÓDIGO 4 -->
+            <EditText
+                android:id="@+id/editTelefoneCodigo4"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_code_box"
+                android:gravity="center"
+                android:inputType="number"
+                android:maxLength="1"
+                android:textColor="#111111"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
-    </ScrollView>
+        <!-- LINHA DE ERRO E REENVIO -->
+        <LinearLayout
+            android:id="@+id/layoutMensagensTelefone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-</LinearLayout>
+            <!-- MENSAGEM DE ERRO -->
+            <TextView
+                android:id="@+id/txtErroCodigoTelefone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="*Código inválido ou expirado."
+                android:textColor="#E53935"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- TEXTO REENVIAR CÓDIGO -->
+            <TextView
+                android:id="@+id/txtReenviarCodigoTelefone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reenviar código"
+                android:textColor="#111111"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- BOTÃO CONTINUAR -->
+        <Button
+            android:id="@+id/btnContinuarValidacaoTelefone"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="42dp"
+            android:background="@drawable/btn_black_white_selector"
+            android:backgroundTint="@null"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</ScrollView>

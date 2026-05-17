@@ -38,7 +38,8 @@
                     android:text="Dados de acesso"
                     android:textColor="#1E1E1E"
                     android:textSize="20sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold"
+                    android:layout_marginTop="10dp"/>
 
                 <LinearLayout
                     android:id="@+id/containerFormulario"
@@ -117,13 +118,24 @@
                                 android:textSize="16sp"
                                 android:textStyle="bold"/>
 
-                            <Spinner
-                                android:id="@+id/spinnerDDD"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="48dp"
+                                android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:background="@drawable/bg_input_white"
-                                android:paddingHorizontal="10dp"/>
+                                android:background="@drawable/bg_input_white">
+
+                                <Spinner
+                                    android:id="@+id/spinnerDDD"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="48dp"
+
+                                    android:paddingHorizontal="10dp"/>
+
+
+                            </LinearLayout>
+
+
+
                         </LinearLayout>
 
                         <!-- TELEFONE -->
@@ -164,7 +176,8 @@
                                     android:paddingVertical="12dp"
                                     android:textColor="@color/gray"
                                     android:textColorHint="@color/light_gray"
-                                    android:textSize="14sp"/>
+                                    android:textSize="14sp"
+                                    android:maxLength="15"/>
                             </com.google.android.material.textfield.TextInputLayout>
 
                             <TextView
@@ -299,6 +312,17 @@
                             android:textColor="@color/black"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/txtErroTermos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="*Obrigatório"
+                            android:textColor="#F40707"
+                            android:textSize="10sp"
+                            android:textStyle="bold"/>
+
                     </LinearLayout>
 
                 </LinearLayout>
@@ -317,7 +341,8 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     app:backgroundTint="@null"
-                    app:cornerRadius="12dp"/>
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="5dp"/>
 
             </LinearLayout>
 

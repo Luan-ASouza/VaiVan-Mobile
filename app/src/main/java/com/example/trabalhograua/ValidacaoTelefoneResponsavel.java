@@ -2,13 +2,8 @@ package com.example.trabalhograua;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 
@@ -17,25 +12,23 @@ public class ValidacaoTelefoneResponsavel extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
+        // LIGA ESTA ACTIVITY AO XML DE VALIDAÇÃO DE TELEFONE DO RESPONSÁVEL
         setContentView(R.layout.activity_validacao_telefone_responsavel);
 
-        // BOTÃO
-        MaterialButton btnContinuar = findViewById(R.id.btnContinuar);
+        // BOTÃO CONTINUAR
+        MaterialButton btnContinuar = findViewById(R.id.btnContinuarValidacaoTelefone);
 
-        btnContinuar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        // AO CLICAR, ABRE A PRÓXIMA TELA DO FLUXO DO RESPONSÁVEL
+        btnContinuar.setOnClickListener(v -> {
+            Intent intent = new Intent(
+                    ValidacaoTelefoneResponsavel.this,
+                    DadosDeAcessoResponsavel.class
+            );
 
-                Intent intent = new Intent(
-                        ValidacaoTelefoneResponsavel.this,
-                        PesquisarRotasResponsavel.class
-                );
+            intent.putExtra("tipo", "Responsável");
 
-                startActivity(intent);
-
-            }
+            startActivity(intent);
         });
-
     }
 }
