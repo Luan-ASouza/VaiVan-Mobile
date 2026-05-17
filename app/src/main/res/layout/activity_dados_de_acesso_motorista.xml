@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- TÍTULO -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dados de acesso"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#111111"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- EMAIL -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textStyle="bold"
+            android:textSize="14sp"/>
+
+        <EditText
+            android:id="@+id/editEmail"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_white_red"
+            android:paddingHorizontal="16dp"
+            android:textSize="16sp"
+            android:inputType="textEmailAddress"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="*Email já cadastrado no sistema"
+            android:textColor="#E53935"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"/>
+
+        <!-- DDD E TELEFONE -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="18dp">
+
+            <!-- DDD -->
+
+            <LinearLayout
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DDD"
+                    android:textStyle="bold"
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/editDDD"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center"
+                    android:hint="+55"
+                    android:textSize="16sp"
+                    android:inputType="number"/>
+
+            </LinearLayout>
+
+            <!-- TELEFONE -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Telefone"
+                    android:textStyle="bold"
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/editTelefone"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_white"
+                    android:paddingHorizontal="16dp"
+                    android:textSize="16sp"
+                    android:inputType="phone"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- SENHA -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Senha"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="18dp"/>
+
+        <EditText
+            android:id="@+id/editSenha"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_white"
+            android:paddingHorizontal="16dp"
+            android:textSize="16sp"
+            android:inputType="textPassword"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="*A senha deve conter:\n-Minimo 8 caracteres;\n-Minimo 1 caractere especial;"
+            android:textColor="#E53935"
+            android:textSize="12sp"
+            android:lineSpacingExtra="3dp"
+            android:layout_marginTop="4dp"/>
+
+        <!-- CONFIRMAR SENHA -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Confirmar Senha"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="18dp"/>
+
+        <EditText
+            android:id="@+id/editConfirmarSenha"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_white_red"
+            android:paddingHorizontal="16dp"
+            android:textSize="16sp"
+            android:inputType="textPassword"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="*As senha devem ser iguais"
+            android:textColor="#E53935"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"/>
+
+        <!-- CHECKBOX -->
+
+        <CheckBox
+            android:id="@+id/checkTermos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Aceito os Termos de Uso"
+            android:textSize="13sp"
+            android:layout_marginTop="14dp"/>
+
+        <!-- BOTÃO -->
+
+        <Button
+            android:id="@+id/btnCadastrar"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_button_black"
+            android:backgroundTint="@null"
+            android:text="Cadastrar"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+</ScrollView>
