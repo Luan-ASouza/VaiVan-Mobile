@@ -27,7 +27,6 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
     private TextView txtErroTelefone;
     private TextInputLayout layoutTelefone;
     private TextInputLayout layoutEmail, layoutSenha, layoutConfirmarSenha;
-
     private MaterialButton btnCadastrar;
 
     @Override
@@ -75,10 +74,21 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
     private void validarFormulario() {
 
         // PEGAR DADOS
-        String email = edtEmail.getText().toString().trim();
-        String telefone = edtTelefone.getText().toString().trim();
-        String senha = edtSenha.getText().toString().trim();
-        String confirmarSenha = edtConfirmarSenha.getText().toString().trim();
+        String email = edtEmail.getText() != null
+                ? edtEmail.getText().toString().trim()
+                : "";
+
+        String telefone = edtTelefone.getText() != null
+                ? edtTelefone.getText().toString().trim()
+                : "";
+
+        String senha = edtSenha.getText() != null
+                ? edtSenha.getText().toString().trim()
+                : "";
+
+        String confirmarSenha = edtConfirmarSenha.getText() != null
+                ? edtConfirmarSenha.getText().toString().trim()
+                : "";
 
         boolean formularioValido = true;
 
