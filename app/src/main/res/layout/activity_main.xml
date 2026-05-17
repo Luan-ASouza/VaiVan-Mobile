@@ -12,7 +12,7 @@
     <View
         android:id="@+id/viewYellow"
         android:layout_width="260dp"
-        android:layout_height="900dp"
+        android:layout_height="1010dp"
         android:background="#F5B42D"
         android:rotation="-20"
         app:layout_constraintTop_toTopOf="parent"
