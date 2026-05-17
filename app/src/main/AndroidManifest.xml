@@ -11,19 +11,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
-        <!-- TELA DE INFORMAÇÕES PESSOAIS DO MOTORISTA -->
-        <activity android:name=".InformacoesPessoais" />
-        <!-- TELA DE VALIDAÇÃO DE TELEFONE DO RESPONSÁVEL -->
-        <activity android:name=".ValidacaoTelefoneResponsavel" />
 
         <!-- TELA DE DADOS DE ACESSO DO MOTORISTA -->
-        <activity android:name=".DadosDeAcessoMotoristaActivity" />
+        <activity android:name=".DadosDeAcessoMotorista" />
 
         <!-- TELA DE VALIDAÇÃO DE EMAIL -->
-        <activity android:name=".ValidacaoEmailActivity" />
+        <activity android:name=".ValidacaoEmailMotorista" />
 
         <!-- TELA DE ENDEREÇO DO MOTORISTA -->
-        <activity android:name=".EnderecoMotoristaActivity" />
+        <activity android:name=".EnderecoMotorista" />
 
         <!-- TELA DE VALIDAÇÃO DA CNH -->
         <activity android:name=".ValidaCnhActivity" />
@@ -50,6 +46,9 @@
             android:exported="false" />
         <activity
             android:name=".InformacoesPessoaisResponsavel"
+            android:exported="false" />
+        <activity
+            android:name=".InformacoesPessoaisMotorista"
             android:exported="false" />
         <activity
             android:name=".DadosDeAcessoResponsavel"

@@ -8,7 +8,7 @@
     android:background="#FFFFFF">
 
     <ScrollView
-        android:id="@+id/scrollInformacoesPessoais"
+        android:id="@+id/scrollInformacoesPessoaisResponsavel"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"

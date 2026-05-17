@@ -16,7 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
 
-public class InformacoesPessoaisResponsavel extends AppCompatActivity {
+public class InformacoesPessoaisMotorista extends AppCompatActivity {
 
     private TextInputEditText edtNomeCompleto, edtCpf;
 
@@ -31,7 +31,7 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_informacoes_pessoais_responsavel);
+        setContentView(R.layout.activity_informacoes_pessoais_motorista);
 
         // CAMPOS
         edtNomeCompleto = findViewById(R.id.edtNomeCompleto);
@@ -220,7 +220,7 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
 
         int idade = anoAtual - anoSelecionado;
 
-        if (idade < 18) {
+        if (idade < 21) {
 
             txtErroIdade.setVisibility(View.VISIBLE);
 
@@ -238,8 +238,8 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
         if (formularioValido) {
 
             Intent intent = new Intent(
-                    InformacoesPessoaisResponsavel.this,
-                    ValidacaoEmailResponsavel.class
+                    InformacoesPessoaisMotorista.this,
+                    ValidacaoEmailMotorista.class
             );
 
             startActivity(intent);

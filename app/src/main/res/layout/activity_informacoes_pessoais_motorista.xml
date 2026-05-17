@@ -1,151 +1,266 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<!-- TELA COMPLETA COM ROLAGEM -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:background="#FFFFFF">
 
-    <!-- CONTAINER PRINCIPAL -->
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scrollInformacoesPessoaisMotorista"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/gray"
+        android:padding="10dp">
 
-        <!-- TÍTULO DA TELA -->
-        <TextView
-            android:id="@+id/txtTitulo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Informações pessoais"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="24dp" />
-
-        <!-- LABEL NOME COMPLETO -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Nome Completo"
-            android:textStyle="bold"
-            android:textSize="14sp" />
-
-        <!-- CAMPO NOME COMPLETO -->
-        <EditText
-            android:id="@+id/editNome"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_input_white"
-            android:paddingHorizontal="16dp"
-            android:textSize="16sp"
-            android:inputType="textPersonName" />
-
-        <!-- LABEL CPF -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="CPF"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="16dp" />
-
-        <!-- CAMPO CPF COM BORDA VERMELHA -->
-        <EditText
-            android:id="@+id/editCpf"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_input_white_red"
-            android:paddingHorizontal="16dp"
-            android:textSize="16sp"
-            android:inputType="number" />
-
-        <!-- MENSAGEM DE ERRO DO CPF -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*Digite um CPF válido.\n*CPF já cadastrado no sistema."
-            android:lineSpacingExtra="4dp"
-            android:textColor="#FF0000"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
-
-        <!-- LABEL DATA DE NASCIMENTO -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Data de nascimento"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="20dp" />
-
-        <!-- CONTAINER DOS CAMPOS DIA, MÊS E ANO -->
         <LinearLayout
+            android:id="@+id/containerPrincipal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_white"
+            android:padding="20dp">
 
-            <!-- CAMPO DIA -->
-            <Spinner
-                android:id="@+id/spinnerDia"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_input_white_red"
-                android:paddingHorizontal="12dp"
-                android:spinnerMode="dropdown" />
+            <!-- TÍTULO -->
 
-            <!-- CAMPO MÊS -->
-            <Spinner
-                android:id="@+id/spinnerMes"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
+            <TextView
+                android:id="@+id/txtTitulo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="32dp"
+                android:text="Informações pessoais"
+                android:textColor="#1E1E1E"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="10dp"/>
+
+            <!-- NOME -->
+
+            <TextView
+                android:id="@+id/txtLabelNome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nome Completo"
+                android:textColor="#1E1E1E"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutNome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtNomeCompleto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:hint="Digite seu nome completo"
+                    android:inputType="textPersonName"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/txtErroNome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_input_white_red"
-                android:paddingHorizontal="12dp"
-                android:spinnerMode="dropdown" />
+                android:text="*Campo obrigatório"
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
 
-            <!-- CAMPO ANO -->
-            <Spinner
-                android:id="@+id/spinnerAno"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
+            <!-- CPF -->
+
+            <TextView
+                android:id="@+id/txtLabelCpf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="CPF"
+                android:textColor="#1E1E1E"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutCpf"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtCpf"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:hint="000.000.000-00"
+                    android:inputType="number"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    android:maxLength="14"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/txtErroCpf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_input_white_red"
-                android:paddingHorizontal="12dp"
-                android:spinnerMode="dropdown" />
+                android:text="*Digite um CPF válido."
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
+            <!-- DATA DE NASCIMENTO -->
+
+            <TextView
+                android:id="@+id/txtLabelDataNascimento"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Data de nascimento"
+                android:textColor="#1E1E1E"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <LinearLayout
+                android:id="@+id/containerDataNascimento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <!-- DIA -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtLabelDia"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dia"
+                        android:textColor="#1E1E1E"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerDia"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        android:paddingHorizontal="10dp"/>
+                </LinearLayout>
+
+                <!-- MÊS -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtLabelMes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mês"
+                        android:textColor="#1E1E1E"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerMes"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        android:paddingHorizontal="10dp"/>
+                </LinearLayout>
+
+                <!-- ANO -->
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtLabelAno"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ano"
+                        android:textColor="#1E1E1E"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerAno"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        android:paddingHorizontal="10dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtErroIdade"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="8dp"
+                android:text="*Obrigatório ser maior de 21 anos"
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
+            <!-- BOTÃO -->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnContinuar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/btn_gray_filled"
+                android:text="Continuar"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="12dp"
+                android:layout_marginBottom="10dp"/>
 
         </LinearLayout>
 
-        <!-- MENSAGEM DE ERRO DA DATA -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*Obrigatório ser maior de 21 anos"
-            android:textColor="#FF0000"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
+    </ScrollView>
 
-        <!-- BOTÃO CONTINUAR -->
-        <Button
-            android:id="@+id/btnContinuar"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="30dp"
-            android:background="@drawable/bg_button_black"
-            android:backgroundTint="@null"
-            android:text="Continuar"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>
