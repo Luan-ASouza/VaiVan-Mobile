@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:fontFamily="@font/montserrat">
 
     <ScrollView
         android:id="@+id/scrollValidacaoEmail"
@@ -232,6 +233,17 @@
                     app:cornerRadius="12dp"/>
 
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="CÓDIGO = 1234"
+                android:textSize="30dp"
+                android:textAlignment="center"
+                android:textColor="@color/orange"
+                android:fontFamily="@font/montserrat"
+                android:textFontWeight="700"/>
 
         </LinearLayout>
 

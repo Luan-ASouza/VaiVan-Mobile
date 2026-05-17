@@ -20,6 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:gravity="center_vertical"
             android:background="@drawable/bg_white"
             android:padding="20dp">
 
@@ -34,7 +35,8 @@
                 android:text="Informações pessoais"
                 android:textColor="#1E1E1E"
                 android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:layout_marginTop="10dp"/>
 
             <!-- NOME -->
 
@@ -70,6 +72,17 @@
                     android:textSize="14sp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <TextView
+                android:id="@+id/txtErroNome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="8dp"
+                android:text="*Campo obrigatório"
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
             <!-- CPF -->
 
             <TextView
@@ -87,7 +100,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white_red"
+                android:background="@drawable/bg_input_white"
                 app:boxBackgroundMode="none"
                 app:hintEnabled="false">
 
@@ -102,7 +115,8 @@
                     android:paddingVertical="12dp"
                     android:textColor="@color/gray"
                     android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp"
+                    android:maxLength="14"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
@@ -111,7 +125,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_marginStart="8dp"
-                android:text="*Digite um CPF válido.\n*CPF já cadastrado no sistema."
+                android:text="*Digite um CPF válido."
                 android:textColor="#F40707"
                 android:textSize="10sp"
                 android:textStyle="bold"/>
@@ -211,7 +225,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white_red"
+                        android:background="@drawable/bg_input_white"
                         android:paddingHorizontal="10dp"/>
                 </LinearLayout>
 
@@ -242,7 +256,8 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null"
-                app:cornerRadius="12dp"/>
+                app:cornerRadius="12dp"
+                android:layout_marginBottom="10dp"/>
 
         </LinearLayout>
 

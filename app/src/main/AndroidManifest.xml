@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
         <activity
+            android:name=".EnderecoResponsavel"
+            android:exported="false" />
+        <activity
             android:name=".CadastroActivity"
             android:exported="false" />
         <activity
@@ -21,7 +24,7 @@
             android:name=".PesquisarRotasResponsavel"
             android:exported="false" />
         <activity
-            android:name=".ValidacaoTelefoneResponsavel"
+            android:name=".ValidacaoEmailResponsavel"
             android:exported="false" />
         <activity
             android:name=".InformacoesPessoais"

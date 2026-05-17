@@ -21,12 +21,10 @@ import android.content.Intent;
 public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
     private TextInputEditText edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
-    private TextView txtErroEmail, txtInfoSenha, txtErroSenha;
+    private TextView txtErroEmail, txtInfoSenha, txtErroSenha, txtErroTermos, txtErroTelefone;
     private Spinner spinnerDDD;
     private CheckBox checkTermos;
-    private TextView txtErroTelefone;
-    private TextInputLayout layoutTelefone;
-    private TextInputLayout layoutEmail, layoutSenha, layoutConfirmarSenha;
+    private TextInputLayout layoutEmail, layoutSenha, layoutConfirmarSenha, layoutTelefone;
     private MaterialButton btnCadastrar;
 
     @Override
@@ -40,12 +38,20 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         edtSenha = findViewById(R.id.edtSenha);
         edtConfirmarSenha = findViewById(R.id.edtConfirmarSenha);
 
+        edtTelefone.addTextChangedListener(
+                MascaraUtil.inserir(
+                        "(##) #####-####",
+                        edtTelefone
+                )
+        );
+
 
         // TEXTOS DE ERRO
         txtErroEmail = findViewById(R.id.txtErroEmail);
         txtInfoSenha = findViewById(R.id.txtInfoSenha);
         txtErroSenha = findViewById(R.id.txtErroSenha);
         txtErroTelefone = findViewById(R.id.txtErroTelefone);
+        txtErroTermos = findViewById(R.id.txtErroTermos);
 
 
         // BOTÃO
@@ -62,6 +68,8 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         txtInfoSenha.setVisibility(View.GONE);
         txtErroSenha.setVisibility(View.GONE);
         txtErroTelefone.setVisibility(View.GONE);
+        txtErroTermos.setVisibility(View.GONE);
+
 
         layoutEmail = findViewById(R.id.layoutEmail);
         layoutSenha = findViewById(R.id.layoutSenha);
@@ -69,6 +77,23 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         layoutTelefone = findViewById(R.id.layoutTelefone);
 
         btnCadastrar.setOnClickListener(v -> validarFormulario());
+
+        //SETAR SPINNER
+
+        String[] ddds = {"+55", "+1", "+351"};
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                ddds
+        );
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinnerDDD.setAdapter(adapter);
+
+        // COMEÇA COM +55
+        spinnerDDD.setSelection(0);
     }
 
     private void validarFormulario() {
@@ -168,7 +193,7 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         // SE ESTIVER TUDO CERTO
         // =========================
 
-        if (checkTermos.isChecked() && formularioValido) {
+        if (termosAceitos() && formularioValido) {
 
             salvarUsuario(email, telefone, senha);
 
@@ -182,26 +207,21 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
             finish();
         }
 
-        // =========================
-        // SPINNER
-        // =========================
-
-        String[] ddds = {"+55", "+1", "+351"};
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                ddds
-        );
-
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-        spinnerDDD.setAdapter(adapter);
-
-        // COMEÇA COM +55
-        spinnerDDD.setSelection(0);
     }
 
+    private boolean termosAceitos() {
+
+        if (!checkTermos.isChecked()) {
+
+            txtErroTermos.setVisibility(View.VISIBLE);
+
+            return false;
+        }
+
+        txtErroTermos.setVisibility(View.GONE);
+
+        return true;
+    }
 
     private boolean telefoneValido(String telefone) {
 
