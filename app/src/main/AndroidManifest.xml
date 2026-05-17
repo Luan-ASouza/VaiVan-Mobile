@@ -27,7 +27,7 @@
             android:name=".ValidacaoEmailResponsavel"
             android:exported="false" />
         <activity
-            android:name=".InformacoesPessoais"
+            android:name=".InformacoesPessoaisResponsavel"
             android:exported="false" />
         <activity
             android:name=".DadosDeAcessoResponsavel"
