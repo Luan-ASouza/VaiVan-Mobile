@@ -63,7 +63,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white_red"
+                        android:background="@drawable/bg_input_white"
                         app:boxBackgroundMode="none"
                         app:hintEnabled="false">
 
@@ -104,7 +104,7 @@
                         <!-- DDD -->
 
                         <LinearLayout
-                            android:layout_width="90dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
 
@@ -119,7 +119,7 @@
 
                             <Spinner
                                 android:id="@+id/spinnerDDD"
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:background="@drawable/bg_input_white"
@@ -167,6 +167,17 @@
                                     android:textSize="14sp"/>
                             </com.google.android.material.textfield.TextInputLayout>
 
+                            <TextView
+                                android:id="@+id/txtErroTelefone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginStart="8dp"
+                                android:text="*Telefone inválido"
+                                android:textColor="#F40707"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
                         </LinearLayout>
 
                     </LinearLayout>
@@ -198,7 +209,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:minHeight="48dp"
-                            android:hint="*****"
+                            android:hint="**********"
                             android:inputType="textPassword"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="12dp"
@@ -235,7 +246,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white_red"
+                        android:background="@drawable/bg_input_white"
                         app:boxBackgroundMode="none"
                         app:endIconMode="password_toggle"
                         app:hintEnabled="false">
@@ -245,7 +256,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:minHeight="48dp"
-                            android:hint="*****"
+                            android:hint="**********"
                             android:inputType="textPassword"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="12dp"
@@ -275,12 +286,10 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:id="@+id/imgCheckTermos"
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:layout_marginEnd="8dp"
-                            android:src="@drawable/icon_check"/>
+                        <CheckBox
+                            android:id="@+id/checkTermos"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"/>
 
                         <TextView
                             android:id="@+id/txtTermos"
@@ -288,7 +297,7 @@
                             android:layout_height="wrap_content"
                             android:text="Aceito os Termos de Uso"
                             android:textColor="@color/black"
-                            android:textSize="10sp"
+                            android:textSize="12sp"
                             android:textStyle="bold"/>
                     </LinearLayout>
 

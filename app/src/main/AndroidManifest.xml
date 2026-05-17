@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
         <activity
+            android:name=".CadastroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TipoCadastroActivity"
+            android:exported="false" />
+        <activity
             android:name=".PesquisarRotasResponsavel"
             android:exported="false" />
         <activity
@@ -42,7 +48,6 @@
             android:exported="false"
             android:label="@string/title_activity_login"
             android:theme="@style/Theme.TrabalhoGrauA" />
-        <activity android:name=".CadastroActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
