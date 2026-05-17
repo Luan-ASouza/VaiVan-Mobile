@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         btnCadastrar.setOnClickListener {
 
             startActivity(
-                Intent(this, DadosDeAcessoResponsavel::class.java)
+                Intent(this, TipoCadastroActivity::class.java)
             )
 
         }

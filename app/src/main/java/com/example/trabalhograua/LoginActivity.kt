@@ -24,7 +24,10 @@ class LoginActivity : AppCompatActivity() {
             val senha = edtSenha.text.toString().trim()
 
             // Login exemplo
-            if (email == "admin@gmail.com" && senha == "123456") {
+            if (
+                email == CadastroActivity.emailCadastrado &&
+                senha == CadastroActivity.senhaCadastrada
+            ) {
 
                 Toast.makeText(
                     this,
