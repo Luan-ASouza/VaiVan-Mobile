@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- TELA COMPLETA COM ROLAGEM -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
+
+    <!-- CONTAINER PRINCIPAL -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="36dp"
+        android:paddingTop="180dp">
+
+        <!-- ÍCONE DE RELÓGIO -->
+        <ImageView
+            android:id="@+id/imgStatusPendente"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:src="@android:drawable/ic_lock_idle_alarm"
+            android:tint="#111111"
+            android:layout_marginBottom="34dp" />
+
+        <!-- TÍTULO PRINCIPAL -->
+        <TextView
+            android:id="@+id/txtTituloAnalise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Obrigado pelas informações!"
+            android:textColor="#111111"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="18dp" />
+
+        <!-- TEXTO SECUNDÁRIO -->
+        <TextView
+            android:id="@+id/txtDescricaoAnalise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Seus documentos serão analisados."
+            android:textColor="#666666"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="50dp" />
+
+        <!-- BOTÃO CONTINUAR -->
+        <Button
+            android:id="@+id/btnContinuarAnalise"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:background="@drawable/btn_black_white_selector"
+            android:backgroundTint="@null"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</ScrollView>

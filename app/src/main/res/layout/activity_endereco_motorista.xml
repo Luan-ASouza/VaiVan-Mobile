@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="48dp"
+        android:paddingTop="150dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Endereço"
+            android:textColor="#111111"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="28dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="* Cidade"
+                    android:textColor="#111111"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editCidade"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_white"
+                    android:hint="Cidade"
+                    android:paddingHorizontal="14dp"
+                    android:textSize="14sp"
+                    android:inputType="text" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="* Estado"
+                    android:textColor="#111111"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editEstado"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_white"
+                    android:hint="Estado"
+                    android:paddingHorizontal="14dp"
+                    android:textSize="14sp"
+                    android:inputType="text" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="* Rua"
+            android:textColor="#111111"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/editRua"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_input_white"
+            android:hint="Rua"
+            android:paddingHorizontal="14dp"
+            android:textSize="14sp"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="* Bairro"
+            android:textColor="#111111"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/editBairro"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_input_white"
+            android:hint="Bairro"
+            android:paddingHorizontal="14dp"
+            android:textSize="14sp"
+            android:inputType="text" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="* Complemento"
+                    android:textColor="#111111"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editComplemento"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_white"
+                    android:hint="Complemento"
+                    android:paddingHorizontal="14dp"
+                    android:textSize="14sp"
+                    android:inputType="text" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="* Número"
+                    android:textColor="#111111"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/editNumero"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_input_white"
+                    android:hint="Número"
+                    android:paddingHorizontal="14dp"
+                    android:textSize="14sp"
+                    android:inputType="number" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="*Campos obrigatórios."
+            android:textColor="#E53935"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginTop="12dp" />
+
+        <Button
+            android:id="@+id/btnContinuarEndereco"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_button_black"
+            android:backgroundTint="@null"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</ScrollView>
