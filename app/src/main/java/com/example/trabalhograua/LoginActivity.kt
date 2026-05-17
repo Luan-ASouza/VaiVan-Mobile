@@ -20,14 +20,12 @@ class LoginActivity : AppCompatActivity() {
 
         btnEntrar.setOnClickListener {
 
-            val email = edtEmail.text.toString().trim()
+            // Pega o texto, limpa espaços (.trim()) e força letras minúsculas (.lowercase())
+            val email = edtEmail.text.toString().trim().lowercase()
             val senha = edtSenha.text.toString().trim()
 
-            // Login exemplo
-            if (
-                email == CadastroActivity.emailCadastrado &&
-                senha == CadastroActivity.senhaCadastrada
-            ) {
+            // VOLTAMOS PARA O PADRÃO: Login fixo e garantido para os testes
+            if (email == "admin@gmail.com" && senha == "123456") {
 
                 Toast.makeText(
                     this,
@@ -35,10 +33,13 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                // Ir para próxima tela
+                // Avança para a tela de seleção de Perfil
                 startActivity(
                     Intent(this, PerfilActivity::class.java)
                 )
+
+                // Fecha a tela de login para não voltar para ela ao clicar no botão físico de voltar
+                finish()
 
             } else {
 
@@ -49,6 +50,5 @@ class LoginActivity : AppCompatActivity() {
                 ).show()
             }
         }
-
     }
 }
