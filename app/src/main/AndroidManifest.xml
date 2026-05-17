@@ -13,6 +13,8 @@
         android:theme="@style/Theme.TrabalhoGrauA">
         <!-- TELA DE INFORMAÇÕES PESSOAIS DO MOTORISTA -->
         <activity android:name=".InformacoesPessoais" />
+        <!-- TELA DE VALIDAÇÃO DE TELEFONE DO RESPONSÁVEL -->
+        <activity android:name=".ValidacaoTelefoneResponsavel" />
 
         <!-- TELA DE DADOS DE ACESSO DO MOTORISTA -->
         <activity android:name=".DadosDeAcessoMotoristaActivity" />
