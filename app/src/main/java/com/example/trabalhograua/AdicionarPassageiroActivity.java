@@ -1,4 +1,4 @@
-package com.example.trabalhograua; // Garanta que este nome seja igual ao do seu projeto
+package com.example.trabalhograua;
 
 import android.os.Bundle;
 import android.view.View;
@@ -13,36 +13,36 @@ public class AdicionarPassageiroActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Define o layout que criamos na pasta res/layout
         setContentView(R.layout.activity_adicionar_passageiro);
 
-        // Referenciando os componentes do XML
         ImageView btnVoltar = findViewById(R.id.btnVoltar);
         Button btnSalvar = findViewById(R.id.btnSalvar);
         EditText edtNome = findViewById(R.id.edtNomePassageiro);
         EditText edtNascimento = findViewById(R.id.edtNascimento);
 
-        // Ação do botão Voltar
         btnVoltar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish(); // Fecha a tela atual e volta para a anterior
+                finish();
             }
         });
 
-        // Ação do botão Salvar
         btnSalvar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String nome = edtNome.getText().toString().trim();
+                String nascimento = edtNascimento.getText().toString().trim();
 
-                if (!nome.isEmpty()) {
+                if (!nome.isEmpty() && !nascimento.isEmpty()) {
+                    // ADICIONA NA LISTA GLOBAL: Guarda na memória temporária do app
+                    DadosGlobais.listaPassageiros.add(nome);
+
                     Toast.makeText(AdicionarPassageiroActivity.this,
-                            "Passageiro " + nome + " salvo!", Toast.LENGTH_SHORT).show();
-                    finish();
+                            "Passageiro " + nome + " cadastrado!", Toast.LENGTH_SHORT).show();
+                    finish(); // Volta para a tela anterior
                 } else {
                     Toast.makeText(AdicionarPassageiroActivity.this,
-                            "Por favor, preencha o nome!", Toast.LENGTH_SHORT).show();
+                            "Por favor, preencha o Nome e a Data de Nascimento!", Toast.LENGTH_SHORT).show();
                 }
             }
         });

@@ -23,12 +23,10 @@ class PerfilActivity : AppCompatActivity() {
             startActivity(Intent(this, MotoristaActivity::class.java))
         }
 
+        // ALTERADO AQUI: Agora direciona para a sua tela de passageiros!
         btnResponsavel.setOnClickListener {
-            Toast.makeText(
-                this,
-                "Responsável selecionado",
-                Toast.LENGTH_SHORT
-            ).show()
+            val intent = Intent(this, ListaPassageirosActivity::class.java)
+            startActivity(intent)
         }
 
         btnEstudante.setOnClickListener {

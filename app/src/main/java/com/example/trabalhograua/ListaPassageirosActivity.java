@@ -1,30 +1,45 @@
-package com.example.trabalhograua; // Verifique se o nome do pacote está igual aos outros arquivos
+package com.example.trabalhograua;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 public class ListaPassageirosActivity extends AppCompatActivity {
 
+    private TextView txtNome2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Liga este código ao arquivo XML de layout da lista
         setContentView(R.layout.activity_lista_passageiros);
 
-        // Encontra o card/botão de "Adicionar Passageiro +" pelo ID que definimos no XML
         CardView btnNovoPassageiro = findViewById(R.id.btnNovoPassageiro);
+        txtNome2 = findViewById(R.id.txtNome2); // O segundo card da sua lista
 
-        // Define o que acontece ao clicar no botão
         btnNovoPassageiro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Comando para mudar da tela de Lista para a tela de Adicionar
                 Intent intent = new Intent(ListaPassageirosActivity.this, AdicionarPassageiroActivity.class);
                 startActivity(intent);
             }
         });
+    }
+
+    // O onResume roda TODA VEZ que você volta para essa tela
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Se a nossa lista na memória tiver pelo menos 1 passageiro cadastrado...
+        if (!DadosGlobais.listaPassageiros.isEmpty()) {
+            // Pega o último nome que você cadastrou
+            String ultimoCadastrado = DadosGlobais.listaPassageiros.get(DadosGlobais.listaPassageiros.size() - 1);
+
+            // Substitui o texto do segundo card pelo nome real que você digitou!
+            txtNome2.setText(ultimoCadastrado);
+        }
     }
 }
