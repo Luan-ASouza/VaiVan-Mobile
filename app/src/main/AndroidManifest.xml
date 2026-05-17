@@ -11,6 +11,28 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA">
+        <!-- TELA DE INFORMAÇÕES PESSOAIS DO MOTORISTA -->
+        <activity android:name=".InformacoesPessoais" />
+        <!-- TELA DE VALIDAÇÃO DE TELEFONE DO RESPONSÁVEL -->
+        <activity android:name=".ValidacaoTelefoneResponsavel" />
+
+        <!-- TELA DE DADOS DE ACESSO DO MOTORISTA -->
+        <activity android:name=".DadosDeAcessoMotoristaActivity" />
+
+        <!-- TELA DE VALIDAÇÃO DE EMAIL -->
+        <activity android:name=".ValidacaoEmailActivity" />
+
+        <!-- TELA DE ENDEREÇO DO MOTORISTA -->
+        <activity android:name=".EnderecoMotoristaActivity" />
+
+        <!-- TELA DE VALIDAÇÃO DA CNH -->
+        <activity android:name=".ValidaCnhActivity" />
+
+        <!-- TELA DE AUTORIZAÇÃO -->
+        <activity android:name=".AutorizacaoActivity" />
+
+        <!-- TELA FINAL DE ANÁLISE DOS DOCUMENTOS -->
+        <activity android:name=".AnaliseDocumentosActivity" />
         <activity
             android:name=".EnderecoResponsavel"
             android:exported="false" />
@@ -58,6 +80,7 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+
             </intent-filter>
         </activity>
     </application>

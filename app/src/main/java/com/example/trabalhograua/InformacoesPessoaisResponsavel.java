@@ -16,7 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
 
-public class InformacoesPessoaisResponsavel extends AppCompatActivity {
+public class InformacoesPessoais extends AppCompatActivity {
 
     private TextInputEditText edtNomeCompleto, edtCpf;
 
@@ -238,7 +238,7 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
         if (formularioValido) {
 
             Intent intent = new Intent(
-                    InformacoesPessoaisResponsavel.this,
+                    InformacoesPessoais.this,
                     ValidacaoEmailResponsavel.class
             );
 
