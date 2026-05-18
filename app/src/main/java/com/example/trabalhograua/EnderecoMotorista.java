@@ -3,13 +3,12 @@ package com.example.trabalhograua;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.widget.TextView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -22,7 +21,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class EnderecoResponsavel extends AppCompatActivity {
+public class EnderecoMotorista extends AppCompatActivity {
 
     // CAMPOS
     private TextInputEditText edtCEP, edtCidade, edtEstado,
@@ -43,7 +42,7 @@ public class EnderecoResponsavel extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_endereco_responsavel);
+        setContentView(R.layout.activity_endereco_motorista);
 
         // =========================
         // CAMPOS
@@ -422,8 +421,8 @@ public class EnderecoResponsavel extends AppCompatActivity {
             );
 
             Intent intent = new Intent(
-                    EnderecoResponsavel.this,
-                    ListaPassageirosActivity.class
+                    EnderecoMotorista.this,
+                    ValidaCnhActivity.class
             );
 
             startActivity(intent);

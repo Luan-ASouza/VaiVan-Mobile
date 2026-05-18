@@ -1,201 +1,353 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:background="@color/gray">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scrollCadastro"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
-
-        <!-- TÍTULO -->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Dados de acesso"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:textColor="#111111"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="32dp"/>
-
-        <!-- EMAIL -->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Email"
-            android:textStyle="bold"
-            android:textSize="14sp"/>
-
-        <EditText
-            android:id="@+id/editEmail"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_input_white_red"
-            android:paddingHorizontal="16dp"
-            android:textSize="16sp"
-            android:inputType="textEmailAddress"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*Email já cadastrado no sistema"
-            android:textColor="#E53935"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp"/>
-
-        <!-- DDD E TELEFONE -->
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/gray"
+        android:padding="10dp">
 
         <LinearLayout
+            android:id="@+id/containerPrincipal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="18dp">
-
-            <!-- DDD -->
-
-            <LinearLayout
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DDD"
-                    android:textStyle="bold"
-                    android:textSize="14sp"/>
-
-                <EditText
-                    android:id="@+id/editDDD"
-                    android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_input_white"
-                    android:gravity="center"
-                    android:hint="+55"
-                    android:textSize="16sp"
-                    android:inputType="number"/>
-
-            </LinearLayout>
-
-            <!-- TELEFONE -->
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:background="@drawable/bg_white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
+                android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/txtTitulo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Telefone"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="32dp"
+                    android:text="Dados de acesso"
+                    android:textColor="#1E1E1E"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textSize="14sp"/>
+                    android:layout_marginTop="10dp"/>
 
-                <EditText
-                    android:id="@+id/editTelefone"
+                <LinearLayout
+                    android:id="@+id/containerFormulario"
                     android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_input_white"
-                    android:paddingHorizontal="16dp"
-                    android:textSize="16sp"
-                    android:inputType="phone"/>
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp">
+
+                    <!-- EMAIL -->
+
+                    <TextView
+                        android:id="@+id/txtLabelEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        app:boxBackgroundMode="none"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="Digite seu email"
+                            android:inputType="textEmailAddress"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtErroEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*Email já cadastrado no sistema"
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- DDD + TELEFONE -->
+
+                    <LinearLayout
+                        android:id="@+id/containerTelefone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                        <!-- DDD -->
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtLabelDDD"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DDD"
+                                android:textColor="#1E1E1E"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_white">
+
+                                <Spinner
+                                    android:id="@+id/spinnerDDD"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="48dp"
+
+                                    android:paddingHorizontal="10dp"/>
+
+
+                            </LinearLayout>
+
+
+
+                        </LinearLayout>
+
+                        <!-- TELEFONE -->
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtLabelTelefone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Telefone"
+                                android:textColor="#1E1E1E"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/layoutTelefone"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_white"
+                                app:boxBackgroundMode="none"
+                                app:hintEnabled="false">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edtTelefone"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="48dp"
+                                    android:hint="Telefone"
+                                    android:inputType="phone"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="12dp"
+                                    android:textColor="@color/gray"
+                                    android:textColorHint="@color/light_gray"
+                                    android:textSize="14sp"
+                                    android:maxLength="15"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <TextView
+                                android:id="@+id/txtErroTelefone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginStart="8dp"
+                                android:text="*Telefone inválido"
+                                android:textColor="#F40707"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- SENHA -->
+
+                    <TextView
+                        android:id="@+id/txtLabelSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Senha"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutSenha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        app:boxBackgroundMode="none"
+                        app:endIconMode="password_toggle"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtSenha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="**********"
+                            android:inputType="textPassword"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtInfoSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*A senha deve conter:\n- Mínimo 8 caracteres;\n- Mínimo 1 caracter especial;\n- Mínimo 1 número."
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- CONFIRMAR SENHA -->
+
+                    <TextView
+                        android:id="@+id/txtLabelConfirmarSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Confirmar Senha"
+                        android:textColor="#1E1E1E"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutConfirmarSenha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        app:boxBackgroundMode="none"
+                        app:endIconMode="password_toggle"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtConfirmarSenha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="**********"
+                            android:inputType="textPassword"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"
+                            android:textColor="@color/gray"
+                            android:textColorHint="@color/light_gray"
+                            android:textSize="14sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/txtErroSenha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="8dp"
+                        android:text="*As senhas devem ser iguais"
+                        android:textColor="#F40707"
+                        android:textSize="10sp"
+                        android:textStyle="bold"/>
+
+                    <!-- TERMOS -->
+
+                    <LinearLayout
+                        android:id="@+id/containerTermos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <CheckBox
+                            android:id="@+id/checkTermos"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"/>
+
+                        <TextView
+                            android:id="@+id/txtTermos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aceito os Termos de Uso"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/txtErroTermos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="*Obrigatório"
+                            android:textColor="#F40707"
+                            android:textSize="10sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- BOTÃO -->
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCadastrar"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Cadastrar"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="5dp"/>
 
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- SENHA -->
+    </ScrollView>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Senha"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="18dp"/>
-
-        <EditText
-            android:id="@+id/editSenha"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_input_white"
-            android:paddingHorizontal="16dp"
-            android:textSize="16sp"
-            android:inputType="textPassword"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*A senha deve conter:\n-Minimo 8 caracteres;\n-Minimo 1 caractere especial;"
-            android:textColor="#E53935"
-            android:textSize="12sp"
-            android:lineSpacingExtra="3dp"
-            android:layout_marginTop="4dp"/>
-
-        <!-- CONFIRMAR SENHA -->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Confirmar Senha"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="18dp"/>
-
-        <EditText
-            android:id="@+id/editConfirmarSenha"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_input_white_red"
-            android:paddingHorizontal="16dp"
-            android:textSize="16sp"
-            android:inputType="textPassword"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*As senha devem ser iguais"
-            android:textColor="#E53935"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp"/>
-
-        <!-- CHECKBOX -->
-
-        <CheckBox
-            android:id="@+id/checkTermos"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Aceito os Termos de Uso"
-            android:textSize="13sp"
-            android:layout_marginTop="14dp"/>
-
-        <!-- BOTÃO -->
-
-        <Button
-            android:id="@+id/btnCadastrar"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/bg_button_black"
-            android:backgroundTint="@null"
-            android:text="Cadastrar"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"/>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

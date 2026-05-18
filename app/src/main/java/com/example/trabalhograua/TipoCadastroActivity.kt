@@ -21,7 +21,7 @@ class TipoCadastroActivity : AppCompatActivity() {
 
         // AO CLICAR EM MOTORISTA, ABRE O FLUXO DO MOTORISTA
         btnMotorista.setOnClickListener {
-            startActivity(Intent(this, InformacoesPessoais::class.java))
+            startActivity(Intent(this, DadosDeAcessoMotorista::class.java))
         }
 
         // AO CLICAR EM RESPONSÁVEL, ABRE O FLUXO DO RESPONSÁVEL

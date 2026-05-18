@@ -1,213 +1,380 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fontFamily="@font/montserrat">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scrollEndereco"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="48dp"
-        android:paddingTop="150dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Endereço"
-            android:textColor="#111111"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="28dp" />
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/gray"
+        android:padding="10dp">
 
         <LinearLayout
+            android:id="@+id/containerPrincipal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_white"
+            android:paddingHorizontal="10dp">
+
+            <!-- CARD -->
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:id="@+id/containerCard"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="* Cidade"
-                    android:textColor="#111111"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
-
-                <EditText
-                    android:id="@+id/editCidade"
-                    android:layout_width="match_parent"
-                    android:layout_height="42dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_input_white"
-                    android:hint="Cidade"
-                    android:paddingHorizontal="14dp"
-                    android:textSize="14sp"
-                    android:inputType="text" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginStart="12dp">
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="40dp">
+
+                <!-- TÍTULO -->
+
+                <TextView
+                    android:id="@+id/txtTitulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="28dp"
+                    android:text="Endereço"
+                    android:textColor="#1E1E1E"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+
+                <!-- CEP -->
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="* Estado"
-                    android:textColor="#111111"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
-
-                <EditText
-                    android:id="@+id/editEstado"
-                    android:layout_width="match_parent"
-                    android:layout_height="42dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_input_white"
-                    android:hint="Estado"
-                    android:paddingHorizontal="14dp"
+                    android:layout_marginTop="16dp"
+                    android:text="CEP"
+                    android:textColor="#1E1E1E"
                     android:textSize="14sp"
-                    android:inputType="text" />
+                    android:textStyle="bold"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutCEP"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_input_white"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtCEP"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:hint="12345678"
+                        android:inputType="textCapWords"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="12dp"
+                        android:textColor="@color/gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="14sp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <!-- CIDADE + ESTADO -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- ESTADO -->
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Estado"
+                            android:textColor="#1E1E1E"
+                            android:textSize="14sp"
+                            android:textStyle="bold"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutEstado"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_input_white"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/edtEstado"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="Estado"
+                                android:inputType="textCapWords"
+                                android:minHeight="48dp"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp"
+                                android:textColor="@color/gray"
+                                android:textColorHint="@color/light_gray"
+                                android:textSize="14sp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <!-- CIDADE -->
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cidade"
+                            android:textColor="#1E1E1E"
+                            android:textSize="14sp"
+                            android:textStyle="bold"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutCidade"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_input_white"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/edtCidade"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="48dp"
+                                android:hint="Cidade"
+                                android:inputType="textCapWords"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp"
+                                android:textColor="@color/gray"
+                                android:textColorHint="@color/light_gray"
+                                android:textSize="14sp"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+
+
+                </LinearLayout>
+
+                <!-- BAIRRO -->
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Bairro"
+                    android:textColor="#1E1E1E"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutBairro"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_white"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtBairro"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:hint="Bairro"
+                        android:inputType="textCapWords"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="12dp"
+                        android:textColor="@color/gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="14sp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- RUA -->
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Rua"
+                    android:textColor="#1E1E1E"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutRua"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_white"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtRua"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:hint="Rua"
+                        android:inputType="textCapWords"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="12dp"
+                        android:textColor="@color/gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="14sp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <!-- COMPLEMENTO + NÚMERO -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Número"
+                            android:textColor="#1E1E1E"
+                            android:textSize="14sp"
+                            android:textStyle="bold"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutNumero"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_input_white"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/edtNumero"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="48dp"
+                                android:hint="123"
+                                android:inputType="number"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp"
+                                android:textColor="@color/gray"
+                                android:textColorHint="@color/light_gray"
+                                android:textSize="14sp"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+
+                    <!-- COMPLEMENTO -->
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Complemento"
+                            android:textColor="#1E1E1E"
+                            android:textSize="14sp"
+                            android:textStyle="bold"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutComplemento"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_input_white"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/edtComplemento"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="48dp"
+                                android:hint="Complemento"
+                                android:inputType="textCapWords"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="12dp"
+                                android:textColor="@color/gray"
+                                android:textColorHint="@color/light_gray"
+                                android:textSize="14sp"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <!-- NÚMERO -->
+
+
+                </LinearLayout>
+
+                <!-- TEXTO ERRO -->
+
+                <TextView
+                    android:id="@+id/txtErroEndereco"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="*Preencha todos os campos obrigatórios."
+                    android:textColor="#F40707"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"/>
+
+                <!-- BOTÃO -->
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnContinuar"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Continuar"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="12dp"/>
 
             </LinearLayout>
 
         </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="* Rua"
-            android:textColor="#111111"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:layout_marginTop="14dp" />
+    </ScrollView>
 
-        <EditText
-            android:id="@+id/editRua"
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_input_white"
-            android:hint="Rua"
-            android:paddingHorizontal="14dp"
-            android:textSize="14sp"
-            android:inputType="text" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="* Bairro"
-            android:textColor="#111111"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:layout_marginTop="14dp" />
-
-        <EditText
-            android:id="@+id/editBairro"
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_input_white"
-            android:hint="Bairro"
-            android:paddingHorizontal="14dp"
-            android:textSize="14sp"
-            android:inputType="text" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="14dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="* Complemento"
-                    android:textColor="#111111"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
-
-                <EditText
-                    android:id="@+id/editComplemento"
-                    android:layout_width="match_parent"
-                    android:layout_height="42dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_input_white"
-                    android:hint="Complemento"
-                    android:paddingHorizontal="14dp"
-                    android:textSize="14sp"
-                    android:inputType="text" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="* Número"
-                    android:textColor="#111111"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
-
-                <EditText
-                    android:id="@+id/editNumero"
-                    android:layout_width="match_parent"
-                    android:layout_height="42dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_input_white"
-                    android:hint="Número"
-                    android:paddingHorizontal="14dp"
-                    android:textSize="14sp"
-                    android:inputType="number" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="*Campos obrigatórios."
-            android:textColor="#E53935"
-            android:textStyle="bold"
-            android:textSize="12sp"
-            android:layout_marginTop="12dp" />
-
-        <Button
-            android:id="@+id/btnContinuarEndereco"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_button_black"
-            android:backgroundTint="@null"
-            android:text="Continuar"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>
