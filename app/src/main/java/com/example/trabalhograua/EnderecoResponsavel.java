@@ -423,7 +423,7 @@ public class EnderecoResponsavel extends AppCompatActivity {
 
             Intent intent = new Intent(
                     EnderecoResponsavel.this,
-                    LoginActivity.class
+                    ListaPassageirosActivity.class
             );
 
             startActivity(intent);
