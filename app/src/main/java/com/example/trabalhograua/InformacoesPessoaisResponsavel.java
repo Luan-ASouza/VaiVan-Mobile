@@ -16,7 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
 
-public class InformacoesPessoais extends AppCompatActivity {
+public class InformacoesPessoaisResponsavel extends AppCompatActivity {
 
     private TextInputEditText edtNomeCompleto, edtCpf;
 
