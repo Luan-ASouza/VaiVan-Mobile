@@ -16,8 +16,6 @@ class PerfilActivity : AppCompatActivity() {
 
         val btnMotorista = findViewById<Button>(R.id.btnMotorista)
         val btnResponsavel = findViewById<Button>(R.id.btnResponsavel)
-        val btnEstudante = findViewById<Button>(R.id.btnEstudante)
-        val btnVoltar = findViewById<ImageView>(R.id.btnVoltar)
 
         btnMotorista.setOnClickListener {
             startActivity(Intent(this, MotoristaActivity::class.java))
@@ -29,12 +27,5 @@ class PerfilActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        btnEstudante.setOnClickListener {
-            startActivity(Intent(this, EstudanteActivity::class.java))
-        }
-
-        btnVoltar.setOnClickListener {
-            finish()
-        }
     }
 }
