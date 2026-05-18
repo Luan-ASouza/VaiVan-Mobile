@@ -10,79 +10,55 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.TrabalhoGrauA">
-        <!-- TELA DE INFORMAÇÕES PESSOAIS DO MOTORISTA -->
-        <activity android:name=".InformacoesPessoais" />
-        <!-- TELA DE VALIDAÇÃO DE TELEFONE DO RESPONSÁVEL -->
-        <activity android:name=".ValidacaoTelefoneResponsavel" />
+        android:theme="@style/Theme.TrabalhoGrauA"
+        tools:targetApi="31">
 
-        <!-- TELA DE DADOS DE ACESSO DO MOTORISTA -->
-        <activity android:name=".DadosDeAcessoMotoristaActivity" />
-
-        <!-- TELA DE VALIDAÇÃO DE EMAIL -->
-        <activity android:name=".ValidacaoEmailActivity" />
-
-        <!-- TELA DE ENDEREÇO DO MOTORISTA -->
-        <activity android:name=".EnderecoMotoristaActivity" />
-
-        <!-- TELA DE VALIDAÇÃO DA CNH -->
-        <activity android:name=".ValidaCnhActivity" />
-
-        <!-- TELA DE AUTORIZAÇÃO -->
-        <activity android:name=".AutorizacaoActivity" />
-
-        <!-- TELA FINAL DE ANÁLISE DOS DOCUMENTOS -->
-        <activity android:name=".AnaliseDocumentosActivity" />
-        <activity
-            android:name=".EnderecoResponsavel"
-            android:exported="false" />
-        <activity
-            android:name=".CadastroActivity"
-            android:exported="false" />
-        <activity
-            android:name=".TipoCadastroActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PesquisarRotasResponsavel"
-            android:exported="false" />
-        <activity
-            android:name=".ValidacaoEmailResponsavel"
-            android:exported="false" />
-        <activity
-            android:name=".InformacoesPessoaisResponsavel"
-            android:exported="false" />
-        <activity
-            android:name=".DadosDeAcessoResponsavel"
-            android:exported="false" />
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" />
-
-        <activity
-            android:name=".MotoristaActivity"
-            android:exported="false" />
-        <activity
-            android:name=".EstudanteActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PerfilActivity"
-            android:exported="false" />
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login"
-            android:theme="@style/Theme.TrabalhoGrauA" />
+        <!-- MAIN -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-
             </intent-filter>
+
         </activity>
+
+        <!-- LOGIN -->
+        <activity android:name=".LoginActivity" />
+
+        <!-- CADASTRO -->
+        <activity android:name=".TipoCadastroActivity" />
+
+        <!-- DADOS DE ACESSO -->
+        <activity android:name=".DadosDeAcessoResponsavel" />
+        <activity android:name=".DadosDeAcessoMotorista" />
+
+        <!-- VALIDAÇÃO -->
+        <activity android:name=".ValidacaoEmailResponsavel" />
+        <activity android:name=".ValidacaoEmailMotorista" />
+
+        <!-- INFORMAÇÕES -->
+        <activity android:name=".InformacoesPessoaisResponsavel" />
+        <activity android:name=".InformacoesPessoaisMotorista" />
+
+        <!-- ENDEREÇO -->
+        <activity android:name=".EnderecoResponsavel" />
+        <activity android:name=".EnderecoMotorista" />
+
+        <!-- DOCUMENTOS MOTORISTA -->
+        <activity android:name=".ValidaCnhActivity"/>
+        <activity android:name=".AutorizacaoActivity"/>
+        <activity android:name="AnaliseDocumentosActivity"/>
+
+        <!-- PERFIL RESPONSAVEL -->
+        <activity android:name=".PerfilActivity" />
+        <activity android:name=".AdicionarPassageiroActivity"/>
+        <activity android:name=".ListaPassageirosActivity"/>
+        <activity android:name=".ProcurarMotoristaActivity"/>
+        
     </application>
 
 </manifest>
