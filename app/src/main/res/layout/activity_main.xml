@@ -1,107 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@drawable/opening"
     tools:context=".MainActivity">
 
-    <!-- Faixa Amarela -->
-    <View
-        android:id="@+id/viewYellow"
-        android:layout_width="260dp"
-        android:layout_height="1010dp"
-        android:background="#F5B42D"
-        android:rotation="-20"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:translationX="120dp"/>
+    <!-- Conteúdo principal -->
 
-    <!-- Logo -->
-    <TextView
-        android:id="@+id/txtVai"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="VAI"
-        android:textColor="#000000"
-        android:textStyle="bold"
-        android:textSize="34sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="120dp"/>
+    <!-- Bottom Sheet -->
 
-    <TextView
-        android:id="@+id/txtVane"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="VAN"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:textSize="34sp"
-        app:layout_constraintTop_toTopOf="@id/txtVai"
-        app:layout_constraintStart_toEndOf="@id/txtVai"/>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="742dp">
 
-    <TextView
-        android:id="@+id/txtSlogan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="VAI CONTIGO!"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/txtVai"
-        app:layout_constraintStart_toStartOf="@id/txtVai"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCadastrar"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
 
-    <!-- Ícone caminhão -->
+            android:layout_marginStart="35dp"
+            android:layout_marginEnd="35dp"
+            android:layout_marginBottom="80dp"
+            android:background="@drawable/bg_hollow_blackborder"
 
-    <!-- Botão Entrar -->
 
-    <ImageView
-        android:id="@+id/imgTruck"
-        android:layout_width="81dp"
-        android:layout_height="132dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="96dp"
-        android:alpha="0.95"
-        android:src="@drawable/ic_truck"
-        app:layout_constraintStart_toEndOf="@+id/txtVane"
-        app:layout_constraintTop_toTopOf="parent" />
+            android:text="Cadastrar nova conta"
 
-    <Button
-        android:id="@+id/btnEntrar"
-        android:layout_width="0dp"
-        android:layout_height="55dp"
-        android:text="Entrar"
-        android:textAllCaps="false"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_button_black"
-        app:layout_constraintBottom_toTopOf="@id/btnCadastrar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="35dp"
-        android:layout_marginEnd="35dp"
-        android:layout_marginBottom="16dp"/>
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textFontWeight="600"
+            android:textStyle="bold"
 
-    <!-- Botão Cadastro -->
-    <Button
-        android:id="@+id/btnCadastrar"
-        android:layout_width="0dp"
-        android:layout_height="55dp"
-        android:text="Cadastrar nova conta"
-        android:textAllCaps="false"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:background="@drawable/bg_button_white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="35dp"
-        android:layout_marginEnd="35dp"
-        android:layout_marginBottom="40dp"/>
+            app:backgroundTint="@null"
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent" />
+
+
+
+        <Button
+            android:id="@+id/btnEntrar"
+            android:layout_width="0dp"
+            android:layout_height="59dp"
+
+            android:layout_marginStart="35dp"
+            android:layout_marginEnd="35dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/gray"
+
+            android:text="Entrar"
+
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+
+            app:layout_constraintBottom_toTopOf="@id/btnCadastrar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/bottomSheet"
+
+        android:layout_width="match_parent"
+        android:layout_height="420dp"
+        android:background="@drawable/bg_bottomsheet_white"
+
+        android:elevation="16dp"
+        android:orientation="vertical"
+
+        android:padding="24dp"
+
+        app:behavior_hideable="true"
+        app:behavior_peekHeight="0dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <View
+            android:layout_width="80dp"
+            android:layout_height="7dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_white_rounded"
+            android:backgroundTint="#dbdce0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp"
+            android:text="Entrar"
+            android:textColor="@color/black"
+
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+
+        <TextView
+            android:id="@+id/txtLabelEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:text="Email"
+            android:textColor="#1E1E1E"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/edtEmail"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_button_white"
+
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:paddingHorizontal="16dp"
+
+            android:textColor="@color/gray"
+            android:textColorHint="@color/light_gray" />
+
+        <TextView
+            android:id="@+id/txtLabelSenha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:text="Senha"
+            android:textColor="#1E1E1E"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/edtSenha"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="8dp"
+
+            android:background="@drawable/bg_button_white"
+            android:hint="Senha"
+            android:inputType="textPassword"
+
+            android:paddingHorizontal="16dp"
+
+            android:textColor="@color/gray"
+            android:textColorHint="@color/light_gray" />
+
+        <!-- Esqueci senha -->
+        <TextView
+            android:id="@+id/txtEsqueci"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Esqueci minha senha"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+
+            android:backgroundTint="@color/orange"
+            android:text="Entrar"
+            android:textAllCaps="false"
+
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="email: admin@gmail.com   senha: 123456"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textFontWeight="500" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
