@@ -7,7 +7,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-public class ListaPassageirosActivity extends AppCompatActivity {
+public class ListaPassageirosActivity extends BaseActivity  {
 
     private TextView txtNome2;
 
@@ -15,6 +15,13 @@ public class ListaPassageirosActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista_passageiros);
+
+        View bottom = findViewById(R.id.bottomNavigation);
+
+        configurarBottomNavigation(
+                bottom,
+                R.id.navPassageiros
+        );
 
         CardView btnNovoPassageiro = findViewById(R.id.btnNovoPassageiro);
         txtNome2 = findViewById(R.id.txtNome2); // O segundo card da sua lista

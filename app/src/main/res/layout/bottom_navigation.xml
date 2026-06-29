@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomNavigation"
+    android:layout_width="match_parent"
+    android:layout_height="78dp"
+    android:background="@drawable/bg_bottom"
+    android:elevation="10dp"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="10dp">
+
+    <!-- PASSAGEIROS -->
+
+    <LinearLayout
+        android:id="@+id/navPassageiros"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:background="@android:color/transparent">
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_passageiros"
+            />
+
+    </LinearLayout>
+
+    <!-- ROTAS -->
+
+    <LinearLayout
+        android:id="@+id/navRotas"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+>
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_rotas"
+            />
+
+
+    </LinearLayout>
+
+    <!-- CHAT -->
+
+    <LinearLayout
+        android:id="@+id/navChat"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_chat"
+ />
+
+
+
+    </LinearLayout>
+
+    <!-- PERFIL -->
+
+    <LinearLayout
+        android:id="@+id/navPerfil"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_perfil"
+            />
+
+
+    </LinearLayout>
+
+</LinearLayout>
