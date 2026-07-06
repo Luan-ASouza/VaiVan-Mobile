@@ -1,9 +1,12 @@
-package com.example.trabalhograua
+package com.example.trabalhograua.cadastro
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import com.example.trabalhograua.cadastro.motorista.DadosDeAcessoMotorista
+import com.example.trabalhograua.cadastro.responsavel.DadosDeAcessoResponsavel
+import com.example.trabalhograua.R
 
 class TipoCadastroActivity : AppCompatActivity() {
 

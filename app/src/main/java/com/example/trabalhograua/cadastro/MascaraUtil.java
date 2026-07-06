@@ -1,4 +1,4 @@
-package com.example.trabalhograua;
+package com.example.trabalhograua.cadastro;
 
 import android.text.Editable;
 import android.text.TextWatcher;

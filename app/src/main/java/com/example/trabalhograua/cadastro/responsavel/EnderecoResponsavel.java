@@ -1,15 +1,19 @@
-package com.example.trabalhograua;
+package com.example.trabalhograua.cadastro.responsavel;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.TextUtils;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.widget.TextView;
+
+import com.example.trabalhograua.ui.responsavel.HomeResponsavelActivity;
+import com.example.trabalhograua.cadastro.MascaraUtil;
+import com.example.trabalhograua.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -21,7 +25,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class EnderecoMotorista extends AppCompatActivity {
+public class EnderecoResponsavel extends AppCompatActivity {
 
     // CAMPOS
     private TextInputEditText edtCEP, edtCidade, edtEstado,
@@ -42,7 +46,7 @@ public class EnderecoMotorista extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_endereco_motorista);
+        setContentView(R.layout.activity_endereco_responsavel);
 
         // =========================
         // CAMPOS
@@ -421,8 +425,8 @@ public class EnderecoMotorista extends AppCompatActivity {
             );
 
             Intent intent = new Intent(
-                    EnderecoMotorista.this,
-                    ValidaCnhActivity.class
+                    EnderecoResponsavel.this,
+                    HomeResponsavelActivity.class
             );
 
             startActivity(intent);

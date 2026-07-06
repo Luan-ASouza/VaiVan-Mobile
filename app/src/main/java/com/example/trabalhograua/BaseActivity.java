@@ -6,6 +6,9 @@ import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.trabalhograua.ui.responsavel.HomeResponsavelActivity;
+import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment;
+
 public class BaseActivity extends AppCompatActivity {
 
     protected void configurarBottomNavigation(View view, int telaAtual) {
@@ -24,7 +27,7 @@ public class BaseActivity extends AppCompatActivity {
 
             if (telaAtual != R.id.navPassageiros) {
 
-                startActivity(new Intent(this, ListaPassageirosActivity.class));
+                startActivity(new Intent(this, HomeResponsavelActivity.class));
 
                 overridePendingTransition(
                         android.R.anim.fade_in,

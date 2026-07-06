@@ -7,6 +7,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.trabalhograua.cadastro.PerfilActivity
+import com.example.trabalhograua.cadastro.TipoCadastroActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class MainActivity : AppCompatActivity() {

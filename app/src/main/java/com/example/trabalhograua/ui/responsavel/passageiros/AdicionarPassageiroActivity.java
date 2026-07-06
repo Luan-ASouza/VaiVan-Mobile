@@ -1,4 +1,4 @@
-package com.example.trabalhograua;
+package com.example.trabalhograua.ui.responsavel.passageiros;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +8,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.trabalhograua.DadosGlobais;
+import com.example.trabalhograua.ProcurarMotoristaActivity;
+import com.example.trabalhograua.R;
 
 public class AdicionarPassageiroActivity extends AppCompatActivity {
 

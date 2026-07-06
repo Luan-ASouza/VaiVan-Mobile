@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -14,58 +14,38 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrabalhoGrauA"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.responsavel.HomeResponsavelActivity"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA"/>
-
-        <!-- MAIN -->
+            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" /> <!-- MAIN -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
-
-
-        <!-- LOGIN E CADASTRO -->
-        <activity android:name=".PerfilActivity" />
-        <activity android:name=".TipoCadastroActivity" />
-
-        <!-- DADOS DE ACESSO -->
-        <activity android:name=".DadosDeAcessoResponsavel" />
-        <activity android:name=".DadosDeAcessoMotorista" />
-
-        <!-- VALIDAÇÃO -->
-        <activity android:name=".ValidacaoEmailResponsavel" />
-        <activity android:name=".ValidacaoEmailMotorista" />
-
-        <!-- INFORMAÇÕES -->
-        <activity android:name=".InformacoesPessoaisResponsavel" />
-        <activity android:name=".InformacoesPessoaisMotorista" />
-
-        <!-- ENDEREÇO -->
-        <activity android:name=".EnderecoResponsavel" />
-        <activity android:name=".EnderecoMotorista" />
-
-        <!-- DOCUMENTOS MOTORISTA -->
-        <activity android:name=".ValidaCnhActivity"/>
-        <activity android:name=".AutorizacaoActivity"/>
-        <activity android:name="AnaliseDocumentosActivity"/>
-
-        <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".AdicionarPassageiroActivity"/>
-        <activity android:name=".ListaPassageirosActivity"/>
-        <activity android:name=".ProcurarMotoristaActivity"/>
-
-        <!-- PERFIL MOTORISTA -->
+        </activity> <!-- LOGIN E CADASTRO -->
+        <activity android:name=".cadastro.PerfilActivity" />
+        <activity android:name=".cadastro.TipoCadastroActivity" /> <!-- DADOS DE ACESSO -->
+        <activity android:name=".cadastro.responsavel.DadosDeAcessoResponsavel" />
+        <activity android:name=".cadastro.motorista.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
+        <activity android:name=".cadastro.responsavel.ValidacaoEmailResponsavel" />
+        <activity android:name=".cadastro.motorista.ValidacaoEmailMotorista" /> <!-- INFORMAÇÕES -->
+        <activity android:name=".cadastro.responsavel.InformacoesPessoaisResponsavel" />
+        <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
+        <activity android:name=".cadastro.responsavel.EnderecoResponsavel" />
+        <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
+        <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
+        <activity android:name=".cadastro.motorista.AutorizacaoActivity" />
+        <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
+        <activity android:name=".ProcurarMotoristaActivity" /> <!-- PERFIL MOTORISTA -->
         <activity android:name=".MotoristaActivity" />
-        
     </application>
 
 </manifest>

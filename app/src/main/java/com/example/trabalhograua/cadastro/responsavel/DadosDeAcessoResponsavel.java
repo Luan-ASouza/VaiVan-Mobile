@@ -1,23 +1,25 @@
-package com.example.trabalhograua;
+package com.example.trabalhograua.cadastro.responsavel;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.trabalhograua.cadastro.MascaraUtil;
+import com.example.trabalhograua.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.CheckBox;
+import android.content.Intent;
 
 
-public class DadosDeAcessoMotorista extends AppCompatActivity {
+public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
     private TextInputEditText edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
     private TextView txtErroEmail, txtInfoSenha, txtErroSenha, txtErroTermos, txtErroTelefone;
@@ -29,7 +31,7 @@ public class DadosDeAcessoMotorista extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dados_de_acesso_motorista);
+        setContentView(R.layout.activity_dados_de_acesso_responsavel);
 
         // CAMPOS
         edtEmail = findViewById(R.id.edtEmail);
@@ -197,8 +199,8 @@ public class DadosDeAcessoMotorista extends AppCompatActivity {
             salvarUsuario(email, telefone, senha);
 
             Intent intent = new Intent(
-                    DadosDeAcessoMotorista.this,
-                    InformacoesPessoaisMotorista.class
+                    DadosDeAcessoResponsavel.this,
+                    InformacoesPessoaisResponsavel.class
             );
 
             startActivity(intent);

@@ -1,11 +1,12 @@
-package com.example.trabalhograua
+package com.example.trabalhograua.cadastro
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.trabalhograua.MotoristaActivity
+import com.example.trabalhograua.R
+import com.example.trabalhograua.ui.responsavel.HomeResponsavelActivity
 
 class PerfilActivity : AppCompatActivity() {
 
@@ -23,7 +24,7 @@ class PerfilActivity : AppCompatActivity() {
 
         // ALTERADO AQUI: Agora direciona para a sua tela de passageiros!
         btnResponsavel.setOnClickListener {
-            val intent = Intent(this, ListaPassageirosActivity::class.java)
+            val intent = Intent(this, HomeResponsavelActivity::class.java)
             startActivity(intent)
         }
 

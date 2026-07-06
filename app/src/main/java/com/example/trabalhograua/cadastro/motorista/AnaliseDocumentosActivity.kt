@@ -1,7 +1,8 @@
-package com.example.trabalhograua
+package com.example.trabalhograua.cadastro.motorista
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.trabalhograua.R
 
 class AnaliseDocumentosActivity : AppCompatActivity() {
 

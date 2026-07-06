@@ -1,8 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme -->
-    <style name="Base.Theme.TrabalhoGrauA"
-        parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.TrabalhoGrauA" parent="Theme.Material3.DayNight.NoActionBar">
 
         <!-- Fonte global -->
         <item name="android:fontFamily">@font/montserrat</item>
@@ -11,7 +10,6 @@
     </style>
 
     <!-- Tema principal -->
-    <style name="Theme.TrabalhoGrauA"
-        parent="Base.Theme.TrabalhoGrauA" />
+    <style name="Theme.TrabalhoGrauA" parent="Base.Theme.TrabalhoGrauA" />
 
 </resources>
