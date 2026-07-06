@@ -19,12 +19,12 @@ class HomeResponsavelActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_responsavel)
 
-        //configurarBottomNavigation()
+        configurarBottomNavigation()
 
-        //// Carrega a tela inicial apenas na primeira criação da Activity
-        //if (savedInstanceState == null) {
-        //    abrirFragment(ListaPassageirosFragment())
-        //}
+        // Carrega a tela inicial apenas na primeira criação da Activity
+        if (savedInstanceState == null) {
+            abrirFragment(ListaPassageirosFragment())
+        }
     }
 
     private fun configurarBottomNavigation() {

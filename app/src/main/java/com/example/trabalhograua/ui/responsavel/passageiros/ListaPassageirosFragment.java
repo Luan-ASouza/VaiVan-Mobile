@@ -30,7 +30,7 @@ public class ListaPassageirosFragment extends Fragment {
             @Nullable Bundle savedInstanceState) {
 
         return inflater.inflate(
-                R.layout.activity_lista_passageiros,
+                R.layout.fragment_lista_passageiros,
                 container,
                 false
         );

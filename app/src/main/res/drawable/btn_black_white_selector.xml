@@ -11,6 +11,6 @@
     <!-- Estado padrão -->
 
     <item
-        android:drawable="@drawable/bg_button_black"/>
+        android:drawable="@drawable/bg_button_darkgrey"/>
 
 </selector>

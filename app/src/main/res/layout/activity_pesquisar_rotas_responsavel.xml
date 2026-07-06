@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="12dp"
                 android:text="Bem vinda, Marina"
-                android:textColor="#1E1E1E"
+                android:textColor="@color/dark_gray"
                 android:textSize="16sp"
                 android:textStyle="bold"/>
 
@@ -71,7 +71,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="16dp"
                 android:text="Pesquisar Rotas"
-                android:textColor="#1E1E1E"
+                android:textColor="@color/dark_gray"
                 android:textSize="18sp"
                 android:textStyle="bold"/>
 
@@ -91,7 +91,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Passageiro"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textSize="14sp"
                     android:textStyle="bold"/>
 
@@ -117,7 +117,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Lucas Santos"
-                            android:textColor="#1E1E1E"
+                            android:textColor="@color/dark_gray"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
@@ -125,7 +125,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="11 anos"
-                            android:textColor="#1E1E1E"
+                            android:textColor="@color/dark_gray"
                             android:textSize="12sp"/>
                     </LinearLayout>
 
@@ -138,7 +138,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:text="Endereço de embarque"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
                 <EditText
@@ -149,7 +149,7 @@
                     android:background="#FFFFFF"
                     android:hint="Rua das Palmeiras, 245 – Apto 32"
                     android:padding="12dp"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textColorHint="#AFAFAF"/>
 
                 <!-- DESEMBARQUE -->
@@ -159,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Endereço de desembarque"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
                 <EditText
@@ -170,7 +170,7 @@
                     android:background="#FFFFFF"
                     android:hint="La Salle Carmo"
                     android:padding="12dp"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textColorHint="#AFAFAF"/>
 
                 <!-- TURNO -->
@@ -180,7 +180,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:text="Turno"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
                 <LinearLayout
@@ -196,7 +196,7 @@
                         android:layout_marginEnd="8dp"
                         android:text="Manhã"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTarde"
@@ -224,7 +224,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:text="Dias da Semana"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
                 <GridLayout
@@ -240,7 +240,7 @@
                         android:layout_margin="4dp"
                         android:text="Segunda"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTerca"
@@ -249,7 +249,7 @@
                         android:layout_margin="4dp"
                         android:text="Terça"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnQuarta"
@@ -258,7 +258,7 @@
                         android:layout_margin="4dp"
                         android:text="Quarta"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnQuinta"
@@ -267,7 +267,7 @@
                         android:layout_margin="4dp"
                         android:text="Quinta"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSexta"
@@ -276,7 +276,7 @@
                         android:layout_margin="4dp"
                         android:text="Sexta"
                         android:textAllCaps="false"
-                        app:backgroundTint="#1E1E1E"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSabado"
@@ -305,7 +305,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:text="Horário de Embarque"
-                    android:textColor="#1E1E1E"
+                    android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
                 <LinearLayout
@@ -323,7 +323,7 @@
                         android:background="#FFFFFF"
                         android:hint="6:30"
                         android:padding="12dp"
-                        android:textColor="#1E1E1E"
+                        android:textColor="@color/dark_gray"
                         android:textColorHint="#AFAFAF"/>
 
                     <TextView
@@ -341,7 +341,7 @@
                         android:background="#FFFFFF"
                         android:hint="7:20"
                         android:padding="12dp"
-                        android:textColor="#1E1E1E"
+                        android:textColor="@color/dark_gray"
                         android:textColorHint="#AFAFAF"/>
 
                 </LinearLayout>
