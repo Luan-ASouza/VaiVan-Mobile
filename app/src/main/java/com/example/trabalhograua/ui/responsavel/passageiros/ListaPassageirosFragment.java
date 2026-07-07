@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -43,7 +44,7 @@ public class ListaPassageirosFragment extends Fragment {
 
         super.onViewCreated(view, savedInstanceState);
 
-        CardView btnNovoPassageiro = view.findViewById(R.id.btnNovoPassageiro);
+        LinearLayout btnNovoPassageiro = view.findViewById(R.id.btnNovoPassageiro);
         txtNome2 = view.findViewById(R.id.txtNome2);
 
         btnNovoPassageiro.setOnClickListener(v -> {

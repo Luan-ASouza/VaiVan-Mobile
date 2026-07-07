@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Motoristas Disponíveis"
-        android:textColor="#000000"
+        android:textColor="@color/dark_gray"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/header"
@@ -78,7 +78,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Douglas Transporte"
-                        android:textColor="#000000"
+                        android:textColor="@color/dark_gray"
                         android:textStyle="bold"
                         android:textSize="18sp"
                         tools:ignore="HardcodedText" />
@@ -103,7 +103,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Turno: Manhã\nDias: Seg - Ter - Qua - Qui - Sex\nDestino: La Salle Carmo"
-                android:textColor="#000000"
+                android:textColor="@color/dark_gray"
                 android:lineSpacingExtra="4dp"
                 tools:ignore="HardcodedText" />
 
@@ -112,7 +112,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="16dp"
-                android:backgroundTint="#000000"
+                android:backgroundTint="@color/dark_gray"
                 android:text="Contratar esta Rota"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"

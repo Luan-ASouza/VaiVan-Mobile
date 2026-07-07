@@ -7,7 +7,6 @@ import android.widget.LinearLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.ui.responsavel.HomeResponsavelActivity;
-import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -63,7 +62,7 @@ public class BaseActivity extends AppCompatActivity {
     private void selecionar(LinearLayout layout, boolean ativo) {
 
         if (ativo) {
-            layout.setBackgroundResource(R.drawable.bg_nav_item_selected);
+            layout.setBackgroundResource(R.drawable.bg_bottomnav_orange);
         } else {
             layout.setBackgroundResource(android.R.color.transparent);
         }

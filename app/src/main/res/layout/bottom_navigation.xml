@@ -9,21 +9,23 @@
     android:id="@+id/bottomNavigation">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg_bottomnav_black"
-        android:paddingTop="7dp"
-        android:paddingHorizontal="7dp">
+        android:paddingHorizontal="7dp"
+        android:paddingTop="7dp">
 
         <LinearLayout
+            android:id="@+id/linearLayout2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_bottomnav_white"
             android:elevation="10dp"
             android:gravity="center"
             android:orientation="horizontal"
-            android:paddingHorizontal="10dp"
-            android:paddingBottom="50dp"
+            android:paddingHorizontal="7dp"
+            android:paddingTop="7dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -36,14 +38,22 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:background="@android:color/transparent"
                 android:gravity="center"
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:padding="3dp"
                     android:src="@drawable/ic_passageiros" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Passageiros"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -58,10 +68,18 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:padding="3dp"
                     android:src="@drawable/ic_rotas" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Rotas"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -76,10 +94,18 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:padding="3dp"
                     android:src="@drawable/ic_chat" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Conversas"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -94,10 +120,18 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:padding="3dp"
                     android:src="@drawable/ic_perfil" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Perfil"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
