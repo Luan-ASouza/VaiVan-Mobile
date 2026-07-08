@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639129984068",
+    "project_id": "vaivanvaicontigo",
+    "storage_bucket": "vaivanvaicontigo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639129984068:android:a1e029aa3e7932d2233011",
+        "android_client_info": {
+          "package_name": "com.example.trabalhograua"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIp1f_w7CrLEaue7G9T9xkbdfX-qSXf2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

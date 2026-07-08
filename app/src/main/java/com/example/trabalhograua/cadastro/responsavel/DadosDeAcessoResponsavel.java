@@ -5,7 +5,9 @@ import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
-
+import com.example.trabalhograua.model.Usuario;
+import com.example.trabalhograua.repository.FirebaseAuthRepository;
+import com.example.trabalhograua.repository.FirebaseRepository;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.cadastro.MascaraUtil;
@@ -17,11 +19,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.CheckBox;
 import android.content.Intent;
+import com.example.trabalhograua.model.Usuario;
+import com.example.trabalhograua.repository.FirebaseRepository;
+import android.widget.Toast;
 
 
 public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
-    private TextInputEditText edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
+    private TextInputEditText edtNome, edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
     private TextView txtErroEmail, txtInfoSenha, txtErroSenha, txtErroTermos, txtErroTelefone;
     private Spinner spinnerDDD;
     private CheckBox checkTermos;
@@ -34,6 +39,7 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         setContentView(R.layout.activity_dados_de_acesso_responsavel);
 
         // CAMPOS
+        edtNome = findViewById(R.id.edtNome);
         edtEmail = findViewById(R.id.edtEmail);
         edtTelefone = findViewById(R.id.edtTelefone);
         edtSenha = findViewById(R.id.edtSenha);
@@ -100,6 +106,11 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
     private void validarFormulario() {
 
         // PEGAR DADOS
+
+        String nome = edtNome.getText() != null
+                ? edtNome.getText().toString().trim()
+                : "";
+
         String email = edtEmail.getText() != null
                 ? edtEmail.getText().toString().trim()
                 : "";
@@ -117,6 +128,18 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
                 : "";
 
         boolean formularioValido = true;
+
+        if (TextUtils.isEmpty(nome)) {
+
+            edtNome.setError("Digite seu nome");
+
+            formularioValido = false;
+
+        } else {
+
+            edtNome.setError(null);
+
+        }
 
         // =========================
         // VALIDAR EMAIL
@@ -196,16 +219,9 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
         if (termosAceitos() && formularioValido) {
 
-            salvarUsuario(email, telefone, senha);
+            salvarUsuario(nome, email, telefone, senha);
 
-            Intent intent = new Intent(
-                    DadosDeAcessoResponsavel.this,
-                    InformacoesPessoaisResponsavel.class
-            );
 
-            startActivity(intent);
-
-            finish();
         }
 
     }
@@ -253,17 +269,85 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         return true;
     }
 
-    private void salvarUsuario(String email, String telefone, String senha) {
+    private void salvarUsuario(
+            String nome,
+            String email,
+            String telefone,
+            String senha
+    ) {
 
-        // EXEMPLO
-        System.out.println("Email: " + email);
-        System.out.println("Telefone: " + telefone);
-        System.out.println("Senha: " + senha);
+        FirebaseAuthRepository authRepository = new FirebaseAuthRepository();
 
-        // Aqui você pode:
-        // - salvar no SQLite
-        // - Firebase
-        // - API
-        // - SharedPreferences
+        authRepository.cadastrar(
+
+                email,
+                senha,
+
+                uid -> {
+
+                    Usuario usuario = new Usuario(
+                            nome,
+                            email,
+                            telefone,
+                            senha,
+                            "Responsavel"
+                    );
+
+                    FirebaseRepository firestore = new FirebaseRepository();
+
+                    firestore.salvarUsuario(
+
+                            uid,
+                            usuario,
+
+                            () -> {
+
+                                Toast.makeText(
+                                        DadosDeAcessoResponsavel.this,
+                                        "Cadastro realizado!",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+
+                                startActivity(new Intent(
+                                        DadosDeAcessoResponsavel.this,
+                                        InformacoesPessoaisResponsavel.class
+                                ));
+
+                                finish();
+
+                                return kotlin.Unit.INSTANCE;
+                            },
+
+                            erro -> {
+
+                                Toast.makeText(
+                                        DadosDeAcessoResponsavel.this,
+                                        erro.getMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show();
+
+                                return kotlin.Unit.INSTANCE;
+                            }
+
+                    );
+
+                    return kotlin.Unit.INSTANCE;
+
+                },
+
+                erro -> {
+
+                    Toast.makeText(
+                            DadosDeAcessoResponsavel.this,
+                            erro.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+
+                    return kotlin.Unit.INSTANCE;
+
+                }
+
+        );
+
     }
 }

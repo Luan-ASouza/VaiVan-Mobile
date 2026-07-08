@@ -48,6 +48,33 @@
                     android:orientation="vertical"
                     android:paddingHorizontal="20dp">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nome"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="#1E1E1E"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_white"
+                        app:boxBackgroundMode="none"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtNome"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="48dp"
+                            android:hint="Digite seu nome"
+                            android:inputType="textPersonName"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="12dp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <!-- EMAIL -->
 
                     <TextView

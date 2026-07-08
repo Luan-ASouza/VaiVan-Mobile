@@ -1,6 +1,7 @@
 package com.example.trabalhograua
 
 import android.content.Intent
+import com.example.trabalhograua.repository.FirebaseAuthRepository
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -14,6 +15,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 class MainActivity : AppCompatActivity() {
 
     private lateinit var behavior: BottomSheetBehavior<LinearLayout>
+
+    private val authRepository = FirebaseAuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,26 +49,39 @@ class MainActivity : AppCompatActivity() {
 
             val senha = edtSenha.text.toString().trim()
 
-            if (email == "admin@gmail.com" && senha == "123456") {
 
-                Toast.makeText(
-                    this,
-                    "Login realizado com sucesso!",
-                    Toast.LENGTH_SHORT
-                ).show()
+            //Login com autenticacao firebase
+            authRepository.login(
 
-                startActivity(
-                    Intent(this, PerfilActivity::class.java)
-                )
+                email,
+                senha,
 
-            } else {
+                onSuccess = {
 
-                Toast.makeText(
-                    this,
-                    "Email ou senha inválidos",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+                    Toast.makeText(
+                        this,
+                        "Login realizado com sucesso!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    startActivity(
+                        Intent(this, PerfilActivity::class.java)
+                    )
+
+                    finish()
+                },
+
+                onError = { erro ->
+
+                    Toast.makeText(
+                        this,
+                        erro.message,
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                }
+
+            )
         }
 
         // Cadastrar
