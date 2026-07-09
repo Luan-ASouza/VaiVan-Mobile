@@ -1,4 +1,4 @@
-package com.example.trabalhograua.cadastro.responsavel;
+package com.example.trabalhograua.cadastro.responsavel.ui;
 
 import android.content.Intent;
 import android.os.Bundle;

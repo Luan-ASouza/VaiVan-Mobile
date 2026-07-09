@@ -75,7 +75,7 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:hint="12345678"
-                        android:inputType="textCapWords"
+                        android:inputType="number"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="12dp"
                         android:textColor="@color/dark_gray"
