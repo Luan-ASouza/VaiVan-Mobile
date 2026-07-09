@@ -7,7 +7,11 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.HashMap;
+import java.util.Map;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.cadastro.MascaraUtil;
@@ -238,15 +242,39 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
         // =========================
 
         if (formularioValido) {
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-            Intent intent = new Intent(
-                    InformacoesPessoaisResponsavel.this,
-                    ValidacaoEmailResponsavel.class
-            );
+            Map<String, Object> dados = new HashMap<>();
+            dados.put("nome", nome);
+            dados.put("cpf", cpf);
 
-            startActivity(intent);
+            String nascimento =
+                    spinnerDia.getSelectedItem().toString() + "/" +
+                            spinnerMes.getSelectedItem().toString() + "/" +
+                            spinnerAno.getSelectedItem().toString();
 
-            finish();
+            dados.put("nascimento", nascimento);
+
+            FirebaseFirestore.getInstance()
+                    .collection("usuarios")
+                    .document(uid)
+                    .update(dados)
+                    .addOnSuccessListener(unused -> {
+
+                        Intent intent = new Intent(
+                                InformacoesPessoaisResponsavel.this,
+                                ValidacaoEmailResponsavel.class
+                        );
+
+                        startActivity(intent);
+                        finish();
+
+                    })
+                    .addOnFailureListener(e -> {
+
+                        e.printStackTrace();
+
+                    });
         }
     }
 

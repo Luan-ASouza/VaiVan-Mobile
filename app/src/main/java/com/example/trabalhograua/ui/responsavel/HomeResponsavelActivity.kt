@@ -2,6 +2,7 @@ package com.example.trabalhograua.ui.responsavel
 
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.core.view.ViewCompat
@@ -10,12 +11,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 
 import com.example.trabalhograua.R
+import com.example.trabalhograua.repository.FirebaseRepository
 import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment
 import com.example.trabalhograua.ui.responsavel.rotas.ListaRotasFragment
 import com.example.trabalhograua.ui.responsavel.chat.ChatFragment
 import com.example.trabalhograua.ui.responsavel.perfil.PerfilFragment
 import com.example.trabalhograua.ui.responsavel.navigation.BottomNavigationController
 import com.example.trabalhograua.ui.responsavel.navigation.NavigationItem
+import com.google.firebase.auth.FirebaseAuth
 
 class HomeResponsavelActivity : AppCompatActivity() {
 
@@ -24,6 +27,29 @@ class HomeResponsavelActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_responsavel)
+
+        val txtBoasVindas = findViewById<TextView>(R.id.txtBemVinda)
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (uid != null) {
+
+            FirebaseRepository().buscarUsuario(
+
+                uid,
+
+                { usuario ->
+
+                    txtBoasVindas.text = "Olá ${usuario.nome}"
+
+                },
+
+                {
+
+                }
+
+            )
+        }
 
         configurarBottomNavigation()
 

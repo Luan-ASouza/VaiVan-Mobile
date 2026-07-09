@@ -5,7 +5,7 @@ import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
-import com.example.trabalhograua.model.Usuario;
+import com.example.trabalhograua.cadastro.Usuario;
 import com.example.trabalhograua.repository.FirebaseAuthRepository;
 import com.example.trabalhograua.repository.FirebaseRepository;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,7 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.CheckBox;
 import android.content.Intent;
-import com.example.trabalhograua.model.Usuario;
+import com.example.trabalhograua.cadastro.Usuario;
 import com.example.trabalhograua.repository.FirebaseRepository;
 import android.widget.Toast;
 
