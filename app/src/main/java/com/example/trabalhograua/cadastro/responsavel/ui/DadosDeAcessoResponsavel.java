@@ -1,13 +1,13 @@
-package com.example.trabalhograua.cadastro.responsavel;
+package com.example.trabalhograua.cadastro.responsavel.ui;
 
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
-import com.example.trabalhograua.model.Usuario;
-import com.example.trabalhograua.repository.FirebaseAuthRepository;
-import com.example.trabalhograua.repository.FirebaseRepository;
+
+import com.example.trabalhograua.cadastro.CadastroSession;
+import com.example.trabalhograua.cadastro.responsavel.CadastroResponsavel;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.cadastro.MascaraUtil;
@@ -19,9 +19,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.CheckBox;
 import android.content.Intent;
-import com.example.trabalhograua.model.Usuario;
-import com.example.trabalhograua.repository.FirebaseRepository;
-import android.widget.Toast;
 
 
 public class DadosDeAcessoResponsavel extends AppCompatActivity {
@@ -215,15 +212,30 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
         // =========================
         // SE ESTIVER TUDO CERTO
+        // Registra dados no formulario temporario e vai pra proxima activity
         // =========================
 
         if (termosAceitos() && formularioValido) {
 
-            salvarUsuario(nome, email, telefone, senha);
-
+            SalvarDadosTemporarios(nome, email, telefone, senha);
 
         }
 
+    }
+
+    private void SalvarDadosTemporarios(String nome,String email,String telefone,String senha){
+        CadastroResponsavel cadastro =
+                CadastroSession.INSTANCE.getCadastroResponsavel();
+
+        cadastro.setNome(nome);
+        cadastro.setEmail(email);
+        cadastro.setTelefone(telefone);
+        cadastro.setSenha(senha);
+
+        startActivity(new Intent(
+                DadosDeAcessoResponsavel.this,
+                InformacoesPessoaisResponsavel.class
+        ));
     }
 
     private boolean termosAceitos() {
@@ -267,87 +279,5 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         }
 
         return true;
-    }
-
-    private void salvarUsuario(
-            String nome,
-            String email,
-            String telefone,
-            String senha
-    ) {
-
-        FirebaseAuthRepository authRepository = new FirebaseAuthRepository();
-
-        authRepository.cadastrar(
-
-                email,
-                senha,
-
-                uid -> {
-
-                    Usuario usuario = new Usuario(
-                            nome,
-                            email,
-                            telefone,
-                            senha,
-                            "Responsavel"
-                    );
-
-                    FirebaseRepository firestore = new FirebaseRepository();
-
-                    firestore.salvarUsuario(
-
-                            uid,
-                            usuario,
-
-                            () -> {
-
-                                Toast.makeText(
-                                        DadosDeAcessoResponsavel.this,
-                                        "Cadastro realizado!",
-                                        Toast.LENGTH_SHORT
-                                ).show();
-
-                                startActivity(new Intent(
-                                        DadosDeAcessoResponsavel.this,
-                                        InformacoesPessoaisResponsavel.class
-                                ));
-
-                                finish();
-
-                                return kotlin.Unit.INSTANCE;
-                            },
-
-                            erro -> {
-
-                                Toast.makeText(
-                                        DadosDeAcessoResponsavel.this,
-                                        erro.getMessage(),
-                                        Toast.LENGTH_LONG
-                                ).show();
-
-                                return kotlin.Unit.INSTANCE;
-                            }
-
-                    );
-
-                    return kotlin.Unit.INSTANCE;
-
-                },
-
-                erro -> {
-
-                    Toast.makeText(
-                            DadosDeAcessoResponsavel.this,
-                            erro.getMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
-
-                    return kotlin.Unit.INSTANCE;
-
-                }
-
-        );
-
     }
 }

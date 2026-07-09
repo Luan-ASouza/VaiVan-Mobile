@@ -6,6 +6,12 @@ class FirebaseAuthRepository {
 
     private val auth = FirebaseAuth.getInstance()
 
+    fun recuperarSenha(email: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { exception -> onError(exception) }
+    }
+
     fun cadastrar(
         email: String,
         senha: String,

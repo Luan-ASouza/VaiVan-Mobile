@@ -244,6 +244,8 @@
                 android:id="@+id/btnEditarPerfil"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="10dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_darkgrey"
                 android:backgroundTint="@null"
@@ -253,13 +255,15 @@
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                tools:layout_editor_absoluteX="20dp"
-                tools:layout_editor_absoluteY="127dp" />
+                app:layout_constraintEnd_toStartOf="@+id/btnTrocarSenha"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/infoBanner" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnTrocarSenha"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="19dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_orange"
                 android:gravity="center"
@@ -270,8 +274,9 @@
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                tools:layout_editor_absoluteX="189dp"
-                tools:layout_editor_absoluteY="151dp" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/btnEditarPerfil"
+                app:layout_constraintTop_toBottomOf="@+id/infoBanner" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnDesconectar"

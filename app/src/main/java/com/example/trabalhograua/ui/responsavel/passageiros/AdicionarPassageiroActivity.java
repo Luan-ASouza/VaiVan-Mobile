@@ -9,9 +9,10 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.trabalhograua.DadosGlobais;
-import com.example.trabalhograua.ProcurarMotoristaActivity;
+import com.example.trabalhograua.ui.responsavel.DadosGlobais;
 import com.example.trabalhograua.R;
+import com.example.trabalhograua.ui.responsavel.HomeResponsavelActivity;
+import com.example.trabalhograua.ui.responsavel.rotas.ListaRotasFragment;
 
 public class AdicionarPassageiroActivity extends AppCompatActivity {
 
@@ -43,7 +44,7 @@ public class AdicionarPassageiroActivity extends AppCompatActivity {
                     DadosGlobais.listaPassageiros.add(nome);
 
                     // 2. Redireciona imediatamente para a tela de procurar motorista/rota
-                    Intent intent = new Intent(AdicionarPassageiroActivity.this, ProcurarMotoristaActivity.class);
+                    Intent intent = new Intent(AdicionarPassageiroActivity.this, ListaRotasFragment.class);
                     startActivity(intent);
 
                     // 3. Fecha a tela de cadastro por baixo

@@ -15,6 +15,9 @@
         android:theme="@style/Theme.TrabalhoGrauA"
         tools:targetApi="31">
         <activity
+            android:name=".ui.motorista.HomeMotoristaActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.responsavel.HomeResponsavelActivity"
             android:exported="false" />
 
@@ -43,9 +46,7 @@
         <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
         <activity android:name=".cadastro.motorista.AutorizacaoActivity" />
         <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
-        <activity android:name=".ProcurarMotoristaActivity" /> <!-- PERFIL MOTORISTA -->
-        <activity android:name=".MotoristaActivity" />
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />/> <!-- PERFIL MOTORISTA -->/>
     </application>
 
 </manifest>

@@ -10,10 +10,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
-import com.example.trabalhograua.DadosGlobais;
+import com.example.trabalhograua.ui.responsavel.DadosGlobais;
 import com.example.trabalhograua.R;
 
 public class ListaPassageirosFragment extends Fragment {

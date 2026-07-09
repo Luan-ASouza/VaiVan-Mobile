@@ -1,4 +1,4 @@
-package com.example.trabalhograua.cadastro.responsavel;
+package com.example.trabalhograua.cadastro.responsavel.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,13 +10,16 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.trabalhograua.cadastro.CadastroSession;
 import com.example.trabalhograua.cadastro.MascaraUtil;
 import com.example.trabalhograua.R;
+import com.example.trabalhograua.cadastro.responsavel.CadastroResponsavel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
+import java.util.Date;
 
 public class InformacoesPessoaisResponsavel extends AppCompatActivity {
 
@@ -37,31 +40,31 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
 
         // CAMPOS
         edtNomeCompleto = findViewById(R.id.edtNomeCompleto);
-            //SOMENTE LETRAS
-            edtNomeCompleto.setFilters(new InputFilter[] {
-                    (source, start, end, dest, dstart, dend) -> {
+        //SOMENTE LETRAS
+        edtNomeCompleto.setFilters(new InputFilter[] {
+                (source, start, end, dest, dstart, dend) -> {
 
-                        if (source.equals("")) {
-                            return null;
-                        }
-
-                        // aceita somente letras e espaços
-                        if (!source.toString().matches("[a-zA-ZáàâãéèêíìóòôõúùçÁÀÂÃÉÈÊÍÌÓÒÔÕÚÙÇ ]+")) {
-                            return "";
-                        }
-
+                    if (source.equals("")) {
                         return null;
                     }
-            });
+
+                    // aceita somente letras e espaços
+                    if (!source.toString().matches("[a-zA-ZáàâãéèêíìóòôõúùçÁÀÂÃÉÈÊÍÌÓÒÔÕÚÙÇ ]+")) {
+                        return "";
+                    }
+
+                    return null;
+                }
+        });
 
         edtCpf = findViewById(R.id.edtCpf);
-            //MASCARA
-            edtCpf.addTextChangedListener(
-                    MascaraUtil.inserir(
-                            "###.###.###-##",
-                            edtCpf
-                    )
-            );
+        //MASCARA
+        edtCpf.addTextChangedListener(
+                MascaraUtil.inserir(
+                        "###.###.###-##",
+                        edtCpf
+                )
+        );
 
         // LAYOUTS
         layoutNome = findViewById(R.id.layoutNome);
@@ -214,23 +217,36 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
         // VALIDAR IDADE
         // =========================
 
+        int diaSelecionado = Integer.parseInt(
+                spinnerDia.getSelectedItem().toString()
+        );
+
+        int mesSelecionado = spinnerMes.getSelectedItemPosition();
+
         int anoSelecionado = Integer.parseInt(
                 spinnerAno.getSelectedItem().toString()
         );
 
-        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
+        Calendar calendario = Calendar.getInstance();
 
-        int idade = anoAtual - anoSelecionado;
+        calendario.set(
+                anoSelecionado,
+                mesSelecionado,
+                diaSelecionado
+        );
 
-        if (idade < 18) {
+        Date dataNascimento = calendario.getTime();
 
-            txtErroIdade.setVisibility(View.VISIBLE);
+        Calendar hoje = Calendar.getInstance();
 
-            formularioValido = false;
+        int idade = hoje.get(Calendar.YEAR) - calendario.get(Calendar.YEAR);
 
-        } else {
-
-            txtErroIdade.setVisibility(View.GONE);
+        if (
+                hoje.get(Calendar.MONTH) < calendario.get(Calendar.MONTH) ||
+                        (hoje.get(Calendar.MONTH) == calendario.get(Calendar.MONTH)
+                                && hoje.get(Calendar.DAY_OF_MONTH) < calendario.get(Calendar.DAY_OF_MONTH))
+        ) {
+            idade--;
         }
 
         // =========================
@@ -239,15 +255,24 @@ public class InformacoesPessoaisResponsavel extends AppCompatActivity {
 
         if (formularioValido) {
 
-            Intent intent = new Intent(
+            SalvarDadosTemporarios(nome, cpf, dataNascimento);
+
+            startActivity(new Intent(
                     InformacoesPessoaisResponsavel.this,
                     ValidacaoEmailResponsavel.class
-            );
-
-            startActivity(intent);
+            ));
 
             finish();
         }
+    }
+
+    private void SalvarDadosTemporarios(String nome, String cpf, Date dataNascimento){
+        CadastroResponsavel cadastro =
+                CadastroSession.INSTANCE.getCadastroResponsavel();
+
+        cadastro.setNome(nome);
+        cadastro.setCpf(cpf);
+        cadastro.setDataNascimento(dataNascimento);
     }
 
     private String obterTexto(TextInputEditText editText) {

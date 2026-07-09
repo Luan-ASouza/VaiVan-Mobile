@@ -1,4 +1,4 @@
-package com.example.trabalhograua;
+package com.example.trabalhograua.ui.responsavel;
 
 import java.util.ArrayList;
 import java.util.List;
