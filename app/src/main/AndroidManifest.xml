@@ -32,13 +32,13 @@
         </activity> <!-- LOGIN E CADASTRO -->
         <activity android:name=".cadastro.PerfilActivity" />
         <activity android:name=".cadastro.TipoCadastroActivity" /> <!-- DADOS DE ACESSO -->
-        <activity android:name=".cadastro.responsavel.DadosDeAcessoResponsavel" />
+        <activity android:name=".cadastro.responsavel.ui.DadosDeAcessoResponsavel" />
         <activity android:name=".cadastro.motorista.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
-        <activity android:name=".cadastro.responsavel.ValidacaoEmailResponsavel" />
+        <activity android:name=".cadastro.responsavel.ui.ValidacaoEmailResponsavel" />
         <activity android:name=".cadastro.motorista.ValidacaoEmailMotorista" /> <!-- INFORMAÇÕES -->
-        <activity android:name=".cadastro.responsavel.InformacoesPessoaisResponsavel" />
+        <activity android:name=".cadastro.responsavel.ui.InformacoesPessoaisResponsavel" />
         <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
-        <activity android:name=".cadastro.responsavel.EnderecoResponsavel" />
+        <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
         <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
         <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
         <activity android:name=".cadastro.motorista.AutorizacaoActivity" />
