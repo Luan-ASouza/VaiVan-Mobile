@@ -105,14 +105,16 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/rpx2km4gro5o"
+                    android:id="@+id/btnCaompanharViagem"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_button_darkgrey"
                     android:elevation="4dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="20dp">
+                    android:padding="20dp"
+                    android:clickable="true"
+                    android:focusable="true">
 
                     <TextView
                         android:id="@+id/r8xd9ij7bdtj"
@@ -121,12 +123,16 @@
                         android:text="Acompanhar Viagem"
                         android:textColor="#FFFFFF"
                         android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:clickable="false"
+                        android:focusable="false"/>
 
                     <View
                         android:layout_width="0dp"
                         android:layout_height="0dp"
-                        android:layout_weight="1" />
+                        android:layout_weight="1"
+                        android:clickable="false"
+                        android:focusable="false"/>
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/racxm3qd39v"
@@ -134,7 +140,9 @@
                         android:layout_height="24dp"
                         android:scaleType="fitXY"
                         android:src="@drawable/ic_mylocation"
-                        android:tint="@color/white"/>
+                        android:tint="@color/white"
+                        android:clickable="false"
+                        android:focusable="false"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -666,6 +674,7 @@
                 android:paddingHorizontal="20dp"
                 android:layout_marginHorizontal="20dp"
                 android:orientation="horizontal">
+
                 <TextView
                     android:id="@+id/rego8jf4ll7m"
                     android:textColor="@color/dark_gray"
@@ -673,7 +682,7 @@
                     android:textStyle="bold"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="Nova Rota"
+                    android:text="Buscar Transporte"
                     />
                 <View
                     android:layout_width="0dp"
@@ -682,9 +691,9 @@
                     />
                 <ImageView
                     android:id="@+id/r05o09rcd62wo"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_plus"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:src="@drawable/ic_search"
                     android:scaleType="fitXY"
                     />
             </LinearLayout>
