@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.trabalhograua.cadastro.motorista.DadosDeAcessoMotorista
 import com.example.trabalhograua.R
+import com.example.trabalhograua.cadastro.motorista.ValidaCnhActivity
 import com.example.trabalhograua.cadastro.responsavel.ui.DadosDeAcessoResponsavel
 import kotlin.jvm.java
 
@@ -25,7 +26,7 @@ class TipoCadastroActivity : AppCompatActivity() {
 
         // AO CLICAR EM MOTORISTA, ABRE O FLUXO DO MOTORISTA
         btnMotorista.setOnClickListener {
-            startActivity(Intent(this, DadosDeAcessoMotorista::class.java))
+            startActivity(Intent(this, ValidaCnhActivity::class.java))
         }
 
         // AO CLICAR EM RESPONSÁVEL, ABRE O FLUXO DO RESPONSÁVEL
