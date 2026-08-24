@@ -13,7 +13,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.room.Room
 
 import com.example.trabalhograua.R
 import com.example.trabalhograua.data.local.VaivanDatabase
@@ -30,23 +29,16 @@ import kotlinx.coroutines.launch
 class HomeResponsavelActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
-    private lateinit var viewModel: ResponsavelViewModel // 1. Declara o ViewModel
+    private lateinit var viewModel: ResponsavelViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home_responsavel)
 
-        // 2. Mapeia o campo correto do XML para o nome
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
 
-        // 3. Inicializa o Room, o Repositório e a Factory Nativa (igual fizemos no fragment)
-        // Se o nome do seu banco for diferente de AppDatabase, troque aqui.
-        val database = Room.databaseBuilder(
-            applicationContext,
-            VaivanDatabase::class.java,
-            "nome_do_seu_banco"
-        ).build()
-
+        // CORREÇÃO: Usar o Singleton do banco de dados para evitar erro de esquema
+        val database = VaivanDatabase.getInstance(this)
         val responsavelDao = database.responsavelDao()
         val repository = ResponsavelRepository(responsavelDao)
 
@@ -56,18 +48,15 @@ class HomeResponsavelActivity : AppCompatActivity() {
             }
         }
 
-        // 4. Instancia o ViewModel
         viewModel = ViewModelProvider(this, factory)[ResponsavelViewModel::class.java]
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
         if (uid != null) {
-            // 5. Escuta o banco local em tempo real para atualizar o nome no cabeçalho
             lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.observarPorId(uid).collect { responsavel ->
                         if (responsavel != null) {
-                            // Altera apenas o campo do nome, mantendo o "Olá" quieto no canto dele
                             txtNomeDoUsuario.text = responsavel.nome
                         }
                     }

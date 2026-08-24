@@ -158,6 +158,7 @@ class ValidaCnhActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 Toast.makeText(this, "Documentos enviados com sucesso!", Toast.LENGTH_SHORT).show()
                 // Ir para a próxima tela
+                startActivity(Intent(this, CadastroVeiculoActivity::class.java))
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Erro ao salvar dados", Toast.LENGTH_SHORT).show()

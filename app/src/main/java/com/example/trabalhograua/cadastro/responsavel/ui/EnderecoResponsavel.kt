@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.trabalhograua.R
 import com.example.trabalhograua.cadastro.CadastroSession
 import com.example.trabalhograua.cadastro.MascaraUtil
+import com.example.trabalhograua.cadastro.PerfilActivity
 import com.example.trabalhograua.data.local.VaivanDatabase
 import com.example.trabalhograua.data.local.entities.ResponsavelEntity
 import com.example.trabalhograua.data.repository.ResponsavelRepository
@@ -339,7 +340,7 @@ class EnderecoResponsavel : AppCompatActivity() {
 
                 CadastroSession.limpar()
 
-                val intent = Intent(this, HomeResponsavelActivity::class.java)
+                val intent = Intent(this, PerfilActivity::class.java)
                 startActivity(intent)
                 finish()
             },

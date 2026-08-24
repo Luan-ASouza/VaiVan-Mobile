@@ -5,25 +5,23 @@ import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
-
 import com.example.trabalhograua.cadastro.CadastroSession;
 import com.example.trabalhograua.cadastro.responsavel.CadastroResponsavel;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.trabalhograua.cadastro.MascaraUtil;
 import com.example.trabalhograua.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.CheckBox;
 import android.content.Intent;
 
-
 public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
-    private TextInputEditText edtNome, edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
+    private TextInputEditText edtEmail, edtTelefone, edtSenha, edtConfirmarSenha;
     private TextView txtErroEmail, txtInfoSenha, txtErroSenha, txtErroTermos, txtErroTelefone;
     private Spinner spinnerDDD;
     private CheckBox checkTermos;
@@ -35,45 +33,28 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dados_de_acesso_responsavel);
 
-        // CAMPOS
-        edtNome = findViewById(R.id.edtNome);
+        // Inicialização dos campos (Campo Nome removido)
         edtEmail = findViewById(R.id.edtEmail);
         edtTelefone = findViewById(R.id.edtTelefone);
         edtSenha = findViewById(R.id.edtSenha);
         edtConfirmarSenha = findViewById(R.id.edtConfirmarSenha);
 
-        edtTelefone.addTextChangedListener(
-                MascaraUtil.inserir(
-                        "(##) #####-####",
-                        edtTelefone
-                )
-        );
+        edtTelefone.addTextChangedListener(MascaraUtil.inserir("(##) #####-####", edtTelefone));
 
-
-        // TEXTOS DE ERRO
         txtErroEmail = findViewById(R.id.txtErroEmail);
         txtInfoSenha = findViewById(R.id.txtInfoSenha);
         txtErroSenha = findViewById(R.id.txtErroSenha);
         txtErroTelefone = findViewById(R.id.txtErroTelefone);
         txtErroTermos = findViewById(R.id.txtErroTermos);
-
-
-        // BOTÃO
         btnCadastrar = findViewById(R.id.btnCadastrar);
-
-        //SPINNER
         spinnerDDD = findViewById(R.id.spinnerDDD);
-
-        //CHECKBOX
         checkTermos = findViewById(R.id.checkTermos);
 
-        // ESCONDE ERROS INICIALMENTE
         txtErroEmail.setVisibility(View.GONE);
         txtInfoSenha.setVisibility(View.GONE);
         txtErroSenha.setVisibility(View.GONE);
         txtErroTelefone.setVisibility(View.GONE);
         txtErroTermos.setVisibility(View.GONE);
-
 
         layoutEmail = findViewById(R.id.layoutEmail);
         layoutSenha = findViewById(R.id.layoutSenha);
@@ -82,202 +63,109 @@ public class DadosDeAcessoResponsavel extends AppCompatActivity {
 
         btnCadastrar.setOnClickListener(v -> validarFormulario());
 
-        //SETAR SPINNER
-
         String[] ddds = {"+55", "+1", "+351"};
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                ddds
-        );
-
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, ddds);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
         spinnerDDD.setAdapter(adapter);
-
-        // COMEÇA COM +55
         spinnerDDD.setSelection(0);
     }
 
     private void validarFormulario() {
-
-        // PEGAR DADOS
-
-        String nome = edtNome.getText() != null
-                ? edtNome.getText().toString().trim()
-                : "";
-
-        String email = edtEmail.getText() != null
-                ? edtEmail.getText().toString().trim()
-                : "";
-
-        String telefone = edtTelefone.getText() != null
-                ? edtTelefone.getText().toString().trim()
-                : "";
-
-        String senha = edtSenha.getText() != null
-                ? edtSenha.getText().toString().trim()
-                : "";
-
-        String confirmarSenha = edtConfirmarSenha.getText() != null
-                ? edtConfirmarSenha.getText().toString().trim()
-                : "";
+        String email = edtEmail.getText() != null ? edtEmail.getText().toString().trim() : "";
+        String telefone = edtTelefone.getText() != null ? edtTelefone.getText().toString().trim() : "";
+        String senha = edtSenha.getText() != null ? edtSenha.getText().toString().trim() : "";
+        String confirmarSenha = edtConfirmarSenha.getText() != null ? edtConfirmarSenha.getText().toString().trim() : "";
 
         boolean formularioValido = true;
 
-        if (TextUtils.isEmpty(nome)) {
-
-            edtNome.setError("Digite seu nome");
-
-            formularioValido = false;
-
-        } else {
-
-            edtNome.setError(null);
-
-        }
-
-        // =========================
-        // VALIDAR EMAIL
-        // =========================
-
-        if (TextUtils.isEmpty(email) ||
-                !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-
+        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             txtErroEmail.setText("*Digite um email válido");
             txtErroEmail.setVisibility(View.VISIBLE);
             layoutEmail.setBackgroundResource(R.drawable.bg_input_white_red);
-
             formularioValido = false;
-
         } else {
-
             txtErroEmail.setVisibility(View.GONE);
             layoutEmail.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // VALIDAR TELEFONE
-        // =========================
-
         if (!telefoneValido(telefone)) {
-
             txtErroTelefone.setVisibility(View.VISIBLE);
-
             layoutTelefone.setBackgroundResource(R.drawable.bg_input_white_red);
-
             formularioValido = false;
-
         } else {
-
             txtErroTelefone.setVisibility(View.GONE);
-
             layoutTelefone.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // VALIDAR SENHA
-        // =========================
-
         if (!senhaValida(senha)) {
-
             txtInfoSenha.setVisibility(View.VISIBLE);
             layoutSenha.setBackgroundResource(R.drawable.bg_input_white_red);
-
             formularioValido = false;
-
         } else {
-
             txtInfoSenha.setVisibility(View.GONE);
             layoutSenha.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // CONFIRMAR SENHA
-        // =========================
-
         if (!senha.equals(confirmarSenha)) {
-
             txtErroSenha.setVisibility(View.VISIBLE);
             layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_input_white_red);
-
             formularioValido = false;
-
         } else {
-
             txtErroSenha.setVisibility(View.GONE);
             layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // SE ESTIVER TUDO CERTO
-        // Registra dados no formulario temporario e vai pra proxima activity
-        // =========================
-
         if (termosAceitos() && formularioValido) {
-
-            SalvarDadosTemporarios(nome, email, telefone, senha);
-
+            verificarEmailFirebase(email, telefone, senha);
         }
-
     }
 
-    private void SalvarDadosTemporarios(String nome,String email,String telefone,String senha){
-        CadastroResponsavel cadastro =
-                CadastroSession.INSTANCE.getCadastroResponsavel();
+    @SuppressWarnings("deprecation")
+    private void verificarEmailFirebase(String email, String telefone, String senha) {
+        btnCadastrar.setEnabled(false);
+        FirebaseAuth.getInstance().fetchSignInMethodsForEmail(email)
+                .addOnCompleteListener(task -> {
+                    btnCadastrar.setEnabled(true);
+                    if (task.isSuccessful()) {
+                        // Se a lista não estiver vazia, o e-mail já existe
+                        boolean existe = !task.getResult().getSignInMethods().isEmpty();
+                        if (existe) {
+                            txtErroEmail.setText("*Email já cadastrado no sistema");
+                            txtErroEmail.setVisibility(View.VISIBLE);
+                            layoutEmail.setBackgroundResource(R.drawable.bg_input_white_red);
+                        } else {
+                            salvarDadosTemporarios(email, telefone, senha);
+                            startActivity(new Intent(this, InformacoesPessoaisResponsavel.class));
+                        }
+                    } else {
+                        txtErroEmail.setText("*Erro ao verificar e-mail. Tente novamente.");
+                        txtErroEmail.setVisibility(View.VISIBLE);
+                    }
+                });
+    }
 
-        cadastro.setNome(nome);
+    private void salvarDadosTemporarios(String email, String telefone, String senha) {
+        CadastroResponsavel cadastro = CadastroSession.INSTANCE.getCadastroResponsavel();
         cadastro.setEmail(email);
         cadastro.setTelefone(telefone);
         cadastro.setSenha(senha);
-
-        startActivity(new Intent(
-                DadosDeAcessoResponsavel.this,
-                InformacoesPessoaisResponsavel.class
-        ));
     }
 
     private boolean termosAceitos() {
-
         if (!checkTermos.isChecked()) {
-
             txtErroTermos.setVisibility(View.VISIBLE);
-
             return false;
         }
-
         txtErroTermos.setVisibility(View.GONE);
-
         return true;
     }
 
-    private boolean telefoneValido(String telefone) {
-
-        // remove espaços e símbolos
-        telefone = telefone.replaceAll("[^0-9]", "");
-
-        // celular BR geralmente 10 ou 11 números
-        return telefone.length() >= 10 && telefone.length() <= 11;
+    private boolean telefoneValido(String t) {
+        t = t.replaceAll("[^0-9]", "");
+        return t.length() >= 10 && t.length() <= 11;
     }
 
-    private boolean senhaValida(String senha) {
-
-        // mínimo 8 caracteres
-        if (senha.length() < 8) {
-            return false;
-        }
-
-        // pelo menos 1 número
-        if (!senha.matches(".*\\d.*")) {
-            return false;
-        }
-
-        // pelo menos 1 caractere especial
-        if (!senha.matches(".*[!@#$%^&*()_+=|<>?{}\\[\\]~-].*")) {
-            return false;
-        }
-
-        return true;
+    private boolean senhaValida(String s) {
+        return s.length() >= 8 && s.matches(".*\\d.*") && s.matches(".*[!@#$%^&*()_+=|<>?{}\\[\\]~-].*");
     }
 }

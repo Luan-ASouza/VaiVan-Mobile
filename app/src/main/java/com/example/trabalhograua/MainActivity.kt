@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.trabalhograua.cadastro.PerfilActivity
 import com.example.trabalhograua.cadastro.TipoCadastroActivity
+import com.example.trabalhograua.cadastro.responsavel.ui.DadosDeAcessoResponsavel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class MainActivity : AppCompatActivity() {
@@ -101,7 +102,7 @@ class MainActivity : AppCompatActivity() {
 
         // Ir para a tela de Cadastro
         btnCadastrar.setOnClickListener {
-            startActivity(Intent(this, TipoCadastroActivity::class.java))
+            startActivity(Intent(this, DadosDeAcessoResponsavel::class.java))
         }
     }
 }
