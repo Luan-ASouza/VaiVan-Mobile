@@ -17,9 +17,9 @@ class AutorizacaoActivity : AppCompatActivity() {
         // BOTÃO CONTINUAR
         val btnContinuar = findViewById<Button>(R.id.btnContinuarAutorizacao)
 
-        // AO CLICAR, ABRE A TELA FINAL DE ANÁLISE DOS DOCUMENTOS
+        // AO CLICAR, ABRE O CADASTRO DO VEÍCULO ANTES DA ANÁLISE FINAL
         btnContinuar.setOnClickListener {
-            startActivity(Intent(this, AnaliseDocumentosActivity::class.java))
+            startActivity(Intent(this, CadastroVeiculoActivity::class.java))
         }
     }
 }

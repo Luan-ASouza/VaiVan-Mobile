@@ -11,11 +11,13 @@ import com.example.trabalhograua.data.local.dao.LocalizacaoDao
 import com.example.trabalhograua.data.local.dao.MotoristaDao
 import com.example.trabalhograua.data.local.dao.PassageiroDao
 import com.example.trabalhograua.data.local.dao.ResponsavelDao
+import com.example.trabalhograua.data.local.dao.VeiculoDao
 import com.example.trabalhograua.data.local.entities.DocumentoEntity
 import com.example.trabalhograua.data.local.entities.LocalizacaoEntity
 import com.example.trabalhograua.data.local.entities.MotoristaEntity
 import com.example.trabalhograua.data.local.entities.PassageiroEntity
 import com.example.trabalhograua.data.local.entities.ResponsavelEntity
+import com.example.trabalhograua.data.local.entities.VeiculoEntity
 
 @Database(
     entities = [
@@ -23,9 +25,10 @@ import com.example.trabalhograua.data.local.entities.ResponsavelEntity
         PassageiroEntity::class,
         MotoristaEntity::class,
         DocumentoEntity::class,
-        LocalizacaoEntity::class
+        LocalizacaoEntity::class,
+        VeiculoEntity::class
     ],
-    version = 2, // <--- AUMENTEI PARA 2 para forçar a limpeza do cache antigo
+    version = 3, // <--- AUMENTEI PARA 3 (adição de VeiculoEntity)
     exportSchema = false
 )
 @TypeConverters(TimestampConverter::class) // <--- ADICIONE ESTA LINHA AQUI
@@ -36,6 +39,7 @@ abstract class VaivanDatabase : RoomDatabase() {
     abstract fun motoristaDao(): MotoristaDao
     abstract fun documentoDao(): DocumentoDao
     abstract fun localizacaoDao(): LocalizacaoDao
+    abstract fun veiculoDao(): VeiculoDao
 
     companion object {
         @Volatile

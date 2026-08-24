@@ -44,7 +44,8 @@
         <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
         <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
         <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
-        <activity android:name=".cadastro.motorista.AutorizacaoActivity" />
+        <activity android:name=".cadastro.motorista.AutorizacaoActivity" /> <!-- VEÍCULO -->
+        <activity android:name=".cadastro.motorista.CadastroVeiculoActivity" />
         <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
         <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />/> <!-- PERFIL MOTORISTA -->/>
     </application>
