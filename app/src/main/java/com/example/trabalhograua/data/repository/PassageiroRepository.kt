@@ -73,4 +73,24 @@ class PassageiroRepository(
         collection.document(id).delete().await()
         passageiroDao.deleteById(id)
     }
+
+    /** Versão com callbacks, para chamar direto de uma Activity/Fragment sem lifecycleScope. */
+    fun salvarAsync(
+        item: PassageiroEntity,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                salvar(item)
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    onError(e)
+                }
+            }
+        }
+    }
 }
