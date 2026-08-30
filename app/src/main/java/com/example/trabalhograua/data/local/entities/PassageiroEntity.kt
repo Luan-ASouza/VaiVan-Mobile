@@ -18,6 +18,9 @@ data class PassageiroEntity(
     val status: String = "",
     val matricula: String = "",
     val maiorIdade: Boolean = false,
+    val necessidadesEspeciais: Boolean = false,
+    val descricaoNecessidades: String = "",
+    val observacoes: String = "",
     val responsavelId: String? = null,
     val rotaId: String? = null,
     val lastUpdated: Long = 0L

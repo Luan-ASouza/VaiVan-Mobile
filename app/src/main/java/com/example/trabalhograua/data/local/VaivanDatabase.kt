@@ -28,7 +28,7 @@ import com.example.trabalhograua.data.local.entities.VeiculoEntity
         LocalizacaoEntity::class,
         VeiculoEntity::class
     ],
-    version = 3, // <--- AUMENTEI PARA 3 (adição de VeiculoEntity)
+    version = 4, // <--- AUMENTEI PARA 4 (novos campos em PassageiroEntity: necessidades especiais e observações)
     exportSchema = false
 )
 @TypeConverters(TimestampConverter::class) // <--- ADICIONE ESTA LINHA AQUI

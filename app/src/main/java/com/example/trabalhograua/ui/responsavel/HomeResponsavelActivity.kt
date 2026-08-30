@@ -17,7 +17,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.trabalhograua.R
 import com.example.trabalhograua.data.local.VaivanDatabase
 import com.example.trabalhograua.data.repository.ResponsavelRepository
-import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment
 import com.example.trabalhograua.ui.responsavel.rotas.ListaRotasFragment
 import com.example.trabalhograua.ui.responsavel.chat.ChatFragment
 import com.example.trabalhograua.ui.responsavel.perfil.PerfilFragment

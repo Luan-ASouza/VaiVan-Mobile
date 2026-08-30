@@ -47,7 +47,7 @@
         <activity android:name=".cadastro.motorista.AutorizacaoActivity" /> <!-- VEÍCULO -->
         <activity android:name=".cadastro.motorista.CadastroVeiculoActivity" />
         <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />/> <!-- PERFIL MOTORISTA -->/>
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /> <!-- PERFIL MOTORISTA -->
     </application>
 
 </manifest>
