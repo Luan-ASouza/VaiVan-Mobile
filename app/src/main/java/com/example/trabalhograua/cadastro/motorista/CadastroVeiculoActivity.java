@@ -1,348 +1,295 @@
 package com.example.trabalhograua.cadastro.motorista;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputFilter;
+import android.provider.OpenableColumns;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.R;
-import com.google.android.material.button.MaterialButton;
+import com.example.trabalhograua.data.local.VaivanDatabase;
+import com.example.trabalhograua.data.local.entities.DocumentoEntity;
+import com.example.trabalhograua.data.local.entities.VeiculoEntity;
+import com.example.trabalhograua.data.repository.DocumentoRepository;
+import com.example.trabalhograua.data.repository.VeiculoRepository;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class CadastroVeiculoActivity extends AppCompatActivity {
 
-    // PADRÕES DE PLACA ACEITOS (ANTIGO E MERCOSUL)
-    private static final Pattern PLACA_ANTIGA = Pattern.compile("^[A-Z]{3}[0-9]{4}$");
-    private static final Pattern PLACA_MERCOSUL = Pattern.compile("^[A-Z]{3}[0-9][A-Z][0-9]{2}$");
+    private TextInputEditText edtPlaca, edtModelo, edtAno, edtCapacidade;
+    private TextView txtErroPlaca, txtErroModelo, txtErroAno, txtErroCapacidade;
+    private Button btnSelecionarCrlv, btnSelecionarAutorizacao, btnSalvar;
+    private TextView txtNomeArquivoCrlv, txtNomeArquivoAutorizacao;
+    private ImageView iconCheckCrlv, iconCheckAutorizacao;
 
-    // CAMPOS
-    private TextInputEditText edtPlaca, edtMarca, edtModelo, edtCor, edtCapacidade;
+    private VeiculoRepository veiculoRepository;
+    private DocumentoRepository documentoRepository;
 
-    // LAYOUTS
-    private TextInputLayout layoutPlaca, layoutMarca, layoutModelo, layoutCor, layoutCapacidade;
+    private Uri uriCrlv;
+    private Uri uriAutorizacao;
 
-    // TEXTOS DE ERRO
-    private TextView txtErroPlaca, txtErroMarca, txtErroModelo, txtErroCor, txtErroCapacidade;
+    private static final Pattern REGEX_PLACA = Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$");
 
-    // SPINNER
-    private Spinner spinnerAnoFabricacao;
+    // --- Seletores de arquivo (aceitam imagem OU pdf) ---
+    private final ActivityResultLauncher<String[]> pickerCrlv =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    uriCrlv = uri;
+                    txtNomeArquivoCrlv.setText(nomeDoArquivo(uri));
+                    txtNomeArquivoCrlv.setTextColor(getColor(R.color.black));
+                    iconCheckCrlv.setVisibility(View.VISIBLE);
+                }
+            });
 
-    // BOTÃO
-    private MaterialButton btnContinuar;
-
-    private FirebaseAuth auth;
-    private FirebaseFirestore db;
+    private final ActivityResultLauncher<String[]> pickerAutorizacao =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    uriAutorizacao = uri;
+                    txtNomeArquivoAutorizacao.setText(nomeDoArquivo(uri));
+                    txtNomeArquivoAutorizacao.setTextColor(getColor(R.color.black));
+                    iconCheckAutorizacao.setVisibility(View.VISIBLE);
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro_veiculo);
 
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        veiculoRepository = new VeiculoRepository(VaivanDatabase.Companion.getInstance(this).veiculoDao());
+        documentoRepository = new DocumentoRepository(VaivanDatabase.Companion.getInstance(this).documentoDao());
 
-        // CAMPOS
         edtPlaca = findViewById(R.id.edtPlaca);
-        // FORÇA MAIÚSCULAS E ACEITA SÓ LETRAS/NÚMEROS
-        edtPlaca.setFilters(new InputFilter[]{
-                (source, start, end, dest, dstart, dend) -> {
-
-                    if (source.equals("")) {
-                        return null;
-                    }
-
-                    String filtrado = source.toString()
-                            .toUpperCase()
-                            .replaceAll("[^A-Z0-9]", "");
-
-                    if (!filtrado.equals(source.toString())) {
-                        return filtrado;
-                    }
-
-                    return source.toString().toUpperCase();
-                }
-        });
-
-        edtMarca = findViewById(R.id.edtMarca);
         edtModelo = findViewById(R.id.edtModelo);
-
-        edtCor = findViewById(R.id.edtCor);
-        // SOMENTE LETRAS
-        edtCor.setFilters(new InputFilter[]{
-                (source, start, end, dest, dstart, dend) -> {
-
-                    if (source.equals("")) {
-                        return null;
-                    }
-
-                    if (!source.toString().matches("[a-zA-ZáàâãéèêíìóòôõúùçÁÀÂÃÉÈÊÍÌÓÒÔÕÚÙÇ ]+")) {
-                        return "";
-                    }
-
-                    return null;
-                }
-        });
-
+        edtAno = findViewById(R.id.edtAno);
         edtCapacidade = findViewById(R.id.edtCapacidade);
 
-        // LAYOUTS
-        layoutPlaca = findViewById(R.id.layoutPlaca);
-        layoutMarca = findViewById(R.id.layoutMarca);
-        layoutModelo = findViewById(R.id.layoutModelo);
-        layoutCor = findViewById(R.id.layoutCor);
-        layoutCapacidade = findViewById(R.id.layoutCapacidade);
-
-        // TEXTOS DE ERRO
         txtErroPlaca = findViewById(R.id.txtErroPlaca);
-        txtErroMarca = findViewById(R.id.txtErroMarca);
         txtErroModelo = findViewById(R.id.txtErroModelo);
-        txtErroCor = findViewById(R.id.txtErroCor);
+        txtErroAno = findViewById(R.id.txtErroAno);
         txtErroCapacidade = findViewById(R.id.txtErroCapacidade);
 
-        // SPINNER
-        spinnerAnoFabricacao = findViewById(R.id.spinnerAnoFabricacao);
-
-        // BOTÃO
-        btnContinuar = findViewById(R.id.btnContinuarVeiculo);
-
-        // ESCONDER ERROS
         txtErroPlaca.setVisibility(View.GONE);
-        txtErroMarca.setVisibility(View.GONE);
         txtErroModelo.setVisibility(View.GONE);
-        txtErroCor.setVisibility(View.GONE);
+        txtErroAno.setVisibility(View.GONE);
         txtErroCapacidade.setVisibility(View.GONE);
 
-        // CONFIGURAR SPINNER DE ANO
-        configurarSpinnerAno();
+        btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv);
+        btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao);
+        txtNomeArquivoCrlv = findViewById(R.id.txtNomeArquivoCrlv);
+        txtNomeArquivoAutorizacao = findViewById(R.id.txtNomeArquivoAutorizacao);
+        iconCheckCrlv = findViewById(R.id.iconCheckCrlv);
+        iconCheckAutorizacao = findViewById(R.id.iconCheckAutorizacao);
 
-        // CLICK BOTÃO
-        btnContinuar.setOnClickListener(v -> validarFormulario());
+        btnSelecionarCrlv.setOnClickListener(v ->
+                pickerCrlv.launch(new String[]{"image/*", "application/pdf"}));
+
+        btnSelecionarAutorizacao.setOnClickListener(v ->
+                pickerAutorizacao.launch(new String[]{"image/*", "application/pdf"}));
+
+        btnSalvar = findViewById(R.id.btnSalvarVeiculo);
+        btnSalvar.setOnClickListener(v -> validarESalvar());
     }
 
-    private void configurarSpinnerAno() {
-
-        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
-
-        // ACEITA VEÍCULOS DE ATÉ 30 ANOS ATRÁS + PRÓXIMO ANO (0KM)
-        int totalAnos = 32;
-
-        String[] anos = new String[totalAnos];
-
-        for (int i = 0; i < totalAnos; i++) {
-            anos[i] = String.valueOf((anoAtual + 1) - i);
+    private String nomeDoArquivo(Uri uri) {
+        String nome = "arquivo";
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index != -1 && cursor.moveToFirst()) {
+                    nome = cursor.getString(index);
+                }
+            }
         }
-
-        ArrayAdapter<String> adapterAno = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                anos
-        );
-
-        adapterAno.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
-        );
-
-        spinnerAnoFabricacao.setAdapter(adapterAno);
+        return nome;
     }
 
-    private void validarFormulario() {
+    private void validarESalvar() {
+        String placa = edtPlaca.getText() != null
+                ? edtPlaca.getText().toString().trim().toUpperCase().replace("-", "") : "";
+        String modelo = edtModelo.getText() != null ? edtModelo.getText().toString().trim() : "";
+        String anoTexto = edtAno.getText() != null ? edtAno.getText().toString().trim() : "";
+        String capacidadeTexto = edtCapacidade.getText() != null ? edtCapacidade.getText().toString().trim() : "";
 
-        String placa = obterTexto(edtPlaca).toUpperCase();
-        String marca = obterTexto(edtMarca);
-        String modelo = obterTexto(edtModelo);
-        String cor = obterTexto(edtCor);
-        String capacidadeTexto = obterTexto(edtCapacidade);
+        boolean valido = true;
 
-        boolean formularioValido = true;
-
-        // =========================
-        // VALIDAR PLACA
-        // =========================
-
-        if (!placaValida(placa)) {
-
+        if (!REGEX_PLACA.matcher(placa).matches()) {
             txtErroPlaca.setVisibility(View.VISIBLE);
-            layoutPlaca.setBackgroundResource(R.drawable.bg_input_white_red);
-            formularioValido = false;
-
+            valido = false;
         } else {
-
             txtErroPlaca.setVisibility(View.GONE);
-            layoutPlaca.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // VALIDAR MARCA
-        // =========================
-
-        if (marca.length() < 2) {
-
-            txtErroMarca.setVisibility(View.VISIBLE);
-            layoutMarca.setBackgroundResource(R.drawable.bg_input_white_red);
-            formularioValido = false;
-
-        } else {
-
-            txtErroMarca.setVisibility(View.GONE);
-            layoutMarca.setBackgroundResource(R.drawable.bg_input_white);
-        }
-
-        // =========================
-        // VALIDAR MODELO
-        // =========================
-
-        if (modelo.length() < 1) {
-
+        if (modelo.length() < 2) {
             txtErroModelo.setVisibility(View.VISIBLE);
-            layoutModelo.setBackgroundResource(R.drawable.bg_input_white_red);
-            formularioValido = false;
-
+            valido = false;
         } else {
-
             txtErroModelo.setVisibility(View.GONE);
-            layoutModelo.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // VALIDAR COR
-        // =========================
-
-        if (cor.length() < 3) {
-
-            txtErroCor.setVisibility(View.VISIBLE);
-            layoutCor.setBackgroundResource(R.drawable.bg_input_white_red);
-            formularioValido = false;
-
+        Integer ano = null;
+        try {
+            ano = Integer.parseInt(anoTexto);
+        } catch (NumberFormatException ignored) {}
+        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
+        if (ano == null || ano < 1990 || ano > anoAtual + 1) {
+            txtErroAno.setVisibility(View.VISIBLE);
+            valido = false;
         } else {
-
-            txtErroCor.setVisibility(View.GONE);
-            layoutCor.setBackgroundResource(R.drawable.bg_input_white);
+            txtErroAno.setVisibility(View.GONE);
         }
 
-        // =========================
-        // VALIDAR CAPACIDADE
-        // =========================
-
-        int capacidade = 0;
-        boolean capacidadeValida = true;
-
+        Integer capacidade = null;
         try {
             capacidade = Integer.parseInt(capacidadeTexto);
-
-            if (capacidade < 1 || capacidade > 40) {
-                capacidadeValida = false;
-            }
-
-        } catch (NumberFormatException e) {
-            capacidadeValida = false;
-        }
-
-        if (!capacidadeValida) {
-
+        } catch (NumberFormatException ignored) {}
+        if (capacidade == null || capacidade <= 0 || capacidade > 40) {
             txtErroCapacidade.setVisibility(View.VISIBLE);
-            layoutCapacidade.setBackgroundResource(R.drawable.bg_input_white_red);
-            formularioValido = false;
-
+            valido = false;
         } else {
-
             txtErroCapacidade.setVisibility(View.GONE);
-            layoutCapacidade.setBackgroundResource(R.drawable.bg_input_white);
         }
 
-        // =========================
-        // SALVAR E AVANÇAR
-        // =========================
+        if (!valido) return;
 
-        if (formularioValido) {
-
-            int anoFabricacao = Integer.parseInt(
-                    spinnerAnoFabricacao.getSelectedItem().toString()
-            );
-
-            salvarVeiculo(placa, marca, modelo, cor, anoFabricacao, capacidade);
+        if (uriCrlv == null) {
+            Toast.makeText(this, "Selecione o arquivo do CRLV", Toast.LENGTH_SHORT).show();
+            return;
         }
+        if (uriAutorizacao == null) {
+            Toast.makeText(this, "Selecione o documento de autorização", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String motoristaId = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+
+        if (motoristaId == null) {
+            Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        btnSalvar.setEnabled(false);
+        btnSalvar.setText("Salvando...");
+
+        VeiculoEntity veiculo = new VeiculoEntity(
+                "",
+                placa,
+                modelo,
+                ano,
+                capacidade,
+                "ATIVO",
+                motoristaId,
+                0L
+        );
+
+        final String motoristaIdFinal = motoristaId;
+
+        veiculoRepository.salvarAsync(
+                veiculo,
+                veiculoId -> {
+                    enviarCrlv(veiculoId, motoristaIdFinal);
+                    return null; // exigido pelo tipo Function1<String, Unit> do Kotlin
+                },
+                erro -> {
+                    btnSalvar.setEnabled(true);
+                    btnSalvar.setText("Salvar e continuar");
+                    Toast.makeText(this, "Erro ao salvar veículo: " + erro.getMessage(), Toast.LENGTH_LONG).show();
+                    return null;
+                }
+        );
     }
 
-    private void salvarVeiculo(
-            String placa,
-            String marca,
-            String modelo,
-            String cor,
-            int anoFabricacao,
-            int capacidadePassageiros
-    ) {
+    private void enviarCrlv(String veiculoId, String motoristaId) {
+        StorageReference ref = FirebaseStorage.getInstance().getReference()
+                .child("documentos_veiculos/" + veiculoId + "/crlv_" + System.currentTimeMillis());
 
-        String userId = auth.getCurrentUser() != null
-                ? auth.getCurrentUser().getUid()
-                : null;
-
-        Map<String, Object> dados = new HashMap<>();
-        dados.put("placa", placa);
-        dados.put("marca", marca);
-        dados.put("modelo", modelo);
-        dados.put("cor", cor);
-        dados.put("anoFabricacao", anoFabricacao);
-        dados.put("capacidadePassageiros", capacidadePassageiros);
-        dados.put("motoristaId", userId);
-        dados.put("dataCadastro", FieldValue.serverTimestamp());
-
-        btnContinuar.setEnabled(false);
-
-        db.collection("veiculos")
-                .add(dados)
-                .addOnSuccessListener(documentReference -> {
-
-                    Toast.makeText(
-                            this,
-                            "Veículo cadastrado com sucesso!",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    Intent intent = new Intent(
-                            CadastroVeiculoActivity.this,
-                            AnaliseDocumentosActivity.class
-                    );
-
-                    startActivity(intent);
-                    finish();
-                })
-                .addOnFailureListener(erro -> {
-
-                    btnContinuar.setEnabled(true);
-
-                    Toast.makeText(
-                            this,
-                            "Erro ao cadastrar veículo: " + erro.getMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
-                });
+        ref.putFile(uriCrlv)
+                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
+                        .addOnSuccessListener(url -> salvarDocumento(
+                                veiculoId, motoristaId, "CRLV", url.toString(),
+                                () -> enviarAutorizacao(veiculoId, motoristaId)
+                        ))
+                        .addOnFailureListener(this::tratarErroUpload))
+                .addOnFailureListener(this::tratarErroUpload);
     }
 
-    private boolean placaValida(String placa) {
+    private void enviarAutorizacao(String veiculoId, String motoristaId) {
+        StorageReference ref = FirebaseStorage.getInstance().getReference()
+                .child("documentos_veiculos/" + veiculoId + "/autorizacao_" + System.currentTimeMillis());
 
-        return PLACA_ANTIGA.matcher(placa).matches()
-                || PLACA_MERCOSUL.matcher(placa).matches();
+        ref.putFile(uriAutorizacao)
+                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
+                        .addOnSuccessListener(url -> salvarDocumento(
+                                veiculoId, motoristaId, "AUTORIZACAO_TRANSPORTE_ESCOLAR", url.toString(),
+                                this::finalizarCadastro
+                        ))
+                        .addOnFailureListener(this::tratarErroUpload))
+                .addOnFailureListener(this::tratarErroUpload);
     }
 
-    private String obterTexto(TextInputEditText editText) {
+    // Interface simples só pra representar "o que fazer depois de salvar o documento"
+    private interface AoSalvar {
+        void executar();
+    }
 
-        return editText.getText() != null
-                ? editText.getText().toString().trim()
-                : "";
+    private void salvarDocumento(String veiculoId, String motoristaId, String tipo, String url, AoSalvar aoSalvar) {
+        DocumentoEntity documento = new DocumentoEntity(
+                "",
+                tipo,
+                url,
+                new SimpleDateFormat("dd/MM/yyyy", new Locale("pt", "BR")).format(new Date()),
+                "EM_ANALISE",
+                motoristaId,
+                veiculoId,
+                0L
+        );
+
+        documentoRepository.salvarAsync(
+                documento,
+                () -> {
+                    aoSalvar.executar();
+                    return null;
+                },
+                erro -> {
+                    tratarErroUpload(erro);
+                    return null;
+                }
+        );
+    }
+
+    private void finalizarCadastro() {
+        Toast.makeText(this, "Veículo e documentos enviados!", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(this, StatusDocumentosVeiculoActivity.class);
+        // O id do veículo já foi usado nos passos anteriores; se quiser reabrir
+        // a tela de status depois, dá pra buscar o último veículo do motorista.
+        startActivity(intent);
+        finish();
+    }
+
+    private void tratarErroUpload(@NonNull Exception e) {
+        btnSalvar.setEnabled(true);
+        btnSalvar.setText("Salvar e continuar");
+        Toast.makeText(this, "Erro ao enviar documento: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
 }

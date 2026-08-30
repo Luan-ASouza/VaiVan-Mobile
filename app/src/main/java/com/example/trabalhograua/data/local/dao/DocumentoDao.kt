@@ -24,4 +24,7 @@ interface DocumentoDao {
 
     @Query("SELECT * FROM documentos")
     fun getAll(): Flow<List<DocumentoEntity>>
+
+    @Query("SELECT * FROM documentos WHERE veiculoId = :veiculoId")
+    fun getByVeiculo(veiculoId: String): Flow<List<DocumentoEntity>>
 }

@@ -73,4 +73,22 @@ class DocumentoRepository(
         collection.document(id).delete().await()
         documentoDao.deleteById(id)
     }
+    fun observarPorVeiculo(veiculoId: String): Flow<List<DocumentoEntity>> =
+        documentoDao.getByVeiculo(veiculoId)
+
+    fun salvarAsync(
+        item: DocumentoEntity,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                salvar(item)
+                kotlinx.coroutines.withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(Dispatchers.Main) { onError(e) }
+            }
+        }
+    }
 }
+

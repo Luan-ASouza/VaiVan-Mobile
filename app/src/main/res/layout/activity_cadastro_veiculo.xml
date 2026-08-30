@@ -1,348 +1,379 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="@color/white">
 
-    <ScrollView
-        android:id="@+id/scrollCadastroVeiculo"
+    <!-- CABEÇALHO PRETO -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/black"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="28dp">
+
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_truck"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cadastre seu veículo"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Última etapa antes de começar a rodar"
+            android:textColor="@color/orange"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- CONTEÚDO ROLÁVEL -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="@color/dark_gray"
-        android:padding="10dp">
+        android:layout_gravity="bottom"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/containerPrincipalVeiculo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_white"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="40dp">
 
-            <!-- TÍTULO -->
-
-            <TextView
-                android:id="@+id/txtTituloVeiculo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="4dp"
-                android:text="Cadastro do automóvel"
-                android:textColor="@color/dark_gray"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/txtSubtituloVeiculo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="28dp"
-                android:text="Informe os dados do veículo utilizado no transporte"
-                android:textColor="@color/light_gray"
-                android:textSize="12sp"
-                android:gravity="center"/>
-
-            <!-- PLACA -->
-
-            <TextView
-                android:id="@+id/txtLabelPlaca"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Placa"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutPlaca"
+            <!-- CARD: DADOS DO VEÍCULO -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtPlaca"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="ABC1D23 ou ABC1234"
-                    android:inputType="textCapCharacters"
-                    android:maxLength="7"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/txtErroPlaca"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Digite uma placa válida (padrão antigo ou Mercosul)."
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- MARCA -->
-
-            <TextView
-                android:id="@+id/txtLabelMarca"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Marca"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutMarca"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtMarca"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="Ex: Fiat, Mercedes-Benz, Renault"
-                    android:inputType="textCapWords"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/txtErroMarca"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Campo obrigatório"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- MODELO -->
-
-            <TextView
-                android:id="@+id/txtLabelModelo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Modelo"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutModelo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtModelo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="Ex: Sprinter 415, Master L2H2"
-                    android:inputType="textCapWords"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/txtErroModelo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Campo obrigatório"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- COR E ANO -->
-
-            <LinearLayout
-                android:id="@+id/containerCorAno"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
-
-                <!-- COR -->
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="20dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
                     <TextView
-                        android:id="@+id/txtLabelCor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cor"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
+                        android:text="Dados do veículo"
+                        android:textColor="@color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
 
+                    <!-- PLACA -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCor"
+                        android:id="@+id/layoutPlaca"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/orange"
+                        app:hintTextColor="@color/black"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false">
-
+                        android:layout_marginBottom="4dp">
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/edtCor"
+                            android:id="@+id/edtPlaca"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:minHeight="48dp"
-                            android:hint="Ex: Branco"
-                            android:inputType="textCapWords"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="12dp"
-                            android:textColor="@color/dark_gray"
-                            android:textColorHint="@color/light_gray"
-                            android:textSize="14sp"/>
+                            android:hint="Placa (ABC1D23)"
+                            android:maxLength="8"
+                            android:inputType="textCapCharacters" />
                     </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
-                <!-- ANO DE FABRICAÇÃO -->
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-
                     <TextView
-                        android:id="@+id/txtLabelAnoFabricacao"
+                        android:id="@+id/txtErroPlaca"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ano de fabricação"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
+                        android:text="*Digite uma placa válida"
+                        android:textColor="@color/red"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="12dp" />
 
-                    <Spinner
-                        android:id="@+id/spinnerAnoFabricacao"
+                    <!-- MODELO -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/orange"
+                        app:hintTextColor="@color/black"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white"
-                        android:paddingHorizontal="10dp"/>
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtModelo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Modelo (ex: Fiat Ducato)" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:id="@+id/txtErroModelo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="*Digite o modelo do veículo"
+                        android:textColor="@color/red"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- ANO + CAPACIDADE lado a lado -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="8dp">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                app:boxStrokeColor="@color/orange"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edtAno"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:hint="Ano"
+                                    android:inputType="number"
+                                    android:maxLength="4" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                            <TextView
+                                android:id="@+id/txtErroAno"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="*Ano inválido"
+                                android:textColor="@color/red"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="8dp">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                app:boxStrokeColor="@color/orange"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edtCapacidade"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:hint="Capacidade"
+                                    android:inputType="number"
+                                    android:maxLength="2" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                            <TextView
+                                android:id="@+id/txtErroCapacidade"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="*Obrigatório"
+                                android:textColor="@color/red"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/txtErroCor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Informe a cor do veículo"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- CAPACIDADE DE PASSAGEIROS -->
-
-            <TextView
-                android:id="@+id/txtLabelCapacidade"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Capacidade de passageiros"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutCapacidade"
+            <!-- CARD: DOCUMENTOS DO VEÍCULO -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="24dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtCapacidade"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="Ex: 15"
-                    android:inputType="number"
-                    android:maxLength="2"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-            <TextView
-                android:id="@+id/txtErroCapacidade"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Informe um número de vagas entre 1 e 40"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Documentos do veículo"
+                        android:textColor="@color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
 
-            <!-- BOTÃO -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Envie foto ou PDF de cada documento"
+                        android:textColor="@color/light_gray"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="18dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnContinuarVeiculo"
+                    <!-- BLOCO CRLV -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_beige_round_20"
+                        android:padding="16dp"
+                        android:layout_marginBottom="14dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="CRLV"
+                            android:textColor="@color/black"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Certificado de Registro e Licenciamento do Veículo"
+                            android:textColor="@color/light_gray"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="10dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <Button
+                                android:id="@+id/btnSelecionarCrlv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_button_yellow"
+                                android:backgroundTint="@null"
+                                android:text="Selecionar arquivo"
+                                android:textAllCaps="false"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="13sp" />
+
+                            <ImageView
+                                android:id="@+id/iconCheckCrlv"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/icon_check"
+                                android:layout_marginStart="10dp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txtNomeArquivoCrlv"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nenhum arquivo selecionado"
+                            android:textColor="@color/light_gray"
+                            android:textStyle="italic"
+                            android:textSize="12sp"
+                            android:layout_marginTop="8dp"
+                            android:ellipsize="middle"
+                            android:singleLine="true" />
+                    </LinearLayout>
+
+                    <!-- BLOCO AUTORIZAÇÃO -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_beige_round_20"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Autorização de Transporte Escolar"
+                            android:textColor="@color/black"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Documento de liberação para dirigir transporte escolar"
+                            android:textColor="@color/light_gray"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="10dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <Button
+                                android:id="@+id/btnSelecionarAutorizacao"
+                                android:layout_width="wrap_content"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_button_yellow"
+                                android:backgroundTint="@null"
+                                android:text="Selecionar arquivo"
+                                android:textAllCaps="false"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="13sp" />
+
+                            <ImageView
+                                android:id="@+id/iconCheckAutorizacao"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/icon_check"
+                                android:layout_marginStart="10dp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txtNomeArquivoAutorizacao"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nenhum arquivo selecionado"
+                            android:textColor="@color/light_gray"
+                            android:textStyle="italic"
+                            android:textSize="12sp"
+                            android:layout_marginTop="8dp"
+                            android:ellipsize="middle"
+                            android:singleLine="true" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- BOTÃO PRINCIPAL -->
+            <Button
+                android:id="@+id/btnSalvarVeiculo"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="10dp"
-                android:background="@drawable/btn_gray_filled"
-                android:text="Continuar"
+                android:layout_height="55dp"
+                android:background="@drawable/bg_button_darkgrey"
+                android:backgroundTint="@null"
+                android:text="Salvar e continuar"
                 android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textColor="@color/white"
                 android:textStyle="bold"
-                app:backgroundTint="@null"
-                app:cornerRadius="12dp"/>
+                android:textSize="15sp" />
 
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-    </ScrollView>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

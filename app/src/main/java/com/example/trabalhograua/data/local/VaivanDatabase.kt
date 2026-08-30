@@ -30,7 +30,9 @@ import com.example.trabalhograua.data.local.entities.VeiculoEntity
     ],
     version = 3, // <--- AUMENTEI PARA 3 (adição de VeiculoEntity)
     exportSchema = false
+
 )
+
 @TypeConverters(TimestampConverter::class) // <--- ADICIONE ESTA LINHA AQUI
 abstract class VaivanDatabase : RoomDatabase() {
 
