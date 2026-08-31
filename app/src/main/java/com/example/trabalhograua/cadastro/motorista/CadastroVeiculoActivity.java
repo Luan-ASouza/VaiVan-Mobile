@@ -222,15 +222,16 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         btnSalvar.setText("Salvando...");
 
         VeiculoEntity veiculo = new VeiculoEntity(
-                "",
+                "",             // id
                 placa,
                 marca,
                 modelo,
-                ano,
                 cor,
+                ano,
                 capacidade,
+                "PENDENTE",     // status — ajuste esse valor conforme as regras do seu app
                 motoristaId,
-                0L
+                0L              // lastUpdated
         );
 
         final String motoristaIdFinal = motoristaId;

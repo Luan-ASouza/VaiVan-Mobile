@@ -8,7 +8,9 @@ import androidx.room.PrimaryKey
 data class VeiculoEntity(
     @PrimaryKey val id: String = "",
     val placa: String = "",
+    val marca: String = "",
     val modelo: String = "",
+    val cor: String = "",
     val anoFabricacao: Int = 0,
     val capacidadePassageiros: Int = 0,
     val status: String = "",

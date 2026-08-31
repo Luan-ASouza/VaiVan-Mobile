@@ -9,11 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
-/**
- * Segue o mesmo padrão de MotoristaRepository/DocumentoRepository:
- * Firestore = fonte da verdade, Room (VeiculoDao) = cache local que a UI observa.
- */
 class VeiculoRepository(
     private val veiculoDao: VeiculoDao,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -61,7 +58,6 @@ class VeiculoRepository(
         veiculoDao.upsertAll(itens)
     }
 
-    /** Escrita: vai pro Firestore, e ao confirmar, atualiza o cache local também. */
     suspend fun salvarVeiculo(veiculo: VeiculoEntity) {
         val docRef = if (veiculo.id.isBlank()) {
             collection.document()
@@ -71,6 +67,22 @@ class VeiculoRepository(
         val comId = veiculo.copy(id = docRef.id, lastUpdated = System.currentTimeMillis())
         docRef.set(comId).await()
         veiculoDao.upsert(comId)
+    }
+
+    /** Wrapper com callback pra ser chamado a partir de código Java (Activities). */
+    fun salvarAsync(
+        veiculo: VeiculoEntity,
+        aoSucesso: (String) -> Unit,
+        aoErro: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                salvarVeiculo(veiculo)
+                withContext(Dispatchers.Main) { aoSucesso(veiculo.id) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { aoErro(e) }
+            }
+        }
     }
 
     suspend fun excluirVeiculo(id: String) {

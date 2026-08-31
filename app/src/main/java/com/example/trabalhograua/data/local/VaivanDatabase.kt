@@ -28,7 +28,7 @@ import com.example.trabalhograua.data.local.entities.VeiculoEntity
         LocalizacaoEntity::class,
         VeiculoEntity::class
     ],
-    version = 4, // <--- AUMENTEI PARA 4 (novos campos em PassageiroEntity: necessidades especiais e observações)
+    version = 5, // <--- AUMENTEI PARA 5 (novos campos em PassageiroEntity: necessidades especiais e observações)
     exportSchema = false
 
 )
