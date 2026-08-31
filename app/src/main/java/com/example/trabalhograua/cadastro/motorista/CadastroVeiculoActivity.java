@@ -26,6 +26,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -35,8 +36,8 @@ import java.util.regex.Pattern;
 
 public class CadastroVeiculoActivity extends AppCompatActivity {
 
-    private TextInputEditText edtPlaca, edtModelo, edtAno, edtCapacidade;
-    private TextView txtErroPlaca, txtErroModelo, txtErroAno, txtErroCapacidade;
+    private TextInputEditText edtPlaca, edtMarca, edtModelo, edtAno, edtCor, edtCapacidade;
+    private TextView txtErroPlaca, txtErroMarca, txtErroModelo, txtErroAno, txtErroCor, txtErroCapacidade;
     private Button btnSelecionarCrlv, btnSelecionarAutorizacao, btnSalvar;
     private TextView txtNomeArquivoCrlv, txtNomeArquivoAutorizacao;
     private ImageView iconCheckCrlv, iconCheckAutorizacao;
@@ -75,22 +76,34 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro_veiculo);
 
-        veiculoRepository = new VeiculoRepository(VaivanDatabase.Companion.getInstance(this).veiculoDao());
-        documentoRepository = new DocumentoRepository(VaivanDatabase.Companion.getInstance(this).documentoDao());
+        veiculoRepository = new VeiculoRepository(
+                VaivanDatabase.Companion.getInstance(this).veiculoDao(),
+                FirebaseFirestore.getInstance()
+        );
+        documentoRepository = new DocumentoRepository(
+                VaivanDatabase.Companion.getInstance(this).documentoDao(),
+                FirebaseFirestore.getInstance()
+        );
 
         edtPlaca = findViewById(R.id.edtPlaca);
+        edtMarca = findViewById(R.id.edtMarca);
         edtModelo = findViewById(R.id.edtModelo);
         edtAno = findViewById(R.id.edtAno);
+        edtCor = findViewById(R.id.edtCor);
         edtCapacidade = findViewById(R.id.edtCapacidade);
 
         txtErroPlaca = findViewById(R.id.txtErroPlaca);
+        txtErroMarca = findViewById(R.id.txtErroMarca);
         txtErroModelo = findViewById(R.id.txtErroModelo);
         txtErroAno = findViewById(R.id.txtErroAno);
+        txtErroCor = findViewById(R.id.txtErroCor);
         txtErroCapacidade = findViewById(R.id.txtErroCapacidade);
 
         txtErroPlaca.setVisibility(View.GONE);
+        txtErroMarca.setVisibility(View.GONE);
         txtErroModelo.setVisibility(View.GONE);
         txtErroAno.setVisibility(View.GONE);
+        txtErroCor.setVisibility(View.GONE);
         txtErroCapacidade.setVisibility(View.GONE);
 
         btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv);
@@ -126,8 +139,10 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
     private void validarESalvar() {
         String placa = edtPlaca.getText() != null
                 ? edtPlaca.getText().toString().trim().toUpperCase().replace("-", "") : "";
+        String marca = edtMarca.getText() != null ? edtMarca.getText().toString().trim() : "";
         String modelo = edtModelo.getText() != null ? edtModelo.getText().toString().trim() : "";
         String anoTexto = edtAno.getText() != null ? edtAno.getText().toString().trim() : "";
+        String cor = edtCor.getText() != null ? edtCor.getText().toString().trim() : "";
         String capacidadeTexto = edtCapacidade.getText() != null ? edtCapacidade.getText().toString().trim() : "";
 
         boolean valido = true;
@@ -139,6 +154,13 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
             txtErroPlaca.setVisibility(View.GONE);
         }
 
+        if (marca.length() < 2) {
+            txtErroMarca.setVisibility(View.VISIBLE);
+            valido = false;
+        } else {
+            txtErroMarca.setVisibility(View.GONE);
+        }
+
         if (modelo.length() < 2) {
             txtErroModelo.setVisibility(View.VISIBLE);
             valido = false;
@@ -146,23 +168,30 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
             txtErroModelo.setVisibility(View.GONE);
         }
 
-        Integer ano = null;
+        int ano = -1;
         try {
             ano = Integer.parseInt(anoTexto);
         } catch (NumberFormatException ignored) {}
         int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
-        if (ano == null || ano < 1990 || ano > anoAtual + 1) {
+        if (ano < 1990 || ano > anoAtual + 1) {
             txtErroAno.setVisibility(View.VISIBLE);
             valido = false;
         } else {
             txtErroAno.setVisibility(View.GONE);
         }
 
-        Integer capacidade = null;
+        if (cor.length() < 2) {
+            txtErroCor.setVisibility(View.VISIBLE);
+            valido = false;
+        } else {
+            txtErroCor.setVisibility(View.GONE);
+        }
+
+        int capacidade = -1;
         try {
             capacidade = Integer.parseInt(capacidadeTexto);
         } catch (NumberFormatException ignored) {}
-        if (capacidade == null || capacidade <= 0 || capacidade > 40) {
+        if (capacidade <= 0 || capacidade > 40) {
             txtErroCapacidade.setVisibility(View.VISIBLE);
             valido = false;
         } else {
@@ -194,10 +223,11 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         VeiculoEntity veiculo = new VeiculoEntity(
                 "",
                 placa,
+                marca,
                 modelo,
                 ano,
+                cor,
                 capacidade,
-                "ATIVO",
                 motoristaId,
                 0L
         );
@@ -227,7 +257,7 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
                 .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
                         .addOnSuccessListener(url -> salvarDocumento(
                                 veiculoId, motoristaId, "CRLV", url.toString(),
-                                () -> enviarAutorizacao(veiculoId, motoristaId)
+                                idIgnorado -> enviarAutorizacao(veiculoId, motoristaId)
                         ))
                         .addOnFailureListener(this::tratarErroUpload))
                 .addOnFailureListener(this::tratarErroUpload);
@@ -249,7 +279,7 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
 
     // Interface simples só pra representar "o que fazer depois de salvar o documento"
     private interface AoSalvar {
-        void executar();
+        void executar(String veiculoId);
     }
 
     private void salvarDocumento(String veiculoId, String motoristaId, String tipo, String url, AoSalvar aoSalvar) {
@@ -267,22 +297,23 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         documentoRepository.salvarAsync(
                 documento,
                 () -> {
-                    aoSalvar.executar();
+                    aoSalvar.executar(veiculoId);
                     return null;
                 },
                 erro -> {
-                    tratarErroUpload(erro);
+                    btnSalvar.setEnabled(true);
+                    btnSalvar.setText("Salvar e continuar");
+                    Toast.makeText(this, "Erro ao salvar documento: " + erro.getMessage(), Toast.LENGTH_LONG).show();
                     return null;
                 }
         );
     }
 
-    private void finalizarCadastro() {
+    private void finalizarCadastro(String veiculoId) {
         Toast.makeText(this, "Veículo e documentos enviados!", Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(this, StatusDocumentosVeiculoActivity.class);
-        // O id do veículo já foi usado nos passos anteriores; se quiser reabrir
-        // a tela de status depois, dá pra buscar o último veículo do motorista.
+        intent.putExtra("veiculoId", veiculoId);
         startActivity(intent);
         finish();
     }

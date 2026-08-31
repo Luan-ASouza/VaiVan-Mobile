@@ -1,0 +1,20 @@
+[33m25fe3b3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m resolve conflito no AndroidManifest
+[33m9f80f76[m sua mensagem aqui
+[33m1dfd885[m Adicionar passageiro front e back
+[33me372e71[m Rename .java to .kt
+[33mc50a7d8[m alteração do fluxo de registro
+[33mb59918c[m feat: cadastro de automovel (entity, dao, repository e tela)
+[33mf7a4753[m feat: upload de imagens de cnh
+[33m56fa22a[m Add Figma design link to README
+[33mf8ea724[m AcompanharViagemFragment.kt
+[33mf591415[m melhorias na main activity, recuperar senha, dlete e organizaçao de arquivos, perfil e header puxam informaçoes do room,acompanhar viagem agora é um fragment, pagina de motorista "em desenvolvimento"
+[33m651b86d[m Endereço responsavel agora é kotlin!!
+[33m4b90980[m Merge remote-tracking branch 'origin/master'
+[33m7f1657e[m Adição do nome editavel
+[33ma49e23c[m Merge remote-tracking branch 'origin/master'
+[33mefda2f9[m repositorios, Daos e Entidades.
+[33m351b530[m Tirei o texto de login e senha pré-deifidos
+[33m1718daa[m Redirect botão do fragmente
+[33m0524673[m clickable
+[33m17f0738[m Integração com FireBase e autenticação (AGR TEM BANCO DE DADOS!)
+[33m5317d52[m Adição da api dos maps (de novo) e do gpx

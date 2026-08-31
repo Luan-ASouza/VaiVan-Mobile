@@ -105,6 +105,29 @@
                         android:textSize="12sp"
                         android:layout_marginBottom="12dp" />
 
+                    <!-- MARCA -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/orange"
+                        app:hintTextColor="@color/black"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtMarca"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Marca (ex: Fiat, Mercedes-Benz)" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:id="@+id/txtErroMarca"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="*Digite a marca do veículo"
+                        android:textColor="@color/red"
+                        android:textSize="12sp"
+                        android:layout_marginBottom="12dp" />
+
                     <!-- MODELO -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -132,7 +155,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -192,6 +216,29 @@
                                 android:textSize="12sp" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <!-- COR -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/orange"
+                        app:hintTextColor="@color/black"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="4dp">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtCor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Cor" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:id="@+id/txtErroCor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="*Digite a cor do veículo"
+                        android:textColor="@color/red"
+                        android:textSize="12sp" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

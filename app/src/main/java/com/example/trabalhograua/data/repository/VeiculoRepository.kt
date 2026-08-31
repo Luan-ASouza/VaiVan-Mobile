@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 /**
  * Segue o mesmo padrão de MotoristaRepository/DocumentoRepository:
@@ -62,7 +63,7 @@ class VeiculoRepository(
     }
 
     /** Escrita: vai pro Firestore, e ao confirmar, atualiza o cache local também. */
-    suspend fun salvarVeiculo(veiculo: VeiculoEntity) {
+    suspend fun salvarVeiculo(veiculo: VeiculoEntity): String {
         val docRef = if (veiculo.id.isBlank()) {
             collection.document()
         } else {
@@ -71,10 +72,20 @@ class VeiculoRepository(
         val comId = veiculo.copy(id = docRef.id, lastUpdated = System.currentTimeMillis())
         docRef.set(comId).await()
         veiculoDao.upsert(comId)
+        return comId.id
     }
-
-    suspend fun excluirVeiculo(id: String) {
-        collection.document(id).delete().await()
-        veiculoDao.deleteById(id)
+    fun salvarAsync(
+        item: VeiculoEntity,
+        onSuccess: (String) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                val id = salvarVeiculo(item)
+                withContext(Dispatchers.Main) { onSuccess(id) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onError(e) }
+            }
+        }
     }
 }
