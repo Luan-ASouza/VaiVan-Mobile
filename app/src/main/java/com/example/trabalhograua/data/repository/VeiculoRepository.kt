@@ -73,6 +73,43 @@ class VeiculoRepository(
         veiculoDao.upsert(comId)
     }
 
+    suspend fun salvar(item: VeiculoEntity): String {
+        val docRef = if (item.id.isBlank()) {
+            collection.document()
+        } else {
+            collection.document(item.id)
+        }
+
+        val comId = item.copy(
+            id = docRef.id,
+            lastUpdated = System.currentTimeMillis()
+        )
+
+        docRef.set(comId).await()
+        veiculoDao.upsert(comId)
+
+        return docRef.id
+    }
+
+    fun salvarAsync(
+        item: VeiculoEntity,
+        onSuccess: (String) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                salvar(item)
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    onSuccess(item.id)
+                }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    onError(e)
+                }
+            }
+        }
+    }
+
     suspend fun excluirVeiculo(id: String) {
         collection.document(id).delete().await()
         veiculoDao.deleteById(id)

@@ -24,6 +24,7 @@ import com.example.trabalhograua.data.repository.DocumentoRepository;
 import com.example.trabalhograua.data.repository.VeiculoRepository;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -75,8 +76,14 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro_veiculo);
 
-        veiculoRepository = new VeiculoRepository(VaivanDatabase.Companion.getInstance(this).veiculoDao());
-        documentoRepository = new DocumentoRepository(VaivanDatabase.Companion.getInstance(this).documentoDao());
+        veiculoRepository = new VeiculoRepository(
+                VaivanDatabase.Companion.getInstance(this).veiculoDao(),
+                FirebaseFirestore.getInstance()
+        );
+        documentoRepository = new DocumentoRepository(
+                VaivanDatabase.Companion.getInstance(this).documentoDao(),
+                FirebaseFirestore.getInstance()
+        );
 
         edtPlaca = findViewById(R.id.edtPlaca);
         edtModelo = findViewById(R.id.edtModelo);
