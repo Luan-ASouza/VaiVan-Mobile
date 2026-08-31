@@ -58,7 +58,7 @@ class VeiculoRepository(
         veiculoDao.upsertAll(itens)
     }
 
-    suspend fun salvarVeiculo(veiculo: VeiculoEntity) {
+    suspend fun salvarVeiculo(veiculo: VeiculoEntity): String {
         val docRef = if (veiculo.id.isBlank()) {
             collection.document()
         } else {
@@ -67,6 +67,7 @@ class VeiculoRepository(
         val comId = veiculo.copy(id = docRef.id, lastUpdated = System.currentTimeMillis())
         docRef.set(comId).await()
         veiculoDao.upsert(comId)
+        return comId.id
     }
 
     /** Wrapper com callback pra ser chamado a partir de código Java (Activities). */
@@ -77,8 +78,8 @@ class VeiculoRepository(
     ) {
         scope.launch {
             try {
-                salvarVeiculo(veiculo)
-                withContext(Dispatchers.Main) { aoSucesso(veiculo.id) }
+                val idGerado = salvarVeiculo(veiculo)
+                withContext(Dispatchers.Main) { aoSucesso(idGerado) }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { aoErro(e) }
             }
