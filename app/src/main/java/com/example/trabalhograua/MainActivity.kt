@@ -12,7 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.trabalhograua.cadastro.PerfilActivity
 import com.example.trabalhograua.cadastro.TipoCadastroActivity
 import com.example.trabalhograua.cadastro.responsavel.ui.DadosDeAcessoResponsavel
+import com.example.trabalhograua.chat.ChatRepository
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         // Botões principais da tela de fundo
         val btnEntrar = findViewById<Button>(R.id.btnEntrar)
         val btnCadastrar = findViewById<Button>(R.id.btnCadastrar)
+        val btnTestarChat = findViewById<Button>(R.id.btnTestarChat)
 
         // Componentes do painel deslizante (Bottom Sheet)
         val edtEmail = findViewById<EditText>(R.id.edtEmail)
@@ -91,8 +96,7 @@ class MainActivity : AppCompatActivity() {
             authRepository.recuperarSenha(
                 email,
                 onSuccess = {
-                    Toast.makeText(this, "Link de recuperação enviado para: $email", Toast.LENGTH_LONG).show()
-                    behavior.state = BottomSheetBehavior.STATE_HIDDEN // Esconde o painel após o envio
+                    Toast.makeText(this, "E-mail de recuperação enviado!", Toast.LENGTH_SHORT).show()
                 },
                 onError = { erro ->
                     Toast.makeText(this, "Erro: ${erro.message}", Toast.LENGTH_LONG).show()
@@ -104,5 +108,14 @@ class MainActivity : AppCompatActivity() {
         btnCadastrar.setOnClickListener {
             startActivity(Intent(this, DadosDeAcessoResponsavel::class.java))
         }
+
+        // ===== BOTÃO TEMPORÁRIO — testar tela de chat (remover depois) =====
+        btnTestarChat.setOnClickListener {
+            val intentChat = Intent(this, com.example.trabalhograua.chat.ChatActivity::class.java)
+            intentChat.putExtra("outroUsuarioId", "kjqVvTT9n4NSfoeQiqJjUxgAhjJ3")
+            intentChat.putExtra("nomeContato", "Motorista Teste")
+            startActivity(intentChat)
+        }
+
     }
 }

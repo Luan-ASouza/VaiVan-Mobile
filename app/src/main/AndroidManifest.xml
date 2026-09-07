@@ -50,6 +50,9 @@
         <activity android:name=".cadastro.motorista.StatusDocumentosVeiculoActivity" />
         <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
         <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /><!-- PERFIL MOTORISTA -->
+        <activity
+            android:name=".chat.ChatActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

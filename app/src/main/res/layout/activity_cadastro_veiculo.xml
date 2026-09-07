@@ -70,32 +70,58 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Dados do veículo"
-                        android:textColor="@color/black"
-                        android:textSize="17sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="18dp"
+                            android:background="@color/orange"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dados do veículo"
+                            android:textColor="@color/dark_gray"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/montserrat"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <!-- PLACA -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/layoutPlaca"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         app:boxStrokeColor="@color/orange"
-                        app:hintTextColor="@color/black"
+                        app:hintTextColor="@color/dark_gray"
+                        app:boxCornerRadiusTopStart="14dp"
+                        app:boxCornerRadiusTopEnd="14dp"
+                        app:boxCornerRadiusBottomStart="14dp"
+                        app:boxCornerRadiusBottomEnd="14dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp">
+                        android:layout_marginBottom="2dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/edtPlaca"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Placa (ABC1D23)"
+                            android:hint="Placa"
                             android:maxLength="8"
                             android:inputType="textCapCharacters" />
                     </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ex: ABC1234 (antiga) ou ABC1D23 (Mercosul)"
+                        android:textColor="@color/light_gray"
+                        android:textSize="11sp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp" />
                     <TextView
                         android:id="@+id/txtErroPlaca"
                         android:layout_width="wrap_content"
@@ -166,17 +192,19 @@
                             android:layout_marginEnd="8dp">
 
                             <com.google.android.material.textfield.TextInputLayout
-                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                                 app:boxStrokeColor="@color/orange"
+                                app:endIconTint="@color/orange"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content">
-                                <com.google.android.material.textfield.TextInputEditText
+                                <AutoCompleteTextView
                                     android:id="@+id/edtAno"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:hint="Ano"
-                                    android:inputType="number"
-                                    android:maxLength="4" />
+                                    android:inputType="none"
+                                    android:focusable="false"
+                                    android:cursorVisible="false" />
                             </com.google.android.material.textfield.TextInputLayout>
                             <TextView
                                 android:id="@+id/txtErroAno"
@@ -258,14 +286,28 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Documentos do veículo"
-                        android:textColor="@color/black"
-                        android:textSize="17sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="4dp">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="18dp"
+                            android:background="@color/orange"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Documentos do veículo"
+                            android:textColor="@color/dark_gray"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/montserrat"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -411,14 +453,16 @@
             <Button
                 android:id="@+id/btnSalvarVeiculo"
                 android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:background="@drawable/bg_button_darkgrey"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_button_orange"
                 android:backgroundTint="@null"
+                android:elevation="2dp"
                 android:text="Salvar e continuar"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
+                android:textColor="@color/black"
+                android:fontFamily="@font/montserrat"
                 android:textStyle="bold"
-                android:textSize="15sp" />
+                android:textSize="16sp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
