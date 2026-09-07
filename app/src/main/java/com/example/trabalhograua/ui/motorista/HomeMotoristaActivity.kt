@@ -11,7 +11,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 class HomeMotoristaActivity : AppCompatActivity() {
 
     // UID do responsável de teste (Firebase Authentication)
-    private val UID_RESPONSAVEL_TESTE = "8pXGmpZPXuZHLLugolIplgSJ6Mt2"
+    private val UID_RESPONSAVEL_TESTE = "2ESSCaVomchf3R4K9jJ2yP6jbZw2"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
