@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,14 +32,17 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class CadastroVeiculoActivity extends AppCompatActivity {
 
-    private TextInputEditText edtPlaca, edtMarca, edtModelo, edtAno, edtCor, edtCapacidade;
+    private TextInputEditText edtPlaca, edtMarca, edtModelo, edtCor, edtCapacidade;
+    private AutoCompleteTextView edtAno;
     private TextView txtErroPlaca, txtErroMarca, txtErroModelo, txtErroAno, txtErroCor, txtErroCapacidade;
     private Button btnSelecionarCrlv, btnSelecionarAutorizacao, btnSalvar;
     private TextView txtNomeArquivoCrlv, txtNomeArquivoAutorizacao;
@@ -93,6 +98,8 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
         edtCor = findViewById(R.id.edtCor);
         edtCapacidade = findViewById(R.id.edtCapacidade);
 
+        configurarSeletorAno();
+
         txtErroPlaca = findViewById(R.id.txtErroPlaca);
         txtErroMarca = findViewById(R.id.txtErroMarca);
         txtErroModelo = findViewById(R.id.txtErroModelo);
@@ -122,6 +129,22 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
 
         btnSalvar = findViewById(R.id.btnSalvarVeiculo);
         btnSalvar.setOnClickListener(v -> validarESalvar());
+    }
+
+    private void configurarSeletorAno() {
+        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
+        int anoMaisRecente = anoAtual + 1;
+        int anoMaisAntigo = 1990;
+
+        List<String> anos = new ArrayList<>();
+        for (int ano = anoMaisRecente; ano >= anoMaisAntigo; ano--) {
+            anos.add(String.valueOf(ano));
+        }
+
+        ArrayAdapter<String> adapterAnos = new ArrayAdapter<>(
+                this, android.R.layout.simple_list_item_1, anos);
+        edtAno.setAdapter(adapterAnos);
+        edtAno.setOnClickListener(v -> edtAno.showDropDown());
     }
 
     private String nomeDoArquivo(Uri uri) {
@@ -229,7 +252,7 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
                 cor,
                 ano,
                 capacidade,
-                "PENDENTE",     // status — ajuste esse valor conforme as regras do seu app
+                "PENDENTE",     // status inicial do veículo recém-cadastrado
                 motoristaId,
                 0L              // lastUpdated
         );
@@ -240,7 +263,7 @@ public class CadastroVeiculoActivity extends AppCompatActivity {
                 veiculo,
                 veiculoId -> {
                     enviarCrlv(veiculoId, motoristaIdFinal);
-                    return null; // exigido pelo tipo Function1<String, Unit> do Kotlin
+                    return null;
                 },
                 erro -> {
                     btnSalvar.setEnabled(true);
