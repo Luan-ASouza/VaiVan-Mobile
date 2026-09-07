@@ -43,13 +43,12 @@
         <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
         <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
         <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
-        <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
-        <activity android:name=".cadastro.motorista.AutorizacaoActivity" /> <!-- VEÍCULO -->
+        <activity android:name=".cadastro.motorista.documentos.ValidaCnhActivity" />
         <!-- VEÍCULO -->
-        <activity android:name=".cadastro.motorista.CadastroVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.StatusDocumentosVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /><!-- PERFIL MOTORISTA -->
+        <activity android:name=".ui.motorista.veiculos.CadastroVeiculoActivity" />
+        <activity android:name=".cadastro.motorista.documentos.StatusDocumentosVeiculoActivity" />
+        <activity android:name=".cadastro.motorista.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
     </application>
 
 </manifest>

@@ -1,30 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- TELA COMPLETA COM ROLAGEM -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fontFamily="@font/montserrat">
 
-    <!-- CONTAINER PRINCIPAL DA TELA -->
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scrollValidacaoEmail"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="36dp"
-        android:paddingTop="190dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/dark_gray"
+        android:padding="10dp">
 
-        <!-- TÍTULO DA TELA -->
-        <TextView
-            android:id="@+id/txtTituloCnh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Valide sua CNH"
-            android:textColor="#111111"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="22dp" />
+        <LinearLayout
+            android:id="@+id/containerPrincipal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:layout_marginVertical="10dp"
+            android:background="@drawable/bg_white">
+
+            <TextView
+                android:id="@+id/txtDescricaoCnh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Valide sua CNH"
+                android:textColor="@color/dark_gray"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="20dp" />
 
         <!-- TEXTO EXPLICATIVO -->
         <TextView
@@ -38,89 +50,119 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="30dp" />
 
-        <!-- LABEL FOTO DA FRENTE -->
-        <TextView
-            android:id="@+id/txtFotoFrente"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Foto da frente"
-            android:textColor="#111111"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="30dp">
 
-        <!-- LINHA COM BOTÃO EDITAR ENVIO E NOME DO ARQUIVO -->
-        <LinearLayout
-            android:id="@+id/layoutArquivoFrente"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
-
-            <!-- BOTÃO EDITAR ENVIO -->
-            <Button
-                android:id="@+id/btnEditarEnvioFrente"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:background="@drawable/btn_black_white_selector"
-                android:backgroundTint="@null"
-                android:text="Editar envio"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="13sp" />
-
-            <!-- NOME DO ARQUIVO ENVIADO -->
+            <!-- LABEL FOTO DA FRENTE -->
             <TextView
-                android:id="@+id/txtNomeArquivoFrente"
+                android:id="@+id/txtFotoFrente"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="nomedoArquivo.png"
+                android:text="Foto da frente"
                 android:textColor="#111111"
-                android:textSize="13sp"
-                android:layout_marginStart="12dp" />
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
-        </LinearLayout>
+            <!-- LINHA COM BOTÃO EDITAR ENVIO E NOME DO ARQUIVO -->
+            <LinearLayout
+                android:id="@+id/layoutArquivoFrente"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
 
-        <!-- LABEL FOTO DO VERSO -->
-        <TextView
-            android:id="@+id/txtFotoVerso"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Foto do verso"
-            android:textColor="#111111"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+                <!-- BOTÃO EDITAR ENVIO -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEnviarArquivoFrente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_hollow_blackborder"
+                    app:backgroundTint="@null"
+                    android:text="Selecionar Arquivo"
+                    android:textAllCaps="false"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
 
-        <!-- BOTÃO ENVIAR ARQUIVO DO VERSO -->
-        <Button
-            android:id="@+id/btnEnviarArquivoVerso"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_button_white"
-            android:backgroundTint="@null"
-            android:text="Enviar arquivo"
-            android:textAllCaps="false"
-            android:textColor="#111111"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:layout_marginBottom="34dp" />
+                <!-- NOME DO ARQUIVO ENVIADO -->
+                <TextView
+                    android:id="@+id/txtNomeArquivoFrente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/dark_gray"
+                    android:textSize="13sp"
+                    android:layout_marginStart="12dp" />
 
-        <!-- BOTÃO PRINCIPAL ENVIAR E CONTINUAR -->
+            </LinearLayout>
+
+            <!-- LABEL FOTO DO VERSO -->
+            <TextView
+                android:id="@+id/txtFotoVerso"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Foto do verso"
+                android:textColor="#111111"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+                <LinearLayout
+                    android:id="@+id/layoutArquivoFrente"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="40dp">
+
+                    <!-- BOTÃO ENVIAR ARQUIVO DO VERSO -->
+                    <Button
+                        android:id="@+id/btnEnviarArquivoVerso"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_hollow_blackborder"
+                        app:backgroundTint="@null"
+                        android:text="Selecionar Arquivo"
+                        android:textAllCaps="false"
+                        android:textColor="@color/dark_gray"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <!-- NOME DO ARQUIVO ENVIADO -->
+                    <TextView
+                        android:id="@+id/txtNomeArquivoVerso"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textColor="@color/dark_gray"
+                        android:textSize="13sp"
+                        android:layout_marginStart="12dp" />
+
+                </LinearLayout>
+
+
+            <!-- BOTÃO PRINCIPAL ENVIAR E CONTINUAR -->
+
+            </LinearLayout>
+
         <Button
             android:id="@+id/btnEnviarContinuarCnh"
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:background="@drawable/btn_black_white_selector"
-            android:backgroundTint="@null"
+            app:backgroundTint="@null"
             android:text="Enviar e Continuar"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:textSize="14sp" />
+        </LinearLayout>
 
-    </LinearLayout>
-
-</ScrollView>
+    </ScrollView>
+</LinearLayout>

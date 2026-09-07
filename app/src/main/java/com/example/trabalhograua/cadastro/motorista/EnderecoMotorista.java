@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.cadastro.MascaraUtil;
 import com.example.trabalhograua.R;
+import com.example.trabalhograua.cadastro.motorista.documentos.ValidaCnhActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;

@@ -1,4 +1,4 @@
-package com.example.trabalhograua.cadastro.motorista;
+package com.example.trabalhograua.ui.motorista.veiculos;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.R;
+import com.example.trabalhograua.cadastro.motorista.documentos.StatusDocumentosVeiculoActivity;
 import com.example.trabalhograua.data.local.VaivanDatabase;
 import com.example.trabalhograua.data.local.entities.DocumentoEntity;
 import com.example.trabalhograua.data.local.entities.VeiculoEntity;
@@ -27,7 +28,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

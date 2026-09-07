@@ -1,4 +1,4 @@
-package com.example.trabalhograua.cadastro.motorista
+package com.example.trabalhograua.cadastro.motorista.documentos
 
 import android.os.Bundle
 import android.widget.TextView
@@ -24,7 +24,8 @@ class StatusDocumentosVeiculoActivity : AppCompatActivity() {
         chipCrlv = findViewById(R.id.chipStatusCrlv)
         chipAutorizacao = findViewById(R.id.chipStatusAutorizacao)
 
-        documentoRepository = DocumentoRepository(VaivanDatabase.getInstance(this).documentoDao())
+        documentoRepository =
+            DocumentoRepository(VaivanDatabase.Companion.getInstance(this).documentoDao())
 
         val veiculoId = intent.getStringExtra("veiculoId") ?: return
 

@@ -1,4 +1,4 @@
-package com.example.trabalhograua.cadastro.motorista
+package com.example.trabalhograua.cadastro.motorista.documentos
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

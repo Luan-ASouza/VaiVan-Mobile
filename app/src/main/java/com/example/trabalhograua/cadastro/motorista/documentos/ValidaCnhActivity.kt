@@ -1,15 +1,19 @@
-package com.example.trabalhograua.cadastro.motorista
+package com.example.trabalhograua.cadastro.motorista.documentos
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.semantics.text
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.trabalhograua.R
+import com.example.trabalhograua.ui.motorista.veiculos.CadastroVeiculoActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,13 +33,22 @@ class ValidaCnhActivity : AppCompatActivity() {
         uri?.let {
             uriFrente = it
             findViewById<TextView>(R.id.txtNomeArquivoFrente).text = "Frente selecionada"
+            findViewById<Button>(R.id.btnEnviarArquivoFrente).text = "Editar envio"
+            findViewById<Button>(R.id.btnEnviarArquivoFrente).setTextColor(
+                ContextCompat.getColor(this, R.color.white)
+            )
+            findViewById<Button>(R.id.btnEnviarArquivoFrente).background = getDrawable(R.drawable.btn_gray_filled)
         }
     }
 
     private val launcherVerso = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             uriVerso = it
-            findViewById<Button>(R.id.btnEnviarArquivoVerso).text = "Verso selecionado"
+            findViewById<TextView>(R.id.txtNomeArquivoVerso).text = "Verso selecionado"
+            findViewById<Button>(R.id.btnEnviarArquivoVerso).setTextColor(
+                ContextCompat.getColor(this, R.color.white)
+            )
+            findViewById<Button>(R.id.btnEnviarArquivoVerso).background = getDrawable(R.drawable.btn_gray_filled)
         }
     }
 
@@ -47,12 +60,37 @@ class ValidaCnhActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        val btnFrente = findViewById<Button>(R.id.btnEditarEnvioFrente)
+        val btnFrente = findViewById<Button>(R.id.btnEnviarArquivoFrente)
         val btnVerso = findViewById<Button>(R.id.btnEnviarArquivoVerso)
         val btnEnviarContinuar = findViewById<Button>(R.id.btnEnviarContinuarCnh)
+        val scrollView = findViewById<ScrollView>(
+            R.id.scrollValidacaoEmail
+        )
 
-        btnFrente.setOnClickListener { launcherFrente.launch("image/*") }
-        btnVerso.setOnClickListener { launcherVerso.launch("image/*") }
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView) { view, insets ->
+
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            view.setPadding(
+                view.paddingLeft,
+                bars.top,
+                view.paddingRight,
+                bars.bottom
+            )
+
+            insets
+        }
+
+        btnFrente.setOnClickListener {
+            launcherFrente.launch("image/*")
+        }
+        btnVerso.setOnClickListener {
+            launcherVerso.launch("image/*")
+            btnVerso.text = "Editar envio"
+            btnVerso.background = getDrawable(R.drawable.btn_gray_filled)
+        }
 
         btnEnviarContinuar.setOnClickListener {
             if (uriFrente != null && uriVerso != null) {

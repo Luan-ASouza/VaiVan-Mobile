@@ -6,7 +6,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.trabalhograua.cadastro.motorista.DadosDeAcessoMotorista
 import com.example.trabalhograua.R
-import com.example.trabalhograua.cadastro.motorista.ValidaCnhActivity
+import com.example.trabalhograua.cadastro.motorista.documentos.ValidaCnhActivity
 import com.example.trabalhograua.cadastro.responsavel.ui.DadosDeAcessoResponsavel
 import kotlin.jvm.java
 
