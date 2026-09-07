@@ -29,6 +29,7 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
 
     private lateinit var edtNome: EditText
     private lateinit var edtNascimento: EditText
+    private lateinit var layoutNecessidades: com.google.android.material.textfield.TextInputLayout
     private lateinit var edtNecessidades: EditText
     private lateinit var edtObservacoes: EditText
     private lateinit var btnSim: Button
@@ -50,6 +51,7 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
         edtNome = findViewById(R.id.edtNomePassageiro)
         edtNascimento = findViewById(R.id.edtNascimento)
         edtNecessidades = findViewById(R.id.edtNecessidades)
+        layoutNecessidades = findViewById(R.id.layoutNecessidades)
         edtObservacoes = findViewById(R.id.edtObservacoes)
         btnSim = findViewById(R.id.btnSimNecessidade)
         btnNao = findViewById(R.id.btnNaoNecessidade)
@@ -78,13 +80,13 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
         temNecessidadeEspecial = selecionado
 
         btnSim.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (selecionado) 0xFFF5B42D.toInt() else 0xFFB0B0B0.toInt()
+            if (selecionado) 0xFFF6B12F.toInt() else 0xFFAFAFAF.toInt()
         )
         btnNao.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (selecionado) 0xFFB0B0B0.toInt() else 0xFF707070.toInt()
+            if (selecionado) 0xFFAFAFAF.toInt() else 0xFFF6B12F.toInt()
         )
 
-        edtNecessidades.visibility = if (selecionado) {
+        layoutNecessidades.visibility = if (selecionado) {
             android.view.View.VISIBLE
         } else {
             edtNecessidades.setText("")

@@ -6,58 +6,98 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/beige"
-    app:cardCornerRadius="20dp">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="12dp">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/imgFotoPassageiroItem"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="2dp"
-            android:src="@drawable/filho1"
-            app:shapeAppearanceOverlay="@style/CircleImage"
-            app:strokeColor="@color/dark_gray"
-            app:strokeWidth="3dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/txtNomePassageiroItem"
-            android:layout_width="0dp"
+        <!-- Linha principal: toque para expandir/recolher os detalhes -->
+        <LinearLayout
+            android:id="@+id/linhaPrincipalItem"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/dark_gray"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/imgFotoPassageiroItem"
-            app:layout_constraintTop_toTopOf="@id/imgFotoPassageiroItem" />
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txtIdadePassageiroItem"
-            android:layout_width="wrap_content"
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgFotoPassageiroItem"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/filho1"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="@color/dark_gray"
+                app:strokeWidth="3dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtNomePassageiroItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtIdadePassageiroItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#707070" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/imgChevronItem"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Ver mais detalhes"
+                android:padding="8dp"
+                android:src="@drawable/icon_dropdown"
+                app:tint="@color/light_gray" />
+        </LinearLayout>
+
+        <!-- Detalhes (escondido por padrão, abre ao tocar na linha acima) -->
+        <LinearLayout
+            android:id="@+id/containerDetalhesItem"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#707070"
-            app:layout_constraintStart_toStartOf="@id/txtNomePassageiroItem"
-            app:layout_constraintTop_toBottomOf="@id/txtNomePassageiroItem" />
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="62dp"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <TextView
-            android:id="@+id/txtNecessidadePassageiroItem"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textColor="#F5B42D"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@id/txtNomePassageiroItem"
-            app:layout_constraintTop_toBottomOf="@id/txtIdadePassageiroItem" />
+            <TextView
+                android:id="@+id/txtNecessidadePassageiroItem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:textColor="@color/dark_gray"
+                android:textSize="12sp"
+                android:visibility="gone" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/txtObservacoesPassageiroItem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#707070"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </LinearLayout>
 </androidx.cardview.widget.CardView>

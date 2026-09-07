@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -88,9 +89,13 @@ class ListaPassageirosFragment : Fragment() {
         for (passageiro in passageiros) {
             val itemView = inflater.inflate(R.layout.item_passageiro, containerConfirmados, false)
 
+            val linhaPrincipal = itemView.findViewById<LinearLayout>(R.id.linhaPrincipalItem)
             val txtNome = itemView.findViewById<TextView>(R.id.txtNomePassageiroItem)
             val txtIdade = itemView.findViewById<TextView>(R.id.txtIdadePassageiroItem)
+            val imgChevron = itemView.findViewById<ImageView>(R.id.imgChevronItem)
+            val containerDetalhes = itemView.findViewById<LinearLayout>(R.id.containerDetalhesItem)
             val txtNecessidade = itemView.findViewById<TextView>(R.id.txtNecessidadePassageiroItem)
+            val txtObservacoes = itemView.findViewById<TextView>(R.id.txtObservacoesPassageiroItem)
 
             txtNome.text = passageiro.nome
 
@@ -106,6 +111,25 @@ class ListaPassageirosFragment : Fragment() {
                 }
             } else {
                 txtNecessidade.visibility = View.GONE
+            }
+
+            if (passageiro.observacoes.isNotBlank()) {
+                txtObservacoes.visibility = View.VISIBLE
+                txtObservacoes.text = "Observações: ${passageiro.observacoes}"
+            } else {
+                txtObservacoes.visibility = View.GONE
+            }
+
+            // Só mostra a setinha se tiver algum detalhe pra exibir
+            val temDetalhes = passageiro.necessidadesEspeciais || passageiro.observacoes.isNotBlank()
+            imgChevron.visibility = if (temDetalhes) View.VISIBLE else View.INVISIBLE
+
+            linhaPrincipal.setOnClickListener {
+                if (!temDetalhes) return@setOnClickListener
+
+                val vaiExpandir = containerDetalhes.visibility != View.VISIBLE
+                containerDetalhes.visibility = if (vaiExpandir) View.VISIBLE else View.GONE
+                imgChevron.animate().rotation(if (vaiExpandir) 180f else 0f).setDuration(150).start()
             }
 
             containerConfirmados.addView(itemView)

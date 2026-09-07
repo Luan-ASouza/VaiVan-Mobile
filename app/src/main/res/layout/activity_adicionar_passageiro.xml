@@ -1,170 +1,268 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:orientation="vertical"
+    android:background="@android:color/white">
 
-    <View
-        android:id="@+id/header"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:background="#F5B42D"
-        app:layout_constraintTop_toTopOf="parent"/>
-
-    <ImageView
-        android:id="@+id/btnVoltar"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginStart="16dp"
-        android:contentDescription="Botão voltar"
-        android:src="@android:drawable/ic_menu_revert"
-        app:layout_constraintBottom_toBottomOf="@id/header"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/header" />
-
-    <TextView
-        android:id="@+id/txtTitulo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Adicionar Passageiro"
-        android:textColor="@color/dark_gray"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@id/header"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/header"
-        tools:ignore="HardcodedText" />
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardBackgroundColor="#E5E0DA"
-        app:cardCornerRadius="30dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/orange"
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:gravity="center_horizontal"
+            android:background="@drawable/bg_white"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="24dp">
 
-            <ImageView
-                android:id="@+id/imgFotoNovoPassageiro"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginBottom="16dp"
-                android:background="@android:color/white"
-                android:contentDescription="Foto do passageiro"
-                android:padding="20dp"
-                android:src="@android:drawable/ic_menu_camera" />
-
-            <EditText
-                android:id="@+id/edtNomePassageiro"
+            <!-- CABEÇALHO: voltar + título -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginBottom="10dp"
-                android:background="@android:color/white"
-                android:hint="Nome Completo"
-                android:inputType="textPersonName"
-                android:autofillHints="name"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                tools:ignore="HardcodedText" />
-
-            <EditText
-                android:id="@+id/edtNascimento"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginBottom="10dp"
-                android:background="@android:color/white"
-                android:hint="Nascimento (DD/MM/AAAA)"
-                android:inputType="date"
-                android:autofillHints="birthDate"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Necessidades especiais?"
+                android:layout_marginBottom="20dp">
+
+                <ImageView
+                    android:id="@+id/btnVoltar"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:contentDescription="Voltar"
+                    android:src="@drawable/ic_arrowback"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/txtTitulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Novo Passageiro"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+            </FrameLayout>
+
+            <!-- FOTO (ilustrativa por enquanto — upload de foto é outra funcionalidade) -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgFotoNovoPassageiro"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:layout_marginBottom="20dp"
+                android:background="@color/background_card"
+                android:contentDescription="Foto do passageiro"
+                android:padding="24dp"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_menu_camera"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="@color/dark_gray"
+                app:strokeWidth="2dp" />
+
+            <!-- NOME -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nome completo"
                 android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtNomePassageiro"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="name"
+                    android:hint="Nome do seu filho(a)"
+                    android:inputType="textPersonName"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- NASCIMENTO -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Data de nascimento"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtNascimento"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="birthDateFull"
+                    android:hint="DD/MM/AAAA"
+                    android:inputType="number"
+                    android:minHeight="48dp"
+                    android:maxLength="10"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- NECESSIDADES ESPECIAIS -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Possui alguma necessidade especial?"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 tools:ignore="HardcodedText" />
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btnSimNecessidade"
-                    android:layout_width="70dp"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
-                    android:backgroundTint="#F5B42D"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_gray_filled"
                     android:text="Sim"
-                    android:textSize="12sp"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="20dp"
                     tools:ignore="HardcodedText" />
 
                 <Button
                     android:id="@+id/btnNaoNecessidade"
-                    android:layout_width="70dp"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
-                    android:layout_marginStart="5dp"
-                    android:backgroundTint="#707070"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_gray_filled"
                     android:text="Não"
-                    android:textSize="12sp"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="20dp"
                     tools:ignore="HardcodedText" />
             </LinearLayout>
 
-            <EditText
-                android:id="@+id/edtNecessidades"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutNecessidades"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:layout_marginTop="10dp"
-                android:background="@android:color/white"
-                android:gravity="top"
-                android:hint="Descreva as necessidades"
-                android:inputType="textMultiLine"
-                android:padding="10dp"
-                android:autofillHints="none"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_input_white"
+                android:visibility="gone"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtNecessidades"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="none"
+                    android:gravity="top"
+                    android:hint="Descreva a necessidade especial"
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- OBSERVAÇÕES -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Observações (opcional)"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 tools:ignore="HardcodedText" />
 
-            <EditText
-                android:id="@+id/edtObservacoes"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:layout_marginTop="10dp"
-                android:background="@android:color/white"
-                android:gravity="top"
-                android:hint="Observações"
-                android:inputType="textMultiLine"
-                android:padding="10dp"
-                android:autofillHints="none"
-                tools:ignore="HardcodedText" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtObservacoes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="none"
+                    android:gravity="top"
+                    android:hint="Ex: alergias, ponto de referência, etc."
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/btnSalvar"
                 android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="20dp"
-                android:backgroundTint="#F5B42D"
+                android:layout_height="48dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/btn_gray_filled"
                 android:text="Salvar"
-                android:textColor="@color/dark_gray"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
                 android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="12dp"
                 tools:ignore="HardcodedText" />
 
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</LinearLayout>
