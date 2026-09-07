@@ -20,7 +20,7 @@ class PerfilActivity : AppCompatActivity() {
         val btnResponsavel = findViewById<Button>(R.id.btnResponsavel)
 
         btnMotorista.setOnClickListener {
-            startActivity(Intent(this, ValidaCnhActivity::class.java))
+            startActivity(Intent(this, HomeMotoristaActivity::class.java))
         }
 
         // ALTERADO AQUI: Agora direciona para a sua tela de passageiros!

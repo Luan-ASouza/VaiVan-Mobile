@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -35,6 +38,26 @@ class ChatActivity : AppCompatActivity() {
         edtMensagem = findViewById(R.id.edtMensagem)
         btnEnviar = findViewById(R.id.btnEnviar)
         txtNomeContato = findViewById(R.id.txtNomeContato)
+
+        val LinearLayout = findViewById<LinearLayout>(
+            R.id.activity_chat
+        )
+
+        ViewCompat.setOnApplyWindowInsetsListener(LinearLayout) { view, insets ->
+
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            view.setPadding(
+                view.paddingLeft,
+                bars.top,
+                view.paddingRight,
+                bars.bottom
+            )
+
+            insets
+        }
 
         // Configura a lista (RecyclerView)
         recyclerMensagens.layoutManager = LinearLayoutManager(this)
