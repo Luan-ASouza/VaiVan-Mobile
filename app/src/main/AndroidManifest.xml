@@ -33,8 +33,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity> <!-- LOGIN E CADASTRO -->
-        <activity android:name=".cadastro.PerfilActivity" />
-        <activity android:name=".cadastro.TipoCadastroActivity" /> <!-- DADOS DE ACESSO -->
+        <activity android:name=".cadastro.EscolhaTipoPerfilActivity" />
         <activity android:name=".cadastro.responsavel.ui.DadosDeAcessoResponsavel" />
         <activity android:name=".cadastro.motorista.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
         <activity android:name=".cadastro.responsavel.ui.ValidacaoEmailResponsavel" />
