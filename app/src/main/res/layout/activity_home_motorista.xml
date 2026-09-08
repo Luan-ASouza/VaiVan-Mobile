@@ -1,76 +1,57 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/dark_gray"
-    android:padding="20dp">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/layoutContainerPrincipal"
+    <!-- Status bar gap -->
+    <View
+        android:id="@+id/topGap"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:background="@drawable/bg_white_rounded"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="30dp"
+        android:background="@color/dark_gray"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-        <ImageView
-            android:id="@+id/imgConstrucao"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginBottom="24dp"
-            android:src="@drawable/ic_construction"
-            app:tint="@color/dark_gray" />
-
-        <TextView
-            android:id="@+id/txtTituloDesenvolvimento"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Área de Motoristas"
-            android:textAlignment="center"
-            android:textColor="@color/dark_gray"
-            android:textSize="28sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtStatusDesenvolvimento"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Funcionalidade em desenvolvimento"
-            android:textAlignment="center"
-            android:textColor="@color/dark_gray"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtAvisoIlustrativo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Em breve você poderá gerenciar suas rotas e clientes."
-            android:textAlignment="center"
-            android:textColor="@color/dark_gray"
-            android:textSize="16sp" />
-
-    </LinearLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabChat"
-        android:layout_width="wrap_content"
+    <!-- Header -->
+    <include
+        android:id="@+id/header"
+        layout="@layout/motorista_header_layout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="24dp"
-        android:src="@drawable/ic_construction"
-        app:tint="@color/white"
-        app:backgroundTint="@color/orange"
+        app:layout_constraintTop_toBottomOf="@id/topGap"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Conteúdo -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Bottom -->
+    <include
+        android:id="@+id/bottomNavigation"
+        layout="@layout/bottom_navigation_motorista"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/bottomGap"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Navigation bar gap -->
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

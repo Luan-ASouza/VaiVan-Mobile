@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trabalhograua.cadastro.MascaraUtil;
 import com.example.trabalhograua.R;
-import com.example.trabalhograua.cadastro.motorista.documentos.ValidaCnhActivity;
+import com.example.trabalhograua.cadastro.motorista.documentos.EnvioCnhActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -425,7 +425,7 @@ public class EnderecoMotorista extends AppCompatActivity {
 
             Intent intent = new Intent(
                     EnderecoMotorista.this,
-                    ValidaCnhActivity.class
+                    EnvioCnhActivity.class
             );
 
             startActivity(intent);

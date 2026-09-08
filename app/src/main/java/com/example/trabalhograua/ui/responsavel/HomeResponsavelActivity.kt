@@ -2,7 +2,9 @@ package com.example.trabalhograua.ui.responsavel
 
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.core.view.ViewCompat
@@ -33,6 +35,8 @@ class HomeResponsavelActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
         setContentView(R.layout.activity_home_responsavel)
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
@@ -86,6 +90,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
         }
     }
 
+    //Abre o Fragment selecionado
     private fun abrirFragment(fragment: Fragment) {
         supportFragmentManager
             .beginTransaction()
@@ -93,6 +98,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
             .commit()
     }
 
+    //Aplica gaps em cima e embaixo de forma dinâmica
     fun applySystemBarGaps(root: View) {
         val topGap = root.findViewById<View>(R.id.topGap)
         val bottomGap = root.findViewById<View>(R.id.bottomGap)
