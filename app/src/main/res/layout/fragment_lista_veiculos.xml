@@ -1,14 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.motorista.veiculos.ListaVeiculosFragment">
+    android:background="#FFFFFF">
 
-    <!-- TODO: Update blank fragment layout -->
+    <!-- Título -->
+
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:id="@+id/labelVeiculos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Seus Veículos"
+        android:textColor="@color/dark_gray"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
 
-</FrameLayout>
+
+    <!-- Lista -->
+
+    <ScrollView
+        android:id="@+id/scrollVeiculos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toTopOf="@id/btnNovoVeiculo"
+        app:layout_constraintTop_toBottomOf="@id/labelVeiculos">
+
+        <LinearLayout
+            android:id="@+id/containerLista"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="16dp">
+
+            <!--
+                Os veículos são adicionados dinamicamente pelo
+                ListaVeiculosFragment.kt
+            -->
+
+            <LinearLayout
+                android:id="@+id/containerConfirmados"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+
+            <!-- Mensagem quando não existem veículos -->
+
+            <TextView
+                android:id="@+id/txtSemVeiculos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:text="Nenhum veículo cadastrado ainda."
+                android:textColor="#707070"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+    <!-- Botão Novo Veículo -->
+
+    <LinearLayout
+        android:id="@+id/btnNovoVeiculo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/bg_beige_round_20"
+        android:clickable="true"
+        android:elevation="4dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="15dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/txtNovoVeiculo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Novo Veículo"
+            android:textColor="@color/dark_gray"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/imgPlusVeiculo"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="Adicionar veículo"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_plus" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
