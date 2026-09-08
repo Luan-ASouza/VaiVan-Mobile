@@ -15,6 +15,12 @@
         android:theme="@style/Theme.TrabalhoGrauA"
         tools:targetApi="31">
         <activity
+            android:name=".cadastro.motorista.documentos.VerificacaoFacialActivity"
+            android:exported="false" />
+        <activity
+            android:name=".cadastro.motorista.documentos.EnvioComprovanteResidenciaActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.motorista.HomeMotoristaActivity"
             android:exported="false" />
         <activity
@@ -42,12 +48,11 @@
         <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
         <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
         <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
-        <activity android:name=".cadastro.motorista.documentos.ValidaCnhActivity" />
-        <!-- VEÍCULO -->
+        <activity android:name=".cadastro.motorista.documentos.EnvioCnhActivity" /> <!-- VEÍCULO -->
         <activity android:name=".ui.motorista.veiculos.CadastroVeiculoActivity" />
         <activity android:name=".cadastro.motorista.documentos.StatusDocumentosVeiculoActivity" />
         <activity android:name=".cadastro.motorista.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /><!-- PERFIL MOTORISTA -->
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /> <!-- PERFIL MOTORISTA -->
         <activity
             android:name=".chat.ChatActivity"
             android:exported="false" />
