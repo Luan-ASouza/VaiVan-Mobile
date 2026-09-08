@@ -16,12 +16,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.trabalhograua.R
-import com.example.trabalhograua.chat.ChatActivity
 import com.example.trabalhograua.data.local.VaivanDatabase
 import com.example.trabalhograua.data.repository.ResponsavelRepository
 import com.example.trabalhograua.ui.motorista.chat.ChatFragment
 import com.example.trabalhograua.ui.motorista.navigation.BottomNavigationControllerMotorista
 import com.example.trabalhograua.ui.motorista.navigation.NavigationItem
+import com.example.trabalhograua.ui.motorista.perfil.PerfilFragment
 import com.example.trabalhograua.ui.motorista.veiculos.ListaVeiculosFragment
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -83,7 +83,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
                 NavigationItem.VEICULOS -> abrirFragment(ListaVeiculosFragment())
                 NavigationItem.ROTAS -> abrirFragment(ListaVeiculosFragment())
                 NavigationItem.CHAT -> abrirFragment(ChatFragment())
-                NavigationItem.PERFIL -> abrirFragment(ListaVeiculosFragment())
+                NavigationItem.PERFIL -> abrirFragment(PerfilFragment())
             }
         }
     }
