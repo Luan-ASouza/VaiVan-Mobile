@@ -19,7 +19,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 
-class ValidaCnhActivity : AppCompatActivity() {
+class EnvioCnhActivity : AppCompatActivity() {
 
     private lateinit var storage: FirebaseStorage
     private lateinit var auth: FirebaseAuth
@@ -184,7 +184,7 @@ class ValidaCnhActivity : AppCompatActivity() {
         val dados = mapOf(
             "cnhFrenteUrl" to urlFrente,
             "cnhVersoUrl" to urlVerso,
-            "statusValidacao" to "pendente",
+            "statusValidacao" to "em_analise",
             "dataEnvio" to FieldValue.serverTimestamp()
         )
 
@@ -196,7 +196,7 @@ class ValidaCnhActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 Toast.makeText(this, "Documentos enviados com sucesso!", Toast.LENGTH_SHORT).show()
                 // Ir para a próxima tela
-                startActivity(Intent(this, CadastroVeiculoActivity::class.java))
+                VerificarProgressoDocumentos(this).verificar()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Erro ao salvar dados", Toast.LENGTH_SHORT).show()
