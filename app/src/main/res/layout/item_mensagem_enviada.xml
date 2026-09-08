@@ -20,7 +20,7 @@
         android:layout_weight="0"
         android:background="@drawable/bg_bolha_enviada"
         android:padding="10dp"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/black"
         android:textSize="15sp"
         android:maxWidth="260dp"
         tools:text="Oi! Gostaria de saber mais sobre o transporte." />

@@ -55,6 +55,7 @@
         <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /> <!-- PERFIL MOTORISTA -->
         <activity
             android:name=".chat.ChatActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
     </application>
 

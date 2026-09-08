@@ -14,7 +14,7 @@
         android:layout_weight="0"
         android:background="@drawable/bg_bolha_recebida"
         android:padding="10dp"
-        android:textColor="#000000"
+        android:textColor="@color/white"
         android:textSize="15sp"
         android:maxWidth="260dp"
         tools:text="Claro! Qual é a região de vocês?" />
