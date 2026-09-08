@@ -9,14 +9,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.trabalhograua.cadastro.PerfilActivity
-import com.example.trabalhograua.cadastro.TipoCadastroActivity
+import com.example.trabalhograua.cadastro.EscolhaTipoPerfilActivity
 import com.example.trabalhograua.cadastro.responsavel.ui.DadosDeAcessoResponsavel
-import com.example.trabalhograua.chat.ChatRepository
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import kotlin.jvm.java
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +21,16 @@ class MainActivity : AppCompatActivity() {
     private val authRepository = FirebaseAuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        val usuario = FirebaseAuth.getInstance().currentUser
+
+        if (usuario != null) {
+            // Usuário já está logado
+            // Vai direto para a tela principal
+            startActivity(Intent(this, EscolhaTipoPerfilActivity::class.java))
+            finish()
+        }
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -74,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                 senha,
                 onSuccess = {
                     Toast.makeText(this, "Login realizado com sucesso!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, PerfilActivity::class.java))
+                    startActivity(Intent(this, EscolhaTipoPerfilActivity::class.java))
                     finish()
                 },
                 onError = { erro ->
