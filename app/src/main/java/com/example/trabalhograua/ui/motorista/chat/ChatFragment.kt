@@ -12,7 +12,7 @@ import com.example.trabalhograua.chat.ChatActivity
 class ChatFragment : Fragment() {
 
     // UID do motorista de teste (Firebase Authentication)
-    private val UID_RESPONSAVEL_TESTE = "2ESSCaVomchf3R4K9jJ2yP6jbZw2"
+    private val UID_RESPONSAVEL_TESTE = "Fu1vTcd4J5QBzNnYoN6CzbuOhN72"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
