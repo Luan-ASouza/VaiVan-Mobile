@@ -125,7 +125,7 @@
                         android:id="@+id/btnEnviarArquivoComprovante"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:background="@drawable/bg_hollow_blackborder"
+                        android:background="@drawable/bg_hollow_darkgray"
                         app:backgroundTint="@null"
                         android:text="Selecionar Arquivo"
                         android:textAllCaps="false"

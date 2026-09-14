@@ -9,12 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.trabalhograua.R
+import com.example.trabalhograua.util.WindowInsetsUtil.aplicarInsets
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
@@ -48,71 +47,7 @@ class ChatActivity : AppCompatActivity() {
         txtNomeContato = findViewById(R.id.txtNomeContato)
         barraMensagem = findViewById(R.id.barraMensagem)
 
-        // --------------------------------------------------
-        // WINDOW INSETS
-        // --------------------------------------------------
-
-        ViewCompat.setOnApplyWindowInsetsListener(activityChat) { view, insets ->
-
-            val systemBars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars()
-            )
-
-            val ime = insets.getInsets(
-                WindowInsetsCompat.Type.ime()
-            )
-
-            val tecladoAberto = insets.isVisible(
-                WindowInsetsCompat.Type.ime()
-            )
-
-            /*
-             * Quando o teclado estiver aberto:
-             *
-             *     ime.bottom = altura do teclado
-             *
-             * Quando estiver fechado:
-             *
-             *     systemBars.bottom = barra de navegação
-             *
-             * Usamos o maior valor para garantir que
-             * a barra de mensagem nunca fique escondida.
-             */
-
-            val bottomInset = if (tecladoAberto) {
-                ime.bottom
-            } else {
-                systemBars.bottom
-            }
-
-            /*
-             * Mantém a barra superior abaixo da status bar.
-             */
-            view.setPadding(
-                view.paddingLeft,
-                systemBars.top,
-                view.paddingRight,
-                0
-            )
-
-            /*
-             * AQUI está o principal:
-             *
-             * adicionamos o espaço do teclado na parte
-             * inferior da Activity.
-             *
-             * Como a barra de mensagem está no final
-             * do LinearLayout, ela sobe junto.
-             */
-            view.setPadding(
-                view.paddingLeft,
-                systemBars.top,
-                view.paddingRight,
-                bottomInset
-            )
-
-            insets
-        }
+        aplicarInsets(activityChat)
 
         // --------------------------------------------------
         // RECYCLERVIEW

@@ -1,30 +1,25 @@
 package com.example.trabalhograua.ui.responsavel
 
 import android.os.Bundle
-import android.view.View
-import android.view.WindowManager
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-
 import com.example.trabalhograua.R
 import com.example.trabalhograua.data.local.VaivanDatabase
 import com.example.trabalhograua.data.repository.ResponsavelRepository
-import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment
-import com.example.trabalhograua.ui.responsavel.rotas.ListaRotasFragment
 import com.example.trabalhograua.ui.responsavel.chat.ChatFragment
-import com.example.trabalhograua.ui.responsavel.perfil.PerfilFragment
 import com.example.trabalhograua.ui.responsavel.navigation.BottomNavigationController
 import com.example.trabalhograua.ui.responsavel.navigation.NavigationItem
+import com.example.trabalhograua.ui.responsavel.passageiros.ListaPassageirosFragment
+import com.example.trabalhograua.ui.responsavel.perfil.PerfilFragment
+import com.example.trabalhograua.ui.responsavel.rotas.ListaRotasFragment
+import com.example.trabalhograua.util.SystemBarUtils.applyTopAndBottomGaps
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -41,37 +36,91 @@ class HomeResponsavelActivity : AppCompatActivity() {
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
 
-        // CORREÇÃO: Usar o Singleton do banco de dados para evitar erro de esquema
+        // --------------------------------------------------
+        // DATABASE / REPOSITORY / VIEWMODEL
+        // --------------------------------------------------
+
         val database = VaivanDatabase.getInstance(this)
         val responsavelDao = database.responsavelDao()
         val repository = ResponsavelRepository(responsavelDao)
 
         val factory = object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>
+            ): T {
                 return ResponsavelViewModel(repository) as T
             }
         }
 
-        viewModel = ViewModelProvider(this, factory)[ResponsavelViewModel::class.java]
+        viewModel = ViewModelProvider(
+            this,
+            factory
+        )[ResponsavelViewModel::class.java]
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        // --------------------------------------------------
+        // USUÁRIO LOGADO
+        // --------------------------------------------------
+
+        val uid = FirebaseAuth
+            .getInstance()
+            .currentUser
+            ?.uid
 
         if (uid != null) {
+
+            // --------------------------------------------------
+            // FIREBASE → ROOM
+            // --------------------------------------------------
+            //
+            // Busca o perfil atualizado no Firestore
+            // e salva no Room.
+            //
+            viewModel.sincronizarPorId(uid)
+
+            // --------------------------------------------------
+            // ROOM → TELA
+            // --------------------------------------------------
+            //
+            // Observa o Room.
+            // Quando sincronizarPorId() salvar os dados,
+            // este Flow será atualizado automaticamente.
+            //
             lifecycleScope.launch {
+
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.observarPorId(uid).collect { responsavel ->
-                        if (responsavel != null) {
-                            txtNomeDoUsuario.text = responsavel.nome
+
+                    viewModel
+                        .observarPorId(uid)
+                        .collect { responsavel ->
+
+                            if (responsavel != null) {
+                                txtNomeDoUsuario.text = responsavel.nome
+                            }
                         }
-                    }
                 }
             }
         }
 
+        // --------------------------------------------------
+        // NAVEGAÇÃO
+        // --------------------------------------------------
+
         configurarBottomNavigation()
 
+        // --------------------------------------------------
+        // WINDOW INSETS
+        // --------------------------------------------------
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        applySystemBarGaps(findViewById(android.R.id.content))
+
+        applyTopAndBottomGaps(
+            findViewById(android.R.id.content)
+        )
+
+        // --------------------------------------------------
+        // FRAGMENT INICIAL
+        // --------------------------------------------------
 
         if (savedInstanceState == null) {
             abrirFragment(ListaPassageirosFragment())
@@ -79,36 +128,50 @@ class HomeResponsavelActivity : AppCompatActivity() {
     }
 
     private fun configurarBottomNavigation() {
-        bottomNavigation = BottomNavigationController(findViewById(R.id.bottomNavigation))
+
+        bottomNavigation = BottomNavigationController(
+            findViewById(R.id.bottomNavigation)
+        )
+
         bottomNavigation.setOnItemSelected { item ->
+
             when (item) {
-                NavigationItem.PASSAGEIROS -> abrirFragment(ListaPassageirosFragment())
-                NavigationItem.ROTAS -> abrirFragment(ListaRotasFragment())
-                NavigationItem.CHAT -> abrirFragment(ChatFragment())
-                NavigationItem.PERFIL -> abrirFragment(PerfilFragment())
+
+                NavigationItem.PASSAGEIROS ->
+                    abrirFragment(
+                        ListaPassageirosFragment()
+                    )
+
+                NavigationItem.ROTAS ->
+                    abrirFragment(
+                        ListaRotasFragment()
+                    )
+
+                NavigationItem.CHAT ->
+                    abrirFragment(
+                        ChatFragment()
+                    )
+
+                NavigationItem.PERFIL ->
+                    abrirFragment(
+                        PerfilFragment()
+                    )
             }
         }
     }
 
-    //Abre o Fragment selecionado
+    // --------------------------------------------------
+    // ABRIR FRAGMENT
+    // --------------------------------------------------
+
     private fun abrirFragment(fragment: Fragment) {
+
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
+            .replace(
+                R.id.fragmentContainer,
+                fragment
+            )
             .commit()
-    }
-
-    //Aplica gaps em cima e embaixo de forma dinâmica
-    fun applySystemBarGaps(root: View) {
-        val topGap = root.findViewById<View>(R.id.topGap)
-        val bottomGap = root.findViewById<View>(R.id.bottomGap)
-
-        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            topGap.updateLayoutParams { height = systemBars.top }
-            bottomGap.updateLayoutParams { height = systemBars.bottom }
-            insets
-        }
-        ViewCompat.requestApplyInsets(root)
     }
 }

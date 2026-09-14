@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,6 +8,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@android:color/white">
+
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -24,7 +30,7 @@
             android:paddingHorizontal="20dp"
             android:paddingVertical="24dp">
 
-            <!-- CABEÇALHO: voltar + título -->
+            <!-- CABEÇALHO -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -49,9 +55,10 @@
                     android:textSize="20sp"
                     android:textStyle="bold"
                     tools:ignore="HardcodedText" />
+
             </FrameLayout>
 
-            <!-- FOTO (ilustrativa por enquanto — upload de foto é outra funcionalidade) -->
+            <!-- FOTO -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgFotoNovoPassageiro"
                 android:layout_width="90dp"
@@ -99,6 +106,7 @@
                     android:textColorHint="@color/light_gray"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- NASCIMENTO -->
@@ -135,6 +143,7 @@
                     android:textColorHint="@color/light_gray"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- NECESSIDADES ESPECIAIS -->
@@ -183,6 +192,7 @@
                     app:backgroundTint="@null"
                     app:cornerRadius="20dp"
                     tools:ignore="HardcodedText" />
+
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -210,6 +220,7 @@
                     android:textColorHint="@color/light_gray"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- OBSERVAÇÕES -->
@@ -246,8 +257,64 @@
                     android:textColorHint="@color/light_gray"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- LOCAL DE EMBARQUE -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Local de embarque"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutLocal"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="Selecione um local">
+
+                <AutoCompleteTextView
+                    android:id="@+id/edtLocal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:cursorVisible="false"
+                    android:clickable="true"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="14sp"
+                    tools:ignore="TextFields" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ADICIONAR NOVO LOCAL -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdicionarNovoLocal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginTop="2dp"
+                android:paddingHorizontal="0dp"
+                android:text="+ Adicionar novo local"
+                android:textAllCaps="false"
+                android:textColor="@color/orange"
+                android:backgroundTint="@android:color/transparent"
+                app:backgroundTint="@android:color/transparent"
+                app:icon="@drawable/ic_adicionar_localizacao"
+                app:iconTint="@color/orange"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                tools:ignore="HardcodedText" />
+
+            <!-- SALVAR -->
             <Button
                 android:id="@+id/btnSalvar"
                 android:layout_width="match_parent"
@@ -263,6 +330,13 @@
                 app:cornerRadius="12dp"
                 tools:ignore="HardcodedText" />
 
+            <View
+                android:id="@+id/bottomGap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
         </LinearLayout>
+
     </ScrollView>
+
 </LinearLayout>

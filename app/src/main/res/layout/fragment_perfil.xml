@@ -178,7 +178,7 @@
                 app:layout_constraintStart_toStartOf="parent">
 
                 <TextView
-                    android:id="@+id/btnPagamentos"
+                    android:id="@+id/btnLocais"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
@@ -188,7 +188,7 @@
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     android:padding="10dp"
-                    android:text="Pagamentos"
+                    android:text="Locais"
 
                     android:textColor="@color/dark_gray"
                     android:textSize="16sp"

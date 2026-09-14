@@ -1,5 +1,6 @@
 package com.example.trabalhograua.ui.responsavel.perfil
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +15,8 @@ import com.example.trabalhograua.R
 import com.example.trabalhograua.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.trabalhograua.data.repository.ResponsavelRepository
 import com.example.trabalhograua.ui.responsavel.ResponsavelViewModel
+import com.example.trabalhograua.ui.responsavel.passageiros.AdicionarLocalActivity
+import com.example.trabalhograua.ui.responsavel.passageiros.AdicionarPassageiroActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -55,8 +58,13 @@ class PerfilFragment : Fragment() {
         val txtNome = view.findViewById<TextView>(R.id.txtNomeUsuarioCompleto)
         val txtNascimento = view.findViewById<TextView>(R.id.txtNascimento)
         val txtCPF = view.findViewById<TextView>(R.id.txtCPF)
+        val btnLocais = view.findViewById<TextView>(R.id.btnLocais)
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
+
+        btnLocais.setOnClickListener {
+            startActivity(Intent(requireContext(), AdicionarLocalActivity::class.java))
+        }
 
         if (uid != null) {
             // 6. Escutas o Flow normalmente

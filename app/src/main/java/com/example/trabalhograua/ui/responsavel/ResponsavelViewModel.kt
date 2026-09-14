@@ -11,34 +11,48 @@ class ResponsavelViewModel(
     private val repository: ResponsavelRepository
 ) : ViewModel() {
 
-    init {
-        // 1. Assim que o ViewModel é criado, ele ativa a escuta em tempo real do Firebase
-        repository.iniciarSincronizacao()
-    }
-
     /**
-     * 2. Esta função expõe o Flow do banco local (Room).
-     * O teu Fragment vai chamar esta função passando o UID do utilizador logado.
+     * Observa o perfil do responsável no Room.
+     *
+     * O Room é utilizado como cache local.
+     * Sempre que os dados forem atualizados no Room,
+     * a tela recebe automaticamente os novos valores.
      */
     fun observarPorId(id: String): Flow<ResponsavelEntity?> {
         return repository.observarPorId(id)
     }
 
     /**
-     * 3. Caso queiras dar a opção do utilizador apagar a conta ou perfil
+     * Sincroniza o perfil do usuário logado:
+     *
+     * Firebase/Firestore → Room
+     *
+     * Deve ser chamada utilizando o UID do usuário
+     * autenticado pelo FirebaseAuth.
      */
-    fun deletar(id: String) {
+    fun sincronizarPorId(id: String) {
         viewModelScope.launch {
-            repository.excluir(id)
+            try {
+                repository.sincronizarPorId(id)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     /**
-     * 4. O Android chama esta função automaticamente quando o utilizador sai da tela em definitivo.
-     * Aqui desligamos o Firebase de forma segura para não haver fugas de memória.
+     * Exclui o perfil do responsável.
+     *
+     * Remove tanto do Firestore quanto do Room,
+     * conforme definido no Repository.
      */
-    override fun onCleared() {
-        super.onCleared()
-        repository.pararSincronizacao()
+    fun deletar(id: String) {
+        viewModelScope.launch {
+            try {
+                repository.excluir(id)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }

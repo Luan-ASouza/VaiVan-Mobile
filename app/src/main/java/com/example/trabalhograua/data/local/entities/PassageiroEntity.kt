@@ -23,5 +23,6 @@ data class PassageiroEntity(
     val observacoes: String = "",
     val responsavelId: String? = null,
     val rotaId: String? = null,
-    val lastUpdated: Long = 0L
+    val lastUpdated: Long = 0L,
+    val localId: String? = null
 )

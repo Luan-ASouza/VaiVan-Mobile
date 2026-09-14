@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Login realizado com sucesso!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, EscolhaTipoPerfilActivity::class.java))
                     finish()
+
                 },
                 onError = { erro ->
                     Toast.makeText(this, erro.message ?: "Erro desconhecido ao entrar.", Toast.LENGTH_LONG).show()
