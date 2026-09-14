@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
-import com.example.trabalhograua.AcompanharViagemFragment
 import com.example.trabalhograua.R
 
 private const val ARG_PARAM1 = "param1"

@@ -11,14 +11,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider // Nativo do Android
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.trabalhograua.MainActivity
 import com.example.trabalhograua.R
 import com.example.trabalhograua.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.trabalhograua.data.repository.ResponsavelRepository
 import com.example.trabalhograua.ui.responsavel.ResponsavelViewModel
 import com.example.trabalhograua.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.example.trabalhograua.ui.responsavel.passageiros.AdicionarPassageiroActivity
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -59,6 +63,7 @@ class PerfilFragment : Fragment() {
         val txtNascimento = view.findViewById<TextView>(R.id.txtNascimento)
         val txtCPF = view.findViewById<TextView>(R.id.txtCPF)
         val btnLocais = view.findViewById<TextView>(R.id.btnLocais)
+        val btnDesconectar = view.findViewById<MaterialButton>(R.id.btnDesconectar)
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -66,24 +71,46 @@ class PerfilFragment : Fragment() {
             startActivity(Intent(requireContext(), AdicionarLocalActivity::class.java))
         }
 
-        if (uid != null) {
-            // 6. Escutas o Flow normalmente
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.observarPorId(uid).collect { responsavel ->
-                        if (responsavel != null) {
-                            txtNome.text = responsavel.nome
-                            txtCPF.text = responsavel.cpf
+        btnDesconectar.setOnClickListener {
+            val database = VaivanDatabase.getInstance(requireContext())
 
-                            responsavel.dataNascimento?.let { timestamp ->
-                                val date = timestamp.toDate()
-                                val formato = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
-                                txtNascimento.text = formato.format(date)
+            viewLifecycleOwner.lifecycleScope.launch {
+
+                // Executa a limpeza do Room em uma thread de banco
+                withContext(Dispatchers.IO) {
+                    database.clearAllTables() }
+
+                // Desconecta do Firebase
+                FirebaseAuth.getInstance().signOut()
+
+                // Volta para o Login e remove a Home da pilha
+                val intent = Intent(requireContext(), MainActivity::class.java)
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                startActivity(intent)
+            }
+
+                if (uid != null) {
+                    // 6. Escutas o Flow normalmente
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                            viewModel.observarPorId(uid).collect { responsavel ->
+                                if (responsavel != null) {
+                                    txtNome.text = responsavel.nome
+                                    txtCPF.text = responsavel.cpf
+
+                                    responsavel.dataNascimento?.let { timestamp ->
+                                        val date = timestamp.toDate()
+                                        val formato = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
+                                        txtNascimento.text = formato.format(date)
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 }
