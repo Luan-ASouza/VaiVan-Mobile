@@ -14,14 +14,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_vaivan_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.TrabalhoGrauA"
+        android:theme="@style/Theme.VaiVan"
         tools:targetApi="31">
 
         <activity
-            android:name=".cadastro.motorista.documentos.VerificacaoFacialActivity"
+            android:name="com.example.vaivan.ui.motorista.cadastro.documentos.VerificacaoFacialActivity"
             android:exported="false" />
         <activity
-            android:name=".cadastro.motorista.documentos.EnvioComprovanteResidenciaActivity"
+            android:name="com.example.vaivan.ui.motorista.cadastro.documentos.EnvioComprovanteResidenciaActivity"
             android:exported="false" />
         <activity
             android:name=".ui.motorista.HomeMotoristaActivity"
@@ -34,7 +34,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA15teu0qEshSlBTOIT72UBTGpOojvUhmc" /> <!-- MAIN -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.inicio.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,19 +42,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity> <!-- LOGIN E CADASTRO -->
-        <activity android:name=".cadastro.EscolhaTipoPerfilActivity" />
-        <activity android:name=".cadastro.responsavel.ui.DadosDeAcessoResponsavel" />
-        <activity android:name=".cadastro.motorista.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
-        <activity android:name=".cadastro.responsavel.ui.ValidacaoEmailResponsavel" />
-        <activity android:name=".cadastro.motorista.ValidacaoEmailMotorista" /> <!-- INFORMAÇÕES -->
-        <activity android:name=".cadastro.responsavel.ui.InformacoesPessoaisResponsavel" />
-        <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
-        <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
-        <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
-        <activity android:name=".cadastro.motorista.documentos.EnvioCnhActivity" /> <!-- VEÍCULO -->
+        <activity android:name=".ui.inicio.EscolhaTipoPerfilActivity" />
+        <activity android:name=".ui.responsavel.cadastro.DadosDeAcessoResponsavel" />
+        <activity android:name=".ui.motorista.cadastro.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
+        <activity android:name=".ui.responsavel.cadastro.ValidacaoEmailResponsavel" />
+        <activity android:name=".ui.motorista.cadastro.ValidacaoEmailMotorista" /> <!-- INFORMAÇÕES -->
+        <activity android:name=".ui.responsavel.cadastro.InformacoesPessoaisResponsavel" />
+        <activity android:name=".ui.motorista.cadastro.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
+        <activity android:name=".ui.responsavel.cadastro.EnderecoResponsavel" />
+        <activity android:name=".ui.motorista.cadastro.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
+        <activity android:name="com.example.vaivan.ui.motorista.cadastro.documentos.EnvioCnhActivity" /> <!-- VEÍCULO -->
         <activity android:name=".ui.motorista.veiculos.CadastroVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.documentos.StatusDocumentosVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
+        <activity android:name="com.example.vaivan.ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity" />
+        <activity android:name="com.example.vaivan.ui.motorista.cadastro.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
         <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
         <activity android:name=".ui.responsavel.passageiros.AdicionarLocalActivity" />
         <activity android:name=".ui.responsavel.passageiros.SelecaoLocalizacaoActivity" />
