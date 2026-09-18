@@ -1,351 +1,586 @@
-package com.example.vaivan.ui.motorista.veiculos;
+package com.example.vaivan.ui.motorista.veiculos
 
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.OpenableColumns;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.provider.OpenableColumns
+import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import com.example.vaivan.R
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.local.entities.DocumentoEntity
+import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.data.repository.VeiculoRepository
+import com.example.vaivan.ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity
+import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.regex.Pattern
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+class CadastroVeiculoActivity : AppCompatActivity() {
 
-import com.example.vaivan.R;
-import com.example.vaivan.ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity;
-import com.example.vaivan.data.local.VaivanDatabase;
-import com.example.vaivan.data.local.entities.DocumentoEntity;
-import com.example.vaivan.data.local.entities.VeiculoEntity;
-import com.example.vaivan.data.repository.DocumentoRepository;
-import com.example.vaivan.data.repository.VeiculoRepository;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+    private lateinit var edtPlaca: TextInputEditText
+    private lateinit var edtMarca: TextInputEditText
+    private lateinit var edtModelo: TextInputEditText
+    private lateinit var edtAno: AutoCompleteTextView
+    private lateinit var edtCor: TextInputEditText
+    private lateinit var edtCapacidade: TextInputEditText
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
+    private lateinit var txtErroPlaca: TextView
+    private lateinit var txtErroMarca: TextView
+    private lateinit var txtErroModelo: TextView
+    private lateinit var txtErroAno: TextView
+    private lateinit var txtErroCor: TextView
+    private lateinit var txtErroCapacidade: TextView
 
-public class CadastroVeiculoActivity extends AppCompatActivity {
+    private lateinit var btnSelecionarCrlv: Button
+    private lateinit var btnSelecionarAutorizacao: Button
+    private lateinit var btnSalvar: Button
 
-    private TextInputEditText edtPlaca, edtMarca, edtModelo, edtCor, edtCapacidade;
-    private AutoCompleteTextView edtAno;
-    private TextView txtErroPlaca, txtErroMarca, txtErroModelo, txtErroAno, txtErroCor, txtErroCapacidade;
-    private Button btnSelecionarCrlv, btnSelecionarAutorizacao, btnSalvar;
-    private TextView txtNomeArquivoCrlv, txtNomeArquivoAutorizacao;
-    private ImageView iconCheckCrlv, iconCheckAutorizacao;
+    private lateinit var txtNomeArquivoCrlv: TextView
+    private lateinit var txtNomeArquivoAutorizacao: TextView
 
-    private VeiculoRepository veiculoRepository;
-    private DocumentoRepository documentoRepository;
+    private lateinit var iconCheckCrlv: ImageView
+    private lateinit var iconCheckAutorizacao: ImageView
 
-    private Uri uriCrlv;
-    private Uri uriAutorizacao;
+    private lateinit var veiculoRepository: VeiculoRepository
+    private lateinit var documentoRepository: DocumentoRepository
 
-    private static final Pattern REGEX_PLACA = Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$");
+    private var uriCrlv: Uri? = null
+    private var uriAutorizacao: Uri? = null
 
-    // --- Seletores de arquivo (aceitam imagem OU pdf) ---
-    private final ActivityResultLauncher<String[]> pickerCrlv =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri != null) {
-                    uriCrlv = uri;
-                    txtNomeArquivoCrlv.setText(nomeDoArquivo(uri));
-                    txtNomeArquivoCrlv.setTextColor(getColor(R.color.black));
-                    iconCheckCrlv.setVisibility(View.VISIBLE);
-                }
-            });
+    private val pickerCrlv =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let {
+                uriCrlv = it
 
-    private final ActivityResultLauncher<String[]> pickerAutorizacao =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri != null) {
-                    uriAutorizacao = uri;
-                    txtNomeArquivoAutorizacao.setText(nomeDoArquivo(uri));
-                    txtNomeArquivoAutorizacao.setTextColor(getColor(R.color.black));
-                    iconCheckAutorizacao.setVisibility(View.VISIBLE);
-                }
-            });
+                txtNomeArquivoCrlv.text = nomeDoArquivo(it)
+                txtNomeArquivoCrlv.setTextColor(
+                    getColor(R.color.black)
+                )
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cadastro_veiculo);
-
-        veiculoRepository = new VeiculoRepository(
-                VaivanDatabase.Companion.getInstance(this).veiculoDao(),
-                FirebaseFirestore.getInstance()
-        );
-        documentoRepository = new DocumentoRepository(
-                VaivanDatabase.Companion.getInstance(this).documentoDao(),
-                FirebaseFirestore.getInstance()
-        );
-
-        edtPlaca = findViewById(R.id.edtPlaca);
-        edtMarca = findViewById(R.id.edtMarca);
-        edtModelo = findViewById(R.id.edtModelo);
-        edtAno = findViewById(R.id.edtAno);
-        edtCor = findViewById(R.id.edtCor);
-        edtCapacidade = findViewById(R.id.edtCapacidade);
-
-        configurarSeletorAno();
-
-        txtErroPlaca = findViewById(R.id.txtErroPlaca);
-        txtErroMarca = findViewById(R.id.txtErroMarca);
-        txtErroModelo = findViewById(R.id.txtErroModelo);
-        txtErroAno = findViewById(R.id.txtErroAno);
-        txtErroCor = findViewById(R.id.txtErroCor);
-        txtErroCapacidade = findViewById(R.id.txtErroCapacidade);
-
-        txtErroPlaca.setVisibility(View.GONE);
-        txtErroMarca.setVisibility(View.GONE);
-        txtErroModelo.setVisibility(View.GONE);
-        txtErroAno.setVisibility(View.GONE);
-        txtErroCor.setVisibility(View.GONE);
-        txtErroCapacidade.setVisibility(View.GONE);
-
-        btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv);
-        btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao);
-        txtNomeArquivoCrlv = findViewById(R.id.txtNomeArquivoCrlv);
-        txtNomeArquivoAutorizacao = findViewById(R.id.txtNomeArquivoAutorizacao);
-        iconCheckCrlv = findViewById(R.id.iconCheckCrlv);
-        iconCheckAutorizacao = findViewById(R.id.iconCheckAutorizacao);
-
-        btnSelecionarCrlv.setOnClickListener(v ->
-                pickerCrlv.launch(new String[]{"image/*", "application/pdf"}));
-
-        btnSelecionarAutorizacao.setOnClickListener(v ->
-                pickerAutorizacao.launch(new String[]{"image/*", "application/pdf"}));
-
-        btnSalvar = findViewById(R.id.btnSalvarVeiculo);
-        btnSalvar.setOnClickListener(v -> validarESalvar());
-    }
-
-    private void configurarSeletorAno() {
-        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
-        int anoMaisRecente = anoAtual + 1;
-        int anoMaisAntigo = 1990;
-
-        List<String> anos = new ArrayList<>();
-        for (int ano = anoMaisRecente; ano >= anoMaisAntigo; ano--) {
-            anos.add(String.valueOf(ano));
-        }
-
-        ArrayAdapter<String> adapterAnos = new ArrayAdapter<>(
-                this, android.R.layout.simple_list_item_1, anos);
-        edtAno.setAdapter(adapterAnos);
-        edtAno.setOnClickListener(v -> edtAno.showDropDown());
-    }
-
-    private String nomeDoArquivo(Uri uri) {
-        String nome = "arquivo";
-        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
-            if (cursor != null) {
-                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (index != -1 && cursor.moveToFirst()) {
-                    nome = cursor.getString(index);
-                }
+                iconCheckCrlv.visibility = View.VISIBLE
             }
         }
-        return nome;
+
+    private val pickerAutorizacao =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let {
+                uriAutorizacao = it
+
+                txtNomeArquivoAutorizacao.text = nomeDoArquivo(it)
+                txtNomeArquivoAutorizacao.setTextColor(
+                    getColor(R.color.black)
+                )
+
+                iconCheckAutorizacao.visibility = View.VISIBLE
+            }
+        }
+
+    companion object {
+        private const val ANO_MINIMO = 1990
+        private const val LIMITE_CAPACIDADE = 40
+
+        private const val STATUS_VEICULO = "PENDENTE"
+        private const val STATUS_DOCUMENTO = "EM_ANALISE"
+
+        private const val TIPO_CRLV = "CRLV"
+        private const val TIPO_AUTORIZACAO =
+            "AUTORIZACAO_TRANSPORTE_ESCOLAR"
+
+        private val REGEX_PLACA =
+            Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$")
     }
 
-    private void validarESalvar() {
-        String placa = edtPlaca.getText() != null
-                ? edtPlaca.getText().toString().trim().toUpperCase().replace("-", "") : "";
-        String marca = edtMarca.getText() != null ? edtMarca.getText().toString().trim() : "";
-        String modelo = edtModelo.getText() != null ? edtModelo.getText().toString().trim() : "";
-        String anoTexto = edtAno.getText() != null ? edtAno.getText().toString().trim() : "";
-        String cor = edtCor.getText() != null ? edtCor.getText().toString().trim() : "";
-        String capacidadeTexto = edtCapacidade.getText() != null ? edtCapacidade.getText().toString().trim() : "";
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_cadastro_veiculo)
 
-        boolean valido = true;
+        configurarRepositories()
+        configurarViews()
+        configurarSeletorAno()
+        configurarListeners()
+        configurarErros()
+    }
+
+    private fun configurarRepositories() {
+
+        val database = VaivanDatabase.getInstance(this)
+        val firestore = FirebaseFirestore.getInstance()
+
+        veiculoRepository = VeiculoRepository(
+            database.veiculoDao(),
+            firestore
+        )
+
+        documentoRepository = DocumentoRepository(
+            database.documentoDao(),
+            firestore
+        )
+    }
+
+    private fun configurarViews() {
+
+        edtPlaca = findViewById(R.id.edtPlaca)
+        edtMarca = findViewById(R.id.edtMarca)
+        edtModelo = findViewById(R.id.edtModelo)
+        edtAno = findViewById(R.id.edtAno)
+        edtCor = findViewById(R.id.edtCor)
+        edtCapacidade = findViewById(R.id.edtCapacidade)
+
+        txtErroPlaca = findViewById(R.id.txtErroPlaca)
+        txtErroMarca = findViewById(R.id.txtErroMarca)
+        txtErroModelo = findViewById(R.id.txtErroModelo)
+        txtErroAno = findViewById(R.id.txtErroAno)
+        txtErroCor = findViewById(R.id.txtErroCor)
+        txtErroCapacidade = findViewById(R.id.txtErroCapacidade)
+
+        btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv)
+        btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao)
+        btnSalvar = findViewById(R.id.btnSalvarVeiculo)
+
+        txtNomeArquivoCrlv =
+            findViewById(R.id.txtNomeArquivoCrlv)
+
+        txtNomeArquivoAutorizacao =
+            findViewById(R.id.txtNomeArquivoAutorizacao)
+
+        iconCheckCrlv =
+            findViewById(R.id.iconCheckCrlv)
+
+        iconCheckAutorizacao =
+            findViewById(R.id.iconCheckAutorizacao)
+    }
+
+    private fun configurarListeners() {
+
+        btnSelecionarCrlv.setOnClickListener {
+            pickerCrlv.launch(
+                arrayOf(
+                    "image/*",
+                    "application/pdf"
+                )
+            )
+        }
+
+        btnSelecionarAutorizacao.setOnClickListener {
+            pickerAutorizacao.launch(
+                arrayOf(
+                    "image/*",
+                    "application/pdf"
+                )
+            )
+        }
+
+        btnSalvar.setOnClickListener {
+            validarESalvar()
+        }
+    }
+
+    private fun configurarErros() {
+
+        listOf(
+            txtErroPlaca,
+            txtErroMarca,
+            txtErroModelo,
+            txtErroAno,
+            txtErroCor,
+            txtErroCapacidade
+        ).forEach {
+            it.visibility = View.GONE
+        }
+    }
+
+    private fun configurarSeletorAno() {
+
+        val anoAtual = Calendar.getInstance()
+            .get(Calendar.YEAR)
+
+        val anos = (anoAtual + 1 downTo ANO_MINIMO)
+            .map { it.toString() }
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            anos
+        )
+
+        edtAno.setAdapter(adapter)
+
+        edtAno.setOnClickListener {
+            edtAno.showDropDown()
+        }
+    }
+
+    private fun nomeDoArquivo(uri: Uri): String {
+
+        var nome = "arquivo"
+
+        try {
+            contentResolver.query(
+                uri,
+                null,
+                null,
+                null,
+                null
+            )?.use { cursor ->
+
+                val index = cursor.getColumnIndex(
+                    OpenableColumns.DISPLAY_NAME
+                )
+
+                if (
+                    index != -1 &&
+                    cursor.moveToFirst()
+                ) {
+                    nome = cursor.getString(index)
+                }
+            }
+        } catch (_: Exception) {
+            // Mantém "arquivo" como nome padrão.
+        }
+
+        return nome
+    }
+
+    private fun validarESalvar() {
+
+        val placa = obterTexto(edtPlaca)
+            .uppercase(Locale.getDefault())
+            .replace("-", "")
+
+        val marca = obterTexto(edtMarca)
+        val modelo = obterTexto(edtModelo)
+        val anoTexto = obterTexto(edtAno)
+        val cor = obterTexto(edtCor)
+        val capacidadeTexto = obterTexto(edtCapacidade)
+
+        var valido = true
 
         if (!REGEX_PLACA.matcher(placa).matches()) {
-            txtErroPlaca.setVisibility(View.VISIBLE);
-            valido = false;
+            txtErroPlaca.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroPlaca.setVisibility(View.GONE);
+            txtErroPlaca.visibility = View.GONE
         }
 
-        if (marca.length() < 2) {
-            txtErroMarca.setVisibility(View.VISIBLE);
-            valido = false;
+        if (marca.length < 2) {
+            txtErroMarca.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroMarca.setVisibility(View.GONE);
+            txtErroMarca.visibility = View.GONE
         }
 
-        if (modelo.length() < 2) {
-            txtErroModelo.setVisibility(View.VISIBLE);
-            valido = false;
+        if (modelo.length < 2) {
+            txtErroModelo.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroModelo.setVisibility(View.GONE);
+            txtErroModelo.visibility = View.GONE
         }
 
-        int ano = -1;
-        try {
-            ano = Integer.parseInt(anoTexto);
-        } catch (NumberFormatException ignored) {}
-        int anoAtual = Calendar.getInstance().get(Calendar.YEAR);
-        if (ano < 1990 || ano > anoAtual + 1) {
-            txtErroAno.setVisibility(View.VISIBLE);
-            valido = false;
+        val ano = anoTexto.toIntOrNull() ?: -1
+
+        val anoAtual = Calendar.getInstance()
+            .get(Calendar.YEAR)
+
+        if (ano !in ANO_MINIMO..anoAtual + 1) {
+            txtErroAno.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroAno.setVisibility(View.GONE);
+            txtErroAno.visibility = View.GONE
         }
 
-        if (cor.length() < 2) {
-            txtErroCor.setVisibility(View.VISIBLE);
-            valido = false;
+        if (cor.length < 2) {
+            txtErroCor.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroCor.setVisibility(View.GONE);
+            txtErroCor.visibility = View.GONE
         }
 
-        int capacidade = -1;
-        try {
-            capacidade = Integer.parseInt(capacidadeTexto);
-        } catch (NumberFormatException ignored) {}
-        if (capacidade <= 0 || capacidade > 40) {
-            txtErroCapacidade.setVisibility(View.VISIBLE);
-            valido = false;
+        val capacidade = capacidadeTexto.toIntOrNull() ?: -1
+
+        if (capacidade !in 1..LIMITE_CAPACIDADE) {
+            txtErroCapacidade.visibility = View.VISIBLE
+            valido = false
         } else {
-            txtErroCapacidade.setVisibility(View.GONE);
+            txtErroCapacidade.visibility = View.GONE
         }
 
-        if (!valido) return;
+        if (!valido) return
 
-        if (uriCrlv == null) {
-            Toast.makeText(this, "Selecione o arquivo do CRLV", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (uriAutorizacao == null) {
-            Toast.makeText(this, "Selecione o documento de autorização", Toast.LENGTH_SHORT).show();
-            return;
+        val crlv = uriCrlv
+
+        if (crlv == null) {
+            Toast.makeText(
+                this,
+                "Selecione o arquivo do CRLV",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
         }
 
-        String motoristaId = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        val autorizacao = uriAutorizacao
+
+        if (autorizacao == null) {
+            Toast.makeText(
+                this,
+                "Selecione o documento de autorização",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        val motoristaId = FirebaseAuth
+            .getInstance()
+            .currentUser
+            ?.uid
 
         if (motoristaId == null) {
-            Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show();
-            return;
+            Toast.makeText(
+                this,
+                "Sessão expirada. Faça login novamente.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
         }
 
-        btnSalvar.setEnabled(false);
-        btnSalvar.setText("Salvando...");
+        btnSalvar.isEnabled = false
+        btnSalvar.text = "Salvando..."
 
-        VeiculoEntity veiculo = new VeiculoEntity(
-                "",             // id
-                placa,
-                marca,
-                modelo,
-                cor,
-                ano,
-                capacidade,
-                "PENDENTE",     // status inicial do veículo recém-cadastrado
-                motoristaId,
-                0L              // lastUpdated
-        );
-
-        final String motoristaIdFinal = motoristaId;
+        val veiculo = VeiculoEntity(
+            "",
+            placa,
+            marca,
+            modelo,
+            cor,
+            ano,
+            capacidade,
+            STATUS_VEICULO,
+            motoristaId,
+            0L
+        )
 
         veiculoRepository.salvarAsync(
-                veiculo,
-                veiculoId -> {
-                    enviarCrlv(veiculoId, motoristaIdFinal);
-                    return null;
-                },
-                erro -> {
-                    btnSalvar.setEnabled(true);
-                    btnSalvar.setText("Salvar e continuar");
-                    Toast.makeText(this, "Erro ao salvar veículo: " + erro.getMessage(), Toast.LENGTH_LONG).show();
-                    return null;
-                }
-        );
+            veiculo,
+            { veiculoId ->
+                enviarCrlv(
+                    veiculoId,
+                    motoristaId,
+                    crlv
+                )
+                null
+            },
+            { erro ->
+                restaurarBotao()
+
+                Toast.makeText(
+                    this,
+                    "Erro ao salvar veículo: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                null
+            }
+        )
     }
 
-    private void enviarCrlv(String veiculoId, String motoristaId) {
-        StorageReference ref = FirebaseStorage.getInstance().getReference()
-                .child("documentos_veiculos/" + veiculoId + "/crlv_" + System.currentTimeMillis());
-
-        ref.putFile(uriCrlv)
-                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
-                        .addOnSuccessListener(url -> salvarDocumento(
-                                veiculoId, motoristaId, "CRLV", url.toString(),
-                                idIgnorado -> enviarAutorizacao(veiculoId, motoristaId)
-                        ))
-                        .addOnFailureListener(this::tratarErroUpload))
-                .addOnFailureListener(this::tratarErroUpload);
+    private fun obterTexto(
+        view: TextInputEditText
+    ): String {
+        return view.text
+            ?.toString()
+            ?.trim()
+            .orEmpty()
     }
 
-    private void enviarAutorizacao(String veiculoId, String motoristaId) {
-        StorageReference ref = FirebaseStorage.getInstance().getReference()
-                .child("documentos_veiculos/" + veiculoId + "/autorizacao_" + System.currentTimeMillis());
-
-        ref.putFile(uriAutorizacao)
-                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
-                        .addOnSuccessListener(url -> salvarDocumento(
-                                veiculoId, motoristaId, "AUTORIZACAO_TRANSPORTE_ESCOLAR", url.toString(),
-                                this::finalizarCadastro
-                        ))
-                        .addOnFailureListener(this::tratarErroUpload))
-                .addOnFailureListener(this::tratarErroUpload);
+    private fun obterTexto(
+        view: AutoCompleteTextView
+    ): String {
+        return view.text
+            ?.toString()
+            ?.trim()
+            .orEmpty()
     }
 
-    // Interface simples só pra representar "o que fazer depois de salvar o documento"
-    private interface AoSalvar {
-        void executar(String veiculoId);
+    private fun enviarCrlv(
+        veiculoId: String,
+        motoristaId: String,
+        uri: Uri
+    ) {
+
+        val referencia = FirebaseStorage
+            .getInstance()
+            .reference
+            .child(
+                "documentos_veiculos/" +
+                        "$veiculoId/crlv_${System.currentTimeMillis()}"
+            )
+
+        enviarArquivo(
+            referencia,
+            uri,
+            onSucesso = { url ->
+                salvarDocumento(
+                    veiculoId = veiculoId,
+                    motoristaId = motoristaId,
+                    tipo = TIPO_CRLV,
+                    url = url,
+                    aoSalvar = {
+                        enviarAutorizacao(
+                            veiculoId,
+                            motoristaId,
+                            uriAutorizacao ?: return@salvarDocumento
+                        )
+                    }
+                )
+            }
+        )
     }
 
-    private void salvarDocumento(String veiculoId, String motoristaId, String tipo, String url, AoSalvar aoSalvar) {
-        DocumentoEntity documento = new DocumentoEntity(
-                "",
-                tipo,
-                url,
-                new SimpleDateFormat("dd/MM/yyyy", new Locale("pt", "BR")).format(new Date()),
-                "EM_ANALISE",
-                motoristaId,
-                veiculoId,
-                0L
-        );
+    private fun enviarAutorizacao(
+        veiculoId: String,
+        motoristaId: String,
+        uri: Uri
+    ) {
+
+        val referencia = FirebaseStorage
+            .getInstance()
+            .reference
+            .child(
+                "documentos_veiculos/" +
+                        "$veiculoId/autorizacao_${System.currentTimeMillis()}"
+            )
+
+        enviarArquivo(
+            referencia,
+            uri,
+            onSucesso = { url ->
+                salvarDocumento(
+                    veiculoId = veiculoId,
+                    motoristaId = motoristaId,
+                    tipo = TIPO_AUTORIZACAO,
+                    url = url,
+                    aoSalvar = {
+                        finalizarCadastro(veiculoId)
+                    }
+                )
+            }
+        )
+    }
+
+    private fun enviarArquivo(
+        referencia: StorageReference,
+        uri: Uri,
+        onSucesso: (String) -> Unit
+    ) {
+
+        referencia
+            .putFile(uri)
+            .addOnSuccessListener {
+                referencia
+                    .downloadUrl
+                    .addOnSuccessListener { url ->
+                        onSucesso(url.toString())
+                    }
+                    .addOnFailureListener(::tratarErroUpload)
+            }
+            .addOnFailureListener(::tratarErroUpload)
+    }
+
+    private fun salvarDocumento(
+        veiculoId: String,
+        motoristaId: String,
+        tipo: String,
+        url: String,
+        aoSalvar: () -> Unit
+    ) {
+
+        val data = SimpleDateFormat(
+            "dd/MM/yyyy",
+            Locale("pt", "BR")
+        ).format(Date())
+
+        val documento = DocumentoEntity(
+            "",
+            tipo,
+            url,
+            data,
+            STATUS_DOCUMENTO,
+            motoristaId,
+            veiculoId,
+            0L
+        )
 
         documentoRepository.salvarAsync(
-                documento,
-                () -> {
-                    aoSalvar.executar(veiculoId);
-                    return null;
-                },
-                erro -> {
-                    btnSalvar.setEnabled(true);
-                    btnSalvar.setText("Salvar e continuar");
-                    Toast.makeText(this, "Erro ao salvar documento: " + erro.getMessage(), Toast.LENGTH_LONG).show();
-                    return null;
-                }
-        );
+            documento,
+            {
+                aoSalvar()
+                null
+            },
+            { erro ->
+                restaurarBotao()
+
+                Toast.makeText(
+                    this,
+                    "Erro ao salvar documento: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                null
+            }
+        )
     }
 
-    private void finalizarCadastro(String veiculoId) {
-        Toast.makeText(this, "Veículo e documentos enviados!", Toast.LENGTH_SHORT).show();
+    private fun finalizarCadastro(veiculoId: String) {
 
-        Intent intent = new Intent(this, StatusDocumentosVeiculoActivity.class);
-        intent.putExtra("veiculoId", veiculoId);
-        startActivity(intent);
-        finish();
+        Toast.makeText(
+            this,
+            "Veículo e documentos enviados!",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        startActivity(
+            Intent(
+                this,
+                StatusDocumentosVeiculoActivity::class.java
+            ).apply {
+                putExtra("veiculoId", veiculoId)
+            }
+        )
+
+        finish()
     }
 
-    private void tratarErroUpload(@NonNull Exception e) {
-        btnSalvar.setEnabled(true);
-        btnSalvar.setText("Salvar e continuar");
-        Toast.makeText(this, "Erro ao enviar documento: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    private fun restaurarBotao() {
+        btnSalvar.isEnabled = true
+        btnSalvar.text = "Salvar e continuar"
+    }
+
+    private fun tratarErroUpload(erro: Exception) {
+
+        restaurarBotao()
+
+        Toast.makeText(
+            this,
+            "Erro ao enviar documento: ${erro.message}",
+            Toast.LENGTH_LONG
+        ).show()
     }
 }

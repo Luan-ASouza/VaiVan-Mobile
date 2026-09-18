@@ -11,8 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.vaivan.R
 import com.example.vaivan.chat.ChatActivity
 import com.example.vaivan.data.repository.FirebaseAuthRepository
-import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
-import com.example.vaivan.ui.responsavel.cadastro.DadosDeAcessoResponsavel
+import com.example.vaivan.ui.inicio.cadastro.CadastroCredenciaisActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 
@@ -115,7 +114,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Ir para a tela de Cadastro
         btnCadastrar.setOnClickListener {
-            startActivity(Intent(this, DadosDeAcessoResponsavel::class.java))
+            startActivity(Intent(this, CadastroCredenciaisActivity::class.java))
         }
 
         // ===== BOTÃO TEMPORÁRIO — testar tela de chat (remover depois) =====

@@ -2,7 +2,6 @@ package com.example.vaivan.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.google.firebase.Timestamp
 
 @Entity(tableName = "usuarios")
 data class UsuarioEntity(
@@ -14,7 +13,7 @@ data class UsuarioEntity(
     val cpf: String = "",
     val email: String = "",
     val telefone: String = "",
-    val dataNascimento: Timestamp? = null,
+    val dataNascimento: String? = null,
 
     val cep: String = "",
     val estado: String = "",

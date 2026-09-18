@@ -1,4 +1,4 @@
-package com.example.vaivan.ui.responsavel.cadastro
+package com.example.vaivan.ui.inicio.cadastro
 
 import android.content.Intent
 import android.os.Bundle
@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.cadastro.CadastroSession
 import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
 import com.example.vaivan.data.local.VaivanDatabase
@@ -22,7 +21,6 @@ import com.example.vaivan.data.repository.FirebaseAuthRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.Timestamp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,7 +30,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-class EnderecoResponsavel : AppCompatActivity() {
+class CadastroEnderecoActivity : AppCompatActivity() {
 
     // CAMPOS
     private lateinit var edtCEP: TextInputEditText
@@ -264,7 +262,7 @@ class EnderecoResponsavel : AppCompatActivity() {
     }
 
     private fun salvarUsuarioAuth() {
-        val cadastro = CadastroSession.cadastroResponsavel
+        val cadastro = CadastroSession.cadastroUsuario
         val authRepository = FirebaseAuthRepository()
 
         btnContinuar.isEnabled = false
@@ -293,7 +291,7 @@ class EnderecoResponsavel : AppCompatActivity() {
         complemento: String,
         numero: String
     ) {
-        val cadastro = CadastroSession.cadastroResponsavel
+        val cadastro = CadastroSession.cadastroUsuario
         cadastro.endereco.apply {
             this.cep = cep
             this.cidade = cidade
@@ -306,8 +304,7 @@ class EnderecoResponsavel : AppCompatActivity() {
     }
 
     private fun persistirFirestore(uid: String) {
-        val cadastro = CadastroSession.cadastroResponsavel
-        val timestampDataNascimento = cadastro.dataNascimento?.let { Timestamp(it) }
+        val cadastro = CadastroSession.cadastroUsuario
 
         val entity = UsuarioEntity(
             id = uid,
@@ -315,7 +312,7 @@ class EnderecoResponsavel : AppCompatActivity() {
             cpf = cadastro.cpf,
             email = cadastro.email,
             telefone = cadastro.telefone,
-            dataNascimento = timestampDataNascimento,
+            dataNascimento = cadastro.dataNascimento,
             cep = cadastro.endereco.cep,
             estado = cadastro.endereco.estado,
             cidade = cadastro.endereco.cidade,
@@ -332,7 +329,7 @@ class EnderecoResponsavel : AppCompatActivity() {
             entity,
             onSuccess = {
                 Toast.makeText(
-                    this@EnderecoResponsavel,
+                    this@CadastroEnderecoActivity,
                     "Cadastro realizado com sucesso!",
                     Toast.LENGTH_SHORT
                 ).show()

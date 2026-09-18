@@ -1,8 +1,8 @@
-package com.example.vaivan.ui.responsavel.cadastro
+package com.example.vaivan.ui.inicio.cadastro
 
 import java.util.Date
 
-data class CadastroResponsavel(
+data class CadastroUsuario(
 
     var nome: String = "",
 
@@ -14,7 +14,7 @@ data class CadastroResponsavel(
 
     var cpf: String = "",
 
-    var dataNascimento: Date? = null,
+    var dataNascimento: String = "",
 
     var endereco: Endereco = Endereco()
 
