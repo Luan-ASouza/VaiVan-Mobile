@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/beige">
+
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnVoltar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrowback"
+            app:tint="@color/black" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Nova Rota"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- NOME -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nome da rota"
+                android:textColor="@color/dark_gray"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <EditText
+                android:id="@+id/edtNomeRota"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:background="@android:color/white"
+                android:hint="Ex: La Salle Carmo - Manhã"
+                android:paddingHorizontal="12dp"
+                tools:ignore="HardcodedText,Autofill" />
+
+            <!-- ORIGEM -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/background_card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ponto de partida"
+                        android:textColor="@color/dark_gray"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/txtOrigemAtual"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Não definido"
+                        android:textColor="#707070"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
+
+                    <Button
+                        android:id="@+id/btnDefinirOrigem"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/btn_gray_filled"
+                        android:text="Definir no mapa"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- DESTINO -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/background_card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Destino (escola)"
+                        android:textColor="@color/dark_gray"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/txtDestinoAtual"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Não definido"
+                        android:textColor="#707070"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
+
+                    <Button
+                        android:id="@+id/btnDefinirDestino"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/btn_gray_filled"
+                        android:text="Definir no mapa"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- TURNO -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Turno"
+                android:textColor="@color/dark_gray"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnManha"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Manhã"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
+
+                <Button
+                    android:id="@+id/btnTarde"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Tarde"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
+
+                <Button
+                    android:id="@+id/btnNoite"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Noite"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+            <!-- DIAS DA SEMANA -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dias da semana"
+                android:textColor="@color/dark_gray"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:columnCount="4">
+
+                <Button android:id="@+id/btnSeg" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Seg" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnTer" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Ter" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnQua" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Qua" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnQui" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Qui" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnSex" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Sex" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnSab" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Sáb" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+                <Button android:id="@+id/btnDom" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Dom" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
+            </GridLayout>
+
+            <!-- CAPACIDADE -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Capacidade (nº de vagas)"
+                android:textColor="@color/dark_gray"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <EditText
+                android:id="@+id/edtCapacidade"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp"
+                android:background="@android:color/white"
+                android:hint="Ex: 15"
+                android:inputType="number"
+                android:paddingHorizontal="12dp"
+                tools:ignore="HardcodedText,Autofill" />
+
+            <Button
+                android:id="@+id/btnCriarRota"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_button_green"
+                android:text="Criar rota"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

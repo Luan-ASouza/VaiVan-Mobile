@@ -80,7 +80,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelected { item ->
             when (item) {
                 NavigationItem.VEICULOS -> abrirFragment(ListaVeiculosFragment())
-                NavigationItem.ROTAS -> abrirFragment(ListaVeiculosFragment())
+                NavigationItem.ROTAS -> abrirFragment(com.example.vaivan.ui.motorista.rotas.MinhasRotasFragment())
                 NavigationItem.CHAT -> abrirFragment(ChatFragment())
                 NavigationItem.PERFIL -> abrirFragment(PerfilFragment())
             }

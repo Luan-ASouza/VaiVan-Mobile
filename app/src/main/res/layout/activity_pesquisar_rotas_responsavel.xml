@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -128,7 +129,34 @@
                             android:textColor="@color/dark_gray"
                             android:textSize="12sp"/>
                     </LinearLayout>
+                    <Button
+                        android:id="@+id/btnPesquisarRotas"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/btn_gray_filled"
+                        android:text="Pesquisar"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        tools:ignore="HardcodedText" />
 
+                    <LinearLayout
+                        android:id="@+id/containerResultadosRotas"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/txtSemResultados"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:text="Nenhuma rota encontrada."
+                        android:textColor="#707070"
+                        android:visibility="gone"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
 
                 <!-- EMBARQUE -->

@@ -22,6 +22,7 @@ data class PassageiroEntity(
     val descricaoNecessidades: String = "",
     val observacoes: String = "",
     val responsavelId: String? = null,
+    val motoristaId: String? = null,
     val rotaId: String? = null,
     val lastUpdated: Long = 0L,
     val localId: String? = null

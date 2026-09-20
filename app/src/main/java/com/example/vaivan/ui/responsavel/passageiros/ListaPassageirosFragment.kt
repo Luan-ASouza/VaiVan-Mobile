@@ -19,6 +19,7 @@ import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.core.util.DataUtil
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import android.widget.Button
 
 /**
  * Tela "Seus Passageiros": lista os filhos (menores de idade) já
@@ -133,6 +134,13 @@ class ListaPassageirosFragment : Fragment() {
             }
 
             containerConfirmados.addView(itemView)
+            itemView.findViewById<Button>(R.id.btnBuscarRotaItem).setOnClickListener {
+                val intent = Intent(requireContext(), com.example.vaivan.ui.responsavel.rotas.PesquisarRotasActivity::class.java)
+                intent.putExtra("passageiroId", passageiro.id)
+                intent.putExtra("nomePassageiro", passageiro.nome)
+                intent.putExtra("localId", passageiro.localId)
+                startActivity(intent)
+            }
         }
     }
 

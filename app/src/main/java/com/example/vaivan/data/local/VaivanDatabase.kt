@@ -4,18 +4,24 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters // <--- IMPORTANTE
+import androidx.room.TypeConverters
 import com.example.vaivan.data.TimestampConverter
 import com.example.vaivan.data.local.dao.DocumentoDao
 import com.example.vaivan.data.local.dao.LocalizacaoDao
 import com.example.vaivan.data.local.dao.MotoristaDao
+import com.example.vaivan.data.local.dao.ParadaRotaDao
 import com.example.vaivan.data.local.dao.PassageiroDao
+import com.example.vaivan.data.local.dao.RotaDao
+import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.LocalizacaoEntity
 import com.example.vaivan.data.local.entities.MotoristaEntity
+import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.PassageiroEntity
+import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.local.entities.UsuarioEntity
 import com.example.vaivan.data.local.entities.VeiculoEntity
 
@@ -26,14 +32,15 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
         MotoristaEntity::class,
         DocumentoEntity::class,
         LocalizacaoEntity::class,
-        VeiculoEntity::class
+        VeiculoEntity::class,
+        RotaEntity::class,
+        ParadaRotaEntity::class,
+        SolicitacaoInclusaoEntity::class
     ],
-    version = 5, // <--- AUMENTEI PARA 5 (novos campos em PassageiroEntity: necessidades especiais e observações)
+    version = 8, // <--- AUMENTEI PARA 8 (RotaEntity agora é N por motorista; SolicitacaoInclusaoEntity ganhou rotaId)
     exportSchema = false
-
 )
-
-@TypeConverters(TimestampConverter::class) // <--- ADICIONE ESTA LINHA AQUI
+@TypeConverters(TimestampConverter::class)
 abstract class VaivanDatabase : RoomDatabase() {
 
     abstract fun UsuarioDao(): UsuarioDao
@@ -42,6 +49,9 @@ abstract class VaivanDatabase : RoomDatabase() {
     abstract fun documentoDao(): DocumentoDao
     abstract fun localizacaoDao(): LocalizacaoDao
     abstract fun veiculoDao(): VeiculoDao
+    abstract fun rotaDao(): RotaDao
+    abstract fun paradaRotaDao(): ParadaRotaDao
+    abstract fun solicitacaoInclusaoDao(): SolicitacaoInclusaoDao
 
     companion object {
         @Volatile
@@ -54,7 +64,6 @@ abstract class VaivanDatabase : RoomDatabase() {
                     VaivanDatabase::class.java,
                     "vaivan_cache.db"
                 )
-                    // Como mudamos para a versão 2, isso vai recriar o DB local sem travar o app
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
