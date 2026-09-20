@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -12,8 +14,23 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_vaivan_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.TrabalhoGrauA"
+        android:theme="@style/Theme.VaiVan"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.inicio.cadastro.CadastroCodigoVerificacaoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.inicio.cadastro.CadastroInformacoesPessoaisActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.motorista.cadastro.documentos.VerificacaoFacialActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.motorista.cadastro.documentos.EnvioComprovanteResidenciaActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.motorista.HomeMotoristaActivity"
             android:exported="false" />
@@ -23,9 +40,9 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBFQt2ZHq22PLGQYdWsFTtUXp_35OX1YkA" /> <!-- MAIN -->
+            android:value="AIzaSyA15teu0qEshSlBTOIT72UBTGpOojvUhmc" /> <!-- MAIN -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.inicio.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,23 +50,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity> <!-- LOGIN E CADASTRO -->
-        <activity android:name=".cadastro.PerfilActivity" />
-        <activity android:name=".cadastro.TipoCadastroActivity" /> <!-- DADOS DE ACESSO -->
-        <activity android:name=".cadastro.responsavel.ui.DadosDeAcessoResponsavel" />
-        <activity android:name=".cadastro.motorista.DadosDeAcessoMotorista" /> <!-- VALIDAÇÃO -->
-        <activity android:name=".cadastro.responsavel.ui.ValidacaoEmailResponsavel" />
-        <activity android:name=".cadastro.motorista.ValidacaoEmailMotorista" /> <!-- INFORMAÇÕES -->
-        <activity android:name=".cadastro.responsavel.ui.InformacoesPessoaisResponsavel" />
-        <activity android:name=".cadastro.motorista.InformacoesPessoaisMotorista" /> <!-- ENDEREÇO -->
-        <activity android:name=".cadastro.responsavel.ui.EnderecoResponsavel" />
-        <activity android:name=".cadastro.motorista.EnderecoMotorista" /> <!-- DOCUMENTOS MOTORISTA -->
-        <activity android:name=".cadastro.motorista.ValidaCnhActivity" />
-        <activity android:name=".cadastro.motorista.AutorizacaoActivity" /> <!-- VEÍCULO -->
-        <!-- VEÍCULO -->
-        <activity android:name=".cadastro.motorista.CadastroVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.StatusDocumentosVeiculoActivity" />
-        <activity android:name=".cadastro.motorista.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" /><!-- PERFIL MOTORISTA -->
+        <activity android:name=".ui.inicio.EscolhaTipoPerfilActivity" />
+        <activity android:name=".ui.inicio.cadastro.CadastroCredenciaisActivity" />
+        <activity android:name=".ui.inicio.cadastro.CadastroEnderecoActivity" />
+        <activity android:name=".ui.motorista.cadastro.documentos.EnvioCnhActivity" />
+        <activity android:name=".ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity" />
+        <activity android:name=".ui.motorista.cadastro.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
+        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
+        <activity android:name=".ui.responsavel.passageiros.AdicionarLocalActivity" />
+        <activity android:name=".ui.responsavel.passageiros.SelecaoLocalizacaoActivity" />
+        <activity
+            android:name=".chat.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

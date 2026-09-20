@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#000000</color>
     <color name="dark_gray">#1E1E1E</color>
-    <color name="orange">#F6B12F</color>
+    <color name="gray">#3A3A3A</color>
+    <color name="medium_gray">#6B6B6B</color>
     <color name="light_gray">#AFAFAF</color>
+    <color name="orange">#F6B12F</color>
     <color name="background_card">#E5E0DA</color>
     <color name="green">#2CA144</color>
     <color name="light_blue">#0170CC</color>
     <color name="beige">#E4DBD4</color>
+    <color name="beige_cream">#FAD897</color>
     <color name="red">#E53935</color>
 
 </resources>

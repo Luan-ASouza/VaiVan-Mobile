@@ -178,7 +178,7 @@
                 app:layout_constraintStart_toStartOf="parent">
 
                 <TextView
-                    android:id="@+id/btnPagamentos"
+                    android:id="@+id/btnLocais"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
@@ -188,45 +188,12 @@
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     android:padding="10dp"
-                    android:text="Pagamentos"
+                    android:text="Locais"
 
                     android:textColor="@color/dark_gray"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/btnHistórico"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/bg_withe_round_5"
-                    android:clickable="true"
-                    android:elevation="4dp"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:padding="10dp"
-                    android:text="Histórico"
-
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/btnAjuda"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/bg_withe_round_5"
-                    android:clickable="true"
-                    android:elevation="4dp"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:padding="10dp"
-                    android:text="Ajuda"
-
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
             </LinearLayout>
 
             <androidx.constraintlayout.helper.widget.Flow
@@ -236,6 +203,7 @@
                 app:constraint_referenced_ids="btnEditarPerfil, btnTrocarSenha"
 
                 app:flow_horizontalGap="10dp"
+                android:layout_marginTop="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/infoBanner" />
@@ -278,12 +246,12 @@
                 app:layout_constraintStart_toEndOf="@+id/btnEditarPerfil"
                 app:layout_constraintTop_toBottomOf="@+id/infoBanner" />
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDesconectar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_button_red"
-                android:backgroundTint="@null"
+                app:backgroundTint="@null"
                 android:text="Desconectar"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
