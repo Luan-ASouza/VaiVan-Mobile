@@ -3,51 +3,11 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#FFFFFF">
-
-    <!-- HEADER -->
-
-    <LinearLayout
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#F6B12F"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/txtBoasVindas"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"
-                android:text="Bem vinda, Marina"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <ImageView
-                android:id="@+id/imgPerfil"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/sym_def_app_icon"/>
-        </LinearLayout>
-
-    </LinearLayout>
 
     <!-- CONTEÚDO -->
 
@@ -94,7 +54,7 @@
                     android:text="Passageiro"
                     android:textColor="@color/dark_gray"
                     android:textSize="14sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,7 +67,7 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginEnd="12dp"
-                        android:src="@android:drawable/sym_def_app_icon"/>
+                        android:src="@android:drawable/sym_def_app_icon" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -120,44 +80,51 @@
                             android:text="Lucas Santos"
                             android:textColor="@color/dark_gray"
                             android:textSize="16sp"
-                            android:textStyle="bold"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="11 anos"
                             android:textColor="@color/dark_gray"
-                            android:textSize="12sp"/>
+                            android:textSize="12sp" />
+
                     </LinearLayout>
-                    <Button
-                        android:id="@+id/btnPesquisarRotas"
-                        android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Pesquisar"
-                        android:textAllCaps="false"
-                        android:textColor="@android:color/white"
-                        tools:ignore="HardcodedText" />
 
-                    <LinearLayout
-                        android:id="@+id/containerResultadosRotas"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-
-                    <TextView
-                        android:id="@+id/txtSemResultados"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center"
-                        android:text="Nenhuma rota encontrada."
-                        android:textColor="#707070"
-                        android:visibility="gone"
-                        tools:ignore="HardcodedText" />
                 </LinearLayout>
+
+                <!-- BOTÃO PESQUISAR -->
+
+                <Button
+                    android:id="@+id/btnPesquisarRotas"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Pesquisar"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    tools:ignore="HardcodedText" />
+
+                <!-- RESULTADOS -->
+
+                <LinearLayout
+                    android:id="@+id/containerResultadosRotas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/txtSemResultados"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Nenhuma rota encontrada."
+                    android:textColor="#707070"
+                    android:visibility="gone"
+                    tools:ignore="HardcodedText" />
 
                 <!-- EMBARQUE -->
 
@@ -379,95 +346,4 @@
         </LinearLayout>
 
     </ScrollView>
-
-    <!-- MENU INFERIOR -->
-
-    <LinearLayout
-        android:id="@+id/bottomMenu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        android:elevation="8dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="10dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_myplaces"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Passageiros"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_directions"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rotas"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_dialog_email"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Chat"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_manage"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Perfil"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-    </LinearLayout>
-
 </LinearLayout>

@@ -21,7 +21,7 @@ class MotoristaViewModel(
      * O teu Fragment vai chamar esta função passando o UID do utilizador logado.
      */
     fun observarPorId(id: String): Flow<UsuarioEntity?> {
-        return repository.observarPorId(id)
+        return repository.observarUsuarioPorId(id)
     }
 
     /**
@@ -29,7 +29,7 @@ class MotoristaViewModel(
      */
     fun deletar(id: String) {
         viewModelScope.launch {
-            repository.excluir(id)
+            repository.excluirUsuario(id)
         }
     }
 

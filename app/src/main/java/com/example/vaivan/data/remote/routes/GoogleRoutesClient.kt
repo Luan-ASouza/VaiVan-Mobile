@@ -90,7 +90,7 @@ class GoogleRoutesClient(private val context: Context) {
             put("destination", waypoint(destino))
             put("intermediates", intermediates)
             put("travelMode", "DRIVE")
-            put("routingPreference", "TRAFFIC_AWARE_OPTIMAL")
+            put("routingPreference", "TRAFFIC_AWARE")
             put("optimizeWaypointOrder", true)
             put("computeAlternativeRoutes", false)
             put("polylineQuality", "HIGH_QUALITY")

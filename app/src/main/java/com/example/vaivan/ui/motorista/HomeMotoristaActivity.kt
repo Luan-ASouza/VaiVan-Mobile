@@ -22,13 +22,14 @@ import com.example.vaivan.ui.motorista.navigation.BottomNavigationControllerMoto
 import com.example.vaivan.ui.motorista.navigation.NavigationItem
 import com.example.vaivan.ui.motorista.perfil.PerfilFragment
 import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
+import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationControllerMotorista
-    private lateinit var viewModel: MotoristaViewModel
+    private lateinit var viewModel: UsuarioViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,11 +45,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         val factory = object : ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                return MotoristaViewModel(repository) as T
+                return UsuarioViewModel(repository) as T
             }
         }
 
-        viewModel = ViewModelProvider(this, factory)[MotoristaViewModel::class.java]
+        viewModel = ViewModelProvider(this, factory)[UsuarioViewModel::class.java]
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 

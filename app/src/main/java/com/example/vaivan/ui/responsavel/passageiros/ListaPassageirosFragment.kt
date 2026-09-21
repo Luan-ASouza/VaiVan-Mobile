@@ -68,7 +68,7 @@ class ListaPassageirosFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                repository.observarPorResponsavel(uid).collect { passageiros ->
+                repository.observarPassageirosPorResponsavel(uid).collect { passageiros ->
                     renderizarLista(passageiros)
                 }
             }

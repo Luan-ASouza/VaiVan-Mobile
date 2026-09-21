@@ -325,9 +325,10 @@ class CadastroEnderecoActivity : AppCompatActivity() {
             lastUpdated = System.currentTimeMillis()
         )
 
-        repository.salvarAsync(
-            entity,
-            onSuccess = {
+        lifecycleScope.launch {
+            try {
+                repository.salvarUsuario(entity)
+
                 Toast.makeText(
                     this@CadastroEnderecoActivity,
                     "Cadastro realizado com sucesso!",
@@ -336,11 +337,15 @@ class CadastroEnderecoActivity : AppCompatActivity() {
 
                 CadastroSession.limpar()
 
-                val intent = Intent(this, EscolhaTipoPerfilActivity::class.java)
+                val intent = Intent(
+                    this@CadastroEnderecoActivity,
+                    EscolhaTipoPerfilActivity::class.java
+                )
+
                 startActivity(intent)
                 finish()
-            },
-            onError = { e ->
+
+            } catch (e: Exception) {
                 e.printStackTrace()
 
                 txtErroEndereco.text =
@@ -349,6 +354,6 @@ class CadastroEnderecoActivity : AppCompatActivity() {
                 txtErroEndereco.visibility = View.VISIBLE
                 btnContinuar.isEnabled = true
             }
-        )
+        }
     }
 }

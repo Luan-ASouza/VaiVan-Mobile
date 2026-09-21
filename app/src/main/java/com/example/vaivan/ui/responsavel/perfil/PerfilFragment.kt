@@ -15,7 +15,7 @@ import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.responsavel.ResponsavelViewModel
+import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
@@ -28,7 +28,7 @@ import java.util.Locale
 class PerfilFragment : Fragment() {
 
     // 1. Declaras a variável do ViewModel
-    private lateinit var viewModel: ResponsavelViewModel
+    private lateinit var viewModel: UsuarioViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,7 +71,7 @@ class PerfilFragment : Fragment() {
                     modelClass: Class<T>
                 ): T {
 
-                    return ResponsavelViewModel(
+                    return UsuarioViewModel(
                         repository
                     ) as T
                 }
@@ -81,7 +81,7 @@ class PerfilFragment : Fragment() {
             ViewModelProvider(
                 this,
                 factory
-            )[ResponsavelViewModel::class.java]
+            )[UsuarioViewModel::class.java]
 
         // =========================================================
         // VIEWS
@@ -210,21 +210,10 @@ class PerfilFragment : Fragment() {
                                  * Data de nascimento
                                  */
                                 responsavel.dataNascimento
-                                    ?.let { timestamp ->
-
-                                        val date =
-                                            timestamp.toDate()
-
-                                        val formato =
-                                            SimpleDateFormat(
-                                                "dd / MM / yyyy",
-                                                Locale.getDefault()
-                                            )
+                                    ?.let { dataNascimento ->
 
                                         txtNascimento.text =
-                                            formato.format(
-                                                date
-                                            )
+                                            dataNascimento
                                     }
                             }
                         }

@@ -16,6 +16,9 @@ interface RotaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<RotaEntity>)
 
+    @Query("DELETE FROM rotas WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("SELECT * FROM rotas WHERE id = :id")
     fun getById(id: String): Flow<RotaEntity?>
 

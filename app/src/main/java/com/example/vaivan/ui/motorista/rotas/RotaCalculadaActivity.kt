@@ -13,6 +13,7 @@ import com.example.vaivan.core.util.PolylineUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -39,10 +40,14 @@ class RotaCalculadaActivity : AppCompatActivity(), OnMapReadyCallback {
     private var rotaAtual: RotaEntity? = null
     private var paradasAtuais: List<ParadaRotaEntity> = emptyList()
 
-    private val rotaRepository by lazy {
-        val db = VaivanDatabase.getInstance(this)
-        RotaRepository(this, db.rotaDao(), db.paradaRotaDao())
-    }
+    val db = VaivanDatabase.getInstance(this)
+
+    val rotaRepository =
+        RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(this)
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +73,7 @@ class RotaCalculadaActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun observarDados() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                rotaRepository.observarRota(rotaId).collect { rota ->
+                rotaRepository.observarRotaPorId(rotaId).collect { rota ->
                     rotaAtual = rota
                     atualizarResumo()
                     desenharSeTiverDados()

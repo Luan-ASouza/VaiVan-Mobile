@@ -20,13 +20,14 @@ import com.example.vaivan.ui.responsavel.passageiros.ListaPassageirosFragment
 import com.example.vaivan.ui.responsavel.perfil.PerfilFragment
 import com.example.vaivan.ui.responsavel.rotas.ListaRotasFragment
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class HomeResponsavelActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
-    private lateinit var viewModel: ResponsavelViewModel
+    private lateinit var viewModel: UsuarioViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,14 +50,11 @@ class HomeResponsavelActivity : AppCompatActivity() {
             override fun <T : androidx.lifecycle.ViewModel> create(
                 modelClass: Class<T>
             ): T {
-                return ResponsavelViewModel(repository) as T
+                return UsuarioViewModel(repository) as T
             }
         }
 
-        viewModel = ViewModelProvider(
-            this,
-            factory
-        )[ResponsavelViewModel::class.java]
+        viewModel = ViewModelProvider(this, factory)[UsuarioViewModel::class.java]
 
         // --------------------------------------------------
         // USUÁRIO LOGADO
@@ -76,14 +74,14 @@ class HomeResponsavelActivity : AppCompatActivity() {
             // Busca o perfil atualizado no Firestore
             // e salva no Room.
             //
-            viewModel.sincronizarPorId(uid)
+            viewModel.sincronizarUsuarioPorId(uid)
 
             // --------------------------------------------------
             // ROOM → TELA
             // --------------------------------------------------
             //
             // Observa o Room.
-            // Quando sincronizarPorId() salvar os dados,
+            // Quando sincronizarUsuarioPorId() salvar os dados,
             // este Flow será atualizado automaticamente.
             //
             lifecycleScope.launch {

@@ -9,28 +9,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 /**
  * Firestore = fonte da verdade
- * Room = cache local que a UI observa
+ * Room = cache local observado pela UI
  */
 class UsuarioRepository(
-    private val UsuarioDao: UsuarioDao,
+    private val usuarioDao: UsuarioDao,
     private val firestore: FirebaseFirestore =
         FirebaseFirestore.getInstance()
 ) {
 
-    // ---------------------------------------------------------
-    // FIRESTORE
-    // ---------------------------------------------------------
-
     private val collection =
         firestore.collection("usuarios")
-
-    // ---------------------------------------------------------
-    // SINCRONIZAÇÃO
-    // ---------------------------------------------------------
 
     private var listenerRegistration:
             ListenerRegistration? = null
@@ -38,82 +29,51 @@ class UsuarioRepository(
     private val scope =
         CoroutineScope(Dispatchers.IO)
 
-    // ---------------------------------------------------------
-    // ROOM
-    // ---------------------------------------------------------
 
-    /**
-     * Observa um responsável específico no Room.
-     *
-     * A UI continua observando o Room, enquanto o Firebase
-     * atualiza o cache quando necessário.
-     */
-    fun observarPorId(
-        id: String
-    ): Flow<UsuarioEntity?> {
+    // =========================================================
+    // OBSERVAÇÃO DO ROOM
+    // =========================================================
 
-        return UsuarioDao.getById(id)
+    fun observarUsuarioPorId(id: String): Flow<UsuarioEntity?> {
+        return usuarioDao.getById(id)
     }
 
-    // ---------------------------------------------------------
-    // FIREBASE → ROOM EM TEMPO REAL
-    // ---------------------------------------------------------
 
-    /**
-     * Inicia uma escuta em tempo real no Firestore.
-     *
-     * Sempre que houver alteração na coleção "usuarios",
-     * os dados são atualizados no Room.
-     */
+    // =========================================================
+    // SINCRONIZAÇÃO FIREBASE → ROOM
+    // =========================================================
 
     fun iniciarSincronizacao() {
 
-
-
-        // Evita criar mais de um listener.
         listenerRegistration?.remove()
 
         listenerRegistration =
             collection.addSnapshotListener { snapshot, error ->
 
-                if (
-                    error != null ||
-                    snapshot == null
-                ) {
+                if (error != null || snapshot == null) {
                     return@addSnapshotListener
                 }
 
                 scope.launch {
 
-                    val itens =
-                        snapshot.documents.mapNotNull { doc ->
+                    val usuarios =
+                        snapshot.documents.mapNotNull { document ->
 
-                            doc.toObject(
-                                UsuarioEntity::class.java
-                            )?.copy(
-                                id = doc.id,
-                                lastUpdated =
-                                    System.currentTimeMillis()
-                            )
+                            document
+                                .toObject(UsuarioEntity::class.java)
+                                ?.copy(
+                                    id = document.id,
+                                    lastUpdated =
+                                        System.currentTimeMillis()
+                                )
                         }
 
-                    if (itens.isNotEmpty()) {
-
-                        UsuarioDao.upsertAll(
-                            itens
-                        )
-                    }
+                    usuarioDao.upsertAll(usuarios)
                 }
             }
     }
 
-    // ---------------------------------------------------------
-    // PARAR SINCRONIZAÇÃO
-    // ---------------------------------------------------------
 
-    /**
-     * Remove o listener do Firestore.
-     */
     fun pararSincronizacao() {
 
         listenerRegistration?.remove()
@@ -121,17 +81,11 @@ class UsuarioRepository(
         listenerRegistration = null
     }
 
-    // ---------------------------------------------------------
-    // SINCRONIZAÇÃO ÚNICA
-    // ---------------------------------------------------------
 
-    /**
-     * Baixa todos os responsáveis do Firestore
-     * e salva no Room.
-     *
-     * Normalmente não é necessário para o login.
-     * Para login, prefira sincronizarPorId().
-     */
+    // =========================================================
+    // SINCRONIZAÇÃO MANUAL FIREBASE → ROOM
+    // =========================================================
+
     suspend fun sincronizarUmaVez() {
 
         val snapshot =
@@ -139,37 +93,27 @@ class UsuarioRepository(
                 .get()
                 .await()
 
-        val itens =
-            snapshot.documents.mapNotNull { doc ->
+        val usuarios =
+            snapshot.documents.mapNotNull { document ->
 
-                doc.toObject(
-                    UsuarioEntity::class.java
-                )?.copy(
-                    id = doc.id,
-                    lastUpdated =
-                        System.currentTimeMillis()
-                )
+                document
+                    .toObject(UsuarioEntity::class.java)
+                    ?.copy(
+                        id = document.id,
+                        lastUpdated =
+                            System.currentTimeMillis()
+                    )
             }
 
-        if (itens.isNotEmpty()) {
-
-            UsuarioDao.upsertAll(
-                itens
-            )
-        }
+        usuarioDao.upsertAll(usuarios)
     }
 
-    // ---------------------------------------------------------
-    // SINCRONIZAR RESPONSÁVEL DO LOGIN
-    // ---------------------------------------------------------
 
-    /**
-     * Busca somente o responsável informado pelo ID
-     * no Firestore e salva no Room.
-     *
-     * Deve ser chamada após o login.
-     */
-    suspend fun sincronizarPorId(
+    // =========================================================
+    // SINCRONIZAR USUÁRIO ESPECÍFICO
+    // =========================================================
+
+    suspend fun sincronizarUsuarioPorId(
         id: String
     ) {
 
@@ -179,127 +123,74 @@ class UsuarioRepository(
                 .get()
                 .await()
 
-        // Documento não encontrado.
         if (!document.exists()) {
             return
         }
 
-        val responsavel =
-            document.toObject(
-                UsuarioEntity::class.java
-            )?.copy(
-                id = document.id,
-                lastUpdated =
-                    System.currentTimeMillis()
-            )
+        val usuario =
+            document
+                .toObject(UsuarioEntity::class.java)
+                ?.copy(
+                    id = document.id,
+                    lastUpdated =
+                        System.currentTimeMillis()
+                )
 
-        if (responsavel != null) {
-
-            UsuarioDao.upsert(
-                responsavel
-            )
+        if (usuario != null) {
+            usuarioDao.upsert(usuario)
         }
     }
 
-    // ---------------------------------------------------------
-    // SALVAR
-    // ---------------------------------------------------------
 
-    /**
-     * Salva no Firestore e depois atualiza o Room.
-     */
-    suspend fun salvar(
-        item: UsuarioEntity
-    ) {
+    // =========================================================
+    // SALVAR FIREBASE + ROOM
+    // =========================================================
 
-        val docRef =
-            if (item.id.isBlank()) {
+    suspend fun salvarUsuario(
+        usuario: UsuarioEntity
+    ): String {
 
+        val documentReference =
+            if (usuario.id.isBlank()) {
                 collection.document()
-
             } else {
-
-                collection.document(
-                    item.id
-                )
+                collection.document(usuario.id)
             }
 
-        val comId =
-            item.copy(
-                id = docRef.id,
+        val usuarioComId =
+            usuario.copy(
+                id = documentReference.id,
                 lastUpdated =
                     System.currentTimeMillis()
             )
 
-        // Primeiro salva no Firebase.
-        docRef
-            .set(comId)
+        // Firebase
+        documentReference
+            .set(usuarioComId)
             .await()
 
-        // Depois atualiza o cache local.
-        UsuarioDao.upsert(
-            comId
-        )
+        // Room
+        usuarioDao.upsert(usuarioComId)
+
+        return usuarioComId.id
     }
 
-    // ---------------------------------------------------------
-    // EXCLUIR
-    // ---------------------------------------------------------
 
-    /**
-     * Remove do Firestore e também do Room.
-     */
-    suspend fun excluir(
+    // =========================================================
+    // EXCLUIR FIREBASE + ROOM
+    // =========================================================
+
+    suspend fun excluirUsuario(
         id: String
     ) {
 
+        // Firebase
         collection
             .document(id)
             .delete()
             .await()
 
-        UsuarioDao.deleteById(
-            id
-        )
-    }
-
-    // ---------------------------------------------------------
-    // SALVAR ASYNC
-    // ---------------------------------------------------------
-
-    /**
-     * Versão assíncrona do salvar().
-     *
-     * Mantida para as telas que já utilizam callbacks.
-     */
-    fun salvarAsync(
-        item: UsuarioEntity,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-
-        scope.launch {
-
-            try {
-
-                salvar(item)
-
-                withContext(
-                    Dispatchers.Main
-                ) {
-
-                    onSuccess()
-                }
-
-            } catch (e: Exception) {
-
-                withContext(
-                    Dispatchers.Main
-                ) {
-
-                    onError(e)
-                }
-            }
-        }
+        // Room
+        usuarioDao.deleteById(id)
     }
 }

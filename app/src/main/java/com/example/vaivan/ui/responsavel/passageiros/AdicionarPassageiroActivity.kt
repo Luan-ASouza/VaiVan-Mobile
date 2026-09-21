@@ -26,6 +26,8 @@ import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class AdicionarPassageiroActivity : AppCompatActivity() {
 
@@ -759,30 +761,32 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
 
         btnSalvar.isEnabled = false
 
-        repository.salvarAsync(
-            novoPassageiro,
+        lifecycleScope.launch {
 
-            onSuccess = {
+            try {
+
+                repository.salvarPassageiro(
+                    novoPassageiro
+                )
 
                 Toast.makeText(
-                    this,
+                    this@AdicionarPassageiroActivity,
                     "Passageiro cadastrado com sucesso!",
                     Toast.LENGTH_SHORT
                 ).show()
 
                 finish()
-            },
 
-            onError = { erro ->
+            } catch (erro: Exception) {
 
                 btnSalvar.isEnabled = true
 
                 Toast.makeText(
-                    this,
+                    this@AdicionarPassageiroActivity,
                     "Erro ao cadastrar passageiro: ${erro.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
-        )
+        }
     }
 }

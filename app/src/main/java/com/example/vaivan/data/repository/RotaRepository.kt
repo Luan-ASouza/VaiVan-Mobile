@@ -1,6 +1,6 @@
 package com.example.vaivan.data.repository
 
-import android.content.Context
+import android.util.Log
 import com.example.vaivan.data.local.dao.ParadaRotaDao
 import com.example.vaivan.data.local.dao.RotaDao
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
@@ -8,49 +8,167 @@ import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-/** Uma parada (aluno + local de embarque) já confirmada numa rota. */
-data class ParadaCandidata(
-    val passageiroId: String,
-    val nomePassageiro: String,
-    val localId: String,
-    val nomeLocal: String,
-    val endereco: String,
-    val latitude: Double,
-    val longitude: Double
-)
-
+/**
+ * Firestore = fonte da verdade
+ * Room = cache local das rotas que pertencem ao motorista
+ *
+ * Buscas temporárias, como "rotas disponíveis", podem consultar
+ * diretamente o Firestore e não precisam passar pelo Room.
+ */
 class RotaRepository(
-    private val context: Context,
     private val rotaDao: RotaDao,
     private val paradaRotaDao: ParadaRotaDao,
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val routesClient: GoogleRoutesClient,
+    private val firestore: FirebaseFirestore =
+        FirebaseFirestore.getInstance()
 ) {
 
-    private val routesClient = GoogleRoutesClient(context)
-    private val collectionRotas = firestore.collection("rotas")
-    private val collectionParadas = firestore.collection("paradas_rota")
+    private val collectionRotas =
+        firestore.collection("rotas")
 
-    fun observarPorMotorista(motoristaId: String): Flow<List<RotaEntity>> =
-        rotaDao.getByMotorista(motoristaId)
+    private val collectionParadas =
+        firestore.collection("paradas_rota")
 
-    fun observarRota(rotaId: String): Flow<RotaEntity?> =
-        rotaDao.getById(rotaId)
+    private var listenerRotas: ListenerRegistration? = null
 
-    fun observarParadas(rotaId: String): Flow<List<ParadaRotaEntity>> =
-        paradaRotaDao.getByRota(rotaId)
+    private val scope =
+        CoroutineScope(Dispatchers.IO)
 
-    /**
-     * Cria uma nova rota oferecida pelo motorista (ex: "La Salle Carmo - Manhã").
-     * Já calcula uma estimativa de trajeto direto (origem -> destino, sem
-     * paradas) para a rota aparecer com dados na busca antes do primeiro
-     * aluno ser aceito.
-     */
+
+    // =========================================================
+    // OBSERVAÇÃO DO ROOM
+    // =========================================================
+
+    fun observarRotasPorMotorista(
+        motoristaId: String
+    ): Flow<List<RotaEntity>> {
+
+        return rotaDao.getByMotorista(motoristaId)
+    }
+
+
+    fun observarRotaPorId(
+        rotaId: String
+    ): Flow<RotaEntity?> {
+
+        return rotaDao.getById(rotaId)
+    }
+
+
+    fun observarParadas(
+        rotaId: String
+    ): Flow<List<ParadaRotaEntity>> {
+
+        return paradaRotaDao.getByRota(rotaId)
+    }
+
+
+    // =========================================================
+    // SINCRONIZAÇÃO FIRESTORE → ROOM
+    // =========================================================
+
+    fun iniciarSincronizacao(
+        motoristaId: String
+    ) {
+
+        listenerRotas?.remove()
+
+        listenerRotas =
+            collectionRotas
+                .whereEqualTo(
+                    "motoristaId",
+                    motoristaId
+                )
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null || snapshot == null) {
+                        return@addSnapshotListener
+                    }
+
+                    scope.launch {
+
+                        snapshot.documentChanges.forEach { change ->
+
+                            when (change.type) {
+
+                                com.google.firebase.firestore.DocumentChange.Type.ADDED,
+                                com.google.firebase.firestore.DocumentChange.Type.MODIFIED -> {
+
+                                    val rota =
+                                        change.document
+                                            .toObject(RotaEntity::class.java)
+                                            .copy(
+                                                id = change.document.id,
+                                                lastUpdated =
+                                                    System.currentTimeMillis()
+                                            )
+
+                                    rotaDao.upsert(rota)
+                                }
+
+                                com.google.firebase.firestore.DocumentChange.Type.REMOVED -> {
+
+                                    rotaDao.deleteById(
+                                        change.document.id
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+    }
+
+
+    fun pararSincronizacao() {
+
+        listenerRotas?.remove()
+
+        listenerRotas = null
+    }
+
+
+    suspend fun sincronizarRotasPorMotorista(
+        motoristaId: String
+    ) {
+
+        val snapshot =
+            collectionRotas
+                .whereEqualTo(
+                    "motoristaId",
+                    motoristaId
+                )
+                .get()
+                .await()
+
+        val rotas =
+            snapshot.documents.mapNotNull { document ->
+
+                document
+                    .toObject(RotaEntity::class.java)
+                    ?.copy(
+                        id = document.id,
+                        lastUpdated =
+                            System.currentTimeMillis()
+                    )
+            }
+
+        rotaDao.upsertAll(rotas)
+    }
+
+
+    // =========================================================
+    // CRIAR ROTA
+    // =========================================================
+
     suspend fun criarRota(
         motoristaId: String,
         veiculoId: String?,
@@ -67,182 +185,284 @@ class RotaRepository(
         capacidadeTotal: Int
     ): RotaEntity = withContext(Dispatchers.IO) {
 
-        val docRef = collectionRotas.document()
-        val agora = System.currentTimeMillis()
+        val documentReference =
+            collectionRotas.document()
 
-        val origem = PontoRota("origem", origemNome, "", origemLatitude, origemLongitude)
-        val destino = PontoRota("destino", destinoNome, destinoEndereco, destinoLatitude, destinoLongitude)
+        val agora =
+            System.currentTimeMillis()
 
-        val resultadoInicial = try {
-            routesClient.calcularMelhorRota(origem, destino, emptyList())
-        } catch (e: Exception) {
-            null // Se a estimativa inicial falhar, a rota ainda é criada; o cálculo se refaz no 1º aluno aceito.
-        }
+        val origem =
+            PontoRota(
+                id = "origem",
+                nome = origemNome,
+                endereco = "",
+                latitude = origemLatitude,
+                longitude = origemLongitude
+            )
 
-        val rota = RotaEntity(
-            id = docRef.id,
-            motoristaId = motoristaId,
-            veiculoId = veiculoId,
-            nome = nome,
-            origemNome = origemNome,
-            origemLatitude = origemLatitude,
-            origemLongitude = origemLongitude,
-            destinoNome = destinoNome,
-            destinoEndereco = destinoEndereco,
-            destinoLatitude = destinoLatitude,
-            destinoLongitude = destinoLongitude,
-            turno = turno,
-            diasSemana = diasSemana.joinToString(","),
-            capacidadeTotal = capacidadeTotal,
-            vagasOcupadas = 0,
-            distanciaMetros = resultadoInicial?.distanciaMetros ?: 0,
-            duracaoSegundos = resultadoInicial?.duracaoSegundos ?: 0,
-            duracaoSemTrafegoSegundos = resultadoInicial?.duracaoSemTrafegoSegundos ?: 0,
-            polylineEncoded = resultadoInicial?.polylineEncoded ?: "",
-            status = "ATIVA",
-            calculadoEm = agora,
-            lastUpdated = agora
-        )
+        val destino =
+            PontoRota(
+                id = "destino",
+                nome = destinoNome,
+                endereco = destinoEndereco,
+                latitude = destinoLatitude,
+                longitude = destinoLongitude
+            )
 
-        docRef.set(rota).await()
+        val resultadoInicial =
+            try {
+
+                routesClient.calcularMelhorRota(
+                    origem = origem,
+                    destino = destino,
+                    paradas = emptyList()
+                )
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "RotaRepository",
+                    "Erro ao calcular rota inicial",
+                    e
+                )
+
+                null
+            }
+
+        val rota =
+            RotaEntity(
+                id = documentReference.id,
+
+                motoristaId = motoristaId,
+                veiculoId = veiculoId,
+
+                nome = nome,
+
+                origemNome = origemNome,
+                origemLatitude = origemLatitude,
+                origemLongitude = origemLongitude,
+
+                destinoNome = destinoNome,
+                destinoEndereco = destinoEndereco,
+                destinoLatitude = destinoLatitude,
+                destinoLongitude = destinoLongitude,
+
+                turno = turno,
+                diasSemana = diasSemana.joinToString(","),
+
+                capacidadeTotal = capacidadeTotal,
+                vagasOcupadas = 0,
+
+                distanciaMetros =
+                    resultadoInicial?.distanciaMetros ?: 0,
+
+                duracaoSegundos =
+                    resultadoInicial?.duracaoSegundos ?: 0,
+
+                duracaoSemTrafegoSegundos =
+                    resultadoInicial?.duracaoSemTrafegoSegundos ?: 0,
+
+                polylineEncoded =
+                    resultadoInicial?.polylineEncoded ?: "",
+
+                status = "ATIVA",
+
+                calculadoEm = agora,
+                lastUpdated = agora
+            )
+
+        // Firestore = fonte da verdade
+        documentReference
+            .set(rota)
+            .await()
+
+        // Room = cache local
         rotaDao.upsert(rota)
+
         rota
     }
 
-    /**
-     * Busca rotas ativas e com vaga, filtrando pelo nome do destino (escola)
-     * e, opcionalmente, pelo turno. Usada na tela de pesquisa do responsável.
-     */
-    suspend fun buscarRotasDisponiveis(textoBusca: String, turno: String?): List<RotaEntity> =
-        withContext(Dispatchers.IO) {
 
-            var query: Query = collectionRotas.whereEqualTo("status", "ATIVA")
-            if (!turno.isNullOrBlank()) {
-                query = query.whereEqualTo("turno", turno)
+    // =========================================================
+    // BUSCA TEMPORÁRIA DE ROTAS
+    // =========================================================
+
+    suspend fun buscarRotasDisponiveis(
+        textoBusca: String,
+        turno: String?
+    ): List<RotaEntity> = withContext(Dispatchers.IO) {
+
+        var query: Query =
+            collectionRotas
+                .whereEqualTo(
+                    "status",
+                    "ATIVA"
+                )
+
+        if (!turno.isNullOrBlank()) {
+
+            query =
+                query.whereEqualTo(
+                    "turno",
+                    turno
+                )
+        }
+
+        val snapshot =
+            query
+                .get()
+                .await()
+
+        val rotas =
+            snapshot.documents
+                .mapNotNull { document ->
+
+                    document
+                        .toObject(RotaEntity::class.java)
+                        ?.copy(
+                            id = document.id
+                        )
+                }
+                .filter { rota ->
+                    rota.vagasOcupadas <
+                            rota.capacidadeTotal
+                }
+
+        if (textoBusca.isBlank()) {
+
+            rotas
+
+        } else {
+
+            rotas.filter { rota ->
+
+                rota.destinoNome.contains(
+                    textoBusca,
+                    ignoreCase = true
+                )
             }
+        }
+    }
 
-            val snapshot = query.get().await()
-            val todas = snapshot.documents.mapNotNull { it.toObject(RotaEntity::class.java) }
-            val comVaga = todas.filter { it.vagasOcupadas < it.capacidadeTotal }
 
-            if (textoBusca.isBlank()) {
-                comVaga
-            } else {
-                comVaga.filter { it.destinoNome.contains(textoBusca, ignoreCase = true) }
-            }
+    // =========================================================
+    // OPERAÇÕES NECESSÁRIAS PARA O USE CASE
+    // =========================================================
+
+    suspend fun buscarRotaNoFirestore(
+        rotaId: String
+    ): RotaEntity {
+
+        val snapshot =
+            collectionRotas
+                .document(rotaId)
+                .get()
+                .await()
+
+        if (!snapshot.exists()) {
+
+            throw IllegalStateException(
+                "Rota não encontrada."
+            )
         }
 
-    /**
-     * Chamado quando o motorista ACEITA uma solicitação: adiciona a nova
-     * parada às já existentes, recalcula a rota inteira com otimização de
-     * ordem e trânsito em tempo real, e atualiza as vagas ocupadas.
-     */
-    suspend fun recalcularComNovaParada(
-        rotaId: String,
-        novaParada: ParadaCandidata
-    ): RotaEntity = withContext(Dispatchers.IO) {
+        return snapshot
+            .toObject(RotaEntity::class.java)
+            ?.copy(
+                id = snapshot.id
+            )
+            ?: throw IllegalStateException(
+                "Não foi possível ler a rota."
+            )
+    }
 
-        val rotaAtualSnapshot = collectionRotas.document(rotaId).get().await()
-        if (!rotaAtualSnapshot.exists()) {
-            throw IllegalStateException("Rota não encontrada.")
+
+    suspend fun buscarParadasNoFirestore(
+        rotaId: String
+    ): List<ParadaRotaEntity> {
+
+        val snapshot =
+            collectionParadas
+                .whereEqualTo(
+                    "rotaId",
+                    rotaId
+                )
+                .get()
+                .await()
+
+        return snapshot.documents.mapNotNull { document ->
+
+            document
+                .toObject(
+                    ParadaRotaEntity::class.java
+                )
+                ?.copy(
+                    id = document.id
+                )
         }
+    }
 
-        val rotaAtual = rotaAtualSnapshot.toObject(RotaEntity::class.java)
-            ?: throw IllegalStateException("Não foi possível ler a rota.")
 
-        if (rotaAtual.vagasOcupadas >= rotaAtual.capacidadeTotal) {
-            throw IllegalStateException("Esta rota já está com todas as vagas ocupadas.")
-        }
+    suspend fun salvarRotaRecalculada(
+        rota: RotaEntity
+    ) {
 
-        val paradasExistentesSnapshot = collectionParadas
-            .whereEqualTo("rotaId", rotaId)
-            .get()
+        collectionRotas
+            .document(rota.id)
+            .set(rota)
             .await()
 
-        val paradasExistentes = paradasExistentesSnapshot.documents.mapNotNull { doc ->
-            doc.toObject(ParadaRotaEntity::class.java)
-        }
-
-        val todasParadas = paradasExistentes.map { existente ->
-            ParadaCandidata(
-                passageiroId = existente.passageiroId,
-                nomePassageiro = existente.nomePassageiro,
-                localId = existente.localId,
-                nomeLocal = existente.nomeLocal,
-                endereco = existente.endereco,
-                latitude = existente.latitude,
-                longitude = existente.longitude
-            )
-        } + novaParada
-
-        val origem = PontoRota("origem", rotaAtual.origemNome, "", rotaAtual.origemLatitude, rotaAtual.origemLongitude)
-        val destino = PontoRota(
-            "destino", rotaAtual.destinoNome, rotaAtual.destinoEndereco,
-            rotaAtual.destinoLatitude, rotaAtual.destinoLongitude
-        )
-
-        val pontosIntermediarios = todasParadas.map { parada ->
-            PontoRota(parada.passageiroId, parada.nomePassageiro, parada.endereco, parada.latitude, parada.longitude)
-        }
-
-        val resultado = routesClient.calcularMelhorRota(origem, destino, pontosIntermediarios)
-
-        val paradasOrdenadas = if (resultado.ordemOtimizada.isNotEmpty()) {
-            resultado.ordemOtimizada.map { indiceOriginal -> todasParadas[indiceOriginal] }
-        } else {
-            todasParadas
-        }
-
-        val agora = System.currentTimeMillis()
-
-        val rotaAtualizada = rotaAtual.copy(
-            vagasOcupadas = rotaAtual.vagasOcupadas + 1,
-            distanciaMetros = resultado.distanciaMetros,
-            duracaoSegundos = resultado.duracaoSegundos,
-            duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
-            polylineEncoded = resultado.polylineEncoded,
-            calculadoEm = agora,
-            lastUpdated = agora
-        )
-
-        var acumuladoSegundos = 0
-        val paradasEntities = paradasOrdenadas.mapIndexed { index, parada ->
-            val perna = resultado.pernas.getOrNull(index)
-            val duracaoTrecho = perna?.duracaoSegundos ?: 0
-            val distanciaTrecho = perna?.distanciaMetros ?: 0
-            acumuladoSegundos += duracaoTrecho
-
-            val idExistente = paradasExistentes
-                .firstOrNull { it.passageiroId == parada.passageiroId }
-                ?.id
-
-            ParadaRotaEntity(
-                id = idExistente ?: collectionParadas.document().id,
-                rotaId = rotaId,
-                passageiroId = parada.passageiroId,
-                localId = parada.localId,
-                nomePassageiro = parada.nomePassageiro,
-                nomeLocal = parada.nomeLocal,
-                endereco = parada.endereco,
-                latitude = parada.latitude,
-                longitude = parada.longitude,
-                ordem = index,
-                distanciaTrechoMetros = distanciaTrecho,
-                duracaoTrechoSegundos = duracaoTrecho,
-                horarioEstimadoMinutos = acumuladoSegundos / 60,
-                lastUpdated = agora
-            )
-        }
-
-        collectionRotas.document(rotaId).set(rotaAtualizada).await()
-        paradasEntities.forEach { parada ->
-            collectionParadas.document(parada.id).set(parada).await()
-        }
-
-        rotaDao.upsert(rotaAtualizada)
-        paradaRotaDao.deleteByRota(rotaId)
-        paradaRotaDao.upsertAll(paradasEntities)
-
-        rotaAtualizada
+        rotaDao.upsert(rota)
     }
+
+
+    suspend fun salvarParadasRecalculadas(
+        rotaId: String,
+        paradas: List<ParadaRotaEntity>
+    ) {
+
+        paradas.forEach { parada ->
+
+            collectionParadas
+                .document(parada.id)
+                .set(parada)
+                .await()
+        }
+
+        paradaRotaDao.deleteByRota(
+            rotaId
+        )
+
+        paradaRotaDao.upsertAll(
+            paradas
+        )
+    }
+
+    fun novoIdParada(): String {
+        return collectionParadas
+            .document()
+            .id
+    }
+
+
+    // =========================================================
+    // MODELO AUXILIAR
+    // =========================================================
+
+    data class ParadaCandidata(
+
+        val passageiroId: String,
+
+        val nomePassageiro: String,
+
+        val localId: String,
+
+        val nomeLocal: String,
+
+        val endereco: String,
+
+        val latitude: Double,
+
+        val longitude: Double
+    )
 }

@@ -1,9 +1,9 @@
 package com.example.vaivan.data.repository
 
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.example.vaivan.data.local.dao.PassageiroDao
 import com.example.vaivan.data.local.entities.PassageiroEntity
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -12,85 +12,187 @@ import kotlinx.coroutines.tasks.await
 
 class PassageiroRepository(
     private val passageiroDao: PassageiroDao,
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore =
+        FirebaseFirestore.getInstance()
 ) {
-    private val collection = firestore.collection("passageiros")
-    private var listenerRegistration: ListenerRegistration? = null
-    private val scope = CoroutineScope(Dispatchers.IO)
 
-    fun observarTodos(): Flow<List<PassageiroEntity>> = passageiroDao.getAll()
+    private val collection =
+        firestore.collection("passageiros")
 
-    fun observarPorId(id: String): Flow<PassageiroEntity?> = passageiroDao.getById(id)
+    private var listenerRegistration:
+            ListenerRegistration? = null
 
-    /** Filhos vinculados a um responsável (ex: tela "meus passageiros"). */
-    fun observarPorResponsavel(responsavelId: String): Flow<List<PassageiroEntity>> =
-        passageiroDao.getByResponsavel(responsavelId)
+    private val scope =
+        CoroutineScope(Dispatchers.IO)
 
-    /** Passageiros de uma rota (ex: lista de embarque do motorista). */
-    fun observarPorRota(rotaId: String): Flow<List<PassageiroEntity>> =
-        passageiroDao.getByRota(rotaId)
 
-    fun iniciarSincronizacao() {
-        listenerRegistration?.remove()
-        listenerRegistration = collection.addSnapshotListener { snapshot, error ->
-            if (error != null || snapshot == null) return@addSnapshotListener
-            scope.launch {
-                val itens = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(PassageiroEntity::class.java)?.copy(
-                        id = doc.id,
-                        lastUpdated = System.currentTimeMillis()
-                    )
-                }
-                passageiroDao.upsertAll(itens)
-            }
-        }
+    // =========================================================
+    // OBSERVAÇÃO DO ROOM
+    // =========================================================
+
+    fun observarTodosPassageiros():
+            Flow<List<PassageiroEntity>> {
+
+        return passageiroDao.getAll()
     }
 
-    fun pararSincronizacao() {
+    fun observarPassageiroPorId(
+        id: String
+    ): Flow<PassageiroEntity?> {
+
+        return passageiroDao.getById(id)
+    }
+
+    fun observarPassageirosPorResponsavel(
+        responsavelId: String
+    ): Flow<List<PassageiroEntity>> {
+
+        return passageiroDao.getByResponsavel(
+            responsavelId
+        )
+    }
+
+    fun observarPassageirosPorRota(
+        rotaId: String
+    ): Flow<List<PassageiroEntity>> {
+
+        return passageiroDao.getByRota(
+            rotaId
+        )
+    }
+
+
+    // =========================================================
+    // SINCRONIZAÇÃO FIREBASE → ROOM
+    // =========================================================
+
+    fun iniciarSincronizacao() {
+
         listenerRegistration?.remove()
+
+        listenerRegistration =
+            collection.addSnapshotListener { snapshot, error ->
+
+                if (error != null || snapshot == null) {
+                    return@addSnapshotListener
+                }
+
+                scope.launch {
+
+                    val passageiros =
+                        snapshot.documents.mapNotNull { document ->
+
+                            document
+                                .toObject(
+                                    PassageiroEntity::class.java
+                                )
+                                ?.copy(
+                                    id = document.id,
+                                    lastUpdated =
+                                        System.currentTimeMillis()
+                                )
+                        }
+
+                    passageiroDao.upsertAll(
+                        passageiros
+                    )
+                }
+            }
+    }
+
+
+    fun pararSincronizacao() {
+
+        listenerRegistration?.remove()
+
         listenerRegistration = null
     }
 
+
+    // =========================================================
+    // SINCRONIZAÇÃO MANUAL FIREBASE → ROOM
+    // =========================================================
+
     suspend fun sincronizarUmaVez() {
-        val snapshot = collection.get().await()
-        val itens = snapshot.documents.mapNotNull { doc ->
-            doc.toObject(PassageiroEntity::class.java)?.copy(
-                id = doc.id,
-                lastUpdated = System.currentTimeMillis()
-            )
-        }
-        passageiroDao.upsertAll(itens)
-    }
 
-    suspend fun salvar(item: PassageiroEntity) {
-        val docRef = if (item.id.isBlank()) collection.document() else collection.document(item.id)
-        val comId = item.copy(id = docRef.id, lastUpdated = System.currentTimeMillis())
-        docRef.set(comId).await()
-        passageiroDao.upsert(comId)
-    }
+        val snapshot =
+            collection
+                .get()
+                .await()
 
-    suspend fun excluir(id: String) {
-        collection.document(id).delete().await()
-        passageiroDao.deleteById(id)
-    }
+        val passageiros =
+            snapshot.documents.mapNotNull { document ->
 
-    /** Versão com callbacks, para chamar direto de uma Activity/Fragment sem lifecycleScope. */
-    fun salvarAsync(
-        item: PassageiroEntity,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        scope.launch {
-            try {
-                salvar(item)
-                kotlinx.coroutines.withContext(Dispatchers.Main) {
-                    onSuccess()
-                }
-            } catch (e: Exception) {
-                kotlinx.coroutines.withContext(Dispatchers.Main) {
-                    onError(e)
-                }
+                document
+                    .toObject(
+                        PassageiroEntity::class.java
+                    )
+                    ?.copy(
+                        id = document.id,
+                        lastUpdated =
+                            System.currentTimeMillis()
+                    )
             }
-        }
+
+        passageiroDao.upsertAll(
+            passageiros
+        )
+    }
+
+
+    // =========================================================
+    // SALVAR FIREBASE + ROOM
+    // =========================================================
+
+    suspend fun salvarPassageiro(
+        passageiro: PassageiroEntity
+    ): String {
+
+        val documentReference =
+            if (passageiro.id.isBlank()) {
+                collection.document()
+            } else {
+                collection.document(
+                    passageiro.id
+                )
+            }
+
+        val passageiroComId =
+            passageiro.copy(
+                id = documentReference.id,
+                lastUpdated =
+                    System.currentTimeMillis()
+            )
+
+        // Firebase
+        documentReference
+            .set(passageiroComId)
+            .await()
+
+        // Room
+        passageiroDao.upsert(
+            passageiroComId
+        )
+
+        return passageiroComId.id
+    }
+
+
+    // =========================================================
+    // EXCLUIR FIREBASE + ROOM
+    // =========================================================
+
+    suspend fun excluirPassageiro(
+        id: String
+    ) {
+
+        // Firebase
+        collection
+            .document(id)
+            .delete()
+            .await()
+
+        // Room
+        passageiroDao.deleteById(id)
     }
 }

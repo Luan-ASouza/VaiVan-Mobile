@@ -14,16 +14,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.motorista.MotoristaViewModel
+import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class PerfilFragment : Fragment() {
 
     // 1. Declaras a variável do ViewModel
-    private lateinit var viewModel: MotoristaViewModel
+    private lateinit var viewModel: UsuarioViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,12 +43,12 @@ class PerfilFragment : Fragment() {
         // 3. Criar a Factory nativa (sem bibliotecas extras) para construir o ViewModel
         val factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MotoristaViewModel(repository) as T
+                return UsuarioViewModel(repository) as T
             }
         }
 
         // 4. Instancias o ViewModel de forma tradicional e nativa
-        viewModel = ViewModelProvider(this, factory)[MotoristaViewModel::class.java]
+        viewModel = ViewModelProvider(this, factory)[UsuarioViewModel::class.java]
 
         // 5. Mapeias os teus elementos do XML
         val txtNome = view.findViewById<TextView>(R.id.txtNomeUsuarioCompleto)
@@ -68,10 +66,10 @@ class PerfilFragment : Fragment() {
                             txtNome.text = responsavel.nome
                             txtCPF.text = responsavel.cpf
 
-                            responsavel.dataNascimento?.let { timestamp ->
-                                val date = timestamp.toDate()
-                                val formato = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
-                                txtNascimento.text = formato.format(date)
+                            responsavel.dataNascimento?.let {
+                                if (it.isNotBlank()) {
+                                    txtNascimento.text = responsavel.dataNascimento
+                                }
                             }
                         }
                     }

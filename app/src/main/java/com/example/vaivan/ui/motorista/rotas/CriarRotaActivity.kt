@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -46,10 +47,14 @@ class CriarRotaActivity : AppCompatActivity() {
     private lateinit var selecaoOrigemLauncher: ActivityResultLauncher<Intent>
     private lateinit var selecaoDestinoLauncher: ActivityResultLauncher<Intent>
 
-    private val rotaRepository by lazy {
-        val db = VaivanDatabase.getInstance(this)
-        RotaRepository(this, db.rotaDao(), db.paradaRotaDao())
-    }
+    val db = VaivanDatabase.getInstance(this)
+
+    val rotaRepository =
+        RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(this)
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

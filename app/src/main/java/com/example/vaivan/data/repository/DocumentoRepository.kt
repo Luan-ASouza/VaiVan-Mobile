@@ -22,7 +22,7 @@ class DocumentoRepository(
     private var listenerRegistration: ListenerRegistration? = null
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    fun observarTodos(): Flow<List<DocumentoEntity>> = documentoDao.getAll()
+    fun observarTodosDocumentos(): Flow<List<DocumentoEntity>> = documentoDao.getAll()
 
     fun observarPorId(id: String): Flow<DocumentoEntity?> = documentoDao.getById(id)
 

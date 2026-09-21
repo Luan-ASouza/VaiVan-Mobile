@@ -13,6 +13,7 @@ import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -34,10 +35,14 @@ class PesquisarRotasActivity : AppCompatActivity() {
     private var nomePassageiro: String = ""
     private var localId: String? = null
 
-    private val rotaRepository by lazy {
-        val db = VaivanDatabase.getInstance(this)
-        RotaRepository(this, db.rotaDao(), db.paradaRotaDao())
-    }
+    val db = VaivanDatabase.getInstance(this)
+
+    val rotaRepository =
+        RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(this)
+        )
 
     private val solicitacaoRepository by lazy {
         SolicitacaoInclusaoRepository(this, VaivanDatabase.getInstance(this).solicitacaoInclusaoDao())
@@ -93,6 +98,15 @@ class PesquisarRotasActivity : AppCompatActivity() {
     }
 
     private fun renderizarResultados(rotas: List<RotaEntity>) {
+
+        println("ROTAS ENCONTRADAS: ${rotas.size}")
+
+        rotas.forEach {
+            println(
+                "ROTA: id=${it.id}, nome=${it.nome}, destino=${it.destinoEndereco}"
+            )
+        }
+
         containerResultados.removeAllViews()
 
         if (rotas.isEmpty()) {

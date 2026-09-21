@@ -2,6 +2,7 @@ package com.example.vaivan.ui.motorista.rotas
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.ImageButton
@@ -18,6 +19,7 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import kotlinx.coroutines.launch
@@ -37,10 +39,14 @@ class RotaDetalheActivity : AppCompatActivity() {
     private lateinit var txtSemSolicitacoesDetalhe: TextView
     private lateinit var txtAlunosConfirmadosDetalhe: TextView
 
-    private val rotaRepository by lazy {
-        val db = VaivanDatabase.getInstance(this)
-        RotaRepository(this, db.rotaDao(), db.paradaRotaDao())
-    }
+    val db = VaivanDatabase.getInstance(this)
+
+    val rotaRepository =
+        RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(this)
+        )
 
     private val solicitacaoRepository by lazy {
         SolicitacaoInclusaoRepository(this, VaivanDatabase.getInstance(this).solicitacaoInclusaoDao())
@@ -79,7 +85,7 @@ class RotaDetalheActivity : AppCompatActivity() {
     private fun observarRota() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                rotaRepository.observarRota(rotaId).collect { rota ->
+                rotaRepository.observarRotaPorId(rotaId).collect { rota ->
                     preencherRota(rota)
                 }
             }
@@ -133,7 +139,14 @@ class RotaDetalheActivity : AppCompatActivity() {
                     solicitacao,
                     onSuccess = { Toast.makeText(this, "Aluno incluído na rota!", Toast.LENGTH_SHORT).show() },
                     onError = { erro ->
-                        btnAceitar.isEnabled = true; btnRecusar.isEnabled = true
+                        btnAceitar.isEnabled = true;
+                        btnRecusar.isEnabled = true
+
+                        Log.e(
+                            "AceitarRota",
+                            "Erro ao aceitar solicitação",
+                            erro
+                        )
                         Toast.makeText(this, "Erro: ${erro.message}", Toast.LENGTH_LONG).show()
                     }
                 )

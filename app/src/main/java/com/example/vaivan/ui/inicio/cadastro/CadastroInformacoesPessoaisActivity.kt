@@ -362,10 +362,10 @@ class CadastroInformacoesPessoaisActivity : AppCompatActivity() {
         val dia = dataNascimento.get(Calendar.DAY_OF_MONTH)
 
         val dataFormatada = String.format(
-            "%04d-%02d-%02d",
-            ano,
+            "%04d/%02d/%02d",
+            dia,
             mes,
-            dia
+            ano
         )
 
         cadastro.dataNascimento = (dataFormatada)
