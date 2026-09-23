@@ -99,7 +99,7 @@
                 android:textSize="12sp"
                 android:visibility="gone" />
         </LinearLayout>
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnBuscarRotaItem"
             android:layout_width="match_parent"
             android:layout_height="38dp"
@@ -108,7 +108,6 @@
             android:text="Buscar rota para este aluno"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
-            tools:ignore="HardcodedText" />
+            android:textSize="14sp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

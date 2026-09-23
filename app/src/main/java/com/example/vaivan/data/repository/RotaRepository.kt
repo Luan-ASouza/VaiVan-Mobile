@@ -349,6 +349,26 @@ class RotaRepository(
     // OPERAÇÕES NECESSÁRIAS PARA O USE CASE
     // =========================================================
 
+    suspend fun buscarParadasPorPassageiro(
+        passageiroId: String
+    ): List<ParadaRotaEntity> {
+
+        return firestore
+            .collection("paradas_rota")
+            .whereEqualTo("passageiroId", passageiroId)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+
+                document.toObject(
+                    ParadaRotaEntity::class.java
+                )?.copy(
+                    id = document.id
+                )
+            }
+    }
+
     suspend fun buscarRotaNoFirestore(
         rotaId: String
     ): RotaEntity {

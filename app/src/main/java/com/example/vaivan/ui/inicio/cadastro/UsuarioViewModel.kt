@@ -12,13 +12,13 @@ class UsuarioViewModel(
 ) : ViewModel() {
 
     fun observarPorId(id: String): Flow<UsuarioEntity?> {
-        return repository.observarUsuarioPorId(id)
+        return repository.observarUsuario(id)
     }
 
     fun sincronizarUsuarioPorId(id: String) {
         viewModelScope.launch {
             try {
-                repository.sincronizarUsuarioPorId(id)
+                repository.iniciarSincronizacaoPorId(id)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -14,13 +14,11 @@ class BottomNavigationControllerMotorista(
     private val veiculos = root.findViewById<LinearLayout>(R.id.navVeiculosMotorista)
     private val rotas = root.findViewById<LinearLayout>(R.id.navRotasMotorista)
     private val chat = root.findViewById<LinearLayout>(R.id.navChatMotorista)
-    private val perfil = root.findViewById<LinearLayout>(R.id.navPerfilMotorista)
 
     private val items = mapOf(
         NavigationItem.VEICULOS to veiculos,
         NavigationItem.ROTAS to rotas,
-        NavigationItem.CHAT to chat,
-        NavigationItem.PERFIL to perfil
+        NavigationItem.CHAT to chat
     )
 
     private var selectedItem: NavigationItem = NavigationItem.VEICULOS
@@ -47,10 +45,6 @@ class BottomNavigationControllerMotorista(
             listener(NavigationItem.CHAT)
         }
 
-        perfil.setOnClickListener {
-            selectItem(NavigationItem.PERFIL)
-            listener(NavigationItem.PERFIL)
-        }
     }
 
     private fun selectItem(item: NavigationItem) {
@@ -87,6 +81,5 @@ class BottomNavigationControllerMotorista(
 enum class NavigationItem {
     VEICULOS,
     ROTAS,
-    CHAT,
-    PERFIL
+    CHAT
 }

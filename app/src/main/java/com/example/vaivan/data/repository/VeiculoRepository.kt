@@ -144,6 +144,24 @@ class VeiculoRepository(
         return veiculoComId.id
     }
 
+    suspend fun buscarVeiculoNoFirestorePorID(
+        veiculoId: String
+    ): VeiculoEntity? {
+
+        val document =
+            firestore
+                .collection("veiculos")
+                .document(veiculoId)
+                .get()
+                .await()
+
+        return document
+            .toObject(VeiculoEntity::class.java)
+            ?.copy(
+                id = document.id
+            )
+    }
+
 
     // =========================================================
     // WRAPPER PARA CÓDIGO JAVA

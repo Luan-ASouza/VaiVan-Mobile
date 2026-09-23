@@ -26,10 +26,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- VEÍCULOS -->
+        <!-- PASSAGEIROS -->
 
         <LinearLayout
-            android:id="@+id/navVeiculosMotorista"
+            android:id="@+id/navPassageiros"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:gravity="center"
@@ -40,9 +40,8 @@
             <ImageView
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:src="@drawable/ic_veiculos"
-                android:contentDescription="Veículos"
-                app:tint="@color/dark_gray" />
+                android:src="@drawable/ic_passageiros"
+                android:contentDescription="Passageiros" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -50,7 +49,7 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Veículos"
+                android:text="Passageiros"
                 android:textColor="@color/dark_gray"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -61,7 +60,7 @@
         <!-- ROTAS -->
 
         <LinearLayout
-            android:id="@+id/navRotasMotorista"
+            android:id="@+id/navRotas"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:gravity="center"
@@ -72,10 +71,8 @@
             <ImageView
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:padding="1dp"
                 android:src="@drawable/ic_rotas"
-                android:contentDescription="Rotas"
-                app:tint="@color/dark_gray" />
+                android:contentDescription="Rotas" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -91,24 +88,22 @@
         </LinearLayout>
 
 
-        <!-- CHAT -->
+        <!-- ASSINATURAS -->
 
         <LinearLayout
-            android:id="@+id/navChatMotorista"
+            android:id="@+id/navAssinaturas"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="5dp"
-            android:layout_marginHorizontal="5dp">
+            android:layout_marginStart="5dp">
 
             <ImageView
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:padding="1dp"
                 android:src="@drawable/ic_chat"
-                android:contentDescription="Conversas"
-                app:tint="@color/dark_gray" />
+                android:contentDescription="Assinaturas" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -116,15 +111,12 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Conversas"
+                android:text="Assinaturas"
                 android:textColor="@color/dark_gray"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
-
-
-        <!-- PERFIL -->
 
     </LinearLayout>
 

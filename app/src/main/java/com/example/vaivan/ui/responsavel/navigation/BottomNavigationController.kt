@@ -2,6 +2,7 @@ package com.example.vaivan.ui.responsavel.navigation
 
 import android.view.View
 import android.widget.LinearLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.vaivan.R
 
 class BottomNavigationController(
@@ -10,14 +11,12 @@ class BottomNavigationController(
 
     private val passageiros = root.findViewById<LinearLayout>(R.id.navPassageiros)
     private val rotas = root.findViewById<LinearLayout>(R.id.navRotas)
-    private val chat = root.findViewById<LinearLayout>(R.id.navChat)
-    private val perfil = root.findViewById<LinearLayout>(R.id.navPerfil)
+    private val assinaturas = root.findViewById<LinearLayout>(R.id.navAssinaturas)
 
     private val items = mapOf(
         NavigationItem.PASSAGEIROS to passageiros,
         NavigationItem.ROTAS to rotas,
-        NavigationItem.CHAT to chat,
-        NavigationItem.PERFIL to perfil
+        NavigationItem.ASSINATURAS to assinaturas
     )
 
     private var selectedItem: NavigationItem = NavigationItem.PASSAGEIROS
@@ -39,14 +38,9 @@ class BottomNavigationController(
             listener(NavigationItem.ROTAS)
         }
 
-        chat.setOnClickListener {
-            selectItem(NavigationItem.CHAT)
-            listener(NavigationItem.CHAT)
-        }
-
-        perfil.setOnClickListener {
-            selectItem(NavigationItem.PERFIL)
-            listener(NavigationItem.PERFIL)
+        assinaturas.setOnClickListener {
+            selectItem(NavigationItem.ASSINATURAS)
+            listener(NavigationItem.ASSINATURAS)
         }
     }
 
@@ -68,6 +62,6 @@ class BottomNavigationController(
 enum class NavigationItem {
     PASSAGEIROS,
     ROTAS,
-    CHAT,
+    ASSINATURAS,
     PERFIL
 }

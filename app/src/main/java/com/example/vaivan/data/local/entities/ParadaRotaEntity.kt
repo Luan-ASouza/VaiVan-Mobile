@@ -10,7 +10,8 @@ import androidx.room.PrimaryKey
 )
 data class ParadaRotaEntity(
     @PrimaryKey val id: String = "",
-    val rotaId: String = "", // = motoristaId
+    val rotaId: String = "",
+
     val passageiroId: String = "",
     val localId: String = "",
 

@@ -29,4 +29,15 @@ interface PassageiroDao {
 
     @Query("SELECT * FROM passageiros WHERE rotaId = :rotaId")
     fun getByRota(rotaId: String): Flow<List<PassageiroEntity>>
+
+    @Query("DELETE FROM passageiros")
+    suspend fun deleteAll()
+
+    @Query("""
+    DELETE FROM passageiros
+    WHERE id NOT IN (:ids)
+""")
+    suspend fun deleteQueNaoEstaoNaLista(
+        ids: List<String>
+    )
 }

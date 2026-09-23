@@ -1,11 +1,15 @@
 package com.example.vaivan.ui.responsavel
 
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.core.view.WindowCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -36,6 +40,9 @@ class HomeResponsavelActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home_responsavel)
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
+        val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
 
         // --------------------------------------------------
         // DATABASE / REPOSITORY / VIEWMODEL
@@ -90,19 +97,20 @@ class HomeResponsavelActivity : AppCompatActivity() {
 
                     viewModel
                         .observarPorId(uid)
-                        .collect { responsavel ->
+                        .collect { usuario ->
 
-                            if (responsavel != null) {
-                                txtNomeDoUsuario.text = responsavel.nome
+                            if (usuario != null) {
+                                txtNomeDoUsuario.text = usuario.nome
+                                drawerTxtNomeDoUsuario.text = usuario.nome
                             }
                         }
                 }
             }
         }
 
-        // --------------------------------------------------
-        // NAVEGAÇÃO
-        // --------------------------------------------------
+        btnMenu.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.END)
+        }
 
         configurarBottomNavigation()
 
@@ -145,7 +153,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
                         ListaRotasFragment()
                     )
 
-                NavigationItem.CHAT ->
+                NavigationItem.ASSINATURAS ->
                     abrirFragment(
                         ChatFragment()
                     )

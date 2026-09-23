@@ -5,10 +5,13 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -37,6 +40,9 @@ class HomeMotoristaActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home_motorista)
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
+        val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
 
         // CORREÇÃO: Usar o Singleton do banco de dados para evitar erro de esquema
         val database = VaivanDatabase.getInstance(this)
@@ -56,13 +62,18 @@ class HomeMotoristaActivity : AppCompatActivity() {
         if (uid != null) {
             lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    viewModel.observarPorId(uid).collect { responsavel ->
-                        if (responsavel != null) {
-                            txtNomeDoUsuario.text = responsavel.nome
+                    viewModel.observarPorId(uid).collect { usuario ->
+                        if (usuario != null) {
+                            txtNomeDoUsuario.text = usuario.nome
+                            drawerTxtNomeDoUsuario.text = usuario.nome
                         }
                     }
                 }
             }
+        }
+
+        btnMenu.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.END)
         }
 
         configurarBottomNavigation()
@@ -83,7 +94,6 @@ class HomeMotoristaActivity : AppCompatActivity() {
                 NavigationItem.VEICULOS -> abrirFragment(ListaVeiculosFragment())
                 NavigationItem.ROTAS -> abrirFragment(com.example.vaivan.ui.motorista.rotas.MinhasRotasFragment())
                 NavigationItem.CHAT -> abrirFragment(ChatFragment())
-                NavigationItem.PERFIL -> abrirFragment(PerfilFragment())
             }
         }
     }
