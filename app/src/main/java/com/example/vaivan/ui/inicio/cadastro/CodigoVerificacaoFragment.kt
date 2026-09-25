@@ -1,18 +1,18 @@
 package com.example.vaivan.ui.inicio.cadastro
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.example.vaivan.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
-class CadastroCodigoVerificacaoActivity : AppCompatActivity() {
+class CodigoVerificacaoFragment :
+    Fragment(R.layout.fragment_codigo_verificacao) {
 
     private lateinit var edtCodigo1: TextInputEditText
     private lateinit var edtCodigo2: TextInputEditText
@@ -33,44 +33,89 @@ class CadastroCodigoVerificacaoActivity : AppCompatActivity() {
         private const val CODIGO_CORRETO = "1234"
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_validacao_email_responsavel)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        configurarViews()
+        configurarViews(view)
         configurarAutoAvanco()
         configurarListeners()
     }
 
-    private fun configurarViews() {
+    private fun configurarViews(
+        view: View
+    ) {
 
         // CAMPOS
-        edtCodigo1 = findViewById(R.id.edtCodigo1)
-        edtCodigo2 = findViewById(R.id.edtCodigo2)
-        edtCodigo3 = findViewById(R.id.edtCodigo3)
-        edtCodigo4 = findViewById(R.id.edtCodigo4)
+
+        edtCodigo1 =
+            view.findViewById(R.id.edtCodigo1)
+
+        edtCodigo2 =
+            view.findViewById(R.id.edtCodigo2)
+
+        edtCodigo3 =
+            view.findViewById(R.id.edtCodigo3)
+
+        edtCodigo4 =
+            view.findViewById(R.id.edtCodigo4)
+
 
         // LAYOUTS
-        layoutCodigo1 = findViewById(R.id.layoutCodigo1)
-        layoutCodigo2 = findViewById(R.id.layoutCodigo2)
-        layoutCodigo3 = findViewById(R.id.layoutCodigo3)
-        layoutCodigo4 = findViewById(R.id.layoutCodigo4)
+
+        layoutCodigo1 =
+            view.findViewById(R.id.layoutCodigo1)
+
+        layoutCodigo2 =
+            view.findViewById(R.id.layoutCodigo2)
+
+        layoutCodigo3 =
+            view.findViewById(R.id.layoutCodigo3)
+
+        layoutCodigo4 =
+            view.findViewById(R.id.layoutCodigo4)
+
 
         // TEXTOS
-        txtErroCodigo = findViewById(R.id.txtErroCodigo)
-        txtReenviarCodigo = findViewById(R.id.txtReenviarCodigo)
+
+        txtErroCodigo =
+            view.findViewById(R.id.txtErroCodigo)
+
+        txtReenviarCodigo =
+            view.findViewById(R.id.txtReenviarCodigo)
+
 
         // BOTÃO
-        btnContinuar = findViewById(R.id.btnContinuar)
 
-        txtErroCodigo.visibility = View.GONE
+        btnContinuar =
+            view.findViewById(R.id.btnContinuar)
+
+
+        txtErroCodigo.visibility =
+            View.GONE
     }
 
     private fun configurarAutoAvanco() {
 
-        configurarAutoAvanco(edtCodigo1, edtCodigo2)
-        configurarAutoAvanco(edtCodigo2, edtCodigo3)
-        configurarAutoAvanco(edtCodigo3, edtCodigo4)
+        configurarAutoAvanco(
+            edtCodigo1,
+            edtCodigo2
+        )
+
+        configurarAutoAvanco(
+            edtCodigo2,
+            edtCodigo3
+        )
+
+        configurarAutoAvanco(
+            edtCodigo3,
+            edtCodigo4
+        )
     }
 
     private fun configurarListeners() {
@@ -80,7 +125,10 @@ class CadastroCodigoVerificacaoActivity : AppCompatActivity() {
         }
 
         txtReenviarCodigo.setOnClickListener {
-            txtErroCodigo.visibility = View.GONE
+
+            txtErroCodigo.visibility =
+                View.GONE
+
             resetarCampos()
 
             // Futuramente:
@@ -98,27 +146,32 @@ class CadastroCodigoVerificacaoActivity : AppCompatActivity() {
                     obterCodigo(edtCodigo3) +
                     obterCodigo(edtCodigo4)
 
-        if (codigoDigitado == CODIGO_CORRETO) {
 
-            txtErroCodigo.visibility = View.GONE
+        if (
+            codigoDigitado ==
+            CODIGO_CORRETO
+        ) {
+
+            txtErroCodigo.visibility =
+                View.GONE
 
             resetarCampos()
 
-            startActivity(
-                Intent(
-                    this,
-                    CadastroEnderecoActivity::class.java
-                )
-            )
-
-            finish()
+            abrirEndereco()
 
         } else {
 
-            txtErroCodigo.visibility = View.VISIBLE
+            txtErroCodigo.visibility =
+                View.VISIBLE
 
             mostrarErroCampos()
         }
+    }
+
+    private fun abrirEndereco() {
+
+        (requireActivity() as CadastroActivity)
+            .abrirEndereco()
     }
 
     private fun obterCodigo(
@@ -149,10 +202,21 @@ class CadastroCodigoVerificacaoActivity : AppCompatActivity() {
         background: Int
     ) {
 
-        layoutCodigo1.setBackgroundResource(background)
-        layoutCodigo2.setBackgroundResource(background)
-        layoutCodigo3.setBackgroundResource(background)
-        layoutCodigo4.setBackgroundResource(background)
+        layoutCodigo1.setBackgroundResource(
+            background
+        )
+
+        layoutCodigo2.setBackgroundResource(
+            background
+        )
+
+        layoutCodigo3.setBackgroundResource(
+            background
+        )
+
+        layoutCodigo4.setBackgroundResource(
+            background
+        )
     }
 
     private fun configurarAutoAvanco(

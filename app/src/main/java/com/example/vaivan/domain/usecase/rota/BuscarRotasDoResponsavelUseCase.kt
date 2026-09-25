@@ -32,7 +32,7 @@ class BuscarRotasDoResponsavelUseCase(
         val paradasDoResponsavel =
             passageiros.flatMap { passageiro ->
 
-                rotaRepository.buscarParadasPorPassageiro(
+                rotaRepository.consultarParadasPorPassageiro(
                     passageiro.id
                 )
             }
@@ -74,7 +74,7 @@ class BuscarRotasDoResponsavelUseCase(
                     ?.let { veiculoId ->
 
                         veiculoRepository
-                            .buscarVeiculoNoFirestorePorID(
+                            .consultarVeiculo(
                                 veiculoId
                             )
                     }

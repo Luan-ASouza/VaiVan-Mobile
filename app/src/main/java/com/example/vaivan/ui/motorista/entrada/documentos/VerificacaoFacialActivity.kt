@@ -1,4 +1,4 @@
-package com.example.vaivan.ui.motorista.cadastro.documentos
+package com.example.vaivan.ui.motorista.entrada.documentos
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

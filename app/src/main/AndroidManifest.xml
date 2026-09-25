@@ -2,9 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ==================== PERMISSÕES ==================== -->
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+
+    <!-- ==================== APLICAÇÃO ==================== -->
 
     <application
         android:name=".core.VaiVanApplication"
@@ -17,57 +22,144 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VaiVan"
         tools:targetApi="31">
+
+        <!-- ==================== GOOGLE MAPS ==================== -->
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA15teu0qEshSlBTOIT72UBTGpOojvUhmc" />
+
+
+        <!-- ==================== INICIALIZAÇÃO ==================== -->
+
         <activity
-            android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
-            android:exported="false" />
+            android:name=".ui.inicio.SplashActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+
+        <!-- ==================== AUTENTICAÇÃO ==================== -->
+
         <activity
-            android:name=".ui.inicio.cadastro.CadastroCodigoVerificacaoActivity"
+            android:name=".ui.inicio.LoginActivity"
             android:exported="false" />
+
         <activity
-            android:name=".ui.inicio.cadastro.CadastroInformacoesPessoaisActivity"
+            android:name=".ui.inicio.EscolhaTipoPerfilActivity"
             android:exported="false" />
+
+
+        <!-- ==================== CADASTRO ==================== -->
+
         <activity
-            android:name=".ui.motorista.cadastro.documentos.VerificacaoFacialActivity"
+            android:name=".ui.inicio.cadastro.CadastroActivity"
             android:exported="false" />
+
+
+        <!-- ==================== MOTORISTA ==================== -->
+
+        <!-- Entrada -->
+
         <activity
-            android:name=".ui.motorista.cadastro.documentos.EnvioComprovanteResidenciaActivity"
+            android:name=".ui.motorista.entrada.EntradaMotoristaActivity"
             android:exported="false" />
+
+        <!-- Home -->
+
         <activity
             android:name=".ui.motorista.HomeMotoristaActivity"
             android:exported="false" />
+
+
+        <!-- Veículos -->
+
+        <activity
+            android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
+            android:exported="false" />
+
+
+        <!-- Cadastro / Documentos -->
+
+        <activity
+            android:name=".ui.motorista.entrada.documentos.VerificacaoFacialActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.entrada.documentos.EnvioCnhActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.entrada.documentos.EnvioComprovanteResidenciaActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.entrada.documentos.AnaliseDocumentosActivity"
+            android:exported="false" />
+
+
+        <!-- Rotas -->
+
+        <activity
+            android:name=".ui.motorista.rotas.CriarRotaActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.rotas.RotaDetalheActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.rotas.RotaCalculadaActivity"
+            android:exported="false" />
+
+
+        <!-- ==================== RESPONSÁVEL ==================== -->
+
+        <!-- Home -->
+
         <activity
             android:name=".ui.responsavel.HomeResponsavelActivity"
             android:exported="false" />
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyA15teu0qEshSlBTOIT72UBTGpOojvUhmc" /> <!-- MAIN -->
-        <activity
-            android:name=".ui.inicio.LoginActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity> <!-- LOGIN E CADASTRO -->
-        <activity android:name=".ui.inicio.EscolhaTipoPerfilActivity" />
-        <activity android:name=".ui.inicio.cadastro.CadastroCredenciaisActivity" />
-        <activity android:name=".ui.inicio.cadastro.CadastroEnderecoActivity" />
-        <activity android:name=".ui.motorista.cadastro.documentos.EnvioCnhActivity" />
-        <activity android:name=".ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity" />
-        <activity android:name=".ui.motorista.cadastro.documentos.AnaliseDocumentosActivity" /> <!-- PERFIL RESPONSAVEL -->
-        <activity android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity" />
-        <activity android:name=".ui.responsavel.passageiros.AdicionarLocalActivity" />
-        <activity android:name=".ui.responsavel.passageiros.SelecaoLocalizacaoActivity" />
+        <!-- Passageiros -->
+
         <activity
-            android:name=".chat.ChatActivity"
+            android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.responsavel.passageiros.AdicionarLocalActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.responsavel.passageiros.SelecaoLocalizacaoActivity"
+            android:exported="false" />
+
+
+        <!-- Rotas -->
+
+        <activity
+            android:name=".ui.responsavel.rotas.PesquisarRotasActivity"
+            android:exported="false" />
+
+
+        <!-- ==================== COMUM ==================== -->
+
+        <activity
+            android:name=".ui.comum.chat.ChatActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".ui.motorista.rotas.CriarRotaActivity" />
-        <activity android:name=".ui.motorista.rotas.RotaDetalheActivity" />
-        <activity android:name=".ui.motorista.rotas.RotaCalculadaActivity" />
-        <activity android:name=".ui.responsavel.rotas.PesquisarRotasActivity" />
+
     </application>
 
 </manifest>

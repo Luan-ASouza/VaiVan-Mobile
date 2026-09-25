@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fontFamily="@font/montserrat">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="#F6B12F"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_white"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="40dp">
+
+            <!-- TÍTULO -->
+
+            <TextView
+                android:id="@+id/txtTitulo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp"
+                android:text="Confirmar cadastro"
+                android:textColor="@color/dark_gray"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+
+            <!-- DESCRIÇÃO -->
+
+            <TextView
+                android:id="@+id/txtDescricao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp"
+                android:gravity="center"
+                android:text="Confira seus dados antes de finalizar o cadastro."
+                android:textColor="@color/light_gray"
+                android:textSize="13sp"/>
+
+
+            <!-- DADOS PESSOAIS -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dados pessoais"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <!-- NOME -->
+
+            <TextView
+                android:id="@+id/txtNome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:padding="14dp"
+                android:text="Nome"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"/>
+
+            <!-- CPF -->
+
+            <TextView
+                android:id="@+id/txtCpf"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="14dp"
+                android:text="CPF"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"/>
+
+            <!-- EMAIL -->
+
+            <TextView
+                android:id="@+id/txtEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="14dp"
+                android:text="E-mail"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"/>
+
+            <!-- TELEFONE -->
+
+            <TextView
+                android:id="@+id/txtTelefone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="14dp"
+                android:text="Telefone"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"/>
+
+
+            <!-- ENDEREÇO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="Endereço"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <!-- ENDEREÇO COMPLETO -->
+
+            <TextView
+                android:id="@+id/txtEndereco"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:padding="14dp"
+                android:text="Endereço"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"/>
+
+
+            <!-- AVISO -->
+
+            <TextView
+                android:id="@+id/txtAviso"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Ao confirmar, sua conta será criada com estes dados."
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+
+            <!-- ERRO -->
+
+            <TextView
+                android:id="@+id/txtErro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="*Erro ao criar a conta."
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+
+            <!-- BOTÃO -->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmar"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/btn_gray_filled"
+                android:text="Confirmar cadastro"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="12dp"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

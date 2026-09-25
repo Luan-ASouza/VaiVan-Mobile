@@ -746,8 +746,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                 id = "",
                 nome = nome,
                 dataNascimento = nascimentoIso,
-                status = "ATIVO",
-                maiorIdade = false,
                 necessidadesEspeciais =
                     temNecessidadeEspecial,
                 descricaoNecessidades =
@@ -756,7 +754,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                     observacoes,
                 responsavelId =
                     uid,
-                localId = localSelecionadoId
             )
 
         btnSalvar.isEnabled = false

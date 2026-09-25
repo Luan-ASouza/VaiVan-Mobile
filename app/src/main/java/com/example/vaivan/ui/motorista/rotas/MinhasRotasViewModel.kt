@@ -7,6 +7,7 @@ import com.example.vaivan.data.repository.RotaRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.stateIn
 
 class MinhasRotasViewModel(
@@ -19,8 +20,13 @@ class MinhasRotasViewModel(
             .currentUser
             ?.uid
 
-    val rotas: StateFlow<List<RotaEntity>> =
+    init {
+        if (motoristaId != null) {
+            rotaRepository.iniciarSincronizacaoDasRotasDoMotorista(motoristaId)
+        }
+    }
 
+    val rotas: StateFlow<List<RotaEntity>> =
         if (motoristaId != null) {
 
             rotaRepository
@@ -30,16 +36,24 @@ class MinhasRotasViewModel(
                 .stateIn(
                     scope = viewModelScope,
                     started =
-                        SharingStarted.WhileSubscribed(5_000),
+                        SharingStarted.WhileSubscribed(
+                            5_000
+                        ),
                     initialValue =
                         emptyList()
                 )
 
         } else {
 
-            kotlinx.coroutines.flow
-                .MutableStateFlow(
-                    emptyList()
+            emptyFlow<List<RotaEntity>>()
+                .stateIn(
+                    scope = viewModelScope,
+                    started =
+                        SharingStarted.WhileSubscribed(
+                            5_000
+                        ),
+                    initialValue =
+                        emptyList()
                 )
         }
 }

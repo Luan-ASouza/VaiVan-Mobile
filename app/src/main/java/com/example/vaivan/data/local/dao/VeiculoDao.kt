@@ -24,6 +24,9 @@ interface VeiculoDao {
     @Query("SELECT * FROM veiculos")
     fun getAll(): Flow<List<VeiculoEntity>>
 
+    @Query("SELECT id FROM veiculos WHERE motoristaId = :motoristaId")
+    suspend fun getIdsByMotoristaId(motoristaId: String): List<String>
+
     @Query("SELECT * FROM veiculos WHERE motoristaId = :motoristaId")
     fun getByMotoristaId(motoristaId: String): Flow<List<VeiculoEntity>>
 }

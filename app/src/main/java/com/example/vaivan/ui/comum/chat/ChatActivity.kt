@@ -1,4 +1,4 @@
-package com.example.vaivan.chat
+package com.example.vaivan.ui.comum.chat
 
 import android.os.Bundle
 import android.util.Log

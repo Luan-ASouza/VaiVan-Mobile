@@ -10,36 +10,34 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.ViewModelProvider
 import com.example.vaivan.R
 import com.example.vaivan.core.util.DataUtil
 import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.ui.responsavel.rotas.PesquisarRotasFragment
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
-/**
- * Tela "Seus Passageiros": lista os filhos (menores de idade)
- * cadastrados pelo responsável logado.
- *
- * Os dados vêm do PassageiroRepository, que sincroniza com o
- * Firestore e mantém uma cópia local no Room.
- */
 class ListaPassageirosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemPassageiros: TextView
+    private val viewModel: ListaPassageirosViewModel by viewModels()
 
-    private val repository by lazy {
-        PassageiroRepository(
-            VaivanDatabase
-                .getInstance(requireContext())
-                .passageiroDao()
-        )
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val repository =
+            PassageiroRepository(
+                VaivanDatabase
+                    .getInstance(requireContext())
+                    .passageiroDao()
+            )
     }
 
     override fun onCreateView(
@@ -47,7 +45,6 @@ class ListaPassageirosFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         return inflater.inflate(
             R.layout.fragment_lista_passageiros,
             container,
@@ -59,28 +56,29 @@ class ListaPassageirosFragment : Fragment() {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        val btnNovoPassageiro =
-            view.findViewById<LinearLayout>(
-                R.id.btnNovoPassageiro
-            )
+        configurarViews(view)
+        configurarBotoes()
+        observarPassageiros()
+    }
+
+    private fun configurarViews(view: View) {
 
         containerConfirmados =
-            view.findViewById(
-                R.id.containerConfirmados
-            )
+            view.findViewById(R.id.containerConfirmados)
 
         txtSemPassageiros =
-            view.findViewById(
-                R.id.txtSemPassageiros
-            )
+            view.findViewById(R.id.txtSemPassageiros)
+    }
+
+    private fun configurarBotoes() {
+
+        val btnNovoPassageiro =
+            view?.findViewById<LinearLayout>(R.id.btnNovoPassageiro)
+                ?: return
 
         btnNovoPassageiro.setOnClickListener {
-
             startActivity(
                 Intent(
                     requireContext(),
@@ -88,18 +86,9 @@ class ListaPassageirosFragment : Fragment() {
                 )
             )
         }
-
-        observarPassageiros()
     }
 
     private fun observarPassageiros() {
-
-        val uid =
-            FirebaseAuth
-                .getInstance()
-                .currentUser
-                ?.uid
-                ?: return
 
         viewLifecycleOwner.lifecycleScope.launch {
 
@@ -107,14 +96,10 @@ class ListaPassageirosFragment : Fragment() {
                 Lifecycle.State.STARTED
             ) {
 
-                repository
-                    .observarPassageirosDoResponsavel(uid)
-                    .collect { passageiros ->
+                viewModel.passageiros.collect { passageiros ->
 
-                        renderizarLista(
-                            passageiros
-                        )
-                    }
+                    renderizarLista(passageiros)
+                }
             }
         }
     }
@@ -127,19 +112,15 @@ class ListaPassageirosFragment : Fragment() {
 
         if (passageiros.isEmpty()) {
 
-            txtSemPassageiros.visibility =
-                View.VISIBLE
+            txtSemPassageiros.visibility = View.VISIBLE
 
             return
         }
 
-        txtSemPassageiros.visibility =
-            View.GONE
+        txtSemPassageiros.visibility = View.GONE
 
         val inflater =
-            LayoutInflater.from(
-                requireContext()
-            )
+            LayoutInflater.from(requireContext())
 
         for (passageiro in passageiros) {
 
@@ -150,157 +131,170 @@ class ListaPassageirosFragment : Fragment() {
                     false
                 )
 
-            val linhaPrincipal =
-                itemView.findViewById<LinearLayout>(
-                    R.id.linhaPrincipalItem
-                )
-
-            val txtNome =
-                itemView.findViewById<TextView>(
-                    R.id.txtNomePassageiroItem
-                )
-
-            val txtIdade =
-                itemView.findViewById<TextView>(
-                    R.id.txtIdadePassageiroItem
-                )
-
-            val imgChevron =
-                itemView.findViewById<ImageView>(
-                    R.id.imgChevronItem
-                )
-
-            val containerDetalhes =
-                itemView.findViewById<LinearLayout>(
-                    R.id.containerDetalhesItem
-                )
-
-            val txtNecessidade =
-                itemView.findViewById<TextView>(
-                    R.id.txtNecessidadePassageiroItem
-                )
-
-            val txtObservacoes =
-                itemView.findViewById<TextView>(
-                    R.id.txtObservacoesPassageiroItem
-                )
-
-            txtNome.text =
-                passageiro.nome
-
-            val idade =
-                DataUtil.calcularIdade(
-                    passageiro.dataNascimento
-                )
-
-            txtIdade.text =
-                if (idade >= 0) {
-                    "$idade anos"
-                } else {
-                    "Idade indisponível"
-                }
-
-            if (passageiro.necessidadesEspeciais) {
-
-                txtNecessidade.visibility =
-                    View.VISIBLE
-
-                txtNecessidade.text =
-                    if (
-                        passageiro
-                            .descricaoNecessidades
-                            .isNotBlank()
-                    ) {
-
-                        "Necessidade especial: " +
-                                passageiro.descricaoNecessidades
-
-                    } else {
-
-                        "Possui necessidade especial"
-                    }
-
-            } else {
-
-                txtNecessidade.visibility =
-                    View.GONE
-            }
-
-            if (
+            configurarItemPassageiro(
+                itemView,
                 passageiro
-                    .observacoes
-                    .isNotBlank()
-            ) {
-
-                txtObservacoes.visibility =
-                    View.VISIBLE
-
-                txtObservacoes.text =
-                    "Observações: " +
-                            passageiro.observacoes
-
-            } else {
-
-                txtObservacoes.visibility =
-                    View.GONE
-            }
-
-            val temDetalhes =
-                passageiro.necessidadesEspeciais ||
-                        passageiro.observacoes.isNotBlank()
-
-            imgChevron.visibility =
-                if (temDetalhes) {
-                    View.VISIBLE
-                } else {
-                    View.INVISIBLE
-                }
-
-            linhaPrincipal.setOnClickListener {
-
-                if (!temDetalhes) {
-                    return@setOnClickListener
-                }
-
-                val vaiExpandir =
-                    containerDetalhes.visibility !=
-                            View.VISIBLE
-
-                containerDetalhes.visibility =
-                    if (vaiExpandir) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
-
-                imgChevron
-                    .animate()
-                    .rotation(
-                        if (vaiExpandir) {
-                            180f
-                        } else {
-                            0f
-                        }
-                    )
-                    .setDuration(150)
-                    .start()
-            }
-
-            containerConfirmados.addView(
-                itemView
             )
 
-            val btnBuscarRota =
-                itemView.findViewById<Button>(
-                    R.id.btnBuscarRotaItem
-                )
+            containerConfirmados.addView(itemView)
+        }
+    }
 
-            btnBuscarRota.setOnClickListener {
+    private fun configurarItemPassageiro(
+        itemView: View,
+        passageiro: PassageiroEntity
+    ) {
 
-                abrirPesquisaRotas(
-                    passageiro
-                )
+        val linhaPrincipal =
+            itemView.findViewById<LinearLayout>(
+                R.id.linhaPrincipalItem
+            )
+
+        val txtNome =
+            itemView.findViewById<TextView>(
+                R.id.txtNomePassageiroItem
+            )
+
+        val txtIdade =
+            itemView.findViewById<TextView>(
+                R.id.txtIdadePassageiroItem
+            )
+
+        val imgChevron =
+            itemView.findViewById<ImageView>(
+                R.id.imgChevronItem
+            )
+
+        val containerDetalhes =
+            itemView.findViewById<LinearLayout>(
+                R.id.containerDetalhesItem
+            )
+
+        val txtNecessidade =
+            itemView.findViewById<TextView>(
+                R.id.txtNecessidadePassageiroItem
+            )
+
+        val txtObservacoes =
+            itemView.findViewById<TextView>(
+                R.id.txtObservacoesPassageiroItem
+            )
+
+        val btnBuscarRota =
+            itemView.findViewById<Button>(
+                R.id.btnBuscarRotaItem
+            )
+
+        // =========================
+        // INFORMAÇÕES PRINCIPAIS
+        // =========================
+
+        txtNome.text = passageiro.nome
+
+        val idade =
+            DataUtil.calcularIdade(
+                passageiro.dataNascimento
+            )
+
+        txtIdade.text =
+            if (idade >= 0) {
+                "$idade anos"
+            } else {
+                "Idade indisponível"
             }
+
+        // =========================
+        // NECESSIDADE ESPECIAL
+        // =========================
+
+        if (passageiro.necessidadesEspeciais) {
+
+            txtNecessidade.visibility = View.VISIBLE
+
+            txtNecessidade.text =
+                if (!passageiro.descricaoNecessidades.isNullOrBlank()) {
+
+                    "Necessidade especial: " +
+                            passageiro.descricaoNecessidades
+
+                } else {
+
+                    "Possui necessidade especial"
+                }
+
+        } else {
+
+            txtNecessidade.visibility = View.GONE
+        }
+
+        // =========================
+        // OBSERVAÇÕES
+        // =========================
+
+        if (!passageiro.observacoes.isNullOrBlank()) {
+
+            txtObservacoes.visibility = View.VISIBLE
+
+            txtObservacoes.text =
+                "Observações: " +
+                        passageiro.observacoes
+
+        } else {
+
+            txtObservacoes.visibility = View.GONE
+        }
+
+        // =========================
+        // EXPANSÃO
+        // =========================
+
+        val temDetalhes =
+            passageiro.necessidadesEspeciais ||
+                    !passageiro.observacoes.isNullOrBlank()
+
+        imgChevron.visibility =
+            if (temDetalhes) {
+                View.VISIBLE
+            } else {
+                View.INVISIBLE
+            }
+
+        linhaPrincipal.setOnClickListener {
+
+            if (!temDetalhes) {
+                return@setOnClickListener
+            }
+
+            val vaiExpandir =
+                containerDetalhes.visibility != View.VISIBLE
+
+            containerDetalhes.visibility =
+                if (vaiExpandir) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+
+            imgChevron
+                .animate()
+                .rotation(
+                    if (vaiExpandir) {
+                        180f
+                    } else {
+                        0f
+                    }
+                )
+                .setDuration(150)
+                .start()
+        }
+
+        // =========================
+        // BUSCAR ROTA
+        // =========================
+
+        btnBuscarRota.setOnClickListener {
+
+            abrirPesquisaRotas(passageiro)
         }
     }
 
@@ -325,8 +319,8 @@ class ListaPassageirosFragment : Fragment() {
                 )
 
                 putString(
-                    "localId",
-                    passageiro.localId
+                    "pontoEmbarqueId",
+                    passageiro.pontoEmbarqueId
                 )
             }
 

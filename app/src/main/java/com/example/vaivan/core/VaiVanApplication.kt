@@ -13,17 +13,25 @@ class VaiVanApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val database = VaivanDatabase.getInstance(this)
+        val database =
+            VaivanDatabase.getInstance(this)
 
         val usuarioRepository =
-            UsuarioRepository(database.UsuarioDao())
+            UsuarioRepository(
+                database.UsuarioDao()
+            )
 
         val passageiroRepository =
-            PassageiroRepository(database.passageiroDao())
+            PassageiroRepository(
+                database.passageiroDao()
+            )
 
-        syncManager = SyncManager(
-            usuarioRepository,
-            passageiroRepository
-        )
+        syncManager =
+            SyncManager(
+                usuarioRepository,
+                passageiroRepository
+            )
+
+        syncManager.iniciar()
     }
 }

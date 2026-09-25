@@ -1,7 +1,7 @@
 package com.example.vaivan.data.repository
 
-import com.example.vaivan.data.local.dao.VeiculoDao
-import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.example.vaivan.data.local.dao.PontoEmbarqueDao
+import com.example.vaivan.data.local.entities.PontoDeEmbarqueEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
@@ -16,23 +16,23 @@ import kotlinx.coroutines.tasks.await
  * Room = cache local observado pela UI
  *
  * Nomenclatura:
- * observar  → Room → Flow
- * consultar → Firebase, consulta pontual
- * sincronizar → Firebase → Room, mantendo os dados atualizados
- * salvar    → Firebase + Room
- * excluir   → Firebase + Room
+ * observar           → Room → Flow
+ * consultar          → Firebase, consulta pontual
+ * iniciarSincronizacao → Firebase → Room, mantendo os dados atualizados
+ * salvar             → Firebase + Room
+ * excluir            → Firebase + Room
  *
  * O Repository executa as operações de dados.
  * O SyncManager controla o ciclo de vida dos listeners.
  */
-class VeiculoRepository(
-    private val veiculoDao: VeiculoDao,
+class PontoEmbarqueRepository(
+    private val pontoEmbarqueDao: PontoEmbarqueDao,
     private val firestore: FirebaseFirestore =
         FirebaseFirestore.getInstance()
 ) {
 
     private val collection =
-        firestore.collection("veiculos")
+        firestore.collection("ponto_embarque")
 
     private val scope =
         CoroutineScope(
@@ -44,29 +44,28 @@ class VeiculoRepository(
     // OBSERVAÇÃO
     // =========================================================
 
-    /** Observa todos os veículos armazenados no Room. */
-    fun observarVeiculos():
-            Flow<List<VeiculoEntity>> {
+    /**
+     * Observa todos os pontos de embarque do usuário
+     * armazenados no Room.
+     */
+    fun observarPontosDeEmbarqueDoUsuario(
+        usuarioId: String
+    ): Flow<List<PontoDeEmbarqueEntity>> {
 
-        return veiculoDao.getAll()
-    }
-
-    /** Observa um veículo específico pelo ID no Room. */
-    fun observarVeiculoPorId(
-        id: String
-    ): Flow<VeiculoEntity?> {
-
-        return veiculoDao.getById(id)
-    }
-
-    /** Observa os veículos de um motorista específico no Room. */
-    fun observarVeiculosPorMotorista(
-        motoristaId: String
-    ): Flow<List<VeiculoEntity>> {
-
-        return veiculoDao.getByMotoristaId(
-            motoristaId
+        return pontoEmbarqueDao.getByResponsavel(
+            usuarioId
         )
+    }
+
+    /**
+     * Observa um ponto de embarque específico pelo ID
+     * no Room.
+     */
+    fun observarPontoDeEmbarquePorId(
+        id: String
+    ): Flow<PontoDeEmbarqueEntity?> {
+
+        return pontoEmbarqueDao.getById(id)
     }
 
 
@@ -74,10 +73,12 @@ class VeiculoRepository(
     // CONSULTA
     // =========================================================
 
-    /** Consulta um veículo diretamente no Firebase. */
-    suspend fun consultarVeiculo(
+    /**
+     * Consulta um ponto de embarque diretamente no Firebase.
+     */
+    suspend fun consultarPontoDeEmbarque(
         id: String
-    ): VeiculoEntity? {
+    ): PontoDeEmbarqueEntity? {
 
         val document =
             collection
@@ -90,7 +91,9 @@ class VeiculoRepository(
         }
 
         return document
-            .toObject(VeiculoEntity::class.java)
+            .toObject(
+                PontoDeEmbarqueEntity::class.java
+            )
             ?.copy(
                 id = document.id
             )
@@ -101,15 +104,18 @@ class VeiculoRepository(
     // SINCRONIZAÇÃO
     // =========================================================
 
-    /** Inicia a sincronização de todos os veículos do motorista com o Room. */
-    fun iniciarSincronizacao(
-        motoristaId: String
+    /**
+     * Inicia a sincronização dos pontos de embarque
+     * do usuário com o Room.
+     */
+    fun iniciarSincronizacaoDosPontosDeEmbarque(
+        usuarioId: String
     ): ListenerRegistration {
 
         return collection
             .whereEqualTo(
-                "motoristaId",
-                motoristaId
+                "usuarioId",
+                usuarioId
             )
             .addSnapshotListener { snapshot, error ->
 
@@ -122,13 +128,12 @@ class VeiculoRepository(
 
                 scope.launch {
 
-                    // Veículos que atualmente existem no Firebase
-                    val veiculos =
+                    val pontosDeEmbarque =
                         snapshot.documents.mapNotNull { document ->
 
                             document
                                 .toObject(
-                                    VeiculoEntity::class.java
+                                    PontoDeEmbarqueEntity::class.java
                                 )
                                 ?.copy(
                                     id = document.id,
@@ -137,34 +142,8 @@ class VeiculoRepository(
                                 )
                         }
 
-                    // IDs que existem no Firebase
-                    val idsFirebase =
-                        veiculos
-                            .map { it.id }
-                            .toSet()
-
-                    // IDs que existem atualmente no Room
-                    val idsRoom =
-                        veiculoDao
-                            .getIdsByMotoristaId(
-                                motoristaId
-                            )
-
-                    // O que está no Room mas não está mais no Firebase
-                    val idsRemovidos =
-                        idsRoom - idsFirebase
-
-                    // Remove do Room
-                    idsRemovidos.forEach { id ->
-
-                        veiculoDao.deleteById(
-                            id
-                        )
-                    }
-
-                    // Insere/atualiza os veículos existentes
-                    veiculoDao.upsertAll(
-                        veiculos
+                    pontoEmbarqueDao.upsertAll(
+                        pontosDeEmbarque
                     )
                 }
             }
@@ -175,20 +154,23 @@ class VeiculoRepository(
     // SINCRONIZAÇÃO MANUAL
     // =========================================================
 
-    /** Sincroniza todos os veículos uma única vez. */
-    suspend fun sincronizarUmaVez() {
+    /**
+     * Sincroniza todos os pontos de embarque
+     * uma única vez.
+     */
+    suspend fun sincronizarPontosDeEmbarqueUmaVez() {
 
         val snapshot =
             collection
                 .get()
                 .await()
 
-        val veiculos =
+        val pontosDeEmbarque =
             snapshot.documents.mapNotNull { document ->
 
                 document
                     .toObject(
-                        VeiculoEntity::class.java
+                        PontoDeEmbarqueEntity::class.java
                     )
                     ?.copy(
                         id = document.id,
@@ -197,45 +179,52 @@ class VeiculoRepository(
                     )
             }
 
-        veiculoDao.upsertAll(
-            veiculos
+        pontoEmbarqueDao.upsertAll(
+            pontosDeEmbarque
         )
     }
+
 
     // =========================================================
     // ESCRITA
     // =========================================================
 
-    /** Salva o veículo no Firebase e atualiza o Room. */
-    suspend fun salvarVeiculo(
-        veiculo: VeiculoEntity
+    /**
+     * Salva o ponto de embarque no Firebase
+     * e atualiza o Room.
+     */
+    suspend fun salvarPontoDeEmbarque(
+        pontoDeEmbarque: PontoDeEmbarqueEntity
     ): String {
 
         val documentReference =
-            if (veiculo.id.isBlank()) {
+            if (pontoDeEmbarque.id.isBlank()) {
+
                 collection.document()
+
             } else {
+
                 collection.document(
-                    veiculo.id
+                    pontoDeEmbarque.id
                 )
             }
 
-        val veiculoSalvo =
-            veiculo.copy(
+        val pontoDeEmbarqueSalvo =
+            pontoDeEmbarque.copy(
                 id = documentReference.id,
                 lastUpdated =
                     System.currentTimeMillis()
             )
 
         documentReference
-            .set(veiculoSalvo)
+            .set(pontoDeEmbarqueSalvo)
             .await()
 
-        veiculoDao.upsert(
-            veiculoSalvo
+        pontoEmbarqueDao.upsert(
+            pontoDeEmbarqueSalvo
         )
 
-        return veiculoSalvo.id
+        return pontoDeEmbarqueSalvo.id
     }
 
 
@@ -243,8 +232,11 @@ class VeiculoRepository(
     // EXCLUSÃO
     // =========================================================
 
-    /** Exclui o veículo do Firebase e do Room. */
-    suspend fun excluirVeiculo(
+    /**
+     * Exclui o ponto de embarque do Firebase
+     * e do Room.
+     */
+    suspend fun excluirPontoDeEmbarque(
         id: String
     ) {
 
@@ -253,6 +245,6 @@ class VeiculoRepository(
             .delete()
             .await()
 
-        veiculoDao.deleteById(id)
+        pontoEmbarqueDao.deleteById(id)
     }
 }

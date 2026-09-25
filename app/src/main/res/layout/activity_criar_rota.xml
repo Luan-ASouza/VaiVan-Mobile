@@ -1,86 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/beige">
-
-    <View
-        android:id="@+id/topGap"
-        android:layout_width="match_parent"
-        android:layout_height="0dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp">
-
-        <ImageButton
-            android:id="@+id/btnVoltar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:src="@drawable/ic_arrowback"
-            app:tint="@color/black" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Nova Rota"
-            android:textColor="@color/black"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            tools:ignore="HardcodedText" />
-    </LinearLayout>
+    android:background="@color/dark_gray"
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="match_parent"
+        android:background="@color/dark_gray"
+        android:fillViewport="true"
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/bg_white"
             android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- NOME -->
-            <TextView
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp"> <!-- CABEÇALHO -->
+            <LinearLayout
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnVoltar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Voltar"
+                    android:src="@drawable/ic_arrowback"
+                    app:tint="@color/dark_gray" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:text="Nova Rota"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout> <!-- NOME DA ROTA --> <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nome da rota"
                 android:textColor="@color/dark_gray"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/edtNomeRota"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:layout_marginBottom="16dp"
-                android:background="@android:color/white"
-                android:hint="Ex: La Salle Carmo - Manhã"
-                android:paddingHorizontal="12dp"
-                tools:ignore="HardcodedText,Autofill" />
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
 
-            <!-- ORIGEM -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtNomeRota"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Ex: La Salle Carmo - Manhã"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"
+                    tools:ignore="Autofill" />
+            </com.google.android.material.textfield.TextInputLayout> <!-- ORIGEM --> <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Ponto de partida"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginTop="6dp"
                 app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="0dp">
 
                 <LinearLayout
@@ -88,46 +97,42 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Ponto de partida"
-                        android:textColor="@color/dark_gray"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
 
                     <TextView
                         android:id="@+id/txtOrigemAtual"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Não definido"
-                        android:textColor="#707070"
-                        android:textSize="13sp"
-                        tools:ignore="HardcodedText" />
+                        android:text="Nenhum ponto definido"
+                        android:textColor="@color/light_gray"
+                        android:textSize="14sp" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnDefinirOrigem"
                         android:layout_width="match_parent"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
                         android:background="@drawable/btn_gray_filled"
                         android:text="Definir no mapa"
                         android:textAllCaps="false"
                         android:textColor="@android:color/white"
-                        android:textSize="13sp"
-                        tools:ignore="HardcodedText" />
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </androidx.cardview.widget.CardView> <!-- DESTINO --> <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Destino"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <!-- DESTINO -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="6dp"
                 app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardElevation="0dp">
 
                 <LinearLayout
@@ -137,150 +142,218 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Destino (escola)"
-                        android:textColor="@color/dark_gray"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
                         android:id="@+id/txtDestinoAtual"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Não definido"
-                        android:textColor="#707070"
-                        android:textSize="13sp"
-                        tools:ignore="HardcodedText" />
+                        android:text="Nenhum destino definido"
+                        android:textColor="@color/light_gray"
+                        android:textSize="14sp" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnDefinirDestino"
                         android:layout_width="match_parent"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
                         android:background="@drawable/btn_gray_filled"
                         android:text="Definir no mapa"
                         android:textAllCaps="false"
                         android:textColor="@android:color/white"
-                        android:textSize="13sp"
-                        tools:ignore="HardcodedText" />
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- TURNO -->
-            <TextView
-                android:layout_width="match_parent"
+            </androidx.cardview.widget.CardView> <!-- TURNO --> <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
                 android:text="Turno"
                 android:textColor="@color/dark_gray"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <LinearLayout
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/grupoTurno"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:orientation="horizontal">
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnManha"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="44dp"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
                     android:text="Manhã"
                     android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    tools:ignore="HardcodedText" />
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnTarde"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="44dp"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
                     android:text="Tarde"
                     android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    tools:ignore="HardcodedText" />
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnNoite"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="44dp"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
                     android:text="Noite"
                     android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    tools:ignore="HardcodedText" />
-            </LinearLayout>
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <!-- DIAS DA SEMANA -->
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
                 android:text="Dias da semana"
                 android:textColor="@color/dark_gray"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <GridLayout
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/grupoDias"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:columnCount="4">
+                app:singleSelection="false">
 
-                <Button android:id="@+id/btnSeg" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Seg" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnTer" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Ter" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnQua" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Qua" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnQui" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Qui" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnSex" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Sex" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnSab" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Sáb" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-                <Button android:id="@+id/btnDom" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_margin="3dp" android:background="@drawable/btn_gray_filled" android:text="Dom" android:textAllCaps="false" android:textColor="@android:color/white" android:textSize="12sp" tools:ignore="HardcodedText" />
-            </GridLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSeg"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Seg"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
 
-            <!-- CAPACIDADE -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTer"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Ter"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQua"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Qua"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQui"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Qui"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSex"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Sex"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSab"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Sáb"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDom"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Dom"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/button_toggle_background" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup> <!-- CAPACIDADE -->
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Capacidade"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Capacidade (nº de vagas)"
-                android:textColor="@color/dark_gray"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
-            <EditText
-                android:id="@+id/edtCapacidade"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
                 android:layout_marginTop="6dp"
-                android:layout_marginBottom="20dp"
-                android:background="@android:color/white"
-                android:hint="Ex: 15"
-                android:inputType="number"
-                android:paddingHorizontal="12dp"
-                tools:ignore="HardcodedText,Autofill" />
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
 
-            <Button
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtCapacidade"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Ex: 15 vagas"
+                    android:inputType="number"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- BOTÃO -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCriarRota"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginBottom="24dp"
-                android:background="@drawable/bg_button_green"
                 android:text="Criar rota"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
+                app:backgroundTint="@color/dark_gray"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

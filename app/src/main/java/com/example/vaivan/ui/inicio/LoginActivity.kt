@@ -9,9 +9,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.vaivan.R
-import com.example.vaivan.chat.ChatActivity
+import com.example.vaivan.ui.comum.chat.ChatActivity
 import com.example.vaivan.data.repository.FirebaseAuthRepository
-import com.example.vaivan.ui.inicio.cadastro.CadastroCredenciaisActivity
+import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 
@@ -21,17 +21,8 @@ class LoginActivity : AppCompatActivity() {
     private val authRepository = FirebaseAuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        val usuario = FirebaseAuth.getInstance().currentUser
-
-        if (usuario != null) {
-            // Usuário já está logado
-            // Vai direto para a tela principal
-            startActivity(Intent(this, EscolhaTipoPerfilActivity::class.java))
-            finish()
-        }
-
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
         // Botões principais da tela de fundo
@@ -114,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Ir para a tela de Cadastro
         btnCadastrar.setOnClickListener {
-            startActivity(Intent(this, CadastroCredenciaisActivity::class.java))
+            startActivity(Intent(this, CadastroActivity::class.java))
         }
 
         // ===== BOTÃO TEMPORÁRIO — testar tela de chat (remover depois) =====

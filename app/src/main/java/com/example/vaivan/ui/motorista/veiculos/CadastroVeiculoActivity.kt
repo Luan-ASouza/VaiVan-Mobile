@@ -13,18 +13,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.VeiculoRepository
-import com.example.vaivan.ui.motorista.cadastro.documentos.StatusDocumentosVeiculoActivity
+import com.example.vaivan.ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -377,28 +379,32 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             0L
         )
 
-        veiculoRepository.salvarAsync(
-            veiculo,
-            { veiculoId ->
+        lifecycleScope.launch {
+
+            try {
+
+                val veiculoId =
+                    veiculoRepository.salvarVeiculo(
+                        veiculo
+                    )
+
                 enviarCrlv(
                     veiculoId,
                     motoristaId,
                     crlv
                 )
-                null
-            },
-            { erro ->
+
+            } catch (erro: Exception) {
+
                 restaurarBotao()
 
                 Toast.makeText(
-                    this,
+                    this@CadastroVeiculoActivity,
                     "Erro ao salvar veículo: ${erro.message}",
                     Toast.LENGTH_LONG
                 ).show()
-
-                null
             }
-        )
+        }
     }
 
     private fun obterTexto(
@@ -490,6 +496,29 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         uri: Uri,
         onSucesso: (String) -> Unit
     ) {
+
+        val usuario = FirebaseAuth
+            .getInstance()
+            .currentUser
+
+        if (usuario == null) {
+            tratarErroUpload(
+                IllegalStateException(
+                    "Usuário não está autenticado."
+                )
+            )
+            return
+        }
+
+        android.util.Log.d(
+            "STORAGE",
+            "UID: ${usuario.uid}"
+        )
+
+        android.util.Log.d(
+            "STORAGE",
+            "Caminho: ${referencia.path}"
+        )
 
         referencia
             .putFile(uri)

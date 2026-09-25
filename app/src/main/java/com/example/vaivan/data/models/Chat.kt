@@ -1,4 +1,4 @@
-package com.vaivan.app.models
+package com.example.vaivan.data.models
 
 data class Chat(
     val id: Int = 0,

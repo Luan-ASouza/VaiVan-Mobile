@@ -1,11 +1,14 @@
 package com.example.vaivan.ui.responsavel
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.core.view.WindowCompat
@@ -24,9 +27,13 @@ import com.example.vaivan.ui.responsavel.passageiros.ListaPassageirosFragment
 import com.example.vaivan.ui.responsavel.perfil.PerfilFragment
 import com.example.vaivan.ui.responsavel.rotas.ListaRotasFragment
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeResponsavelActivity : AppCompatActivity() {
 
@@ -43,6 +50,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
+        val btnDesconectar = findViewById<LinearLayout>(R.id.btnDrawerDesconectar)
 
         // --------------------------------------------------
         // DATABASE / REPOSITORY / VIEWMODEL
@@ -110,6 +118,41 @@ class HomeResponsavelActivity : AppCompatActivity() {
 
         btnMenu.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.END)
+        }
+
+        btnDesconectar.setOnClickListener {
+
+            lifecycleScope.launch {
+
+                /*
+                 * Limpa o Room fora da Main Thread.
+                 */
+                withContext(Dispatchers.IO) {
+                    database.clearAllTables()
+                }
+
+                /*
+                 * Desconecta do Firebase.
+                 */
+                FirebaseAuth
+                    .getInstance()
+                    .signOut()
+
+                /*
+                 * Volta para o Login.
+                 */
+                val intent =
+                    Intent(
+                        this@HomeResponsavelActivity,
+                        LoginActivity::class.java
+                    )
+
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                startActivity(intent)
+            }
         }
 
         configurarBottomNavigation()

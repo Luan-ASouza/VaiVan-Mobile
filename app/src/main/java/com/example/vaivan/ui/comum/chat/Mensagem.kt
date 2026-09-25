@@ -1,4 +1,4 @@
-package com.example.vaivan.chat
+package com.example.vaivan.ui.comum.chat
 
 data class Mensagem(
     val id: String = "",

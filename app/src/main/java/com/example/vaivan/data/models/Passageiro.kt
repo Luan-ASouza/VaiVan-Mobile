@@ -1,18 +1,23 @@
-package com.vaivan.app.models
+package com.example.vaivan.data.models
+
+
 
 data class Passageiro(
-    override val id: Int = 0,
-    override val nome: String = "",
-    override val cpf: String = "",
-    override val email: String = "",
-    override val senha: String = "",
-    override val telefone: String = "",
-    override val dataNascimento: String = "",
-    override val status: String = "",
-    val matricula: String = "",
-    val maiorIdade: Boolean = false,
+    val id: String = "",
+    val nome: String = "",
+    val cpf: String? = null,
+    val telefone: String? = null,
+    val dataNascimento: String = "",
 
-    // Relacionamentos
-    val responsavelId: Int? = null,
-    val rotaId: Int? = null
-) : Usuario(id, nome, cpf, email, senha, telefone, dataNascimento, status)
+    val matricula: String = "",
+    val necessidadesEspeciais: Boolean = false,
+    val descricaoNecessidades: String? = null,
+    val observacoes: String? = null,
+
+    val responsavelId: String? = null,
+    val motoristaId: String? = null,
+    val pontoEmbarqueId: String? = null,
+
+    val rotaId: String? = null,
+    val lastUpdated: Long = 0L,
+)

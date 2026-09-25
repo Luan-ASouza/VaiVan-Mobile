@@ -1,4 +1,4 @@
-package com.vaivan.app.models
+package com.example.vaivan.data.models
 
 data class Mensagem(
     val id: Int = 0,

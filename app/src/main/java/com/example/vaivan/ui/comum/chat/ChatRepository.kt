@@ -1,4 +1,4 @@
-package com.example.vaivan.chat
+package com.example.vaivan.ui.comum.chat
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

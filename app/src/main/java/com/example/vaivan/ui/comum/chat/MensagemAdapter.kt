@@ -1,4 +1,4 @@
-package com.example.vaivan.chat
+package com.example.vaivan.ui.comum.chat
 
 import android.view.LayoutInflater
 import android.view.View

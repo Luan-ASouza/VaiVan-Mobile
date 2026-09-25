@@ -9,21 +9,22 @@ import androidx.room.PrimaryKey
     indices = [Index(value = ["responsavelId"]), Index(value = ["rotaId"])]
 )
 data class PassageiroEntity(
-    @PrimaryKey val id: String = "",
+    @PrimaryKey
+    val id: String = "",
     val nome: String = "",
-    val cpf: String = "",
-    val email: String = "",
-    val telefone: String = "",
+    val cpf: String? = null,
+    val telefone: String? = null,
     val dataNascimento: String = "",
-    val status: String = "",
+
     val matricula: String = "",
-    val maiorIdade: Boolean = false,
     val necessidadesEspeciais: Boolean = false,
-    val descricaoNecessidades: String = "",
-    val observacoes: String = "",
+    val descricaoNecessidades: String? = null,
+    val observacoes: String? = null,
+
     val responsavelId: String? = null,
     val motoristaId: String? = null,
+    val pontoEmbarqueId: String? = null,
+
     val rotaId: String? = null,
     val lastUpdated: Long = 0L,
-    val localId: String? = null
 )

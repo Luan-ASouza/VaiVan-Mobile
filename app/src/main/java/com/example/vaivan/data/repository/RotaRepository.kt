@@ -7,11 +7,14 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -19,10 +22,18 @@ import kotlinx.coroutines.withContext
 
 /**
  * Firestore = fonte da verdade
- * Room = cache local das rotas que pertencem ao motorista
+ * Room = cache local observado pela UI
  *
- * Buscas temporárias, como "rotas disponíveis", podem consultar
- * diretamente o Firestore e não precisam passar pelo Room.
+ * Nomenclatura:
+ *
+ * observar   → Room → Flow
+ * consultar  → Firebase, consulta pontual
+ * sincronizar → Firebase → Room
+ * salvar     → Firebase + Room
+ * excluir    → Firebase + Room
+ *
+ * O Repository executa as operações de dados.
+ * O SyncManager controla o ciclo de vida dos listeners.
  */
 class RotaRepository(
     private val rotaDao: RotaDao,
@@ -38,47 +49,135 @@ class RotaRepository(
     private val collectionParadas =
         firestore.collection("paradas_rota")
 
+    private val scope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.IO
+        )
+
     private var listenerRotas: ListenerRegistration? = null
 
-    private val scope =
-        CoroutineScope(Dispatchers.IO)
-
 
     // =========================================================
-    // OBSERVAÇÃO DO ROOM
+    // OBSERVAÇÃO
     // =========================================================
 
+    /** Observa as rotas de um motorista no Room. */
     fun observarRotasPorMotorista(
         motoristaId: String
     ): Flow<List<RotaEntity>> {
 
-        return rotaDao.getByMotorista(motoristaId)
+        return rotaDao.getByMotorista(
+            motoristaId
+        )
     }
 
-
+    /** Observa uma rota específica no Room. */
     fun observarRotaPorId(
         rotaId: String
     ): Flow<RotaEntity?> {
 
-        return rotaDao.getById(rotaId)
+        return rotaDao.getById(
+            rotaId
+        )
     }
 
-
+    /** Observa as paradas de uma rota no Room. */
     fun observarParadas(
         rotaId: String
     ): Flow<List<ParadaRotaEntity>> {
 
-        return paradaRotaDao.getByRota(rotaId)
+        return paradaRotaDao.getByRota(
+            rotaId
+        )
     }
 
 
     // =========================================================
-    // SINCRONIZAÇÃO FIRESTORE → ROOM
+    // CONSULTAS
     // =========================================================
 
-    fun iniciarSincronizacao(
+    /** Consulta uma rota diretamente no Firebase. */
+    suspend fun consultarRota(
+        rotaId: String
+    ): RotaEntity? {
+
+        val document =
+            collectionRotas
+                .document(rotaId)
+                .get()
+                .await()
+
+        if (!document.exists()) {
+            return null
+        }
+
+        return document
+            .toObject(RotaEntity::class.java)
+            ?.copy(
+                id = document.id
+            )
+    }
+
+    /** Consulta as paradas de uma rota diretamente no Firebase. */
+    suspend fun consultarParadas(
+        rotaId: String
+    ): List<ParadaRotaEntity> {
+
+        val snapshot =
+            collectionParadas
+                .whereEqualTo(
+                    "rotaId",
+                    rotaId
+                )
+                .get()
+                .await()
+
+        return snapshot.documents.mapNotNull { document ->
+
+            document
+                .toObject(
+                    ParadaRotaEntity::class.java
+                )
+                ?.copy(
+                    id = document.id
+                )
+        }
+    }
+
+    /** Consulta os passageiros de uma rota diretamente no Firebase. */
+    suspend fun consultarParadasPorPassageiro(
+        passageiroId: String
+    ): List<ParadaRotaEntity> {
+
+        return collectionParadas
+            .whereEqualTo(
+                "passageiroId",
+                passageiroId
+            )
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+
+                document
+                    .toObject(
+                        ParadaRotaEntity::class.java
+                    )
+                    ?.copy(
+                        id = document.id
+                    )
+            }
+    }
+
+
+    // =========================================================
+    // SINCRONIZAÇÃO
+    // =========================================================
+
+    /** Inicia a sincronização das rotas de um motorista. */
+    fun iniciarSincronizacaoDasRotasDoMotorista(
         motoristaId: String
-    ) {
+    ): ListenerRegistration {
 
         listenerRotas?.remove()
 
@@ -90,43 +189,66 @@ class RotaRepository(
                 )
                 .addSnapshotListener { snapshot, error ->
 
-                    if (error != null || snapshot == null) {
+                    if (
+                        error != null ||
+                        snapshot == null
+                    ) {
                         return@addSnapshotListener
                     }
 
                     scope.launch {
-
-                        snapshot.documentChanges.forEach { change ->
-
-                            when (change.type) {
-
-                                com.google.firebase.firestore.DocumentChange.Type.ADDED,
-                                com.google.firebase.firestore.DocumentChange.Type.MODIFIED -> {
-
-                                    val rota =
-                                        change.document
-                                            .toObject(RotaEntity::class.java)
-                                            .copy(
-                                                id = change.document.id,
-                                                lastUpdated =
-                                                    System.currentTimeMillis()
-                                            )
-
-                                    rotaDao.upsert(rota)
-                                }
-
-                                com.google.firebase.firestore.DocumentChange.Type.REMOVED -> {
-
-                                    rotaDao.deleteById(
-                                        change.document.id
-                                    )
-                                }
-                            }
-                        }
+                        sincronizarSnapshot(
+                            snapshot
+                        )
                     }
                 }
+
+        return listenerRotas!!
     }
 
+    /** Aplica no Room somente as alterações recebidas do Firebase. */
+    private suspend fun sincronizarSnapshot(
+        snapshot: QuerySnapshot
+    ) {
+
+        for (change in snapshot.documentChanges) {
+
+            val document =
+                change.document
+
+            val rotaId =
+                document.id
+
+            when (change.type) {
+
+                DocumentChange.Type.ADDED,
+                DocumentChange.Type.MODIFIED -> {
+
+                    val rota =
+                        document
+                            .toObject(
+                                RotaEntity::class.java
+                            )
+                            .copy(
+                                id = rotaId,
+                                lastUpdated =
+                                    System.currentTimeMillis()
+                            )
+
+                    rotaDao.upsert(
+                        rota
+                    )
+                }
+
+                DocumentChange.Type.REMOVED -> {
+
+                    rotaDao.deleteById(
+                        rotaId
+                    )
+                }
+            }
+        }
+    }
 
     fun pararSincronizacao() {
 
@@ -135,8 +257,8 @@ class RotaRepository(
         listenerRotas = null
     }
 
-
-    suspend fun sincronizarRotasPorMotorista(
+    /** Faz uma sincronização pontual das rotas do motorista. */
+    suspend fun sincronizarRotasDoMotoristaUmaVez(
         motoristaId: String
     ) {
 
@@ -153,7 +275,9 @@ class RotaRepository(
             snapshot.documents.mapNotNull { document ->
 
                 document
-                    .toObject(RotaEntity::class.java)
+                    .toObject(
+                        RotaEntity::class.java
+                    )
                     ?.copy(
                         id = document.id,
                         lastUpdated =
@@ -161,7 +285,9 @@ class RotaRepository(
                     )
             }
 
-        rotaDao.upsertAll(rotas)
+        rotaDao.upsertAll(
+            rotas
+        )
     }
 
 
@@ -248,26 +374,38 @@ class RotaRepository(
                 destinoLongitude = destinoLongitude,
 
                 turno = turno,
-                diasSemana = diasSemana.joinToString(","),
+                diasSemana =
+                    diasSemana.joinToString(","),
 
-                capacidadeTotal = capacidadeTotal,
+                capacidadeTotal =
+                    capacidadeTotal,
+
                 vagasOcupadas = 0,
 
                 distanciaMetros =
-                    resultadoInicial?.distanciaMetros ?: 0,
+                    resultadoInicial
+                        ?.distanciaMetros
+                        ?: 0,
 
                 duracaoSegundos =
-                    resultadoInicial?.duracaoSegundos ?: 0,
+                    resultadoInicial
+                        ?.duracaoSegundos
+                        ?: 0,
 
                 duracaoSemTrafegoSegundos =
-                    resultadoInicial?.duracaoSemTrafegoSegundos ?: 0,
+                    resultadoInicial
+                        ?.duracaoSemTrafegoSegundos
+                        ?: 0,
 
                 polylineEncoded =
-                    resultadoInicial?.polylineEncoded ?: "",
+                    resultadoInicial
+                        ?.polylineEncoded
+                        ?: "",
 
                 status = "ATIVA",
 
                 calculadoEm = agora,
+
                 lastUpdated = agora
             )
 
@@ -277,7 +415,9 @@ class RotaRepository(
             .await()
 
         // Room = cache local
-        rotaDao.upsert(rota)
+        rotaDao.upsert(
+            rota
+        )
 
         rota
     }
@@ -290,136 +430,87 @@ class RotaRepository(
     suspend fun buscarRotasDisponiveis(
         textoBusca: String,
         turno: String?
-    ): List<RotaEntity> = withContext(Dispatchers.IO) {
+    ): List<RotaEntity> =
+        withContext(Dispatchers.IO) {
 
-        var query: Query =
-            collectionRotas
-                .whereEqualTo(
-                    "status",
-                    "ATIVA"
-                )
+            var query: Query =
+                collectionRotas
+                    .whereEqualTo(
+                        "status",
+                        "ATIVA"
+                    )
 
-        if (!turno.isNullOrBlank()) {
+            if (!turno.isNullOrBlank()) {
 
-            query =
-                query.whereEqualTo(
-                    "turno",
-                    turno
-                )
-        }
+                query =
+                    query.whereEqualTo(
+                        "turno",
+                        turno
+                    )
+            }
 
-        val snapshot =
-            query
-                .get()
-                .await()
+            val snapshot =
+                query
+                    .get()
+                    .await()
 
-        val rotas =
-            snapshot.documents
-                .mapNotNull { document ->
+            val rotas =
+                snapshot.documents
+                    .mapNotNull { document ->
 
-                    document
-                        .toObject(RotaEntity::class.java)
-                        ?.copy(
-                            id = document.id
-                        )
+                        document
+                            .toObject(
+                                RotaEntity::class.java
+                            )
+                            ?.copy(
+                                id = document.id
+                            )
+                    }
+                    .filter { rota ->
+
+                        rota.vagasOcupadas <
+                                rota.capacidadeTotal
+                    }
+
+            if (textoBusca.isBlank()) {
+
+                rotas
+
+            } else {
+
+                rotas.filter { rota ->
+
+                    rota.destinoNome.contains(
+                        textoBusca,
+                        ignoreCase = true
+                    )
                 }
-                .filter { rota ->
-                    rota.vagasOcupadas <
-                            rota.capacidadeTotal
-                }
-
-        if (textoBusca.isBlank()) {
-
-            rotas
-
-        } else {
-
-            rotas.filter { rota ->
-
-                rota.destinoNome.contains(
-                    textoBusca,
-                    ignoreCase = true
-                )
             }
         }
-    }
 
 
     // =========================================================
-    // OPERAÇÕES NECESSÁRIAS PARA O USE CASE
+    // OPERAÇÕES PARA USE CASE
     // =========================================================
-
-    suspend fun buscarParadasPorPassageiro(
-        passageiroId: String
-    ): List<ParadaRotaEntity> {
-
-        return firestore
-            .collection("paradas_rota")
-            .whereEqualTo("passageiroId", passageiroId)
-            .get()
-            .await()
-            .documents
-            .mapNotNull { document ->
-
-                document.toObject(
-                    ParadaRotaEntity::class.java
-                )?.copy(
-                    id = document.id
-                )
-            }
-    }
 
     suspend fun buscarRotaNoFirestore(
         rotaId: String
     ): RotaEntity {
 
-        val snapshot =
-            collectionRotas
-                .document(rotaId)
-                .get()
-                .await()
-
-        if (!snapshot.exists()) {
-
-            throw IllegalStateException(
-                "Rota não encontrada."
-            )
-        }
-
-        return snapshot
-            .toObject(RotaEntity::class.java)
-            ?.copy(
-                id = snapshot.id
-            )
-            ?: throw IllegalStateException(
-                "Não foi possível ler a rota."
-            )
+        return consultarRota(
+            rotaId
+        ) ?: throw IllegalStateException(
+            "Rota não encontrada."
+        )
     }
-
 
     suspend fun buscarParadasNoFirestore(
         rotaId: String
     ): List<ParadaRotaEntity> {
 
-        val snapshot =
-            collectionParadas
-                .whereEqualTo(
-                    "rotaId",
-                    rotaId
-                )
-                .get()
-                .await()
-
-        return snapshot.documents.mapNotNull { document ->
-
-            document
-                .toObject(
-                    ParadaRotaEntity::class.java
-                )
-                ?.copy(
-                    id = document.id
-                )
-        }
+        return consultarParadas(
+            rotaId
+        )
     }
 
 
@@ -432,7 +523,9 @@ class RotaRepository(
             .set(rota)
             .await()
 
-        rotaDao.upsert(rota)
+        rotaDao.upsert(
+            rota
+        )
     }
 
 
@@ -458,7 +551,9 @@ class RotaRepository(
         )
     }
 
+
     fun novoIdParada(): String {
+
         return collectionParadas
             .document()
             .id

@@ -21,7 +21,7 @@ data class UsuarioEntity(
     val bairro: String = "",
     val rua: String = "",
     val numero: String = "",
-    val complemento: String = "",
+    val complemento: String? = null,
 
     val status: String = "",
     val emailConfirmado: Boolean = false,

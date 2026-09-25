@@ -7,7 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.vaivan.R
-import com.example.vaivan.chat.ChatActivity
+import com.example.vaivan.ui.comum.chat.ChatActivity
 
 class ChatFragment : Fragment() {
 

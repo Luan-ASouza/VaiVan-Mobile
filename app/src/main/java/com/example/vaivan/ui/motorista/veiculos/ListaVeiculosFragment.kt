@@ -13,29 +13,24 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
-import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.VeiculoEntity
-import com.example.vaivan.data.repository.VeiculoRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import androidx.fragment.app.viewModels
 
 class ListaVeiculosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemVeiculos: TextView
 
-    private val repository by lazy {
-        VeiculoRepository(
-            VaivanDatabase.getInstance(requireContext())
-                .veiculoDao()
-        )
-    }
+    private val viewModel: ListaVeiculosViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         return inflater.inflate(
             R.layout.fragment_lista_veiculos,
             container,
@@ -72,26 +67,16 @@ class ListaVeiculosFragment : Fragment() {
 
     private fun observarVeiculos() {
 
-        val uid = FirebaseAuth
-            .getInstance()
-            .currentUser
-            ?.uid
-            ?: return
-
-        // Inicia a sincronização do Firestore
-        // com o banco local.
-        repository.iniciarSincronizacao()
-
         viewLifecycleOwner.lifecycleScope.launch {
 
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
 
-                repository
-                    .observarPorMotorista(uid)
-                    .collect { veiculos ->
+                viewModel.veiculos.collect { veiculos ->
 
-                        renderizarLista(veiculos)
-                    }
+                    renderizarLista(veiculos)
+                }
             }
         }
     }
@@ -270,12 +255,5 @@ class ListaVeiculosFragment : Fragment() {
 
             containerConfirmados.addView(itemView)
         }
-    }
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        repository.pararSincronizacao()
     }
 }

@@ -4,17 +4,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
-import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.local.dao.UsuarioDao
-import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.motorista.cadastro.documentos.VerificarProgressoDocumentos
+import com.example.vaivan.ui.motorista.entrada.EntradaMotoristaActivity
+import com.example.vaivan.ui.motorista.entrada.documentos.VerificarProgressoDocumentos
 import com.example.vaivan.ui.responsavel.HomeResponsavelActivity
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 
 class EscolhaTipoPerfilActivity : AppCompatActivity() {
 
@@ -27,7 +20,8 @@ class EscolhaTipoPerfilActivity : AppCompatActivity() {
         val btnResponsavel = findViewById<Button>(R.id.btnResponsavel)
 
         btnMotorista.setOnClickListener {
-            VerificarProgressoDocumentos(this).verificar()
+            val intent = Intent(this, EntradaMotoristaActivity::class.java)
+            startActivity(intent)
         }
 
         // ALTERADO AQUI: Agora direciona para a sua tela de passageiros!

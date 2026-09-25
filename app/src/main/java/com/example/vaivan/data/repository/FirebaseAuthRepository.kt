@@ -35,6 +35,7 @@ class FirebaseAuthRepository {
 
     }
 
+
     fun login(
         email: String,
         senha: String,
