@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.card-login {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 320px;
+}
+
+.card-login h1 {
+  font-size: 20px;
+  margin-bottom: 24px;
+  color: #2E7D32;
+  text-align: center;
+}
+
+.card-login input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.card-login button {
+  width: 100%;
+  padding: 10px;
+  background-color: #2E7D32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.card-login button:hover {
+  background-color: #256428;
+}
+
+.erro {
+  color: #c62828;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.topo-painel {
+  background-color: #2E7D32;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topo-painel h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.topo-painel button {
+  background-color: white;
+  color: #2E7D32;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#listaDocumentos {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.card-documento {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.img-documento {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.info-documento {
+  flex: 1;
+}
+
+.info-documento p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.acoes-documento {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acoes-documento button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+}
+
+.btn-aprovar {
+  background-color: #2E7D32;
+}
+
+.btn-aprovar:hover {
+  background-color: #256428;
+}
+
+.btn-rejeitar {
+  background-color: #c62828;
+}
+
+.btn-rejeitar:hover {
+  background-color: #a51f1f;
+}
+
+.vazio {
+  text-align: center;
+  color: #777;
+}
