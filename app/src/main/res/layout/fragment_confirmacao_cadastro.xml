@@ -22,7 +22,7 @@
             android:orientation="vertical"
             android:background="@drawable/bg_white"
             android:paddingHorizontal="20dp"
-            android:paddingVertical="40dp">
+            android:paddingVertical="32dp">
 
             <!-- TÍTULO -->
 
@@ -31,7 +31,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="12dp"
                 android:text="Confirmar cadastro"
                 android:textColor="@color/dark_gray"
                 android:textSize="20sp"
@@ -43,6 +42,7 @@
                 android:id="@+id/txtDescricao"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="28dp"
                 android:gravity="center"
                 android:text="Confira seus dados antes de finalizar o cadastro."
@@ -50,7 +50,9 @@
                 android:textSize="13sp"/>
 
 
+            <!-- ========================= -->
             <!-- DADOS PESSOAIS -->
+            <!-- ========================= -->
 
             <TextView
                 android:layout_width="wrap_content"
@@ -60,77 +62,230 @@
                 android:textSize="15sp"
                 android:textStyle="bold"/>
 
+
             <!-- NOME -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Nome completo"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
 
             <TextView
                 android:id="@+id/txtNome"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:padding="14dp"
-                android:text="Nome"
+                android:layout_marginTop="3dp"
+                android:text="—"
                 android:textColor="@color/dark_gray"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
 
             <!-- CPF -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="CPF"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
 
             <TextView
                 android:id="@+id/txtCpf"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="14dp"
-                android:text="CPF"
+                android:layout_marginTop="3dp"
+                android:text="—"
                 android:textColor="@color/dark_gray"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
-            <!-- EMAIL -->
+
+            <!-- DATA DE NASCIMENTO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Data de nascimento"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtDataNascimento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="—"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
+
+            <!-- E-MAIL -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="E-mail"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
 
             <TextView
                 android:id="@+id/txtEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="14dp"
-                android:text="E-mail"
+                android:layout_marginTop="3dp"
+                android:text="—"
                 android:textColor="@color/dark_gray"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
 
             <!-- TELEFONE -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Telefone"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
 
             <TextView
                 android:id="@+id/txtTelefone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="14dp"
-                android:text="Telefone"
+                android:layout_marginTop="3dp"
+                android:text="—"
                 android:textColor="@color/dark_gray"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
 
+            <!-- ========================= -->
             <!-- ENDEREÇO -->
+            <!-- ========================= -->
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="30dp"
                 android:text="Endereço"
                 android:textColor="@color/dark_gray"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
 
-            <!-- ENDEREÇO COMPLETO -->
+
+            <!-- CEP -->
 
             <TextView
-                android:id="@+id/txtEndereco"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="CEP"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtCep"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:padding="14dp"
-                android:text="Endereço"
+                android:layout_marginTop="3dp"
+                android:text="—"
                 android:textColor="@color/dark_gray"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
+
+            <!-- CIDADE / ESTADO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Cidade / Estado"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtCidadeEstado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="—"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
+
+            <!-- RUA / NÚMERO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Rua / Número"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtRuaNumero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="—"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
+
+            <!-- BAIRRO -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Bairro"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtBairro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="—"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+
+
+            <!-- COMPLEMENTO -->
+
+            <TextView
+                android:id="@+id/txtLabelComplemento"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Complemento"
+                android:textColor="@color/light_gray"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/txtComplemento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="—"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
 
             <!-- AVISO -->
@@ -139,7 +294,7 @@
                 android:id="@+id/txtAviso"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="28dp"
                 android:text="Ao confirmar, sua conta será criada com estes dados."
                 android:textColor="@color/light_gray"
                 android:textSize="11sp"/>

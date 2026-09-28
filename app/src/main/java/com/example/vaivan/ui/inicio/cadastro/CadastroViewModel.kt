@@ -26,4 +26,26 @@ class CadastroViewModel : ViewModel() {
         cadastro.usuario.cpf = cpf
         cadastro.usuario.dataNascimento = dataNascimento
     }
+
+    fun definirCodigoVerificacao() {
+        cadastro.usuario.emailConfirmado = true
+    }
+
+    fun definirEndereco(
+        cep: String,
+        estado: String,
+        cidade: String,
+        bairro: String,
+        rua: String,
+        numero: String,
+        complemento: String
+    ) {
+        cadastro.usuario.cep = cep
+        cadastro.usuario.estado = estado
+        cadastro.usuario.cidade = cidade
+        cadastro.usuario.bairro = bairro
+        cadastro.usuario.rua = rua
+        cadastro.usuario.numero = numero
+        cadastro.usuario.complemento = complemento
+    }
 }

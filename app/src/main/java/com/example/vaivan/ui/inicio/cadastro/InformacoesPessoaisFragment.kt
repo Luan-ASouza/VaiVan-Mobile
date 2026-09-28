@@ -7,9 +7,10 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
-import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
+import com.example.vaivan.core.validation.CadastroValidator
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -17,6 +18,8 @@ import java.util.Calendar
 
 class InformacoesPessoaisFragment :
     Fragment(R.layout.fragment_informacoes_pessoais) {
+
+    private val viewModel: CadastroViewModel by activityViewModels()
 
     private lateinit var edtNomeCompleto: TextInputEditText
     private lateinit var edtCpf: TextInputEditText
@@ -42,17 +45,17 @@ class InformacoesPessoaisFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         configurarViews(view)
         configurarNome()
         configurarCpf()
         configurarErros()
         configurarSpinnersData()
-
-        btnContinuar.setOnClickListener {
-            validarFormulario()
-        }
+        configurarBotao()
     }
 
     private fun configurarViews(
@@ -103,7 +106,7 @@ class InformacoesPessoaisFragment :
                         return@InputFilter null
                     }
 
-                    val textoPermitido =
+                    val permitido =
                         source.toString().all { caractere ->
 
                             caractere.isLetter() ||
@@ -112,10 +115,10 @@ class InformacoesPessoaisFragment :
                                     caractere == '\''
                         }
 
-                    if (!textoPermitido) {
-                        ""
-                    } else {
+                    if (permitido) {
                         null
+                    } else {
+                        ""
                     }
                 }
             )
@@ -143,17 +146,19 @@ class InformacoesPessoaisFragment :
             View.GONE
     }
 
-    private fun configurarSpinnersData() {
+    private fun configurarBotao() {
 
-        // DIAS
+        btnContinuar.setOnClickListener {
+            validarFormulario()
+        }
+    }
+
+    private fun configurarSpinnersData() {
 
         val dias =
             Array(31) { index ->
                 (index + 1).toString()
             }
-
-
-        // MESES
 
         val meses =
             arrayOf(
@@ -171,9 +176,6 @@ class InformacoesPessoaisFragment :
                 "Dez"
             )
 
-
-        // ANOS
-
         val calendario =
             Calendar.getInstance()
 
@@ -184,7 +186,6 @@ class InformacoesPessoaisFragment :
             Array(100) { index ->
                 (anoAtual - index).toString()
             }
-
 
         configurarSpinner(
             spinnerDia,
@@ -230,129 +231,117 @@ class InformacoesPessoaisFragment :
         val cpf =
             obterTexto(edtCpf)
 
-        var formularioValido =
-            true
+        var valido = true
 
+        if (
+            !CadastroValidator.nomeValido(nome)
+        ) {
 
-        // =========================
-        // VALIDAR NOME
-        // =========================
-
-        if (nome.length < 3) {
-
-            txtErroNome.visibility =
-                View.VISIBLE
-
-            layoutNome.setBackgroundResource(
-                R.drawable.bg_input_white_red
+            mostrarErro(
+                layout = layoutNome,
+                mensagem = txtErroNome
             )
 
-            formularioValido =
-                false
+            valido = false
 
         } else {
 
-            txtErroNome.visibility =
-                View.GONE
-
-            layoutNome.setBackgroundResource(
-                R.drawable.bg_input_white
+            limparErro(
+                layout = layoutNome,
+                mensagem = txtErroNome
             )
         }
 
+        if (
+            !CadastroValidator.cpfValido(cpf)
+        ) {
 
-        // =========================
-        // VALIDAR CPF
-        // =========================
-
-        if (!cpfValido(cpf)) {
-
-            txtErroCpf.visibility =
-                View.VISIBLE
-
-            layoutCpf.setBackgroundResource(
-                R.drawable.bg_input_white_red
+            mostrarErro(
+                layout = layoutCpf,
+                mensagem = txtErroCpf
             )
 
-            formularioValido =
-                false
+            valido = false
 
         } else {
 
-            txtErroCpf.visibility =
-                View.GONE
-
-            layoutCpf.setBackgroundResource(
-                R.drawable.bg_input_white
+            limparErro(
+                layout = layoutCpf,
+                mensagem = txtErroCpf
             )
         }
-
-
-        // =========================
-        // OBTER DATA
-        // =========================
 
         val dataNascimento =
             obterDataNascimento()
-
 
         if (dataNascimento == null) {
 
             txtErroIdade.visibility =
                 View.VISIBLE
 
-            formularioValido =
-                false
+            valido = false
+
+        } else if (
+            !CadastroValidator.idadeValida(
+                dataNascimento,
+                IDADE_MINIMA
+            )
+        ) {
+
+            txtErroIdade.visibility =
+                View.VISIBLE
+
+            valido = false
 
         } else {
 
-            val idade =
-                calcularIdade(dataNascimento)
-
-
-            // =========================
-            // VALIDAR IDADE
-            // =========================
-
-            if (idade < IDADE_MINIMA) {
-
-                txtErroIdade.visibility =
-                    View.VISIBLE
-
-                formularioValido =
-                    false
-
-            } else {
-
-                txtErroIdade.visibility =
-                    View.GONE
-            }
+            txtErroIdade.visibility =
+                View.GONE
         }
 
-
-        // =========================
-        // PRÓXIMA ETAPA
-        // =========================
-
         if (
-            formularioValido &&
+            valido &&
             dataNascimento != null
         ) {
 
-            salvarDadosTemporarios(
-                nome,
-                cpf,
-                dataNascimento
+            salvarDadosNoViewModel(
+                nome = nome,
+                cpf = cpf,
+                dataNascimento = dataNascimento
             )
 
             abrirCodigoVerificacao()
         }
     }
 
-    private fun abrirCodigoVerificacao() {
+    private fun salvarDadosNoViewModel(
+        nome: String,
+        cpf: String,
+        dataNascimento: Calendar
+    ) {
 
-        (requireActivity() as CadastroActivity)
-            .abrirCodigoVerificacao()
+        val ano =
+            dataNascimento.get(Calendar.YEAR)
+
+        val mes =
+            dataNascimento.get(Calendar.MONTH) + 1
+
+        val dia =
+            dataNascimento.get(Calendar.DAY_OF_MONTH)
+
+        val dataFormatada =
+            String.format(
+                "%04d/%02d/%02d",
+                ano,
+                mes,
+                dia
+            )
+
+        viewModel.definirDadosPessoais(
+            nome = nome,
+            cpf = cpf,
+            dataNascimento = dataFormatada
+        )
     }
 
     private fun obterDataNascimento(): Calendar? {
@@ -370,13 +359,22 @@ class InformacoesPessoaisFragment :
                 .toString()
                 .toInt()
 
+        if (
+            !CadastroValidator.dataValida(
+                dia = dia,
+                mes = mes,
+                ano = ano
+            )
+        ) {
+            return null
+        }
+
         return try {
 
             val calendario =
                 Calendar.getInstance()
 
-            calendario.isLenient =
-                false
+            calendario.isLenient = false
 
             calendario.set(
                 ano,
@@ -392,8 +390,6 @@ class InformacoesPessoaisFragment :
                 0
             )
 
-            calendario.time
-
             calendario
 
         } catch (
@@ -404,74 +400,30 @@ class InformacoesPessoaisFragment :
         }
     }
 
-    private fun calcularIdade(
-        dataNascimento: Calendar
-    ): Int {
-
-        val hoje =
-            Calendar.getInstance()
-
-        var idade =
-            hoje.get(Calendar.YEAR) -
-                    dataNascimento.get(Calendar.YEAR)
-
-        if (
-            hoje.get(Calendar.MONTH) <
-            dataNascimento.get(Calendar.MONTH) ||
-
-            (
-                    hoje.get(Calendar.MONTH) ==
-                            dataNascimento.get(Calendar.MONTH) &&
-
-                            hoje.get(Calendar.DAY_OF_MONTH) <
-                            dataNascimento.get(
-                                Calendar.DAY_OF_MONTH
-                            )
-                    )
-        ) {
-
-            idade--
-        }
-
-        return idade
-    }
-
-    private fun salvarDadosTemporarios(
-        nome: String,
-        cpf: String,
-        dataNascimento: Calendar
+    private fun mostrarErro(
+        layout: TextInputLayout,
+        mensagem: TextView
     ) {
 
-        val cadastro =
-            CadastroSession.cadastroUsuario
+        mensagem.visibility =
+            View.VISIBLE
 
-        cadastro.nome =
-            nome
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white_red
+        )
+    }
 
-        cadastro.cpf =
-            cpf
+    private fun limparErro(
+        layout: TextInputLayout,
+        mensagem: TextView
+    ) {
 
+        mensagem.visibility =
+            View.GONE
 
-        val ano =
-            dataNascimento.get(Calendar.YEAR)
-
-        val mes =
-            dataNascimento.get(Calendar.MONTH) + 1
-
-        val dia =
-            dataNascimento.get(Calendar.DAY_OF_MONTH)
-
-
-        val dataFormatada =
-            String.format(
-                "%04d/%02d/%02d",
-                ano,
-                mes,
-                dia
-            )
-
-        cadastro.dataNascimento =
-            dataFormatada
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
     }
 
     private fun obterTexto(
@@ -484,80 +436,9 @@ class InformacoesPessoaisFragment :
             ?: ""
     }
 
-    private fun cpfValido(
-        cpf: String
-    ): Boolean {
+    private fun abrirCodigoVerificacao() {
 
-        val cpfLimpo =
-            cpf.replace(
-                Regex("[^0-9]"),
-                ""
-            )
-
-        if (cpfLimpo.length != 11) {
-            return false
-        }
-
-        if (
-            cpfLimpo.all {
-                it == cpfLimpo[0]
-            }
-        ) {
-            return false
-        }
-
-
-        // PRIMEIRO DÍGITO
-
-        var soma = 0
-
-        for (i in 0 until 9) {
-
-            soma +=
-                cpfLimpo[i].digitToInt() *
-                        (10 - i)
-        }
-
-        var resto =
-            soma % 11
-
-        val primeiroDigito =
-            if (resto < 2) {
-                0
-            } else {
-                11 - resto
-            }
-
-        if (
-            primeiroDigito !=
-            cpfLimpo[9].digitToInt()
-        ) {
-            return false
-        }
-
-
-        // SEGUNDO DÍGITO
-
-        soma = 0
-
-        for (i in 0 until 10) {
-
-            soma +=
-                cpfLimpo[i].digitToInt() *
-                        (11 - i)
-        }
-
-        resto =
-            soma % 11
-
-        val segundoDigito =
-            if (resto < 2) {
-                0
-            } else {
-                11 - resto
-            }
-
-        return segundoDigito ==
-                cpfLimpo[10].digitToInt()
+        (requireActivity() as CadastroActivity)
+            .abrirCodigoVerificacao()
     }
 }
