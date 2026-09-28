@@ -6,10 +6,19 @@ class FirebaseAuthRepository {
 
     private val auth = FirebaseAuth.getInstance()
 
-    fun recuperarSenha(email: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+    fun recuperarSenha(
+        email: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+
         auth.sendPasswordResetEmail(email)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { exception -> onError(exception) }
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                onError(exception)
+            }
     }
 
     fun cadastrar(
@@ -19,22 +28,48 @@ class FirebaseAuthRepository {
         onError: (Exception) -> Unit
     ) {
 
-        auth.createUserWithEmailAndPassword(email, senha)
-            .addOnSuccessListener {
+        auth.createUserWithEmailAndPassword(
+            email,
+            senha
+        )
+            .addOnSuccessListener { result ->
 
-                val uid = it.user!!.uid
+                val uid = result.user?.uid
 
-                onSuccess(uid)
-
+                if (uid != null) {
+                    onSuccess(uid)
+                } else {
+                    onError(
+                        IllegalStateException(
+                            "Usuário criado sem UID."
+                        )
+                    )
+                }
             }
-            .addOnFailureListener {
-
-                onError(it)
-
+            .addOnFailureListener { exception ->
+                onError(exception)
             }
-
     }
 
+    fun verificarEmail(
+        email: String,
+        onResult: (Boolean) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+
+        @Suppress("DEPRECATION")
+        auth.fetchSignInMethodsForEmail(email)
+            .addOnSuccessListener { result ->
+
+                val existe =
+                    !result.signInMethods.isNullOrEmpty()
+
+                onResult(existe)
+            }
+            .addOnFailureListener { exception ->
+                onError(exception)
+            }
+    }
 
     fun login(
         email: String,
@@ -43,21 +78,20 @@ class FirebaseAuthRepository {
         onError: (Exception) -> Unit
     ) {
 
-        auth.signInWithEmailAndPassword(email, senha)
+        auth.signInWithEmailAndPassword(
+            email,
+            senha
+        )
             .addOnSuccessListener {
-
                 onSuccess()
-
             }
-            .addOnFailureListener {
-
-                onError(it)
-
+            .addOnFailureListener { exception ->
+                onError(exception)
             }
-
     }
 
-    fun usuarioAtual() = auth.currentUser
+    fun usuarioAtual() =
+        auth.currentUser
 
     fun logout() {
         auth.signOut()

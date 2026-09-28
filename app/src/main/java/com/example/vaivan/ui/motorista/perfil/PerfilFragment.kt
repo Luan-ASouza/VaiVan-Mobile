@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 

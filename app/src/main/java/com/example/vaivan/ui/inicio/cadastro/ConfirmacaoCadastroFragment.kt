@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
@@ -20,8 +21,23 @@ import com.example.vaivan.data.local.dao.UsuarioDao
 class ConfirmacaoCadastroFragment :
     Fragment(R.layout.fragment_confirmacao_cadastro) {
 
+    private val viewModel: CadastroViewModel by activityViewModels()
+
     private lateinit var btnConfirmar: MaterialButton
     private lateinit var txtErro: TextView
+
+    private lateinit var txtNome: TextView
+    private lateinit var txtCpf: TextView
+    private lateinit var txtDataNascimento: TextView
+    private lateinit var txtEmail: TextView
+    private lateinit var txtTelefone: TextView
+
+    private lateinit var txtCep: TextView
+    private lateinit var txtCidadeEstado: TextView
+    private lateinit var txtRuaNumero: TextView
+    private lateinit var txtBairro: TextView
+    private lateinit var txtComplemento: TextView
+    private lateinit var txtLabelComplemento: TextView
 
     private lateinit var repository: UsuarioRepository
     private lateinit var authRepository: FirebaseAuthRepository
@@ -30,13 +46,62 @@ class ConfirmacaoCadastroFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        btnConfirmar =
-            view.findViewById(R.id.btnConfirmar)
+        configurarViews(view)
+        configurarRepositories()
+        preencherDados()
+        configurarBotao()
+    }
+
+    private fun configurarViews(
+        view: View
+    ) {
+
+        txtNome =
+            view.findViewById(R.id.txtNome)
+
+        txtCpf =
+            view.findViewById(R.id.txtCpf)
+
+        txtDataNascimento =
+            view.findViewById(R.id.txtDataNascimento)
+
+        txtEmail =
+            view.findViewById(R.id.txtEmail)
+
+        txtTelefone =
+            view.findViewById(R.id.txtTelefone)
+
+        txtCep =
+            view.findViewById(R.id.txtCep)
+
+        txtCidadeEstado =
+            view.findViewById(R.id.txtCidadeEstado)
+
+        txtRuaNumero =
+            view.findViewById(R.id.txtRuaNumero)
+
+        txtBairro =
+            view.findViewById(R.id.txtBairro)
+
+        txtComplemento =
+            view.findViewById(R.id.txtComplemento)
+
+        txtLabelComplemento =
+            view.findViewById(R.id.txtLabelComplemento)
 
         txtErro =
             view.findViewById(R.id.txtErro)
+
+        btnConfirmar =
+            view.findViewById(R.id.btnConfirmar)
+    }
+
+    private fun configurarRepositories() {
 
         repository =
             UsuarioRepository(
@@ -47,6 +112,130 @@ class ConfirmacaoCadastroFragment :
 
         authRepository =
             FirebaseAuthRepository()
+    }
+
+    private fun preencherDados() {
+
+        val usuario =
+            viewModel.cadastro.usuario
+
+        txtNome.text =
+            usuario.nome.ifBlank {
+                "Não informado"
+            }
+
+        txtCpf.text =
+            usuario.cpf.ifBlank {
+                "Não informado"
+            }
+
+        txtDataNascimento.text =
+            usuario.dataNascimento?.ifBlank {
+                "Não informado"
+            }
+
+        txtEmail.text =
+            usuario.email.ifBlank {
+                "Não informado"
+            }
+
+        txtTelefone.text =
+            usuario.telefone.ifBlank {
+                "Não informado"
+            }
+
+        txtCep.text =
+            usuario.cep.ifBlank {
+                "Não informado"
+            }
+
+        txtCidadeEstado.text =
+            formatarCidadeEstado(
+                usuario.cidade,
+                usuario.estado
+            )
+
+        txtRuaNumero.text =
+            formatarRuaNumero(
+                usuario.rua,
+                usuario.numero
+            )
+
+        txtBairro.text =
+            usuario.bairro.ifBlank {
+                "Não informado"
+            }
+
+        if (
+            usuario.complemento?.isBlank() == true
+        ) {
+
+            txtLabelComplemento.visibility =
+                View.GONE
+
+            txtComplemento.visibility =
+                View.GONE
+
+        } else {
+
+            txtLabelComplemento.visibility =
+                View.VISIBLE
+
+            txtComplemento.visibility =
+                View.VISIBLE
+
+            txtComplemento.text =
+                usuario.complemento
+        }
+    }
+
+    private fun formatarCidadeEstado(
+        cidade: String,
+        estado: String
+    ): String {
+
+        if (
+            cidade.isBlank() &&
+            estado.isBlank()
+        ) {
+            return "Não informado"
+        }
+
+        if (cidade.isBlank()) {
+            return estado
+        }
+
+        if (estado.isBlank()) {
+            return cidade
+        }
+
+        return "$cidade - $estado"
+    }
+
+    private fun formatarRuaNumero(
+        rua: String,
+        numero: String
+    ): String {
+
+        if (
+            rua.isBlank() &&
+            numero.isBlank()
+        ) {
+            return "Não informado"
+        }
+
+        if (rua.isBlank()) {
+            return numero
+        }
+
+        if (numero.isBlank()) {
+            return rua
+        }
+
+        return "$rua, $numero"
+    }
+
+    private fun configurarBotao() {
 
         btnConfirmar.setOnClickListener {
             confirmarCadastro()
@@ -56,14 +245,17 @@ class ConfirmacaoCadastroFragment :
     private fun confirmarCadastro() {
 
         val cadastro =
-            CadastroSession.cadastroUsuario
+            viewModel.cadastro
 
-        btnConfirmar.isEnabled = false
-        txtErro.visibility = View.GONE
+        btnConfirmar.isEnabled =
+            false
+
+        txtErro.visibility =
+            View.GONE
 
         authRepository.cadastrar(
-            cadastro.email,
-            cadastro.senha,
+            email = cadastro.usuario.email,
+            senha = cadastro.senha,
 
             onSuccess = { uid ->
                 salvarUsuario(uid)
@@ -71,59 +263,68 @@ class ConfirmacaoCadastroFragment :
 
             onError = { erro ->
 
-                btnConfirmar.isEnabled = true
+                btnConfirmar.isEnabled =
+                    true
 
-                txtErro.text =
+                mostrarErro(
                     erro.message
                         ?: "*Erro ao criar a conta."
-
-                txtErro.visibility =
-                    View.VISIBLE
+                )
             }
         )
     }
 
-    private fun salvarUsuario(uid: String) {
+    private fun salvarUsuario(
+        uid: String
+    ) {
 
         val cadastro =
-            CadastroSession.cadastroUsuario
+            viewModel.cadastro
 
         val usuario =
             UsuarioEntity(
                 id = uid,
 
-                nome = cadastro.nome,
-                cpf = cadastro.cpf,
-                email = cadastro.email,
-                telefone = cadastro.telefone,
+                nome =
+                    cadastro.usuario.nome,
+
+                cpf =
+                    cadastro.usuario.cpf,
+
+                email =
+                    cadastro.usuario.email,
+
+                telefone =
+                    cadastro.usuario.telefone,
 
                 dataNascimento =
-                    cadastro.dataNascimento,
+                    cadastro.usuario.dataNascimento,
 
                 cep =
-                    cadastro.endereco.cep,
+                    cadastro.usuario.cep,
 
                 estado =
-                    cadastro.endereco.estado,
+                    cadastro.usuario.estado,
 
                 cidade =
-                    cadastro.endereco.cidade,
+                    cadastro.usuario.cidade,
 
                 bairro =
-                    cadastro.endereco.bairro,
+                    cadastro.usuario.bairro,
 
                 rua =
-                    cadastro.endereco.rua,
+                    cadastro.usuario.rua,
 
                 numero =
-                    cadastro.endereco.numero,
+                    cadastro.usuario.numero,
 
                 complemento =
-                    cadastro.endereco.complemento,
+                    cadastro.usuario.complemento,
 
                 status = "ATIVO",
 
-                emailConfirmado = false,
+                emailConfirmado =
+                    cadastro.usuario.emailConfirmado,
 
                 lastUpdated =
                     System.currentTimeMillis()
@@ -133,7 +334,9 @@ class ConfirmacaoCadastroFragment :
 
             try {
 
-                repository.salvarUsuario(usuario)
+                repository.salvarUsuario(
+                    usuario
+                )
 
                 Toast.makeText(
                     requireContext(),
@@ -141,27 +344,40 @@ class ConfirmacaoCadastroFragment :
                     Toast.LENGTH_SHORT
                 ).show()
 
-                CadastroSession.limpar()
-
-                startActivity(
-                    Intent(
-                        requireContext(),
-                        EscolhaTipoPerfilActivity::class.java
-                    )
-                )
-
-                requireActivity().finish()
+                abrirEscolhaTipoPerfil()
 
             } catch (e: Exception) {
 
-                btnConfirmar.isEnabled = true
+                btnConfirmar.isEnabled =
+                    true
 
-                txtErro.text =
+                mostrarErro(
                     "*Erro ao salvar os dados: ${e.message}"
-
-                txtErro.visibility =
-                    View.VISIBLE
+                )
             }
         }
+    }
+
+    private fun mostrarErro(
+        mensagem: String
+    ) {
+
+        txtErro.text =
+            mensagem
+
+        txtErro.visibility =
+            View.VISIBLE
+    }
+
+    private fun abrirEscolhaTipoPerfil() {
+
+        startActivity(
+            Intent(
+                requireContext(),
+                EscolhaTipoPerfilActivity::class.java
+            )
+        )
+
+        requireActivity().finish()
     }
 }

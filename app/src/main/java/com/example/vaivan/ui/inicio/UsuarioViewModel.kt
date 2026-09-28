@@ -1,4 +1,4 @@
-package com.example.vaivan.ui.inicio.cadastro
+package com.example.vaivan.ui.inicio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

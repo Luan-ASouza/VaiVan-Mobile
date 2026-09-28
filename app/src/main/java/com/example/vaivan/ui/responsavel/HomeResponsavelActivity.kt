@@ -2,6 +2,7 @@ package com.example.vaivan.ui.responsavel
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -34,7 +35,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Log
 
 class HomeResponsavelActivity : AppCompatActivity() {
 
@@ -47,7 +47,6 @@ class HomeResponsavelActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_home_responsavel)
 
-
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
@@ -59,7 +58,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
         // --------------------------------------------------
 
         val database = VaivanDatabase.getInstance(this)
-        val usuarioDao = database.usuarioDao()
+        val usuarioDao = database.UsuarioDao()
         val repository = UsuarioRepository(usuarioDao)
 
         val factory = object : ViewModelProvider.Factory {

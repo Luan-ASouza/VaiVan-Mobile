@@ -15,7 +15,7 @@ import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth

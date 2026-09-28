@@ -3,11 +3,11 @@ package com.example.vaivan.ui.inicio.cadastro
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
-import android.text.TextUtils
 import android.text.TextWatcher
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
@@ -25,6 +25,8 @@ import java.net.URL
 
 class EnderecoFragment :
     Fragment(R.layout.fragment_cadastro_endereco) {
+
+    private val viewModel: CadastroViewModel by activityViewModels()
 
     private lateinit var edtCEP: TextInputEditText
     private lateinit var edtCidade: TextInputEditText
@@ -49,35 +51,59 @@ class EnderecoFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         inicializarViews(view)
         configurarCep()
         configurarBotao()
     }
 
-    private fun inicializarViews(view: View) {
+    private fun inicializarViews(
+        view: View
+    ) {
 
-        edtCEP = view.findViewById(R.id.edtCEP)
-        edtCidade = view.findViewById(R.id.edtCidade)
-        edtEstado = view.findViewById(R.id.edtEstado)
-        edtRua = view.findViewById(R.id.edtRua)
-        edtBairro = view.findViewById(R.id.edtBairro)
+        edtCEP =
+            view.findViewById(R.id.edtCEP)
+
+        edtCidade =
+            view.findViewById(R.id.edtCidade)
+
+        edtEstado =
+            view.findViewById(R.id.edtEstado)
+
+        edtRua =
+            view.findViewById(R.id.edtRua)
+
+        edtBairro =
+            view.findViewById(R.id.edtBairro)
+
         edtComplemento =
             view.findViewById(R.id.edtComplemento)
-        edtNumero = view.findViewById(R.id.edtNumero)
 
-        layoutCEP = view.findViewById(R.id.layoutCEP)
+        edtNumero =
+            view.findViewById(R.id.edtNumero)
+
+        layoutCEP =
+            view.findViewById(R.id.layoutCEP)
+
         layoutCidade =
             view.findViewById(R.id.layoutCidade)
+
         layoutEstado =
             view.findViewById(R.id.layoutEstado)
+
         layoutRua =
             view.findViewById(R.id.layoutRua)
+
         layoutBairro =
             view.findViewById(R.id.layoutBairro)
+
         layoutComplemento =
             view.findViewById(R.id.layoutComplemento)
+
         layoutNumero =
             view.findViewById(R.id.layoutNumero)
 
@@ -125,27 +151,34 @@ class EnderecoFragment :
                 ) {
 
                     val cep =
-                        s.toString()
-                            .replace(
-                                "[^0-9]".toRegex(),
-                                ""
-                            )
+                        s?.toString()
+                            ?.filter { it.isDigit() }
+                            ?: ""
 
                     if (cep.length == 8) {
+
                         buscarCEP(cep)
+
                     } else {
-                        configurarCamposEditaveis(true)
+
+                        configurarCamposEditaveis(
+                            editavel = true
+                        )
                     }
                 }
             }
         )
     }
 
-    private fun buscarCEP(cep: String) {
+    private fun buscarCEP(
+        cep: String
+    ) {
 
         viewLifecycleOwner.lifecycleScope.launch(
             Dispatchers.IO
         ) {
+
+            var conexao: HttpURLConnection? = null
 
             try {
 
@@ -154,11 +187,18 @@ class EnderecoFragment :
                         "https://viacep.com.br/ws/$cep/json/"
                     )
 
-                val conexao =
+                conexao =
                     url.openConnection()
                             as HttpURLConnection
 
-                conexao.requestMethod = "GET"
+                conexao.requestMethod =
+                    "GET"
+
+                conexao.connectTimeout =
+                    5000
+
+                conexao.readTimeout =
+                    5000
 
                 val reader =
                     BufferedReader(
@@ -176,32 +216,35 @@ class EnderecoFragment :
                     reader.readLine()
                         .also { linha = it } != null
                 ) {
+
                     resultado.append(linha)
                 }
 
                 reader.close()
-                conexao.disconnect()
 
                 val json =
                     JSONObject(
                         resultado.toString()
                     )
 
-                if (json.has("erro")) {
+                if (
+                    json.optBoolean(
+                        "erro",
+                        false
+                    )
+                ) {
 
-                    withContext(Dispatchers.Main) {
+                    withContext(
+                        Dispatchers.Main
+                    ) {
 
-                        txtErroEndereco.text =
+                        mostrarErroEndereco(
                             "*CEP não encontrado"
-
-                        txtErroEndereco.visibility =
-                            View.VISIBLE
-
-                        layoutCEP.setBackgroundResource(
-                            R.drawable.bg_input_white_red
                         )
 
-                        configurarCamposEditaveis(true)
+                        configurarCamposEditaveis(
+                            editavel = true
+                        )
                     }
 
                     return@launch
@@ -231,7 +274,9 @@ class EnderecoFragment :
                         ""
                     )
 
-                withContext(Dispatchers.Main) {
+                withContext(
+                    Dispatchers.Main
+                ) {
 
                     edtCidade.setText(cidade)
                     edtEstado.setText(estado)
@@ -245,33 +290,65 @@ class EnderecoFragment :
                         R.drawable.bg_input_white
                     )
 
-                    configurarCamposEditaveis(false)
+                    configurarCamposEditaveis(
+                        editavel = false
+                    )
                 }
 
-            } catch (e: Exception) {
+            } catch (
+                e: Exception
+            ) {
 
-                withContext(Dispatchers.Main) {
+                withContext(
+                    Dispatchers.Main
+                ) {
 
-                    txtErroEndereco.text =
+                    mostrarErroEndereco(
                         "*Erro ao buscar CEP"
+                    )
 
-                    txtErroEndereco.visibility =
-                        View.VISIBLE
-
-                    configurarCamposEditaveis(true)
+                    configurarCamposEditaveis(
+                        editavel = true
+                    )
                 }
+
+            } finally {
+
+                conexao?.disconnect()
             }
         }
+    }
+
+    private fun mostrarErroEndereco(
+        mensagem: String
+    ) {
+
+        txtErroEndereco.text =
+            mensagem
+
+        txtErroEndereco.visibility =
+            View.VISIBLE
+
+        layoutCEP.setBackgroundResource(
+            R.drawable.bg_input_white_red
+        )
     }
 
     private fun configurarCamposEditaveis(
         editavel: Boolean
     ) {
 
-        edtCidade.isEnabled = editavel
-        edtEstado.isEnabled = editavel
-        edtRua.isEnabled = editavel
-        edtBairro.isEnabled = editavel
+        edtCidade.isEnabled =
+            editavel
+
+        edtEstado.isEnabled =
+            editavel
+
+        edtRua.isEnabled =
+            editavel
+
+        edtBairro.isEnabled =
+            editavel
     }
 
     private fun configurarBotao() {
@@ -284,118 +361,95 @@ class EnderecoFragment :
     private fun validarFormulario() {
 
         val cep =
-            edtCEP.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtCEP)
 
         val cidade =
-            edtCidade.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtCidade)
 
         val estado =
-            edtEstado.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtEstado)
 
         val rua =
-            edtRua.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtRua)
 
         val bairro =
-            edtBairro.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtBairro)
 
         val numero =
-            edtNumero.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtNumero)
 
         val complemento =
-            edtComplemento.text
-                ?.toString()
-                ?.trim()
-                ?: ""
+            obterTexto(edtComplemento)
 
         var valido = true
 
-        if (TextUtils.isEmpty(cep)) {
-            layoutCEP.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (cep.isBlank()) {
+
+            marcarErro(layoutCEP)
+
             valido = false
+
         } else {
-            layoutCEP.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutCEP)
         }
 
-        if (TextUtils.isEmpty(cidade)) {
-            layoutCidade.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (cidade.isBlank()) {
+
+            marcarErro(layoutCidade)
+
             valido = false
+
         } else {
-            layoutCidade.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutCidade)
         }
 
-        if (TextUtils.isEmpty(estado)) {
-            layoutEstado.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (estado.isBlank()) {
+
+            marcarErro(layoutEstado)
+
             valido = false
+
         } else {
-            layoutEstado.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutEstado)
         }
 
-        if (TextUtils.isEmpty(rua)) {
-            layoutRua.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (rua.isBlank()) {
+
+            marcarErro(layoutRua)
+
             valido = false
+
         } else {
-            layoutRua.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutRua)
         }
 
-        if (TextUtils.isEmpty(bairro)) {
-            layoutBairro.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (bairro.isBlank()) {
+
+            marcarErro(layoutBairro)
+
             valido = false
+
         } else {
-            layoutBairro.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutBairro)
         }
 
-        if (TextUtils.isEmpty(numero)) {
-            layoutNumero.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
+        if (numero.isBlank()) {
+
+            marcarErro(layoutNumero)
+
             valido = false
+
         } else {
-            layoutNumero.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+
+            limparErro(layoutNumero)
         }
 
-        layoutComplemento.setBackgroundResource(
-            R.drawable.bg_input_white
-        )
+        limparErro(layoutComplemento)
 
         if (!valido) {
 
@@ -411,21 +465,45 @@ class EnderecoFragment :
         txtErroEndereco.visibility =
             View.GONE
 
-        val cadastro =
-            CadastroSession.cadastroUsuario
-
-        cadastro.endereco.apply {
-
-            this.cep = cep
-            this.cidade = cidade
-            this.estado = estado
-            this.rua = rua
-            this.bairro = bairro
-            this.numero = numero
-            this.complemento = complemento
-        }
+        viewModel.definirEndereco(
+            cep = cep,
+            estado = estado,
+            cidade = cidade,
+            bairro = bairro,
+            rua = rua,
+            numero = numero,
+            complemento = complemento
+        )
 
         (requireActivity() as CadastroActivity)
             .abrirConfirmacao()
+    }
+
+    private fun obterTexto(
+        editText: TextInputEditText
+    ): String {
+
+        return editText.text
+            ?.toString()
+            ?.trim()
+            ?: ""
+    }
+
+    private fun marcarErro(
+        layout: TextInputLayout
+    ) {
+
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white_red
+        )
+    }
+
+    private fun limparErro(
+        layout: TextInputLayout
+    ) {
+
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
     }
 }
