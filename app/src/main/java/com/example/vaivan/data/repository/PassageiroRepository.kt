@@ -12,6 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.util.Log
 
 /*
  * Nomenclatura:
@@ -143,6 +144,11 @@ class PassageiroRepository(
         responsavelId: String
     ): ListenerRegistration {
 
+        Log.d(
+            "PASSAGEIRO_SYNC",
+            "Iniciando listener. responsavelId=$responsavelId"
+        )
+
         return collection
             .whereEqualTo(
                 "responsavelId",
@@ -150,11 +156,39 @@ class PassageiroRepository(
             )
             .addSnapshotListener { snapshot, error ->
 
-                if (
-                    error != null ||
-                    snapshot == null
-                ) {
+                if (error != null) {
+
+                    Log.e(
+                        "PASSAGEIRO_SYNC",
+                        "ERRO ao sincronizar passageiros",
+                        error
+                    )
+
                     return@addSnapshotListener
+                }
+
+                if (snapshot == null) {
+
+                    Log.d(
+                        "PASSAGEIRO_SYNC",
+                        "Snapshot veio NULL"
+                    )
+
+                    return@addSnapshotListener
+                }
+
+                Log.d(
+                    "PASSAGEIRO_SYNC",
+                    "Firebase retornou ${snapshot.documents.size} passageiros"
+                )
+
+                snapshot.documents.forEach { document ->
+
+                    Log.d(
+                        "PASSAGEIRO_SYNC",
+                        "id=${document.id} | " +
+                                "responsavelId=${document.getString("responsavelId")}"
+                    )
                 }
 
                 scope.launch {
