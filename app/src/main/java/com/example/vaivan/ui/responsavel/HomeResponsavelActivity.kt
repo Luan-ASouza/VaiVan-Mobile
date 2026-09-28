@@ -28,7 +28,7 @@ import com.example.vaivan.ui.responsavel.perfil.PerfilFragment
 import com.example.vaivan.ui.responsavel.rotas.ListaRotasFragment
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.example.vaivan.ui.inicio.LoginActivity
-import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers

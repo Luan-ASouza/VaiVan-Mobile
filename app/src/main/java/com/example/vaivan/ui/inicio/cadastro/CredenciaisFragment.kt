@@ -9,6 +9,7 @@ import android.widget.CheckBox
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
 import com.google.android.material.button.MaterialButton
@@ -18,6 +19,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 class CredenciaisFragment :
     Fragment(R.layout.fragment_credenciais) {
+
+    private val viewModel: CadastroViewModel by activityViewModels()
 
     private lateinit var edtEmail: TextInputEditText
     private lateinit var edtTelefone: TextInputEditText
@@ -305,9 +308,7 @@ class CredenciaisFragment :
 
     @Suppress("DEPRECATION")
     private fun verificarEmailFirebase(
-        email: String,
-        telefone: String,
-        senha: String
+        email: String
     ) {
 
         btnCadastrar.isEnabled = false
@@ -341,10 +342,10 @@ class CredenciaisFragment :
 
                     } else {
 
-                        salvarDadosTemporarios(
-                            email,
-                            telefone,
-                            senha
+                        viewModel.definirCredenciais(
+                            email = email,
+                            telefone = telefone,
+                            senha = senha
                         )
 
                         abrirProximaEtapa()
@@ -359,26 +360,6 @@ class CredenciaisFragment :
                         View.VISIBLE
                 }
             }
-    }
-
-
-    private fun salvarDadosTemporarios(
-        email: String,
-        telefone: String,
-        senha: String
-    ) {
-
-        val cadastro =
-            CadastroSession.cadastroUsuario
-
-        cadastro.email =
-            email
-
-        cadastro.telefone =
-            telefone
-
-        cadastro.senha =
-            senha
     }
 
 
