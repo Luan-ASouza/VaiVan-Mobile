@@ -14,11 +14,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.ViewModelProvider
 import com.example.vaivan.R
 import com.example.vaivan.core.util.DataUtil
-import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.ui.responsavel.rotas.PesquisarRotasFragment
 import kotlinx.coroutines.launch
@@ -27,18 +24,9 @@ class ListaPassageirosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemPassageiros: TextView
+
+    // ViewModel instanciado com Factory repassando Application e Repository
     private val viewModel: ListaPassageirosViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val repository =
-            PassageiroRepository(
-                VaivanDatabase
-                    .getInstance(requireContext())
-                    .passageiroDao()
-            )
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,19 +52,12 @@ class ListaPassageirosFragment : Fragment() {
     }
 
     private fun configurarViews(view: View) {
-
-        containerConfirmados =
-            view.findViewById(R.id.containerConfirmados)
-
-        txtSemPassageiros =
-            view.findViewById(R.id.txtSemPassageiros)
+        containerConfirmados = view.findViewById(R.id.containerConfirmados)
+        txtSemPassageiros = view.findViewById(R.id.txtSemPassageiros)
     }
 
     private fun configurarBotoes() {
-
-        val btnNovoPassageiro =
-            view?.findViewById<LinearLayout>(R.id.btnNovoPassageiro)
-                ?: return
+        val btnNovoPassageiro = view?.findViewById<LinearLayout>(R.id.btnNovoPassageiro) ?: return
 
         btnNovoPassageiro.setOnClickListener {
             startActivity(
@@ -89,53 +70,35 @@ class ListaPassageirosFragment : Fragment() {
     }
 
     private fun observarPassageiros() {
-
         viewLifecycleOwner.lifecycleScope.launch {
-
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.passageiros.collect { passageiros ->
-
                     renderizarLista(passageiros)
                 }
             }
         }
     }
 
-    private fun renderizarLista(
-        passageiros: List<PassageiroEntity>
-    ) {
-
+    private fun renderizarLista(passageiros: List<PassageiroEntity>) {
         containerConfirmados.removeAllViews()
 
         if (passageiros.isEmpty()) {
-
             txtSemPassageiros.visibility = View.VISIBLE
-
             return
         }
 
         txtSemPassageiros.visibility = View.GONE
 
-        val inflater =
-            LayoutInflater.from(requireContext())
+        val inflater = LayoutInflater.from(requireContext())
 
         for (passageiro in passageiros) {
-
-            val itemView =
-                inflater.inflate(
-                    R.layout.item_passageiro,
-                    containerConfirmados,
-                    false
-                )
-
-            configurarItemPassageiro(
-                itemView,
-                passageiro
+            val itemView = inflater.inflate(
+                R.layout.item_passageiro,
+                containerConfirmados,
+                false
             )
 
+            configurarItemPassageiro(itemView, passageiro)
             containerConfirmados.addView(itemView)
         }
     }
@@ -144,192 +107,80 @@ class ListaPassageirosFragment : Fragment() {
         itemView: View,
         passageiro: PassageiroEntity
     ) {
+        val linhaPrincipal = itemView.findViewById<LinearLayout>(R.id.linhaPrincipalItem)
+        val txtNome = itemView.findViewById<TextView>(R.id.txtNomePassageiroItem)
+        val txtIdade = itemView.findViewById<TextView>(R.id.txtIdadePassageiroItem)
+        val imgChevron = itemView.findViewById<ImageView>(R.id.imgChevronItem)
+        val containerDetalhes = itemView.findViewById<LinearLayout>(R.id.containerDetalhesItem)
+        val txtNecessidade = itemView.findViewById<TextView>(R.id.txtNecessidadePassageiroItem)
+        val txtObservacoes = itemView.findViewById<TextView>(R.id.txtObservacoesPassageiroItem)
+        val btnBuscarRota = itemView.findViewById<Button>(R.id.btnBuscarRotaItem)
 
-        val linhaPrincipal =
-            itemView.findViewById<LinearLayout>(
-                R.id.linhaPrincipalItem
-            )
-
-        val txtNome =
-            itemView.findViewById<TextView>(
-                R.id.txtNomePassageiroItem
-            )
-
-        val txtIdade =
-            itemView.findViewById<TextView>(
-                R.id.txtIdadePassageiroItem
-            )
-
-        val imgChevron =
-            itemView.findViewById<ImageView>(
-                R.id.imgChevronItem
-            )
-
-        val containerDetalhes =
-            itemView.findViewById<LinearLayout>(
-                R.id.containerDetalhesItem
-            )
-
-        val txtNecessidade =
-            itemView.findViewById<TextView>(
-                R.id.txtNecessidadePassageiroItem
-            )
-
-        val txtObservacoes =
-            itemView.findViewById<TextView>(
-                R.id.txtObservacoesPassageiroItem
-            )
-
-        val btnBuscarRota =
-            itemView.findViewById<Button>(
-                R.id.btnBuscarRotaItem
-            )
-
-        // =========================
-        // INFORMAÇÕES PRINCIPAIS
-        // =========================
-
+        // Informações Principais usando String Resources
         txtNome.text = passageiro.nome
 
-        val idade =
-            DataUtil.calcularIdade(
-                passageiro.dataNascimento
-            )
-
-        txtIdade.text =
-            if (idade >= 0) {
-                "$idade anos"
-            } else {
-                "Idade indisponível"
-            }
-
-        // =========================
-        // NECESSIDADE ESPECIAL
-        // =========================
-
-        if (passageiro.necessidadesEspeciais) {
-
-            txtNecessidade.visibility = View.VISIBLE
-
-            txtNecessidade.text =
-                if (!passageiro.descricaoNecessidades.isNullOrBlank()) {
-
-                    "Necessidade especial: " +
-                            passageiro.descricaoNecessidades
-
-                } else {
-
-                    "Possui necessidade especial"
-                }
-
+        val idade = DataUtil.calcularIdade(passageiro.dataNascimento)
+        txtIdade.text = if (idade >= 0) {
+            getString(R.string.idade_anos, idade)
         } else {
+            getString(R.string.idade_indisponivel)
+        }
 
+        // Necessidade Especial
+        if (passageiro.necessidadesEspeciais) {
+            txtNecessidade.visibility = View.VISIBLE
+            txtNecessidade.text = if (!passageiro.descricaoNecessidades.isNullOrBlank()) {
+                getString(R.string.necessidade_especial_descricao, passageiro.descricaoNecessidades)
+            } else {
+                getString(R.string.necessidade_especial_padrao)
+            }
+        } else {
             txtNecessidade.visibility = View.GONE
         }
 
-        // =========================
-        // OBSERVAÇÕES
-        // =========================
-
+        // Observações
         if (!passageiro.observacoes.isNullOrBlank()) {
-
             txtObservacoes.visibility = View.VISIBLE
-
-            txtObservacoes.text =
-                "Observações: " +
-                        passageiro.observacoes
-
+            txtObservacoes.text = getString(R.string.observacoes_descricao, passageiro.observacoes)
         } else {
-
             txtObservacoes.visibility = View.GONE
         }
 
-        // =========================
-        // EXPANSÃO
-        // =========================
+        // Expansão do Card
+        val temDetalhes = passageiro.necessidadesEspeciais || !passageiro.observacoes.isNullOrBlank()
 
-        val temDetalhes =
-            passageiro.necessidadesEspeciais ||
-                    !passageiro.observacoes.isNullOrBlank()
-
-        imgChevron.visibility =
-            if (temDetalhes) {
-                View.VISIBLE
-            } else {
-                View.INVISIBLE
-            }
+        imgChevron.visibility = if (temDetalhes) View.VISIBLE else View.INVISIBLE
 
         linhaPrincipal.setOnClickListener {
+            if (!temDetalhes) return@setOnClickListener
 
-            if (!temDetalhes) {
-                return@setOnClickListener
-            }
+            val vaiExpandir = containerDetalhes.visibility != View.VISIBLE
 
-            val vaiExpandir =
-                containerDetalhes.visibility != View.VISIBLE
+            containerDetalhes.visibility = if (vaiExpandir) View.VISIBLE else View.GONE
 
-            containerDetalhes.visibility =
-                if (vaiExpandir) {
-                    View.VISIBLE
-                } else {
-                    View.GONE
-                }
-
-            imgChevron
-                .animate()
-                .rotation(
-                    if (vaiExpandir) {
-                        180f
-                    } else {
-                        0f
-                    }
-                )
+            imgChevron.animate()
+                .rotation(if (vaiExpandir) 180f else 0f)
                 .setDuration(150)
                 .start()
         }
 
-        // =========================
-        // BUSCAR ROTA
-        // =========================
-
+        // Buscar Rota
         btnBuscarRota.setOnClickListener {
-
             abrirPesquisaRotas(passageiro)
         }
     }
 
-    private fun abrirPesquisaRotas(
-        passageiro: PassageiroEntity
-    ) {
+    private fun abrirPesquisaRotas(passageiro: PassageiroEntity) {
+        val fragment = PesquisarRotasFragment()
 
-        val fragment =
-            PesquisarRotasFragment()
+        fragment.arguments = Bundle().apply {
+            putString("passageiroId", passageiro.id)
+            putString("nomePassageiro", passageiro.nome)
+            putString("pontoEmbarqueId", passageiro.pontoEmbarqueId)
+        }
 
-        fragment.arguments =
-            Bundle().apply {
-
-                putString(
-                    "passageiroId",
-                    passageiro.id
-                )
-
-                putString(
-                    "nomePassageiro",
-                    passageiro.nome
-                )
-
-                putString(
-                    "pontoEmbarqueId",
-                    passageiro.pontoEmbarqueId
-                )
-            }
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.fragmentContainer,
-                fragment
-            )
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
     }
