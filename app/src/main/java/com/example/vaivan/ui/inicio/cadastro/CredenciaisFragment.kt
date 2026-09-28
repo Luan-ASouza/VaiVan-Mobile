@@ -1,23 +1,28 @@
 package com.example.vaivan.ui.inicio.cadastro
 
 import android.os.Bundle
-import android.text.TextUtils
-import android.util.Patterns
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
+import com.example.vaivan.core.validation.CadastroValidator
+import com.example.vaivan.data.repository.FirebaseAuthRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
 
 class CredenciaisFragment :
     Fragment(R.layout.fragment_credenciais) {
+
+    private val viewModel: CadastroViewModel by activityViewModels()
+
+    private val authRepository =
+        FirebaseAuthRepository()
 
     private lateinit var edtEmail: TextInputEditText
     private lateinit var edtTelefone: TextInputEditText
@@ -46,6 +51,15 @@ class CredenciaisFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        inicializarViews(view)
+        configurarTelefone()
+        configurarDDD()
+        configurarMensagens()
+        configurarBotao()
+    }
+
+    private fun inicializarViews(view: View) {
+
         edtEmail =
             view.findViewById(R.id.edtEmail)
 
@@ -57,7 +71,6 @@ class CredenciaisFragment :
 
         edtConfirmarSenha =
             view.findViewById(R.id.edtConfirmarSenha)
-
 
         txtErroEmail =
             view.findViewById(R.id.txtErroEmail)
@@ -74,16 +87,11 @@ class CredenciaisFragment :
         txtErroTermos =
             view.findViewById(R.id.txtErroTermos)
 
-
-        btnCadastrar =
-            view.findViewById(R.id.btnCadastrar)
-
         spinnerDDD =
             view.findViewById(R.id.spinnerDDD)
 
         checkTermos =
             view.findViewById(R.id.checkTermos)
-
 
         layoutEmail =
             view.findViewById(R.id.layoutEmail)
@@ -97,8 +105,11 @@ class CredenciaisFragment :
         layoutTelefone =
             view.findViewById(R.id.layoutTelefone)
 
+        btnCadastrar =
+            view.findViewById(R.id.btnCadastrar)
+    }
 
-        // Máscara do telefone
+    private fun configurarTelefone() {
 
         edtTelefone.addTextChangedListener(
             MascaraUtil.inserir(
@@ -106,39 +117,21 @@ class CredenciaisFragment :
                 edtTelefone
             )
         )
+    }
 
+    private fun configurarDDD() {
 
-        // Esconde mensagens inicialmente
+        val ddds = arrayOf(
+            "+55",
+            "+1",
+            "+351"
+        )
 
-        txtErroEmail.visibility = View.GONE
-        txtInfoSenha.visibility = View.GONE
-        txtErroSenha.visibility = View.GONE
-        txtErroTelefone.visibility = View.GONE
-        txtErroTermos.visibility = View.GONE
-
-
-        // Botão
-
-        btnCadastrar.setOnClickListener {
-            validarFormulario()
-        }
-
-
-        // DDD / código do país
-
-        val ddds =
-            arrayOf(
-                "+55",
-                "+1",
-                "+351"
-            )
-
-        val adapter =
-            ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                ddds
-            )
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            ddds
+        )
 
         adapter.setDropDownViewResource(
             android.R.layout.simple_spinner_dropdown_item
@@ -148,6 +141,21 @@ class CredenciaisFragment :
         spinnerDDD.setSelection(0)
     }
 
+    private fun configurarMensagens() {
+
+        txtErroEmail.visibility = View.GONE
+        txtInfoSenha.visibility = View.GONE
+        txtErroSenha.visibility = View.GONE
+        txtErroTelefone.visibility = View.GONE
+        txtErroTermos.visibility = View.GONE
+    }
+
+    private fun configurarBotao() {
+
+        btnCadastrar.setOnClickListener {
+            validarFormulario()
+        }
+    }
 
     private fun validarFormulario() {
 
@@ -175,45 +183,70 @@ class CredenciaisFragment :
                 ?.trim()
                 ?: ""
 
-
         var formularioValido = true
 
-
-        // EMAIL
-
-        if (
-            TextUtils.isEmpty(email) ||
-            !Patterns.EMAIL_ADDRESS
-                .matcher(email)
-                .matches()
-        ) {
-
-            txtErroEmail.text =
-                "*Digite um email válido"
-
-            txtErroEmail.visibility =
-                View.VISIBLE
-
-            layoutEmail.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
-
+        if (!validarEmail(email)) {
             formularioValido = false
-
-        } else {
-
-            txtErroEmail.visibility =
-                View.GONE
-
-            layoutEmail.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
         }
 
+        if (!validarTelefone(telefone)) {
+            formularioValido = false
+        }
 
-        // TELEFONE
+        if (!validarSenha(senha)) {
+            formularioValido = false
+        }
 
-        if (!telefoneValido(telefone)) {
+        if (!validarConfirmacaoSenha(
+                senha,
+                confirmarSenha
+            )
+        ) {
+            formularioValido = false
+        }
+
+        if (!validarTermos()) {
+            formularioValido = false
+        }
+
+        if (formularioValido) {
+
+            verificarEmail(
+                email = email,
+                telefone = telefone,
+                senha = senha
+            )
+        }
+    }
+
+    private fun validarEmail(
+        email: String
+    ): Boolean {
+
+        if (!CadastroValidator.emailValido(email)) {
+
+            mostrarErro(
+                mensagem = txtErroEmail,
+                layout = layoutEmail,
+                texto = "*Digite um email válido"
+            )
+
+            return false
+        }
+
+        limparErro(
+            mensagem = txtErroEmail,
+            layout = layoutEmail
+        )
+
+        return true
+    }
+
+    private fun validarTelefone(
+        telefone: String
+    ): Boolean {
+
+        if (!CadastroValidator.telefoneValido(telefone)) {
 
             txtErroTelefone.visibility =
                 View.VISIBLE
@@ -222,22 +255,24 @@ class CredenciaisFragment :
                 R.drawable.bg_input_white_red
             )
 
-            formularioValido = false
-
-        } else {
-
-            txtErroTelefone.visibility =
-                View.GONE
-
-            layoutTelefone.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+            return false
         }
 
+        txtErroTelefone.visibility =
+            View.GONE
 
-        // SENHA
+        layoutTelefone.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
 
-        if (!senhaValida(senha)) {
+        return true
+    }
+
+    private fun validarSenha(
+        senha: String
+    ): Boolean {
+
+        if (!CadastroValidator.senhaValida(senha)) {
 
             txtInfoSenha.visibility =
                 View.VISIBLE
@@ -246,150 +281,52 @@ class CredenciaisFragment :
                 R.drawable.bg_input_white_red
             )
 
-            formularioValido = false
-
-        } else {
-
-            txtInfoSenha.visibility =
-                View.GONE
-
-            layoutSenha.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
+            return false
         }
 
+        txtInfoSenha.visibility =
+            View.GONE
 
-        // CONFIRMAÇÃO DA SENHA
+        layoutSenha.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
 
-        if (senha != confirmarSenha) {
+        return true
+    }
 
-            txtErroSenha.visibility =
-                View.VISIBLE
-
-            layoutConfirmarSenha.setBackgroundResource(
-                R.drawable.bg_input_white_red
-            )
-
-            formularioValido = false
-
-        } else {
-
-            txtErroSenha.visibility =
-                View.GONE
-
-            layoutConfirmarSenha.setBackgroundResource(
-                R.drawable.bg_input_white
-            )
-        }
-
-
-        // TERMOS
-
-        val termosValidos =
-            termosAceitos()
-
+    private fun validarConfirmacaoSenha(
+        senha: String,
+        confirmarSenha: String
+    ): Boolean {
 
         if (
-            formularioValido &&
-            termosValidos
+            !CadastroValidator.senhasConferem(
+                senha,
+                confirmarSenha
+            )
         ) {
 
-            verificarEmailFirebase(
-                email,
-                telefone,
-                senha
+            txtErroSenha.visibility =
+                View.VISIBLE
+
+            layoutConfirmarSenha.setBackgroundResource(
+                R.drawable.bg_input_white_red
             )
+
+            return false
         }
+
+        txtErroSenha.visibility =
+            View.GONE
+
+        layoutConfirmarSenha.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
+
+        return true
     }
 
-
-    @Suppress("DEPRECATION")
-    private fun verificarEmailFirebase(
-        email: String,
-        telefone: String,
-        senha: String
-    ) {
-
-        btnCadastrar.isEnabled = false
-
-        FirebaseAuth
-            .getInstance()
-            .fetchSignInMethodsForEmail(email)
-            .addOnCompleteListener { task ->
-
-                btnCadastrar.isEnabled = true
-
-                if (task.isSuccessful) {
-
-                    val existe =
-                        !task.result
-                            .signInMethods
-                            .isNullOrEmpty()
-
-
-                    if (existe) {
-
-                        txtErroEmail.text =
-                            "*Email já cadastrado no sistema"
-
-                        txtErroEmail.visibility =
-                            View.VISIBLE
-
-                        layoutEmail.setBackgroundResource(
-                            R.drawable.bg_input_white_red
-                        )
-
-                    } else {
-
-                        salvarDadosTemporarios(
-                            email,
-                            telefone,
-                            senha
-                        )
-
-                        abrirProximaEtapa()
-                    }
-
-                } else {
-
-                    txtErroEmail.text =
-                        "*Erro ao verificar e-mail. Tente novamente."
-
-                    txtErroEmail.visibility =
-                        View.VISIBLE
-                }
-            }
-    }
-
-
-    private fun salvarDadosTemporarios(
-        email: String,
-        telefone: String,
-        senha: String
-    ) {
-
-        val cadastro =
-            CadastroSession.cadastroUsuario
-
-        cadastro.email =
-            email
-
-        cadastro.telefone =
-            telefone
-
-        cadastro.senha =
-            senha
-    }
-
-
-    private fun abrirProximaEtapa() {
-
-        (requireActivity() as CadastroActivity)
-            .abrirInformacoesPessoais()
-    }
-
-
-    private fun termosAceitos(): Boolean {
+    private fun validarTermos(): Boolean {
 
         if (!checkTermos.isChecked) {
 
@@ -405,33 +342,84 @@ class CredenciaisFragment :
         return true
     }
 
+    private fun verificarEmail(
+        email: String,
+        telefone: String,
+        senha: String
+    ) {
 
-    private fun telefoneValido(
-        telefone: String
-    ): Boolean {
+        btnCadastrar.isEnabled = false
 
-        val numeros =
-            telefone.replace(
-                Regex("[^0-9]"),
-                ""
-            )
+        authRepository.verificarEmail(
+            email = email,
 
-        return numeros.length in 10..11
+            onResult = { existe ->
+
+                btnCadastrar.isEnabled = true
+
+                if (existe) {
+
+                    mostrarErro(
+                        mensagem = txtErroEmail,
+                        layout = layoutEmail,
+                        texto = "*Email já cadastrado no sistema"
+                    )
+
+                    return@verificarEmail
+                }
+
+                viewModel.definirCredenciais(
+                    email = email,
+                    telefone = telefone,
+                    senha = senha
+                )
+
+                abrirProximaEtapa()
+            },
+
+            onError = {
+
+                btnCadastrar.isEnabled = true
+
+                mostrarErro(
+                    mensagem = txtErroEmail,
+                    layout = layoutEmail,
+                    texto = "*Erro ao verificar e-mail. Tente novamente."
+                )
+            }
+        )
     }
 
+    private fun mostrarErro(
+        mensagem: TextView,
+        layout: TextInputLayout,
+        texto: String
+    ) {
 
-    private fun senhaValida(
-        senha: String
-    ): Boolean {
+        mensagem.text = texto
+        mensagem.visibility = View.VISIBLE
 
-        return senha.length >= 8 &&
-                senha.matches(
-                    Regex(".*\\d.*")
-                ) &&
-                senha.matches(
-                    Regex(
-                        ".*[!@#\\$%^&*()_+=|<>?{}\\[\\]~-].*"
-                    )
-                )
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white_red
+        )
+    }
+
+    private fun limparErro(
+        mensagem: TextView,
+        layout: TextInputLayout
+    ) {
+
+        mensagem.visibility =
+            View.GONE
+
+        layout.setBackgroundResource(
+            R.drawable.bg_input_white
+        )
+    }
+
+    private fun abrirProximaEtapa() {
+
+        (requireActivity() as CadastroActivity)
+            .abrirInformacoesPessoais()
     }
 }

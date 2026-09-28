@@ -25,7 +25,7 @@ import com.example.vaivan.ui.motorista.navigation.BottomNavigationControllerMoto
 import com.example.vaivan.ui.motorista.navigation.NavigationItem
 import com.example.vaivan.ui.motorista.perfil.PerfilFragment
 import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
-import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 

@@ -6,14 +6,18 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlin.getValue
 
 class CodigoVerificacaoFragment :
     Fragment(R.layout.fragment_codigo_verificacao) {
 
+    private val viewModel: CadastroViewModel by activityViewModels()
     private lateinit var edtCodigo1: TextInputEditText
     private lateinit var edtCodigo2: TextInputEditText
     private lateinit var edtCodigo3: TextInputEditText
@@ -51,8 +55,6 @@ class CodigoVerificacaoFragment :
         view: View
     ) {
 
-        // CAMPOS
-
         edtCodigo1 =
             view.findViewById(R.id.edtCodigo1)
 
@@ -64,9 +66,6 @@ class CodigoVerificacaoFragment :
 
         edtCodigo4 =
             view.findViewById(R.id.edtCodigo4)
-
-
-        // LAYOUTS
 
         layoutCodigo1 =
             view.findViewById(R.id.layoutCodigo1)
@@ -80,21 +79,14 @@ class CodigoVerificacaoFragment :
         layoutCodigo4 =
             view.findViewById(R.id.layoutCodigo4)
 
-
-        // TEXTOS
-
         txtErroCodigo =
             view.findViewById(R.id.txtErroCodigo)
 
         txtReenviarCodigo =
             view.findViewById(R.id.txtReenviarCodigo)
 
-
-        // BOTÃO
-
         btnContinuar =
             view.findViewById(R.id.btnContinuar)
-
 
         txtErroCodigo.visibility =
             View.GONE
@@ -103,18 +95,18 @@ class CodigoVerificacaoFragment :
     private fun configurarAutoAvanco() {
 
         configurarAutoAvanco(
-            edtCodigo1,
-            edtCodigo2
+            atual = edtCodigo1,
+            proximo = edtCodigo2
         )
 
         configurarAutoAvanco(
-            edtCodigo2,
-            edtCodigo3
+            atual = edtCodigo2,
+            proximo = edtCodigo3
         )
 
         configurarAutoAvanco(
-            edtCodigo3,
-            edtCodigo4
+            atual = edtCodigo3,
+            proximo = edtCodigo4
         )
     }
 
@@ -125,16 +117,7 @@ class CodigoVerificacaoFragment :
         }
 
         txtReenviarCodigo.setOnClickListener {
-
-            txtErroCodigo.visibility =
-                View.GONE
-
-            resetarCampos()
-
-            // Futuramente:
-            // reenviar email
-            // chamar API
-            // Firebase etc.
+            reenviarCodigo()
         }
     }
 
@@ -146,56 +129,73 @@ class CodigoVerificacaoFragment :
                     obterCodigo(edtCodigo3) +
                     obterCodigo(edtCodigo4)
 
+        if (codigoDigitado.isEmpty()) {
 
-        if (
-            codigoDigitado ==
-            CODIGO_CORRETO
-        ) {
+            mostrarErro()
 
-            txtErroCodigo.visibility =
-                View.GONE
+            return
+        }
 
+        if (codigoDigitado == CODIGO_CORRETO) {
+
+            esconderErro()
             resetarCampos()
 
-            abrirEndereco()
+            viewLifecycleOwner.lifecycleScope
+                .launchWhenResumed {
+                    viewModel.definirCodigoVerificacao()
+                    abrirEndereco()
+                }
 
         } else {
 
-            txtErroCodigo.visibility =
-                View.VISIBLE
-
-            mostrarErroCampos()
+            mostrarErro()
         }
     }
 
-    private fun abrirEndereco() {
+    private fun reenviarCodigo() {
 
-        (requireActivity() as CadastroActivity)
-            .abrirEndereco()
+        esconderErro()
+        resetarCampos()
+
+        /*
+         * Futuramente:
+         *
+         * viewModel.definirCodigoVerificacao()
+         *
+         * ou chamar o mecanismo real
+         * de envio/confirmacao do Firebase.
+         */
     }
 
-    private fun obterCodigo(
-        campo: TextInputEditText
-    ): String {
+    private fun mostrarErro() {
 
-        return campo.text
-            ?.toString()
-            ?.trim()
-            ?: ""
-    }
-
-    private fun mostrarErroCampos() {
+        txtErroCodigo.visibility =
+            View.VISIBLE
 
         alterarBackgroundCampos(
             R.drawable.bg_input_white_red
         )
     }
 
+    private fun esconderErro() {
+
+        txtErroCodigo.visibility =
+            View.GONE
+    }
+
     private fun resetarCampos() {
+
+        edtCodigo1.text?.clear()
+        edtCodigo2.text?.clear()
+        edtCodigo3.text?.clear()
+        edtCodigo4.text?.clear()
 
         alterarBackgroundCampos(
             R.drawable.bg_input_white
         )
+
+        edtCodigo1.requestFocus()
     }
 
     private fun alterarBackgroundCampos(
@@ -232,8 +232,7 @@ class CodigoVerificacaoFragment :
                     start: Int,
                     count: Int,
                     after: Int
-                ) {
-                }
+                ) = Unit
 
                 override fun onTextChanged(
                     s: CharSequence?,
@@ -249,9 +248,24 @@ class CodigoVerificacaoFragment :
 
                 override fun afterTextChanged(
                     s: Editable?
-                ) {
-                }
+                ) = Unit
             }
         )
+    }
+
+    private fun obterCodigo(
+        campo: TextInputEditText
+    ): String {
+
+        return campo.text
+            ?.toString()
+            ?.trim()
+            ?: ""
+    }
+
+    private fun abrirEndereco() {
+
+        (requireActivity() as CadastroActivity)
+            .abrirEndereco()
     }
 }
