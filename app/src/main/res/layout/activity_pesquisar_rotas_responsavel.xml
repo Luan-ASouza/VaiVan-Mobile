@@ -69,62 +69,16 @@
                         android:layout_marginEnd="12dp"
                         android:src="@android:drawable/sym_def_app_icon" />
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/txtNomePassageiro"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Lucas Santos"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="11 anos"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
+                        android:textColor="@color/dark_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
                 </LinearLayout>
 
-                <!-- BOTÃO PESQUISAR -->
 
-                <Button
-                    android:id="@+id/btnPesquisarRotas"
-                    android:layout_width="match_parent"
-                    android:layout_height="46dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="@drawable/btn_gray_filled"
-                    android:text="Pesquisar"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    tools:ignore="HardcodedText" />
-
-                <!-- RESULTADOS -->
-
-                <LinearLayout
-                    android:id="@+id/containerResultadosRotas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-
-                <TextView
-                    android:id="@+id/txtSemResultados"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="Nenhuma rota encontrada."
-                    android:textColor="#707070"
-                    android:visibility="gone"
-                    tools:ignore="HardcodedText" />
 
                 <!-- EMBARQUE -->
 
@@ -145,7 +99,12 @@
                     android:hint="Rua das Palmeiras, 245 – Apto 32"
                     android:padding="12dp"
                     android:textColor="@color/dark_gray"
-                    android:textColorHint="#AFAFAF"/>
+                    android:textColorHint="#AFAFAF"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:cursorVisible="false"
+                    android:inputType="none" />
+
 
                 <!-- DESEMBARQUE -->
 
@@ -166,7 +125,11 @@
                     android:hint="La Salle Carmo"
                     android:padding="12dp"
                     android:textColor="@color/dark_gray"
-                    android:textColorHint="#AFAFAF"/>
+                    android:textColorHint="#AFAFAF"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:cursorVisible="false"
+                    android:inputType="none" />
 
                 <!-- TURNO -->
 
@@ -340,6 +303,38 @@
                         android:textColorHint="#AFAFAF"/>
 
                 </LinearLayout>
+                <!-- BOTÃO PESQUISAR -->
+
+                <Button
+                    android:id="@+id/btnPesquisarRotas"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/btn_gray_filled"
+                    android:text="Pesquisar"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    tools:ignore="HardcodedText" />
+
+                <!-- RESULTADOS -->
+
+                <LinearLayout
+                    android:id="@+id/containerResultadosRotas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/txtSemResultados"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Nenhuma rota encontrada."
+                    android:textColor="#707070"
+                    android:visibility="gone"
+                    tools:ignore="HardcodedText" />
 
             </LinearLayout>
 

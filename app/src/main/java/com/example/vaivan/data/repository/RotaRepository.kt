@@ -7,6 +7,9 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
+import com.example.vaivan.core.util.GeoUtil
+import com.example.vaivan.core.util.PolylineUtil
+import com.example.vaivan.data.models.RotaCompativel
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+
 
 /**
  * Firestore = fonte da verdade
@@ -487,6 +491,72 @@ class RotaRepository(
                 }
             }
         }
+    // =========================================================
+    // BUSCA POR PROXIMIDADE (embarque + destino)
+    // =========================================================
+
+    private fun trajetoDaRota(rota: RotaEntity): List<Pair<Double, Double>> {
+        val decodificado: List<Pair<Double, Double>> =
+            if (rota.polylineEncoded.isBlank()) {
+                emptyList()
+            } else {
+                runCatching {
+                    PolylineUtil.decode(rota.polylineEncoded)
+                        .map { it.latitude to it.longitude }
+                }.getOrDefault(emptyList())
+            }
+
+        if (decodificado.size >= 2) return decodificado
+
+        // Plano B: reta entre origem e destino
+        return listOf(
+            rota.origemLatitude to rota.origemLongitude,
+            rota.destinoLatitude to rota.destinoLongitude
+        )
+    }
+
+    suspend fun buscarRotasCompativeis(
+        embarqueLatitude: Double,
+        embarqueLongitude: Double,
+        destinoLatitude: Double,
+        destinoLongitude: Double,
+        turno: String?,
+        dias: Set<String>,
+        raioEmbarqueMetros: Double = 1_000.0,
+        raioDestinoMetros: Double = 1_000.0
+    ): List<RotaCompativel> = withContext(Dispatchers.IO) {
+
+        var query: Query = collectionRotas.whereEqualTo("status", "ATIVA")
+        if (!turno.isNullOrBlank()) {
+            query = query.whereEqualTo("turno", turno)
+        }
+
+        val rotas = query.get().await().documents.mapNotNull { doc ->
+            doc.toObject(RotaEntity::class.java)?.copy(id = doc.id)
+        }
+
+        rotas
+            .filter { it.vagasOcupadas < it.capacidadeTotal }
+            .filter { rota ->
+                val diasDaRota = rota.diasSemana.split(",").map { it.trim() }
+                dias.isEmpty() || diasDaRota.containsAll(dias)
+            }
+            .mapNotNull { rota ->
+                val distDestino = GeoUtil.distanciaMetros(
+                    destinoLatitude, destinoLongitude,
+                    rota.destinoLatitude, rota.destinoLongitude
+                )
+                if (distDestino > raioDestinoMetros) return@mapNotNull null
+
+                val distEmbarque = GeoUtil.distanciaAoTrajetoMetros(
+                    embarqueLatitude, embarqueLongitude, trajetoDaRota(rota)
+                )
+                if (distEmbarque > raioEmbarqueMetros) return@mapNotNull null
+
+                RotaCompativel(rota, distEmbarque.toInt(), distDestino.toInt())
+            }
+            .sortedBy { it.distanciaEmbarqueMetros + it.distanciaDestinoMetros }
+    }
 
 
     // =========================================================
