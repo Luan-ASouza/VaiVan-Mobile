@@ -6,7 +6,12 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "rotas",
-    indices = [Index(value = ["motoristaId"]), Index(value = ["destinoNome"]), Index(value = ["turno"])]
+    indices = [
+        Index(value = ["motoristaId"]),
+        Index(value = ["destinoNome"]),
+        Index(value = ["turno"]),
+        Index(value = ["tipoTrajeto"])
+    ]
 )
 data class RotaEntity(
     @PrimaryKey val id: String = "",
@@ -14,9 +19,7 @@ data class RotaEntity(
     val veiculoId: String? = null,
     val nome: String = "", // ex: "La Salle Carmo - Manhã"
 
-    val origemNome: String = "",
-    val origemLatitude: Double = 0.0,
-    val origemLongitude: Double = 0.0,
+    val tipoTrajeto: String = "IDA", // IDA | VOLTA | IDA_E_VOLTA
 
     val destinoNome: String = "",
     val destinoEndereco: String = "",
@@ -25,6 +28,9 @@ data class RotaEntity(
 
     val turno: String = "", // MANHA | TARDE | NOITE
     val diasSemana: String = "", // ex: "SEG,TER,QUA,QUI,SEX"
+    val escolaId: String = "",
+    val escolaNome: String = "",
+    val bairrosAtendidos: List<String> = emptyList(),
 
     val capacidadeTotal: Int = 0,
     val vagasOcupadas: Int = 0,

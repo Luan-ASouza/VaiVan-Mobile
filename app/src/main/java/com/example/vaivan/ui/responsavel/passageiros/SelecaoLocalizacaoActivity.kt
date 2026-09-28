@@ -37,6 +37,8 @@ class SelecaoLocalizacaoActivity :
         const val EXTRA_LATITUDE = "latitude"
         const val EXTRA_LONGITUDE = "longitude"
         const val EXTRA_PLACE_ID = "placeId"
+        const val EXTRA_BAIRRO = "bairro"
+        const val EXTRA_CIDADE = "cidade"
     }
 
     private lateinit var googleMap: GoogleMap
@@ -46,6 +48,8 @@ class SelecaoLocalizacaoActivity :
 
     private var localSelecionado: LatLng? = null
     private var enderecoSelecionado: String = ""
+    private var bairroSelecionado: String = ""
+    private var cidadeSelecionada: String = ""
 
     private var placeIdSelecionado: String? = null
 
@@ -254,7 +258,7 @@ class SelecaoLocalizacaoActivity :
 
         val geocoder = Geocoder(
             this,
-            Locale.getDefault()
+            Locale("pt", "BR")
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -265,12 +269,13 @@ class SelecaoLocalizacaoActivity :
                 1
             ) { enderecos ->
 
-                val endereco =
-                    enderecos
-                        .firstOrNull()
-                        ?.getAddressLine(0)
+                val address = enderecos.firstOrNull()
 
-                atualizarEndereco(endereco)
+                atualizarEndereco(
+                    address?.getAddressLine(0),
+                    address?.subLocality,
+                    address?.locality
+                )
             }
 
         } else {
@@ -278,19 +283,20 @@ class SelecaoLocalizacaoActivity :
             @Suppress("DEPRECATION")
             try {
 
-                val enderecos =
-                    geocoder.getFromLocation(
-                        latLng.latitude,
-                        latLng.longitude,
-                        1
-                    )
+                // Chamada síncrona do geocoder para versões anteriores ao Android 13
+                val enderecos = geocoder.getFromLocation(
+                    latLng.latitude,
+                    latLng.longitude,
+                    1
+                )
 
-                val endereco =
-                    enderecos
-                        ?.firstOrNull()
-                        ?.getAddressLine(0)
+                val address = enderecos?.firstOrNull()
 
-                atualizarEndereco(endereco)
+                atualizarEndereco(
+                    address?.getAddressLine(0),
+                    address?.subLocality,
+                    address?.locality
+                )
 
             } catch (e: Exception) {
 
@@ -306,11 +312,14 @@ class SelecaoLocalizacaoActivity :
     }
 
     private fun atualizarEndereco(
-        endereco: String?
+        endereco: String?,
+        bairro: String?,
+        cidade: String?
     ) {
 
-        enderecoSelecionado =
-            endereco ?: ""
+        enderecoSelecionado = endereco ?: ""
+        bairroSelecionado = bairro.orEmpty()
+        cidadeSelecionada = cidade.orEmpty()
 
         runOnUiThread {
 
@@ -399,6 +408,8 @@ class SelecaoLocalizacaoActivity :
                 EXTRA_PLACE_ID,
                 placeIdSelecionado
             )
+            putExtra(EXTRA_BAIRRO, bairroSelecionado)
+            putExtra(EXTRA_CIDADE, cidadeSelecionada)
         }
 
         setResult(

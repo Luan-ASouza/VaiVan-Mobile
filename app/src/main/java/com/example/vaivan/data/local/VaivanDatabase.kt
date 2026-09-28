@@ -6,19 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.vaivan.data.local.dao.DocumentoDao
-import com.example.vaivan.data.local.dao.PontoEmbarqueDao
 import com.example.vaivan.data.local.dao.MotoristaDao
 import com.example.vaivan.data.local.dao.ParadaRotaDao
 import com.example.vaivan.data.local.dao.PassageiroDao
+import com.example.vaivan.data.local.dao.PontoEmbarqueDao
 import com.example.vaivan.data.local.dao.RotaDao
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.entities.DocumentoEntity
-import com.example.vaivan.data.local.entities.PontoDeEmbarqueEntity
 import com.example.vaivan.data.local.entities.MotoristaEntity
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.PassageiroEntity
+import com.example.vaivan.data.local.entities.PontoDeEmbarqueEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.local.entities.UsuarioEntity
@@ -36,13 +36,13 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
         ParadaRotaEntity::class,
         SolicitacaoInclusaoEntity::class
     ],
-    version = 9, // <--- AUMENTEI PARA 8 (RotaEntity agora é N por motorista; SolicitacaoInclusaoEntity ganhou rotaId)
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class VaivanDatabase : RoomDatabase() {
 
-    abstract fun UsuarioDao(): UsuarioDao
+    abstract fun usuarioDao(): UsuarioDao
     abstract fun passageiroDao(): PassageiroDao
     abstract fun motoristaDao(): MotoristaDao
     abstract fun documentoDao(): DocumentoDao
@@ -63,7 +63,9 @@ abstract class VaivanDatabase : RoomDatabase() {
                     VaivanDatabase::class.java,
                     "vaivan_cache.db"
                 )
+                    // Garante que o Room recrie as tabelas se a estrutura mudar
                     .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance

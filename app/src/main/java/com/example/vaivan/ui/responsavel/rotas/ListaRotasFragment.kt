@@ -23,6 +23,7 @@ import com.example.vaivan.data.models.RotasDoResponsavel
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.example.vaivan.data.local.dao.UsuarioDao
 
 class ListaRotasFragment : Fragment() {
 
@@ -51,7 +52,7 @@ class ListaRotasFragment : Fragment() {
 
         val usuarioRepository =
             UsuarioRepository(
-                db.UsuarioDao()
+                db.usuarioDao()
             )
 
         val veiculoRepository =

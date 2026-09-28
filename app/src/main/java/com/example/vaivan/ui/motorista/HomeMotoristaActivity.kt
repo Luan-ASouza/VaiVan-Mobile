@@ -28,6 +28,7 @@ import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
 import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.example.vaivan.data.local.dao.UsuarioDao
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
@@ -46,7 +47,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         // CORREÇÃO: Usar o Singleton do banco de dados para evitar erro de esquema
         val database = VaivanDatabase.getInstance(this)
-        val UsuarioDao = database.UsuarioDao()
+        val UsuarioDao = database.usuarioDao()
         val repository = UsuarioRepository(UsuarioDao)
 
         val factory = object : ViewModelProvider.Factory {

@@ -15,6 +15,7 @@ import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
+import com.example.vaivan.data.local.dao.UsuarioDao
 
 class ConfirmacaoCadastroFragment :
     Fragment(R.layout.fragment_confirmacao_cadastro) {
@@ -41,7 +42,7 @@ class ConfirmacaoCadastroFragment :
             UsuarioRepository(
                 VaivanDatabase
                     .getInstance(requireContext())
-                    .UsuarioDao()
+                    .usuarioDao()
             )
 
         authRepository =

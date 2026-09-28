@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.data.local.dao.UsuarioDao
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -57,7 +58,7 @@ class PerfilFragment : Fragment() {
             )
 
         val UsuarioDao =
-            database.UsuarioDao()
+            database.usuarioDao()
 
         val repository =
             UsuarioRepository(

@@ -18,7 +18,7 @@ class VaiVanApplication : Application() {
 
         val usuarioRepository =
             UsuarioRepository(
-                database.UsuarioDao()
+                database.usuarioDao()
             )
 
         val passageiroRepository =

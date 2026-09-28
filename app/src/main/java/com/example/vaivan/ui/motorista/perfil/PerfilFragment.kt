@@ -37,7 +37,7 @@ class PerfilFragment : Fragment() {
         // 2. Inicializas o teu Repositório manualmente aqui dentro
         // (Precisas de passar o DAO do Room. Ajusta os nomes para os do teu projeto)
         val database = VaivanDatabase.getInstance(requireContext())
-        val UsuarioDao = database.UsuarioDao()
+        val UsuarioDao = database.usuarioDao()
         val repository = UsuarioRepository(UsuarioDao)
 
         // 3. Criar a Factory nativa (sem bibliotecas extras) para construir o ViewModel

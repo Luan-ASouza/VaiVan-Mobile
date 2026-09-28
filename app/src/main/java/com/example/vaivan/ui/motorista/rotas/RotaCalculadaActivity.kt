@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.motorista.rotas
 
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -36,24 +37,24 @@ class RotaCalculadaActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var googleMap: GoogleMap
     private lateinit var txtResumoMapa: TextView
     private lateinit var containerParadasMapa: LinearLayout
+    private lateinit var rotaRepository: RotaRepository
 
     private var rotaAtual: RotaEntity? = null
     private var paradasAtuais: List<ParadaRotaEntity> = emptyList()
-
-    val db = VaivanDatabase.getInstance(this)
-
-    val rotaRepository =
-        RotaRepository(
-            rotaDao = db.rotaDao(),
-            paradaRotaDao = db.paradaRotaDao(),
-            routesClient = GoogleRoutesClient(this)
-        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rota_calculada)
 
         rotaId = intent.getStringExtra(EXTRA_ROTA_ID) ?: run { finish(); return }
+
+        // Inicialização do Banco e Repositório no ciclo de vida correto
+        val db = VaivanDatabase.getInstance(this)
+        rotaRepository = RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(this)
+        )
 
         txtResumoMapa = findViewById(R.id.txtResumoMapa)
         containerParadasMapa = findViewById(R.id.containerParadasMapa)
@@ -119,27 +120,49 @@ class RotaCalculadaActivity : AppCompatActivity(), OnMapReadyCallback {
 
         googleMap.clear()
 
+        // 1. Desenha a linha da rota
         val pontosPolyline = PolylineUtil.decode(rota.polylineEncoded)
-        googleMap.addPolyline(
-            PolylineOptions().addAll(pontosPolyline).width(12f).color(android.graphics.Color.parseColor("#F6B12F"))
-        )
-
-        val boundsBuilder = LatLngBounds.Builder()
-
-        val origem = LatLng(rota.origemLatitude, rota.origemLongitude)
-        googleMap.addMarker(MarkerOptions().position(origem).title("Início").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)))
-        boundsBuilder.include(origem)
-
-        paradasAtuais.forEach { parada ->
-            val ponto = LatLng(parada.latitude, parada.longitude)
-            googleMap.addMarker(MarkerOptions().position(ponto).title(parada.nomePassageiro).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)))
-            boundsBuilder.include(ponto)
+        if (pontosPolyline.isNotEmpty()) {
+            googleMap.addPolyline(
+                PolylineOptions()
+                    .addAll(pontosPolyline)
+                    .width(12f)
+                    .color(Color.parseColor("#F6B12F"))
+            )
         }
 
-        val destino = LatLng(rota.destinoLatitude, rota.destinoLongitude)
-        googleMap.addMarker(MarkerOptions().position(destino).title(rota.destinoNome).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)))
-        boundsBuilder.include(destino)
+        val boundsBuilder = LatLngBounds.Builder()
+        var temPontos = false
 
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 120))
+        // 2. Adiciona marcadores para cada parada/bairro
+        paradasAtuais.forEach { parada ->
+            val ponto = LatLng(parada.latitude, parada.longitude)
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(ponto)
+                    .title(parada.nomePassageiro)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+            )
+            boundsBuilder.include(ponto)
+            temPontos = true
+        }
+
+        // 3. Adiciona marcador do destino (Escola)
+        if (rota.destinoLatitude != 0.0 && rota.destinoLongitude != 0.0) {
+            val destino = LatLng(rota.destinoLatitude, rota.destinoLongitude)
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(destino)
+                    .title(rota.destinoNome)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+            )
+            boundsBuilder.include(destino)
+            temPontos = true
+        }
+
+        // 4. Enquadra a câmera nos marcadores existentes
+        if (temPontos) {
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 120))
+        }
     }
 }
