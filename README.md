@@ -1,5 +1,3 @@
-# 🚐 VaiVan — VaiVan Vai Contigo!
-
 <p align="center">
   <img src="docs/logo.png" alt="Logo VaiVan" width="180">
 </p>
