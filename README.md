@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Logo VaiVan" width="180">
+  <img src="docs/logo.svg" alt="Logo VaiVan" width="100%">
 </p>
 
 <h1 align="center">🚐 VaiVan — VaiVan Vai Contigo!</h1>
