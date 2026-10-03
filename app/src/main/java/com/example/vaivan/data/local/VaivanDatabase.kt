@@ -18,7 +18,7 @@ import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.MotoristaEntity
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.PassageiroEntity
-import com.example.vaivan.data.local.entities.PontoDeEmbarqueEntity
+import com.example.vaivan.data.local.entities.PontoEmbarqueEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.local.entities.UsuarioEntity
@@ -30,7 +30,7 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
         PassageiroEntity::class,
         MotoristaEntity::class,
         DocumentoEntity::class,
-        PontoDeEmbarqueEntity::class,
+        PontoEmbarqueEntity::class,
         VeiculoEntity::class,
         RotaEntity::class,
         ParadaRotaEntity::class,

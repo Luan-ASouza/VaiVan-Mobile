@@ -5,7 +5,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "ponto_embarque", indices = [Index(value = ["viagemId"])])
-data class PontoDeEmbarqueEntity(
+data class PontoEmbarqueEntity(
     @PrimaryKey val id: String = "",
 
     val latitude: Double = 0.0,

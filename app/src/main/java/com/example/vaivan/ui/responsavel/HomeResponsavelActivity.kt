@@ -23,7 +23,7 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.inicio.LoginActivity
-import com.example.vaivan.ui.inicio.cadastro.UsuarioViewModel
+import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.example.vaivan.ui.responsavel.chat.ChatFragment
 import com.example.vaivan.ui.responsavel.navigation.BottomNavigationController
 import com.example.vaivan.ui.responsavel.navigation.NavigationItem
@@ -58,7 +58,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
         // --------------------------------------------------
 
         val database = VaivanDatabase.getInstance(this)
-        val usuarioDao = database.UsuarioDao()
+        val usuarioDao = database.usuarioDao()
         val repository = UsuarioRepository(usuarioDao)
 
         val factory = object : ViewModelProvider.Factory {

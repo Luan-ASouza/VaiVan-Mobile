@@ -1,7 +1,7 @@
 package com.example.vaivan.data.repository
 
 import com.example.vaivan.data.local.dao.PontoEmbarqueDao
-import com.example.vaivan.data.local.entities.PontoDeEmbarqueEntity
+import com.example.vaivan.data.local.entities.PontoEmbarqueEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
@@ -50,7 +50,7 @@ class PontoEmbarqueRepository(
      */
     fun observarPontosDeEmbarqueDoUsuario(
         usuarioId: String
-    ): Flow<List<PontoDeEmbarqueEntity>> {
+    ): Flow<List<PontoEmbarqueEntity>> {
 
         return pontoEmbarqueDao.getByResponsavel(
             usuarioId
@@ -63,7 +63,7 @@ class PontoEmbarqueRepository(
      */
     fun observarPontoDeEmbarquePorId(
         id: String
-    ): Flow<PontoDeEmbarqueEntity?> {
+    ): Flow<PontoEmbarqueEntity?> {
 
         return pontoEmbarqueDao.getById(id)
     }
@@ -78,7 +78,7 @@ class PontoEmbarqueRepository(
      */
     suspend fun consultarPontoDeEmbarque(
         id: String
-    ): PontoDeEmbarqueEntity? {
+    ): PontoEmbarqueEntity? {
 
         val document =
             collection
@@ -92,7 +92,7 @@ class PontoEmbarqueRepository(
 
         return document
             .toObject(
-                PontoDeEmbarqueEntity::class.java
+                PontoEmbarqueEntity::class.java
             )
             ?.copy(
                 id = document.id
@@ -133,7 +133,7 @@ class PontoEmbarqueRepository(
 
                             document
                                 .toObject(
-                                    PontoDeEmbarqueEntity::class.java
+                                    PontoEmbarqueEntity::class.java
                                 )
                                 ?.copy(
                                     id = document.id,
@@ -170,7 +170,7 @@ class PontoEmbarqueRepository(
 
                 document
                     .toObject(
-                        PontoDeEmbarqueEntity::class.java
+                        PontoEmbarqueEntity::class.java
                     )
                     ?.copy(
                         id = document.id,
@@ -194,7 +194,7 @@ class PontoEmbarqueRepository(
      * e atualiza o Room.
      */
     suspend fun salvarPontoDeEmbarque(
-        pontoDeEmbarque: PontoDeEmbarqueEntity
+        pontoDeEmbarque: PontoEmbarqueEntity
     ): String {
 
         val documentReference =
