@@ -169,6 +169,10 @@ class RotaRepository(
         veiculoId: String?,
         nome: String,
         tipoTrajeto: String,
+        origemNome: String,
+        origemEndereco: String,
+        origemLatitude: Double,
+        origemLongitude: Double,
         destinoNome: String,
         destinoEndereco: String,
         destinoLatitude: Double,
@@ -184,6 +188,14 @@ class RotaRepository(
         val documentReference = collectionRotas.document()
         val agora = System.currentTimeMillis()
 
+        val origem = PontoRota(
+            id = "origem",
+            nome = origemNome,
+            endereco = origemEndereco,
+            latitude = origemLatitude,
+            longitude = origemLongitude
+        )
+
         val destino = PontoRota(
             id = "destino",
             nome = destinoNome,
@@ -192,16 +204,23 @@ class RotaRepository(
             longitude = destinoLongitude
         )
 
-        // Cálculo inicial da rota considerando apenas o destino principal (Escola)
-        val resultadoInicial = try {
+        // Trajeto real: ponto A -> escola
+        val resultado = try {
             routesClient.calcularMelhorRota(
-                origem = destino,
+                origem = origem,
                 destino = destino,
                 paradas = emptyList()
             )
         } catch (e: Exception) {
-            Log.e("RotaRepository", "Erro ao calcular rota inicial", e)
-            null
+            Log.e("RotaRepository", "Erro ao calcular rota", e)
+            throw IllegalStateException(
+                "Não foi possível traçar a rota. Verifique a internet e os endereços.", e
+            )
+        }
+
+        // Rota sem trajeto ficaria invisível para o radar, então não salvamos
+        if (resultado.polylineEncoded.isNullOrBlank()) {
+            throw IllegalStateException("O Google não retornou um trajeto para esses endereços.")
         }
 
         val rota = RotaEntity(
@@ -210,6 +229,10 @@ class RotaRepository(
             veiculoId = veiculoId,
             nome = nome,
             tipoTrajeto = tipoTrajeto,
+            origemNome = origemNome,
+            origemEndereco = origemEndereco,
+            origemLatitude = origemLatitude,
+            origemLongitude = origemLongitude,
             destinoNome = destinoNome,
             destinoEndereco = destinoEndereco,
             destinoLatitude = destinoLatitude,
@@ -221,24 +244,20 @@ class RotaRepository(
             bairrosAtendidos = bairrosAtendidos,
             capacidadeTotal = capacidadeTotal,
             vagasOcupadas = 0,
-            distanciaMetros = resultadoInicial?.distanciaMetros ?: 0,
-            duracaoSegundos = resultadoInicial?.duracaoSegundos ?: 0,
-            duracaoSemTrafegoSegundos = resultadoInicial?.duracaoSemTrafegoSegundos ?: 0,
-            polylineEncoded = resultadoInicial?.polylineEncoded ?: "",
+            distanciaMetros = resultado.distanciaMetros,
+            duracaoSegundos = resultado.duracaoSegundos,
+            duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
+            polylineEncoded = resultado.polylineEncoded,
             status = "ATIVA",
             calculadoEm = agora,
             lastUpdated = agora
         )
 
-        // Firestore = fonte da verdade
-        documentReference.set(rota).await()
-
-        // Room = cache local
-        rotaDao.upsert(rota)
+        documentReference.set(rota).await()   // Firestore = fonte da verdade
+        rotaDao.upsert(rota)                  // Room = cache local
 
         rota
     }
-
     // =========================================================
     // BUSCA TEMPORÁRIA DE ROTAS
     // =========================================================
@@ -307,6 +326,12 @@ class RotaRepository(
         raioDestinoMetros: Double = 1_000.0
     ): List<RotaCompativel> = withContext(Dispatchers.IO) {
 
+        Log.d(
+            "RADAR",
+            "VERSAO NOVA: embarque=($embarqueLatitude,$embarqueLongitude) " +
+                    "desembarque=($destinoLatitude,$destinoLongitude) turno=$turno dias=$dias"
+        )
+
         var query: Query = collectionRotas.whereEqualTo("status", "ATIVA")
         if (!turno.isNullOrBlank()) {
             query = query.whereEqualTo("turno", turno)
@@ -316,6 +341,8 @@ class RotaRepository(
             doc.toObject(RotaEntity::class.java)?.copy(id = doc.id)
         }
 
+        Log.d("RADAR", "Rotas ATIVAS encontradas: ${rotas.size}")
+
         rotas
             .filter { it.vagasOcupadas < it.capacidadeTotal }
             .filter { rota ->
@@ -323,22 +350,62 @@ class RotaRepository(
                 dias.isEmpty() || diasDaRota.containsAll(dias)
             }
             .mapNotNull { rota ->
-                val distDestino = GeoUtil.distanciaMetros(
+                // Sem trajeto real (polyline) a rota não entra no radar
+                val trajeto = trajetoDaRota(rota)
+                if (trajeto.size < 2) {
+                    Log.d("RADAR", "[${rota.nome}] FORA: sem polyline")
+                    return@mapNotNull null
+                }
+
+                // Distância de cada ponto da busca até a escola da rota
+                val embarqueAteEscola = GeoUtil.distanciaMetros(
+                    embarqueLatitude, embarqueLongitude,
+                    rota.destinoLatitude, rota.destinoLongitude
+                )
+                val desembarqueAteEscola = GeoUtil.distanciaMetros(
                     destinoLatitude, destinoLongitude,
                     rota.destinoLatitude, rota.destinoLongitude
                 )
-                if (distDestino > raioDestinoMetros) return@mapNotNull null
 
-                val distEmbarque = GeoUtil.distanciaAoTrajetoMetros(
-                    embarqueLatitude, embarqueLongitude, trajetoDaRota(rota)
+                // O ponto mais perto da escola é "a escola". O outro é "a casa".
+                val buscaEhIda = desembarqueAteEscola <= embarqueAteEscola
+                val sentidoBusca = if (buscaEhIda) "IDA" else "VOLTA"
+
+                // A rota atende esse sentido?
+                val tipoDaRota = rota.tipoTrajeto.ifBlank { "IDA_E_VOLTA" }
+                val atendeSentido = tipoDaRota == "IDA_E_VOLTA" || tipoDaRota == sentidoBusca
+                if (!atendeSentido) {
+                    Log.d("RADAR", "[${rota.nome}] FORA: busca é de $sentidoBusca, mas a rota é $tipoDaRota")
+                    return@mapNotNull null
+                }
+
+                // A escola da busca precisa estar perto da escola da rota
+                val distEscola = if (buscaEhIda) desembarqueAteEscola else embarqueAteEscola
+                if (distEscola > raioDestinoMetros) {
+                    Log.d("RADAR", "[${rota.nome}] FORA: escola a ${distEscola.toInt()} m da escola da rota")
+                    return@mapNotNull null
+                }
+
+                // A casa precisa estar perto do trajeto (o "radar" de 1 km)
+                val casaLat = if (buscaEhIda) embarqueLatitude else destinoLatitude
+                val casaLng = if (buscaEhIda) embarqueLongitude else destinoLongitude
+
+                val distCasa = GeoUtil.distanciaAoTrajetoMetros(casaLat, casaLng, trajeto)
+                if (distCasa > raioEmbarqueMetros) {
+                    Log.d("RADAR", "[${rota.nome}] FORA: casa a ${distCasa.toInt()} m do trajeto")
+                    return@mapNotNull null
+                }
+
+                Log.d(
+                    "RADAR",
+                    "[${rota.nome}] COMPATIVEL ($sentidoBusca, rota $tipoDaRota): " +
+                            "casa a ${distCasa.toInt()} m, escola a ${distEscola.toInt()} m"
                 )
-                if (distEmbarque > raioEmbarqueMetros) return@mapNotNull null
 
-                RotaCompativel(rota, distEmbarque.toInt(), distDestino.toInt())
+                RotaCompativel(rota, distCasa.toInt(), distEscola.toInt())
             }
             .sortedBy { it.distanciaEmbarqueMetros + it.distanciaDestinoMetros }
     }
-
     // =========================================================
     // OPERAÇÕES PARA USE CASE
     // =========================================================

@@ -21,6 +21,13 @@ data class RotaEntity(
 
     val tipoTrajeto: String = "IDA", // IDA | VOLTA | IDA_E_VOLTA
 
+    // Ponto A (bairro / saída do motorista)
+    val origemNome: String = "",
+    val origemEndereco: String = "",
+    val origemLatitude: Double = 0.0,
+    val origemLongitude: Double = 0.0,
+
+    // Ponto B (escola)
     val destinoNome: String = "",
     val destinoEndereco: String = "",
     val destinoLatitude: Double = 0.0,

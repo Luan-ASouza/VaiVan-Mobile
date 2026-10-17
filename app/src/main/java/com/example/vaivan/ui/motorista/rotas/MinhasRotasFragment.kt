@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -218,20 +219,54 @@ class MinhasRotasFragment : Fragment() {
 
             itemView.setOnClickListener {
 
-                val intent =
-                    Intent(
-                        requireContext(),
-                        RotaDetalheActivity::class.java
-                    )
+                AlertDialog.Builder(requireContext())
+                    .setTitle(rota.nome)
+                    .setItems(
+                        arrayOf(
+                            "Ver detalhes",
+                            "Ver trajeto no mapa"
+                        )
+                    ) { _, opcao ->
 
-                intent.putExtra(
-                    RotaDetalheActivity.EXTRA_ROTA_ID,
-                    rota.id
-                )
+                        when (opcao) {
 
-                startActivity(
-                    intent
-                )
+                            0 -> {
+                                val intent =
+                                    Intent(
+                                        requireContext(),
+                                        RotaDetalheActivity::class.java
+                                    )
+
+                                intent.putExtra(
+                                    RotaDetalheActivity.EXTRA_ROTA_ID,
+                                    rota.id
+                                )
+
+                                startActivity(
+                                    intent
+                                )
+                            }
+
+                            1 -> {
+                                val intent =
+                                    Intent(
+                                        requireContext(),
+                                        VisualizarRotaActivity::class.java
+                                    )
+
+                                intent.putExtra(
+                                    VisualizarRotaActivity.EXTRA_ROTA_ID,
+                                    rota.id
+                                )
+
+                                startActivity(
+                                    intent
+                                )
+                            }
+                        }
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
             }
 
 

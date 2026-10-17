@@ -45,6 +45,13 @@ class CriarRotaActivity : AppCompatActivity() {
     private var destinoLatitude: Double? = null
     private var destinoLongitude: Double? = null
 
+    private var origemNome: String? = null
+    private var origemEndereco: String? = null
+    private var origemLatitude: Double? = null
+    private var origemLongitude: Double? = null
+    private lateinit var txtOrigemAtual: TextView
+    private lateinit var selecaoOrigemLauncher: ActivityResultLauncher<Intent>
+
     private var escolaSelecionada: Escola? = null
     private lateinit var txtBairros: TextView
 
@@ -74,6 +81,7 @@ class CriarRotaActivity : AppCompatActivity() {
         edtNomeRota = findViewById(R.id.edtNomeRota)
         edtCapacidade = findViewById(R.id.edtCapacidade)
         txtDestinoAtual = findViewById(R.id.txtDestinoAtual)
+        txtOrigemAtual = findViewById(R.id.txtOrigemAtual)
         txtBairros = findViewById(R.id.txtBairros)
         btnCriarRota = findViewById(R.id.btnCriarRota)
 
@@ -107,6 +115,10 @@ class CriarRotaActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnDefinirDestino).setOnClickListener {
             mostrarDialogEscolas()
+        }
+
+        findViewById<Button>(R.id.btnDefinirOrigem).setOnClickListener {
+            selecaoOrigemLauncher.launch(Intent(this, SelecaoLocalizacaoActivity::class.java))
         }
 
         findViewById<Button>(R.id.btnAdicionarBairro).setOnClickListener {
@@ -205,6 +217,23 @@ class CriarRotaActivity : AppCompatActivity() {
     // ---------------------------------------------------------
 
     private fun configurarLaunchers() {
+        // Mapa aberto para escolher o PONTO DE PARTIDA (ponto A)
+        selecaoOrigemLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val dados = extrairResultado(result) ?: return@registerForActivityResult
+
+            origemEndereco = dados.first
+            origemLatitude = dados.second
+            origemLongitude = dados.third
+            origemNome = result.data
+                ?.getStringExtra(SelecaoLocalizacaoActivity.EXTRA_BAIRRO)
+                .orEmpty()
+                .ifBlank { dados.first }
+
+            txtOrigemAtual.text = dados.first
+        }
+
         // Mapa aberto para CADASTRAR UMA NOVA ESCOLA
         selecaoDestinoLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -361,6 +390,14 @@ class CriarRotaActivity : AppCompatActivity() {
             return
         }
 
+        val oEndereco = origemEndereco
+        val oLat = origemLatitude
+        val oLng = origemLongitude
+        if (oEndereco == null || oLat == null || oLng == null) {
+            Toast.makeText(this, "Selecione o ponto de partida.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val escola = escolaSelecionada
         val dNome = destinoNome; val dLat = destinoLatitude; val dLng = destinoLongitude
         if (escola == null || dNome == null || dLat == null || dLng == null) {
@@ -394,11 +431,15 @@ class CriarRotaActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                rotaRepository.criarRota(
+                val rota = rotaRepository.criarRota(
                     motoristaId = uid,
                     veiculoId = null,
                     nome = nome,
-                    tipoTrajeto = tipoTrajeto, // Passando tipoTrajeto no lugar de origem fixo
+                    tipoTrajeto = tipoTrajeto,
+                    origemNome = origemNome ?: oEndereco,
+                    origemEndereco = oEndereco,
+                    origemLatitude = oLat,
+                    origemLongitude = oLng,
                     destinoNome = dNome,
                     destinoEndereco = escola.endereco,
                     destinoLatitude = dLat,
@@ -411,6 +452,10 @@ class CriarRotaActivity : AppCompatActivity() {
                     bairrosAtendidos = bairrosAtendidos.keys.toList()
                 )
                 Toast.makeText(this@CriarRotaActivity, "Rota criada!", Toast.LENGTH_SHORT).show()
+                startActivity(
+                    Intent(this@CriarRotaActivity, VisualizarRotaActivity::class.java)
+                        .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rota.id)
+                )
                 finish()
             } catch (e: Exception) {
                 btnCriarRota.isEnabled = true

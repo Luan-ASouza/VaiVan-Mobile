@@ -44,6 +44,8 @@
         </activity>
 
 
+
+
         <!-- ==================== AUTENTICAÇÃO ==================== -->
 
         <activity
@@ -121,6 +123,9 @@
             android:name=".ui.motorista.rotas.RotaCalculadaActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.motorista.rotas.VisualizarRotaActivity"
+            android:exported="false" />
 
         <!-- ==================== RESPONSÁVEL ==================== -->
 

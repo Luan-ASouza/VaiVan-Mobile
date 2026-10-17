@@ -36,7 +36,7 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
         ParadaRotaEntity::class,
         SolicitacaoInclusaoEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -65,7 +65,6 @@ abstract class VaivanDatabase : RoomDatabase() {
                 )
                     // Garante que o Room recrie as tabelas se a estrutura mudar
                     .fallbackToDestructiveMigration()
-                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance
