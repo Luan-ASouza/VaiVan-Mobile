@@ -1,13 +1,14 @@
 package com.example.vaivan.ui.motorista.rotas
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,7 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
 
 class MinhasRotasFragment : Fragment() {
@@ -26,6 +28,20 @@ class MinhasRotasFragment : Fragment() {
     private lateinit var containerRotas: LinearLayout
 
     private lateinit var txtSemRotas: TextView
+
+    private val rotaRepository: RotaRepository by lazy {
+
+        val db =
+            VaivanDatabase.getInstance(
+                requireContext()
+            )
+
+        RotaRepository(
+            rotaDao = db.rotaDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            routesClient = GoogleRoutesClient(requireContext())
+        )
+    }
 
 
     private val viewModel: MinhasRotasViewModel by lazy {
@@ -218,55 +234,7 @@ class MinhasRotasFragment : Fragment() {
 
 
             itemView.setOnClickListener {
-
-                AlertDialog.Builder(requireContext())
-                    .setTitle(rota.nome)
-                    .setItems(
-                        arrayOf(
-                            "Ver detalhes",
-                            "Ver trajeto no mapa"
-                        )
-                    ) { _, opcao ->
-
-                        when (opcao) {
-
-                            0 -> {
-                                val intent =
-                                    Intent(
-                                        requireContext(),
-                                        RotaDetalheActivity::class.java
-                                    )
-
-                                intent.putExtra(
-                                    RotaDetalheActivity.EXTRA_ROTA_ID,
-                                    rota.id
-                                )
-
-                                startActivity(
-                                    intent
-                                )
-                            }
-
-                            1 -> {
-                                val intent =
-                                    Intent(
-                                        requireContext(),
-                                        VisualizarRotaActivity::class.java
-                                    )
-
-                                intent.putExtra(
-                                    VisualizarRotaActivity.EXTRA_ROTA_ID,
-                                    rota.id
-                                )
-
-                                startActivity(
-                                    intent
-                                )
-                            }
-                        }
-                    }
-                    .setNegativeButton("Cancelar", null)
-                    .show()
+                mostrarOpcoes(rota)
             }
 
 
@@ -274,6 +242,123 @@ class MinhasRotasFragment : Fragment() {
                 itemView
             )
         }
+    }
+
+
+    // ---------------------------------------------------------
+    // PAINÉIS (BOTTOM SHEET)
+    // ---------------------------------------------------------
+
+    /** Painel com as opções da rota: detalhes, trajeto e excluir. */
+    private fun mostrarOpcoes(
+        rota: RotaEntity
+    ) {
+
+        val sheet = BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_rota_opcoes, null)
+        sheet.setContentView(view)
+
+        // Deixa o fundo padrão transparente para aparecerem os cantos arredondados
+        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+
+        view.findViewById<TextView>(R.id.txtSheetTitulo).text = rota.nome
+
+        view.findViewById<View>(R.id.btnSheetDetalhes).setOnClickListener {
+            sheet.dismiss()
+
+            val intent =
+                Intent(
+                    requireContext(),
+                    RotaDetalheActivity::class.java
+                )
+
+            intent.putExtra(
+                RotaDetalheActivity.EXTRA_ROTA_ID,
+                rota.id
+            )
+
+            startActivity(intent)
+        }
+
+        view.findViewById<View>(R.id.btnSheetTrajeto).setOnClickListener {
+            sheet.dismiss()
+
+            val intent =
+                Intent(
+                    requireContext(),
+                    VisualizarRotaActivity::class.java
+                )
+
+            intent.putExtra(
+                VisualizarRotaActivity.EXTRA_ROTA_ID,
+                rota.id
+            )
+
+            startActivity(intent)
+        }
+
+        view.findViewById<View>(R.id.btnSheetExcluir).setOnClickListener {
+            sheet.dismiss()
+            confirmarExclusao(rota)
+        }
+
+        sheet.show()
+    }
+
+
+    /** Painel de confirmação antes de apagar a rota. */
+    private fun confirmarExclusao(
+        rota: RotaEntity
+    ) {
+
+        val aviso =
+            if (rota.vagasOcupadas > 0)
+                "Esta rota já tem ${rota.vagasOcupadas} passageiro(s) " +
+                        "vinculado(s). Eles perderão a vaga.\n\n" +
+                        "Essa ação não pode ser desfeita."
+            else
+                "Essa ação não pode ser desfeita."
+
+        val sheet = BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_confirmar_exclusao, null)
+        sheet.setContentView(view)
+
+        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+
+        view.findViewById<TextView>(R.id.txtConfirmarTitulo).text =
+            "Excluir \"${rota.nome}\"?"
+
+        view.findViewById<TextView>(R.id.txtConfirmarMensagem).text = aviso
+
+        view.findViewById<View>(R.id.btnCancelarExcluir).setOnClickListener {
+            sheet.dismiss()
+        }
+
+        view.findViewById<View>(R.id.btnConfirmarExcluir).setOnClickListener {
+            sheet.dismiss()
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    rotaRepository.excluirRota(rota.id)
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Rota excluída.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } catch (e: Exception) {
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Erro ao excluir: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
+        sheet.show()
     }
 
 

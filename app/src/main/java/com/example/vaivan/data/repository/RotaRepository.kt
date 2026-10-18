@@ -406,6 +406,27 @@ class RotaRepository(
             }
             .sortedBy { it.distanciaEmbarqueMetros + it.distanciaDestinoMetros }
     }
+
+    // =========================================================
+    // EXCLUIR ROTA
+    // =========================================================
+
+    /** Apaga a rota e as paradas dela no Firestore e no cache local (Room). */
+    suspend fun excluirRota(rotaId: String) = withContext(Dispatchers.IO) {
+        val paradas = collectionParadas
+            .whereEqualTo("rotaId", rotaId)
+            .get()
+            .await()
+
+        val batch = firestore.batch()
+        paradas.documents.forEach { batch.delete(it.reference) }
+        batch.delete(collectionRotas.document(rotaId))
+        batch.commit().await()
+
+        paradaRotaDao.deleteByRota(rotaId)
+        rotaDao.deleteById(rotaId)
+    }
+
     // =========================================================
     // OPERAÇÕES PARA USE CASE
     // =========================================================

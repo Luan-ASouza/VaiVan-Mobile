@@ -13,5 +13,6 @@
     <color name="beige">#E4DBD4</color>
     <color name="beige_cream">#FAD897</color>
     <color name="red">#E53935</color>
+    <color name="danger_red">#E53935</color>
 
 </resources>
