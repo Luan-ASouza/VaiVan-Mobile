@@ -4,12 +4,15 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -22,12 +25,13 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
-import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class RotaDetalheActivity : AppCompatActivity() {
 
@@ -38,11 +42,28 @@ class RotaDetalheActivity : AppCompatActivity() {
     private lateinit var rotaId: String
 
     private lateinit var txtNomeRotaDetalhe: TextView
-    private lateinit var txtResumoRotaDetalhe: TextView
     private lateinit var btnVerMapaDetalhe: Button
+    private lateinit var btnTrajetoDetalhe: Button
     private lateinit var containerSolicitacoesDetalhe: LinearLayout
     private lateinit var txtSemSolicitacoesDetalhe: TextView
     private lateinit var txtAlunosConfirmadosDetalhe: TextView
+
+    // Novos campos do visual
+    private lateinit var txtEscolaDetalhe: TextView
+    private lateinit var txtStatusDetalhe: TextView
+    private lateinit var txtSentidoDetalhe: TextView
+    private lateinit var txtTurnoDetalhe: TextView
+    private lateinit var txtVagasLivresDetalhe: TextView
+    private lateinit var txtVagasLegendaDetalhe: TextView
+    private lateinit var txtVagasOcupadasDetalhe: TextView
+    private lateinit var progressVagasDetalhe: ProgressBar
+    private lateinit var txtOrigemDetalhe: TextView
+    private lateinit var txtDestinoDetalhe: TextView
+    private lateinit var txtDistanciaDetalhe: TextView
+    private lateinit var txtDuracaoDetalhe: TextView
+    private lateinit var cardBairrosDetalhe: View
+    private lateinit var chipGroupBairrosDetalhe: ChipGroup
+    private lateinit var mapaDias: Map<String, TextView>
 
     private val viewModel: RotaDetalheViewModel by lazy {
 
@@ -138,14 +159,14 @@ class RotaDetalheActivity : AppCompatActivity() {
                 R.id.txtNomeRotaDetalhe
             )
 
-        txtResumoRotaDetalhe =
-            findViewById(
-                R.id.txtResumoRotaDetalhe
-            )
-
         btnVerMapaDetalhe =
             findViewById(
                 R.id.btnVerMapaDetalhe
+            )
+
+        btnTrajetoDetalhe =
+            findViewById(
+                R.id.btnTrajetoDetalhe
             )
 
         containerSolicitacoesDetalhe =
@@ -163,6 +184,51 @@ class RotaDetalheActivity : AppCompatActivity() {
                 R.id.txtAlunosConfirmadosDetalhe
             )
 
+        txtEscolaDetalhe = findViewById(R.id.txtEscolaDetalhe)
+        txtStatusDetalhe = findViewById(R.id.txtStatusDetalhe)
+        txtSentidoDetalhe = findViewById(R.id.txtSentidoDetalhe)
+        txtTurnoDetalhe = findViewById(R.id.txtTurnoDetalhe)
+        txtVagasLivresDetalhe = findViewById(R.id.txtVagasLivresDetalhe)
+        txtVagasLegendaDetalhe = findViewById(R.id.txtVagasLegendaDetalhe)
+        txtVagasOcupadasDetalhe = findViewById(R.id.txtVagasOcupadasDetalhe)
+        progressVagasDetalhe = findViewById(R.id.progressVagasDetalhe)
+        txtOrigemDetalhe = findViewById(R.id.txtOrigemDetalhe)
+        txtDestinoDetalhe = findViewById(R.id.txtDestinoDetalhe)
+        txtDistanciaDetalhe = findViewById(R.id.txtDistanciaDetalhe)
+        txtDuracaoDetalhe = findViewById(R.id.txtDuracaoDetalhe)
+        cardBairrosDetalhe = findViewById(R.id.cardBairrosDetalhe)
+        chipGroupBairrosDetalhe = findViewById(R.id.chipGroupBairrosDetalhe)
+
+        mapaDias = mapOf(
+            "SEG" to findViewById<TextView>(R.id.diaSeg),
+            "TER" to findViewById<TextView>(R.id.diaTer),
+            "QUA" to findViewById<TextView>(R.id.diaQua),
+            "QUI" to findViewById<TextView>(R.id.diaQui),
+            "SEX" to findViewById<TextView>(R.id.diaSex),
+            "SAB" to findViewById<TextView>(R.id.diaSab),
+            "DOM" to findViewById<TextView>(R.id.diaDom)
+        )
+
+        // Trajeto da rota (ponto A -> escola), sempre disponível
+        btnTrajetoDetalhe.setOnClickListener {
+
+            val intent =
+                Intent(
+                    this,
+                    VisualizarRotaActivity::class.java
+                )
+
+            intent.putExtra(
+                VisualizarRotaActivity.EXTRA_ROTA_ID,
+                rotaId
+            )
+
+            startActivity(
+                intent
+            )
+        }
+
+        // Rota com os alunos (só depois de ter alunos confirmados)
         btnVerMapaDetalhe.setOnClickListener {
 
             val intent =
@@ -214,6 +280,10 @@ class RotaDetalheActivity : AppCompatActivity() {
         }
     }
 
+    // ---------------------------------------------------------
+    // PREENCHER OS DADOS DA ROTA
+    // ---------------------------------------------------------
+
     private fun preencherRota(
         rota: RotaEntity?
     ) {
@@ -222,18 +292,149 @@ class RotaDetalheActivity : AppCompatActivity() {
             return
         }
 
-        txtNomeRotaDetalhe.text =
-            rota.nome
+        txtNomeRotaDetalhe.text = rota.nome
 
-        txtResumoRotaDetalhe.text =
-            "Destino: ${rota.destinoEndereco}\n" +
-                    "Vagas: " +
-                    "${rota.vagasOcupadas}/" +
-                    rota.capacidadeTotal
+        // Cartão principal
+        txtEscolaDetalhe.text = rota.escolaNome.ifBlank { rota.destinoNome }
+        txtStatusDetalhe.text = if (rota.status == "ATIVA") "Ativa" else "Arquivada"
+        txtSentidoDetalhe.text = rotuloSentido(rota.tipoTrajeto)
+        txtTurnoDetalhe.text = traduzirTurno(rota.turno)
+
+        // Dias da semana: os da rota ficam laranja, os outros cinza
+        val diasDaRota = rota.diasSemana
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+
+        mapaDias.forEach { (chave, textView) ->
+            val ativo = chave in diasDaRota
+
+            textView.setBackgroundResource(
+                if (ativo) R.drawable.bg_dia_ativo else R.drawable.bg_dia_inativo
+            )
+            textView.setTextColor(
+                if (ativo) {
+                    ContextCompat.getColor(this, android.R.color.white)
+                } else {
+                    ContextCompat.getColor(this, R.color.light_gray)
+                }
+            )
+        }
+
+        // Vagas
+        val livres = (rota.capacidadeTotal - rota.vagasOcupadas).coerceAtLeast(0)
+
+        txtVagasLivresDetalhe.text = livres.toString()
+        txtVagasLegendaDetalhe.text = if (livres == 1) "vaga livre" else "vagas livres"
+        txtVagasOcupadasDetalhe.text =
+            "${rota.vagasOcupadas} de ${rota.capacidadeTotal} ocupadas"
+
+        progressVagasDetalhe.max = rota.capacidadeTotal.coerceAtLeast(1)
+        progressVagasDetalhe.progress = rota.vagasOcupadas
+
+        // Percurso
+        txtOrigemDetalhe.text =
+            rota.origemEndereco.ifBlank { "Não informado" }
+        txtDestinoDetalhe.text =
+            rota.destinoEndereco.ifBlank { rota.destinoNome }
+
+        txtDistanciaDetalhe.text =
+            if (rota.distanciaMetros > 0) {
+                String.format(
+                    Locale("pt", "BR"),
+                    "%.1f km",
+                    rota.distanciaMetros / 1000.0
+                )
+            } else {
+                "—"
+            }
+
+        txtDuracaoDetalhe.text = formatarDuracao(rota.duracaoSegundos)
+
+        // Bairros atendidos (etiquetas arredondadas)
+        chipGroupBairrosDetalhe.removeAllViews()
+
+        if (rota.bairrosAtendidos.isEmpty()) {
+            cardBairrosDetalhe.visibility = View.GONE
+        } else {
+            cardBairrosDetalhe.visibility = View.VISIBLE
+
+            rota.bairrosAtendidos.forEach { chave ->
+                val etiqueta = TextView(this).apply {
+                    text = formatarBairro(chave)
+                    textSize = 13f
+                    setTextColor(
+                        ContextCompat.getColor(this@RotaDetalheActivity, R.color.dark_gray)
+                    )
+                    setPadding(dp(14), dp(8), dp(14), dp(8))
+                    setBackgroundResource(R.drawable.bg_chip_bairro)
+                }
+                chipGroupBairrosDetalhe.addView(etiqueta)
+            }
+        }
 
         btnVerMapaDetalhe.isEnabled =
             rota.vagasOcupadas > 0
     }
+
+    // ---------------------------------------------------------
+    // AUXILIARES DE FORMATAÇÃO
+    // ---------------------------------------------------------
+
+    private fun dp(valor: Int): Int =
+        (valor * resources.displayMetrics.density).toInt()
+
+    private fun rotuloSentido(tipoTrajeto: String): String =
+        when (tipoTrajeto) {
+            "IDA" -> "Ida"
+            "VOLTA" -> "Volta"
+            "IDA_E_VOLTA" -> "Ida e volta"
+            else -> tipoTrajeto
+        }
+
+    private fun traduzirTurno(turno: String): String =
+        when (turno) {
+            "MANHA" -> "Manhã"
+            "TARDE" -> "Tarde"
+            "NOITE" -> "Noite"
+            else -> turno
+        }
+
+    private fun formatarDuracao(segundos: Int): String {
+        if (segundos <= 0) return "—"
+
+        val minutosTotais = (segundos / 60).coerceAtLeast(1)
+        val horas = minutosTotais / 60
+        val minutos = minutosTotais % 60
+
+        return when {
+            horas == 0 -> "$minutosTotais min"
+            minutos == 0 -> "${horas}h"
+            else -> "${horas}h ${minutos}min"
+        }
+    }
+
+    /** A chave do bairro é normalizada; aqui deixamos ela mais bonita para exibir. */
+    private fun formatarBairro(chave: String): String {
+        val base = chave
+            .substringBefore("|")
+            .substringBefore("#")
+            .substringBefore(";")
+            .replace("_", " ")
+            .trim()
+
+        return base
+            .split(" ")
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { palavra ->
+                palavra.replaceFirstChar { it.uppercase() }
+            }
+    }
+
+    // ---------------------------------------------------------
+    // SOLICITAÇÕES
+    // ---------------------------------------------------------
 
     private fun observarSolicitacoes() {
 
@@ -277,13 +478,13 @@ class RotaDetalheActivity : AppCompatActivity() {
         if (solicitacoes.isEmpty()) {
 
             txtSemSolicitacoesDetalhe.visibility =
-                android.view.View.VISIBLE
+                View.VISIBLE
 
             return
         }
 
         txtSemSolicitacoesDetalhe.visibility =
-            android.view.View.GONE
+            View.GONE
 
         val inflater =
             LayoutInflater.from(
@@ -411,6 +612,10 @@ class RotaDetalheActivity : AppCompatActivity() {
                 )
         }
     }
+
+    // ---------------------------------------------------------
+    // ALUNOS CONFIRMADOS
+    // ---------------------------------------------------------
 
     private fun observarParadas() {
 
