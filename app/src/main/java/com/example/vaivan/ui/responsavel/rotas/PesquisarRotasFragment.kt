@@ -5,39 +5,23 @@ import android.app.Activity
 import android.content.Intent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.vaivan.data.models.RotaCompativel
 import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
-import java.util.Locale
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.local.entities.RotaEntity
-import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
-import com.example.vaivan.data.remote.routes.GoogleRoutesClient
-import com.example.vaivan.data.repository.RotaRepository
-import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class PesquisarRotasFragment : Fragment() {
 
     private lateinit var edtDesembarque: EditText
     private lateinit var edtHoraInicio: EditText
-    private lateinit var containerResultados: LinearLayout
-    private lateinit var txtSemResultados: TextView
 
     private lateinit var botoesTurno: Map<String, Button>
 
@@ -63,7 +47,6 @@ class PesquisarRotasFragment : Fragment() {
             extrairPonto(result)?.let { ponto ->
                 embarque = ponto
                 edtEmbarque.setText(ponto.endereco)
-                limparResultados()
             }
         }
 
@@ -72,22 +55,20 @@ class PesquisarRotasFragment : Fragment() {
             extrairPonto(result)?.let { ponto ->
                 desembarque = ponto
                 edtDesembarque.setText(ponto.endereco)
-                limparResultados()
+            }
+        }
+
+    // Tela de resultados: se a solicitação foi enviada, fecha esta tela também
+    private val resultadosLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                requireActivity().onBackPressedDispatcher.onBackPressed()
             }
         }
 
     private var passageiroId: String = ""
     private var nomePassageiro: String = ""
     private var localId: String? = null
-
-    private lateinit var rotaRepository: RotaRepository
-    private lateinit var solicitacaoRepository: SolicitacaoInclusaoRepository
-
-    private val firestore =
-        FirebaseFirestore.getInstance()
-
-    private val auth =
-        FirebaseAuth.getInstance()
 
 
     // =========================================================
@@ -118,7 +99,6 @@ class PesquisarRotasFragment : Fragment() {
             savedInstanceState
         )
 
-        inicializarDependencias()
         inicializarDados()
         inicializarViews(view)
         configurarSelecaoDePontos()
@@ -132,31 +112,6 @@ class PesquisarRotasFragment : Fragment() {
     // =========================================================
     // INICIALIZAÇÃO
     // =========================================================
-
-    private fun inicializarDependencias() {
-
-        val db =
-            VaivanDatabase.getInstance(
-                requireContext().applicationContext
-            )
-
-        rotaRepository =
-            RotaRepository(
-                rotaDao = db.rotaDao(),
-                paradaRotaDao = db.paradaRotaDao(),
-                routesClient =
-                    GoogleRoutesClient(
-                        requireContext()
-                    )
-            )
-
-        solicitacaoRepository =
-            SolicitacaoInclusaoRepository(
-                requireContext(),
-                db.solicitacaoInclusaoDao()
-            )
-    }
-
 
     private fun inicializarDados() {
 
@@ -190,16 +145,6 @@ class PesquisarRotasFragment : Fragment() {
         edtHoraInicio =
             view.findViewById(
                 R.id.edtHoraInicio
-            )
-
-        containerResultados =
-            view.findViewById(
-                R.id.containerResultadosRotas
-            )
-
-        txtSemResultados =
-            view.findViewById(
-                R.id.txtSemResultados
             )
 
         botoesTurno =
@@ -244,7 +189,6 @@ class PesquisarRotasFragment : Fragment() {
                 // tocar de novo no mesmo turno remove o filtro
                 turnoSelecionado = if (turnoSelecionado == chave) null else chave
                 atualizarCores()
-                limparResultados()
             }
         }
     }
@@ -255,7 +199,6 @@ class PesquisarRotasFragment : Fragment() {
                 // add devolve false se já existia: funciona como um interruptor
                 if (!diasSelecionados.add(chave)) diasSelecionados.remove(chave)
                 atualizarCores()
-                limparResultados()
             }
         }
     }
@@ -289,11 +232,6 @@ class PesquisarRotasFragment : Fragment() {
         return PontoSelecionado(endereco, lat, lng)
     }
 
-    private fun limparResultados() {
-        containerResultados.removeAllViews()
-        txtSemResultados.visibility = View.GONE
-    }
-
     private fun configurarSelecaoDePontos() {
         edtEmbarque.setOnClickListener {
             selecaoEmbarqueLauncher.launch(
@@ -325,119 +263,28 @@ class PesquisarRotasFragment : Fragment() {
             return
         }
 
-        btnPesquisar.isEnabled = false
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val resultados = rotaRepository.buscarRotasCompativeis(
-                    embarqueLatitude = pontoEmbarque.latitude,
-                    embarqueLongitude = pontoEmbarque.longitude,
-                    destinoLatitude = pontoDestino.latitude,
-                    destinoLongitude = pontoDestino.longitude,
-                    turno = turnoSelecionado,
-                    dias = diasSelecionados.toSet()
-                )
-                renderizarResultados(resultados)
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Erro na busca: ${e.message}", Toast.LENGTH_LONG)
-                    .show()
-            } finally {
-                btnPesquisar.isEnabled = true
-            }
-        }
-    }
-
-
-    // =========================================================
-    // RESULTADOS
-    // =========================================================
-
-    private fun renderizarResultados(resultados: List<RotaCompativel>) {
-        containerResultados.removeAllViews()
-
-        if (resultados.isEmpty()) {
-            txtSemResultados.visibility = View.VISIBLE
-            return
-        }
-        txtSemResultados.visibility = View.GONE
-
-        resultados.forEach { adicionarItemRota(it) }
-    }
-
-    private fun formatarDistancia(metros: Int): String =
-        if (metros < 1000) "$metros m"
-        else String.format(Locale("pt", "BR"), "%.1f km", metros / 1000.0)
-
-    private fun adicionarItemRota(item: RotaCompativel) {
-        val rota = item.rota
-
-        val itemView = layoutInflater.inflate(
-            R.layout.item_resultado_rota, containerResultados, false
-        )
-
-        val txtNomeMotorista = itemView.findViewById<TextView>(R.id.txtNomeMotoristaResultado)
-        val txtNomeRota = itemView.findViewById<TextView>(R.id.txtNomeRotaResultado)
-        val txtVagas = itemView.findViewById<TextView>(R.id.txtVagasResultado)
-        val btnReservar = itemView.findViewById<Button>(R.id.btnReservarResultado)
-
-        txtNomeRota.text = "${rota.nome} · Destino: ${rota.destinoEndereco}"
-
-        txtVagas.text =
-            "Vagas: ${rota.capacidadeTotal - rota.vagasOcupadas} disponíveis\n" +
-                    "Passa a ${formatarDistancia(item.distanciaEmbarqueMetros)} do embarque"
-
-        txtNomeMotorista.text = "Carregando motorista..."
-        viewLifecycleOwner.lifecycleScope.launch {
-            txtNomeMotorista.text = try {
-                firestore.collection("usuarios")
-                    .document(rota.motoristaId)
-                    .get().await()
-                    .getString("nome") ?: "Motorista"
-            } catch (e: Exception) {
-                "Motorista"
-            }
+        // Abre a tela de resultados com todos os filtros escolhidos
+        val intent = Intent(requireContext(), ResultadosRotasActivity::class.java).apply {
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_ENDERECO, pontoEmbarque.endereco)
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_LAT, pontoEmbarque.latitude)
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_LNG, pontoEmbarque.longitude)
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_ENDERECO, pontoDestino.endereco)
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_LAT, pontoDestino.latitude)
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_LNG, pontoDestino.longitude)
+            putExtra(ResultadosRotasActivity.EXTRA_TURNO, turnoSelecionado)
+            putStringArrayListExtra(
+                ResultadosRotasActivity.EXTRA_DIAS,
+                ArrayList(diasSelecionados)
+            )
+            putExtra(
+                ResultadosRotasActivity.EXTRA_HORARIO,
+                edtHoraInicio.text?.toString()?.trim().orEmpty()
+            )
+            putExtra(ResultadosRotasActivity.EXTRA_PASSAGEIRO_ID, passageiroId)
+            putExtra(ResultadosRotasActivity.EXTRA_NOME_PASSAGEIRO, nomePassageiro)
+            putExtra(ResultadosRotasActivity.EXTRA_LOCAL_ID, localId)
         }
 
-        btnReservar.setOnClickListener { enviarSolicitacao(item) }
-
-        containerResultados.addView(itemView)
-    }
-
-    // =========================================================
-    // SOLICITAÇÃO
-    // =========================================================
-
-    private fun enviarSolicitacao(item: RotaCompativel) {
-        val uid = auth.currentUser?.uid
-        if (uid == null) {
-            Toast.makeText(requireContext(), "Sessão expirada.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val pontoEmbarque = embarque ?: return
-        val rota = item.rota
-
-        val solicitacao = SolicitacaoInclusaoEntity(
-            rotaId = rota.id,
-            passageiroId = passageiroId,
-            nomePassageiro = nomePassageiro,
-            responsavelId = uid,
-            motoristaId = rota.motoristaId,
-            localEmbarqueId = localId.orEmpty(),
-            nomeLocalEmbarque = pontoEmbarque.endereco,
-            enderecoEmbarque = pontoEmbarque.endereco,
-            latitudeEmbarque = pontoEmbarque.latitude,
-            longitudeEmbarque = pontoEmbarque.longitude,
-            horarioDesejado = edtHoraInicio.text?.toString()?.trim().orEmpty()
-        )
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                solicitacaoRepository.enviarSolicitacao(solicitacao)
-                Toast.makeText(requireContext(), "Solicitação enviada!", Toast.LENGTH_SHORT).show()
-                requireActivity().onBackPressedDispatcher.onBackPressed()
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Erro: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
+        resultadosLauncher.launch(intent)
     }
 }
