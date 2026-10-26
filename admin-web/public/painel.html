@@ -2,18 +2,38 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VaiVan - Painel Admin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body style="display: block;">
 
-  <div class="topo-painel">
-    <h1>Documentos Pendentes</h1>
-    <button id="btnSair">Sair</button>
-  </div>
+<div class="topo-painel">
+  <h1>Painel VaiVan</h1>
+  <button id="btnSair">Sair</button>
+</div>
 
+<div class="abas">
+  <button class="aba ativa" data-aba="documentos">Documentos</button>
+  <button class="aba" data-aba="assinaturas">Assinaturas</button>
+  <button class="aba" data-aba="planos">Planos</button>
+</div>
+
+<section id="abaDocumentos" class="conteudo-aba">
   <div id="listaDocumentos"></div>
+</section>
 
-  <script type="module" src="painel.js"></script>
+<section id="abaAssinaturas" class="conteudo-aba" hidden>
+  <div id="listaAssinaturas"></div>
+</section>
+
+<section id="abaPlanos" class="conteudo-aba" hidden>
+  <div class="barra-planos">
+    <button id="btnPlanosPadrao" class="btn-neutro">Criar planos padrão</button>
+  </div>
+  <div id="listaPlanos"></div>
+</section>
+
+<script type="module" src="painel.js"></script>
 </body>
 </html>

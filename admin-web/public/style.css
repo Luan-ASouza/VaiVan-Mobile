@@ -152,3 +152,65 @@ body {
   text-align: center;
   color: #777;
 }
+/* Abas do painel */
+.abas {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 16px 24px 0;
+}
+
+.aba {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 20px;
+  background: #e0e0e0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.aba.ativa {
+  background: #0170CC;
+  color: white;
+}
+
+.conteudo-aba {
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.conteudo-aba[hidden] {
+  display: none;
+}
+
+.conteudo-aba > div {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-simples {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-neutro {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  background: #455A64;
+  color: white;
+}
+
+.barra-planos {
+  margin-bottom: 16px;
+}
