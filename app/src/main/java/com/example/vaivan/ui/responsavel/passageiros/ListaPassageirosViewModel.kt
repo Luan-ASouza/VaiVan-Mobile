@@ -31,22 +31,21 @@ class ListaPassageirosViewModel(
 
     init {
         viewModelScope.launch {
-            repository
-                .observarPassageiros()
-                .collect { passageiros ->
+            passageiros.collect { lista ->
+                Log.d(
+                    "ROOM_DEBUG",
+                    "Passageiros do responsável no Room: ${lista.size}"
+                )
 
+                lista.forEach { passageiro ->
                     Log.d(
                         "ROOM_DEBUG",
-                        "Total de passageiros no Room: ${passageiros.size}"
+                        "id=${passageiro.id}, " +
+                                "nome=${passageiro.nome}, " +
+                                "responsavelId=${passageiro.responsavelId}"
                     )
-
-                    passageiros.forEach {
-                        Log.d(
-                            "ROOM_DEBUG",
-                            "Passageiro: id=${it.id}, nome=${it.nome}, responsavelId=${it.responsavelId}"
-                        )
-                    }
                 }
+            }
         }
     }
 

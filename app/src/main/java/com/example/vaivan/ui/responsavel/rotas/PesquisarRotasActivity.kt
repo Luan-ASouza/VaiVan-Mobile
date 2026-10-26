@@ -16,6 +16,7 @@ import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -27,6 +28,8 @@ class PesquisarRotasActivity : AppCompatActivity() {
     private lateinit var edtHoraInicio: EditText
     private lateinit var containerResultados: LinearLayout
     private lateinit var txtSemResultados: TextView
+
+    private var modalidadeSelecionada = "IDA"
 
     private lateinit var botoesTurno: Map<String, Button>
     private var turnoSelecionado: String? = null
@@ -56,8 +59,6 @@ class PesquisarRotasActivity : AppCompatActivity() {
         nomePassageiro = intent.getStringExtra("nomePassageiro") ?: ""
         localId = intent.getStringExtra("localId")
 
-        edtDesembarque = findViewById(R.id.edtDesembarque)
-        edtHoraInicio = findViewById(R.id.edtHoraInicio)
         containerResultados = findViewById(R.id.containerResultadosRotas)
         txtSemResultados = findViewById(R.id.txtSemResultados)
 

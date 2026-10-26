@@ -48,6 +48,8 @@ class ResultadosRotasActivity : AppCompatActivity() {
         const val EXTRA_NOME_PASSAGEIRO = "nomePassageiro"
         const val EXTRA_LOCAL_ID = "localId"
 
+        const val EXTRA_MODALIDADE = "modalidade"
+
         private val ORDEM_DIAS = listOf("SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM")
         private val ROTULO_DIAS = mapOf(
             "SEG" to "Seg", "TER" to "Ter", "QUA" to "Qua", "QUI" to "Qui",
@@ -73,6 +75,7 @@ class ResultadosRotasActivity : AppCompatActivity() {
     private var passageiroId = ""
     private var nomePassageiro = ""
     private var localId: String? = null
+    private var modalidade: String = "IDA"
 
     private val firestore by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
@@ -131,6 +134,7 @@ class ResultadosRotasActivity : AppCompatActivity() {
         passageiroId = intent.getStringExtra(EXTRA_PASSAGEIRO_ID).orEmpty()
         nomePassageiro = intent.getStringExtra(EXTRA_NOME_PASSAGEIRO).orEmpty()
         localId = intent.getStringExtra(EXTRA_LOCAL_ID)
+        modalidade = intent.getStringExtra(EXTRA_MODALIDADE) ?: "IDA"
 
         if (embarqueLat.isNaN() || embarqueLng.isNaN() ||
             destinoLat.isNaN() || destinoLng.isNaN()
@@ -179,11 +183,31 @@ class ResultadosRotasActivity : AppCompatActivity() {
                     turno = turno,
                     dias = dias
                 )
-                renderizar(resultados)
+
+                val resultadosFiltrados = resultados.filter { item ->
+                    when (modalidade.uppercase()) {
+                        "IDA" -> item.rota.tipoTrajeto.equals("IDA", ignoreCase = true) ||
+                                item.rota.tipoTrajeto.equals("IDA_E_VOLTA", ignoreCase = true)
+
+                        "VOLTA" -> item.rota.tipoTrajeto.equals("VOLTA", ignoreCase = true) ||
+                                item.rota.tipoTrajeto.equals("IDA_E_VOLTA", ignoreCase = true)
+
+                        "IDA_E_VOLTA" -> item.rota.tipoTrajeto.equals("IDA_E_VOLTA", ignoreCase = true)
+
+                        else -> false
+                    }
+                }
+
+                renderizar(resultadosFiltrados)
+
             } catch (e: Exception) {
                 txtContagemResultados.text = "Não foi possível buscar."
-                Toast.makeText(this@ResultadosRotasActivity, "Erro na busca: ${e.message}", Toast.LENGTH_LONG)
-                    .show()
+
+                Toast.makeText(
+                    this@ResultadosRotasActivity,
+                    "Erro na busca: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             } finally {
                 progressResultados.visibility = View.GONE
             }

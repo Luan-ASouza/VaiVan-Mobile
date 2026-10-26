@@ -42,9 +42,10 @@
                 android:id="@+id/cardRotas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#E4DBD4"
+                android:background="@drawable/bg_beige_round_30"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:layout_marginBottom="90dp">
 
                 <!-- PASSAGEIRO -->
 
@@ -83,27 +84,111 @@
                 <!-- EMBARQUE -->
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/textView3"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Endereço de embarque"
+                    android:text="Modalidade"
                     android:textColor="@color/dark_gray"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/edtEmbarque"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnIda"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Ida"
+                        android:textAllCaps="false"
+                        android:textColor="@color/dark_gray"
+                        app:backgroundTint="@color/white" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVolta"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Volta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/dark_gray"
+                        app:backgroundTint="@color/white" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnIdaVolta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ida e Volta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/dark_gray"
+                        app:backgroundTint="@color/white" />
+
+                </LinearLayout>
+
+                <!-- LOCAL DE EMBARQUE -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Local de embarque"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutLocal"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:background="#FFFFFF"
-                    android:hint="Rua das Palmeiras, 245 – Apto 32"
-                    android:padding="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="#AFAFAF"
-                    android:clickable="true"
-                    android:focusable="false"
-                    android:cursorVisible="false"
-                    android:inputType="none" />
+                    android:hint="Selecione um local"
+                    android:textColorHint="@color/dark_gray"
+                    app:boxBackgroundColor="@color/white">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/edtEmbarque"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:cursorVisible="false"
+                        android:clickable="true"
+                        android:textColorHint="@color/dark_gray"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="14sp"
+                        tools:ignore="TextFields"
+                        android:popupBackground="@color/white"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- ADICIONAR NOVO LOCAL -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdicionarNovoLocal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_marginTop="2dp"
+                    android:paddingHorizontal="0dp"
+                    android:text="+ Adicionar novo local"
+                    android:textAllCaps="false"
+                    android:textColor="@color/orange"
+                    android:backgroundTint="@android:color/transparent"
+                    app:backgroundTint="@android:color/transparent"
+                    app:icon="@drawable/ic_adicionar_localizacao"
+                    app:iconTint="@color/orange"
+                    app:iconGravity="textStart"
+                    app:iconPadding="6dp"
+                    tools:ignore="HardcodedText" />
 
 
                 <!-- DESEMBARQUE -->
@@ -112,24 +197,36 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Endereço de desembarque"
+                    android:text="Escola"
                     android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
-                <EditText
-                    android:id="@+id/edtDesembarque"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutEscola"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:background="#FFFFFF"
-                    android:hint="La Salle Carmo"
-                    android:padding="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="#AFAFAF"
-                    android:clickable="true"
-                    android:focusable="false"
-                    android:cursorVisible="false"
-                    android:inputType="none" />
+                    android:hint="Selecione uma Escola"
+                    android:textColorHint="@color/dark_gray"
+                    app:boxBackgroundColor="@color/white">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/edtEscola"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:cursorVisible="false"
+                        android:clickable="true"
+                        android:minHeight="48dp"
+                        android:textColorHint="@color/dark_gray"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="14sp"
+                        tools:ignore="TextFields"
+                        android:popupBackground="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- TURNO -->
 
@@ -142,15 +239,17 @@
                     android:textStyle="bold"/>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnManha"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:layout_marginEnd="8dp"
                         android:text="Manhã"
                         android:textAllCaps="false"
@@ -158,20 +257,22 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTarde"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:layout_marginEnd="8dp"
                         android:text="Tarde"
                         android:textAllCaps="false"
-                        app:backgroundTint="#D9D9D9"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnNoite"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="Noite"
                         android:textAllCaps="false"
-                        app:backgroundTint="#D9D9D9"/>
+                        app:backgroundTint="@color/dark_gray"/>
 
                 </LinearLayout>
 
@@ -185,124 +286,61 @@
                     android:textColor="@color/dark_gray"
                     android:textStyle="bold"/>
 
-                <GridLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:columnCount="3">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSegunda"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Segunda"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnTerca"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Terça"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnQuarta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Quarta"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnQuinta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Quinta"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSexta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Sexta"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSabado"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Sábado"
-                        android:textAllCaps="false"
-                        app:backgroundTint="#D9D9D9"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnDomingo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="4dp"
-                        android:text="Domingo"
-                        android:textAllCaps="false"
-                        app:backgroundTint="#D9D9D9"/>
-
-                </GridLayout>
-
-                <!-- HORÁRIO -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Horário de Embarque"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:weightSum="7">
 
-                    <EditText
-                        android:id="@+id/edtHoraInicio"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDomingo"
+                        style="@style/DiaSemanaButton"
                         android:layout_weight="1"
-                        android:background="#FFFFFF"
-                        android:hint="6:30"
-                        android:padding="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="#AFAFAF"/>
+                        android:text="D" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="10dp"
-                        android:text="e"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/edtHoraFim"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSegunda"
+                        style="@style/DiaSemanaButton"
                         android:layout_weight="1"
-                        android:background="#FFFFFF"
-                        android:hint="7:20"
-                        android:padding="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="#AFAFAF"/>
+                        android:text="S" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTerca"
+                        style="@style/DiaSemanaButton"
+                        android:layout_weight="1"
+                        android:text="T" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnQuarta"
+                        style="@style/DiaSemanaButton"
+                        android:layout_weight="1"
+                        android:text="Q" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnQuinta"
+                        style="@style/DiaSemanaButton"
+                        android:layout_weight="1"
+                        android:text="Q" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSexta"
+                        style="@style/DiaSemanaButton"
+                        android:layout_weight="1"
+                        android:text="S" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSabado"
+                        style="@style/DiaSemanaButton"
+                        android:layout_weight="1"
+                        android:text="S" />
 
                 </LinearLayout>
+
+                <!-- HORÁRIO -->
+
                 <!-- BOTÃO PESQUISAR -->
 
                 <Button
@@ -311,7 +349,7 @@
                     android:layout_height="46dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@drawable/btn_gray_filled"
+                    android:backgroundTint="@color/orange"
                     android:text="Pesquisar"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
