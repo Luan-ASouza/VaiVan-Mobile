@@ -1,54 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/beige"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp">
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_marginHorizontal="4dp"
+    android:layout_weight="1"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <View
+        <!-- Faixa colorida com o nome do plano (a cor é definida pelo código) -->
+        <LinearLayout
             android:id="@+id/faixaPlano"
             android:layout_width="match_parent"
-            android:layout_height="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="12dp">
 
             <TextView
                 android:id="@+id/txtNomePlano"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/txtValorPlano"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/dark_gray"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/txtValorPlano"
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/dark_gray"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:layout_height="2dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="10dp"
+                android:background="@color/medium_gray" />
 
             <TextView
                 android:id="@+id/txtBeneficiosPlano"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:lineSpacingExtra="4dp"
-                android:textColor="@color/gray"
-                android:textSize="14sp" />
+                android:textColor="@color/dark_gray"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtAvisoPlano"
@@ -56,19 +70,29 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:textColor="@color/medium_gray"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:visibility="gone" />
+
+            <!-- Empurra o botão para o rodapé do cartão -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
             <Button
                 android:id="@+id/btnAcaoPlano"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="14dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_button_darkgrey"
-                android:backgroundTint="@null"
+                android:minHeight="42dp"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="8dp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:textStyle="bold" />
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

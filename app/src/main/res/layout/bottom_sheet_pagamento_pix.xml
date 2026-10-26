@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_bottomsheet_white"
@@ -30,7 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:textColor="@color/green"
+        android:textColor="@color/dark_gray"
         android:textSize="28sp"
         android:textStyle="bold" />
 
@@ -60,12 +61,13 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="18dp"
-        android:background="@drawable/bg_button_darkgrey"
-        android:backgroundTint="@null"
+        android:background="@drawable/bg_button_green"
         android:text="Confirmar pagamento (simulado)"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textStyle="bold" />
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null" />
 
     <Button
         android:id="@+id/btnCancelarPix"
@@ -73,9 +75,10 @@
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
         android:background="@android:color/transparent"
-        android:backgroundTint="@null"
         android:text="Pagar depois"
         android:textAllCaps="false"
         android:textColor="@color/dark_gray"
-        android:textStyle="bold" />
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null" />
 </LinearLayout>
