@@ -25,6 +25,9 @@ import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.example.vaivan.data.repository.AssinaturaBloqueadaException
+import com.example.vaivan.data.repository.AssinaturaRepository
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 
 class CriarRotaActivity : AppCompatActivity() {
 
@@ -431,6 +434,8 @@ class CriarRotaActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                // Plano de assinatura: exige plano em dia e respeita o limite de rotas
+                AssinaturaRepository().exigirPodeCriarRota(uid)
                 val rota = rotaRepository.criarRota(
                     motoristaId = uid,
                     veiculoId = null,
@@ -457,6 +462,9 @@ class CriarRotaActivity : AppCompatActivity() {
                         .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rota.id)
                 )
                 finish()
+            } catch (e: AssinaturaBloqueadaException) {
+                btnCriarRota.isEnabled = true
+                AssinaturaUi.mostrarBloqueio(this@CriarRotaActivity, e.message ?: "Assinatura necessária.")
             } catch (e: Exception) {
                 btnCriarRota.isEnabled = true
                 Toast.makeText(this@CriarRotaActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()

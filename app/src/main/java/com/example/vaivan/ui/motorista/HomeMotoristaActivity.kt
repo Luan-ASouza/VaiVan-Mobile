@@ -28,6 +28,12 @@ import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
 import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import android.content.Intent
+import com.example.vaivan.data.repository.AssinaturaRepository
+import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaActivity
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
+import com.example.vaivan.ui.motorista.assinatura.PagamentosMotoristaActivity
 import com.example.vaivan.data.local.dao.UsuarioDao
 
 class HomeMotoristaActivity : AppCompatActivity() {
@@ -77,6 +83,8 @@ class HomeMotoristaActivity : AppCompatActivity() {
             drawerLayout.openDrawer(GravityCompat.END)
         }
 
+        configurarAssinatura(uid, drawerLayout)
+
         configurarBottomNavigation()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -87,7 +95,66 @@ class HomeMotoristaActivity : AppCompatActivity() {
         }
 
     }
+    /**
+     * Plano de assinatura: aviso no topo, atalhos no menu lateral e
+     * bloqueio da área de pagamentos quando a assinatura não está em dia.
+     */
+    private fun configurarAssinatura(uid: String?, drawerLayout: DrawerLayout) {
+        val banner = findViewById<TextView>(R.id.bannerAssinatura)
+        val btnAssinatura = findViewById<View>(R.id.btnDrawerAssinatura)
+        val btnPagamentos = findViewById<View>(R.id.btnDrawerPagamentos)
 
+        val abrirAssinatura = {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, AssinaturaActivity::class.java))
+        }
+        banner.setOnClickListener { abrirAssinatura() }
+        btnAssinatura.setOnClickListener { abrirAssinatura() }
+        btnPagamentos.setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, PagamentosMotoristaActivity::class.java))
+        }
+
+        if (uid == null) return
+
+        val repository = AssinaturaRepository()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+                launch {
+                    repository.observarAssinatura(uid).collect { assinatura ->
+                        val agora = System.currentTimeMillis()
+                        val estado = AssinaturaPolicy.estado(assinatura, agora)
+
+                        val mensagem = AssinaturaUi.mensagemDoBanner(estado, assinatura)
+                        if (mensagem == null) {
+                            banner.visibility = View.GONE
+                        } else {
+                            banner.text = mensagem
+                            banner.setBackgroundColor(AssinaturaUi.corDoBanner(estado))
+                            banner.visibility = View.VISIBLE
+                        }
+
+                        btnPagamentos.visibility =
+                            if (AssinaturaPolicy.podeVerPagamentos(assinatura, agora)) {
+                                View.VISIBLE
+                            } else {
+                                View.GONE
+                            }
+                    }
+                }
+
+                launch {
+                    try {
+                        repository.gerarCobrancaDeRenovacaoSeNecessario(uid)
+                    } catch (_: Exception) {
+                        // Sem conexão: tenta de novo na próxima abertura.
+                    }
+                }
+            }
+        }
+    }
     private fun configurarBottomNavigation() {
         bottomNavigation = BottomNavigationControllerMotorista(findViewById(R.id.bottomNavigation))
         bottomNavigation.setOnItemSelected { item ->

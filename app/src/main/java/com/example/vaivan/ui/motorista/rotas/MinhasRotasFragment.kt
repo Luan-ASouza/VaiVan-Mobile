@@ -22,6 +22,10 @@ import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
+import com.example.vaivan.data.repository.AssinaturaBloqueadaException
+import com.example.vaivan.data.repository.AssinaturaRepository
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
+import com.google.firebase.auth.FirebaseAuth
 
 class MinhasRotasFragment : Fragment() {
 
@@ -129,12 +133,27 @@ class MinhasRotasFragment : Fragment() {
             )
             .setOnClickListener {
 
-                startActivity(
-                    Intent(
-                        requireContext(),
-                        CriarRotaActivity::class.java
-                    )
-                )
+                val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        AssinaturaRepository().exigirPodeCriarRota(uid)
+                        startActivity(
+                            Intent(
+                                requireContext(),
+                                CriarRotaActivity::class.java
+                            )
+                        )
+                    } catch (e: AssinaturaBloqueadaException) {
+                        AssinaturaUi.mostrarBloqueio(
+                            requireContext(), e.message ?: "Assinatura necessária."
+                        )
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            requireContext(), "Erro: ${e.message}", Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
 
 

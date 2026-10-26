@@ -44,6 +44,24 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/topGap" />
 
+            <!-- Aviso da assinatura (aparece só quando há algo a avisar) -->
+            <TextView
+                android:id="@+id/bannerAssinatura"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#F6B12F"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="10dp"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/header" />
             <!-- Fragment -->
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentContainer"
@@ -54,7 +72,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/header" />
+                app:layout_constraintTop_toBottomOf="@id/bannerAssinatura" />
 
             <!-- Bottom Navigation -->
             <include
@@ -277,7 +295,66 @@
                         android:textStyle="bold" />
 
                 </LinearLayout>
+                <!-- Planos e assinatura -->
+                <LinearLayout
+                    android:id="@+id/btnDrawerAssinatura"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp">
 
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_star"
+                        app:tint="@color/dark_gray" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="Planos e assinatura"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- Gestão de pagamentos -->
+                <LinearLayout
+                    android:id="@+id/btnDrawerPagamentos"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_cadeado"
+                        app:tint="@color/dark_gray" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="Gestão de pagamentos"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
             </LinearLayout>
 
 

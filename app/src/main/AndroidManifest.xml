@@ -63,7 +63,15 @@
             android:name=".ui.inicio.cadastro.CadastroActivity"
             android:exported="false" />
 
+        <!-- Planos e assinatura -->
 
+        <activity
+            android:name=".ui.motorista.assinatura.AssinaturaActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.motorista.assinatura.PagamentosMotoristaActivity"
+            android:exported="false" />
         <!-- ==================== MOTORISTA ==================== -->
 
         <!-- Entrada -->
