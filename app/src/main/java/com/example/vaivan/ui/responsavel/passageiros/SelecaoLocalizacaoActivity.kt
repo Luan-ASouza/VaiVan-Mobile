@@ -8,8 +8,10 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.vaivan.R
@@ -23,6 +25,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.AutocompleteActivity
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.android.material.button.MaterialButton
 import java.util.Locale
 
@@ -57,11 +64,39 @@ class SelecaoLocalizacaoActivity :
     private lateinit var btnMinhaLocalizacao: MaterialButton
     private lateinit var btnConfirmar: MaterialButton
 
+    // Resultado da busca de endereço (tela de sugestões do Google)
+    private val buscaEnderecoLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+            when (result.resultCode) {
+
+                Activity.RESULT_OK -> {
+                    val data = result.data ?: return@registerForActivityResult
+                    val lugar = Autocomplete.getPlaceFromIntent(data)
+                    val latLng = lugar.location ?: return@registerForActivityResult
+
+                    irParaLocal(latLng, lugar.id)
+                }
+
+                AutocompleteActivity.RESULT_ERROR -> {
+                    val data = result.data ?: return@registerForActivityResult
+                    val status = Autocomplete.getStatusFromIntent(data)
+
+                    Toast.makeText(
+                        this,
+                        "Erro na busca: ${status.statusMessage ?: status.statusCode}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_selecao_localizacao)
 
+        inicializarPlaces()
         inicializarViews()
         inicializarLocalizacao()
         configurarMapa()
@@ -69,6 +104,92 @@ class SelecaoLocalizacaoActivity :
 
         applyTopGap(
             findViewById(android.R.id.content)
+        )
+    }
+
+    // ---------------------------------------------------------
+    // BUSCA DE ENDEREÇO (PLACES)
+    // ---------------------------------------------------------
+
+    /** Lê a chave do mapa que já está no AndroidManifest e liga o Places. */
+    @Suppress("DEPRECATION")
+    private fun inicializarPlaces() {
+
+        if (Places.isInitialized()) {
+            return
+        }
+
+        val chave = try {
+            packageManager
+                .getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+                .metaData
+                ?.getString("com.google.android.geo.API_KEY")
+                .orEmpty()
+        } catch (e: Exception) {
+            ""
+        }
+
+        if (chave.isBlank()) {
+
+            Toast.makeText(
+                this,
+                "Chave do mapa não encontrada. A busca ficará indisponível.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
+        }
+
+        Places.initializeWithNewPlacesApiEnabled(
+            applicationContext,
+            chave
+        )
+    }
+
+    private fun abrirBuscaEndereco() {
+
+        if (!Places.isInitialized()) {
+
+            Toast.makeText(
+                this,
+                "Busca indisponível no momento.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        val intent = Autocomplete.IntentBuilder(
+            AutocompleteActivityMode.OVERLAY,
+            listOf(
+                Place.Field.ID,
+                Place.Field.LOCATION
+            )
+        )
+            .setCountries(listOf("BR"))
+            .build(this)
+
+        buscaEnderecoLauncher.launch(intent)
+    }
+
+    /** Marca o ponto escolhido na busca e leva a câmera até ele. */
+    private fun irParaLocal(
+        latLng: LatLng,
+        placeId: String?
+    ) {
+
+        if (!::googleMap.isInitialized) {
+            return
+        }
+
+        selecionarLocalizacao(latLng)
+        placeIdSelecionado = placeId
+
+        googleMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                latLng,
+                17f
+            )
         )
     }
 
@@ -83,6 +204,10 @@ class SelecaoLocalizacaoActivity :
         btnConfirmar = findViewById(R.id.btnConfirmar)
 
         btnConfirmar.isEnabled = false
+
+        findViewById<View>(R.id.cardBusca).setOnClickListener {
+            abrirBuscaEndereco()
+        }
     }
 
     // ---------------------------------------------------------
@@ -230,6 +355,9 @@ class SelecaoLocalizacaoActivity :
     ) {
 
         localSelecionado = latLng
+
+        // Um toque no mapa ou o GPS invalida o lugar escolhido na busca
+        placeIdSelecionado = null
 
         marcador?.remove()
 
