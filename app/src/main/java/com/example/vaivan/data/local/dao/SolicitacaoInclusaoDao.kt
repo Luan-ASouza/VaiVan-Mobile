@@ -16,6 +16,9 @@ interface SolicitacaoInclusaoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<SolicitacaoInclusaoEntity>)
 
+    @Query("DELETE FROM solicitacoes_inclusao WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("SELECT * FROM solicitacoes_inclusao WHERE motoristaId = :motoristaId AND status = 'PENDENTE' ORDER BY criadoEm ASC")
     fun getPendentesPorMotorista(motoristaId: String): Flow<List<SolicitacaoInclusaoEntity>>
 

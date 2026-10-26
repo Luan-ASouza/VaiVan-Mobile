@@ -1,42 +1,55 @@
 package com.example.vaivan.domain.usecase.rota
 
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
+import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
 import com.example.vaivan.data.repository.RotaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Recalcula a rota com mais um aluno. Este caso de uso apenas CALCULA: quem grava
+ * (de forma atômica, junto com a aceitação da solicitação) é o RotaRepository.
+ */
 class RecalcularRotaUseCase(
     private val rotaRepository: RotaRepository,
     private val routesClient: GoogleRoutesClient
 ) {
 
-    suspend operator fun invoke(
+    /**
+     * @param baseCalculadoEm valor de "calculadoEm" da rota no momento da leitura; a gravação só
+     *        é aceita se a rota não tiver mudado desde então.
+     */
+    class Resultado(
+        val rota: RotaEntity,
+        val paradas: List<ParadaRotaEntity>,
+        val baseCalculadoEm: Long
+    )
+
+    suspend fun calcular(
         rotaId: String,
         novaParada: RotaRepository.ParadaCandidata
-    ) = withContext(Dispatchers.IO) {
+    ): Resultado = withContext(Dispatchers.IO) {
 
-        // -----------------------------------------------------
-        // 1. Busca a rota atual
-        // -----------------------------------------------------
+        // 1. Rota atual
         val rotaAtual = rotaRepository.buscarRotaNoFirestore(rotaId)
 
-        // -----------------------------------------------------
-        // 2. Verifica capacidade
-        // -----------------------------------------------------
+        // 2. Capacidade
         if (rotaAtual.vagasOcupadas >= rotaAtual.capacidadeTotal) {
             throw IllegalStateException("Esta rota já está com todas as vagas ocupadas.")
         }
 
-        // -----------------------------------------------------
-        // 3. Busca as paradas atuais
-        // -----------------------------------------------------
-        val paradasExistentes = rotaRepository.buscarParadasNoFirestore(rotaId)
+        // 3. Paradas atuais (na ordem da rota)
+        val paradasExistentes = rotaRepository
+            .buscarParadasNoFirestore(rotaId)
+            .sortedBy { it.ordem }
 
-        // -----------------------------------------------------
-        // 4. Junta paradas antigas + nova parada
-        // -----------------------------------------------------
+        if (paradasExistentes.any { it.passageiroId == novaParada.passageiroId }) {
+            throw IllegalStateException("Este passageiro já está nesta rota.")
+        }
+
+        // 4. Todas as paradas, antigas + nova
         val todasParadas = paradasExistentes.map { parada ->
             RotaRepository.ParadaCandidata(
                 passageiroId = parada.passageiroId,
@@ -49,21 +62,22 @@ class RecalcularRotaUseCase(
             )
         } + novaParada
 
-        // -----------------------------------------------------
-        // 5. Monta origem e destino
-        // Como 'origem' foi removida da rota, a primeira parada da lista é a origem inicial
-        // -----------------------------------------------------
-        val primeiraParada = todasParadas.first()
+        // 5. Pontos de partida e chegada.
+        //    IDA / IDA_E_VOLTA: ponto de partida do motorista -> alunos -> escola
+        //    VOLTA:             escola -> alunos -> ponto de partida do motorista
+        //    Rotas antigas, sem ponto de partida gravado, usam o primeiro aluno como saída.
+        val temPontoDePartida =
+            rotaAtual.origemLatitude != 0.0 || rotaAtual.origemLongitude != 0.0
 
-        val origem = PontoRota(
-            id = primeiraParada.passageiroId,
-            nome = primeiraParada.nomePassageiro,
-            endereco = primeiraParada.endereco,
-            latitude = primeiraParada.latitude,
-            longitude = primeiraParada.longitude
+        val pontoDePartidaDoMotorista = PontoRota(
+            id = "origem",
+            nome = rotaAtual.origemNome,
+            endereco = rotaAtual.origemEndereco,
+            latitude = rotaAtual.origemLatitude,
+            longitude = rotaAtual.origemLongitude
         )
 
-        val destino = PontoRota(
+        val escola = PontoRota(
             id = "destino",
             nome = rotaAtual.destinoNome,
             endereco = rotaAtual.destinoEndereco,
@@ -71,12 +85,37 @@ class RecalcularRotaUseCase(
             longitude = rotaAtual.destinoLongitude
         )
 
-        // -----------------------------------------------------
-        // 6. Converte as paradas restantes para pontos intermediários
-        // -----------------------------------------------------
-        val paradasIntermediarias = todasParadas.drop(1)
+        val ehVolta = rotaAtual.tipoTrajeto == "VOLTA"
 
-        val pontosIntermediarios = paradasIntermediarias.map { parada ->
+        val primeiraParadaEhASaida = !temPontoDePartida
+
+        val origem: PontoRota
+        val destino: PontoRota
+        val candidatasIntermediarias: List<RotaRepository.ParadaCandidata>
+
+        if (primeiraParadaEhASaida) {
+            val primeira = todasParadas.first()
+            origem = PontoRota(
+                id = primeira.passageiroId,
+                nome = primeira.nomePassageiro,
+                endereco = primeira.endereco,
+                latitude = primeira.latitude,
+                longitude = primeira.longitude
+            )
+            destino = escola
+            candidatasIntermediarias = todasParadas.drop(1)
+        } else if (ehVolta) {
+            origem = escola
+            destino = pontoDePartidaDoMotorista
+            candidatasIntermediarias = todasParadas
+        } else {
+            origem = pontoDePartidaDoMotorista
+            destino = escola
+            candidatasIntermediarias = todasParadas
+        }
+
+        // 6. Pontos intermediários para a API
+        val pontosIntermediarios = candidatasIntermediarias.map { parada ->
             PontoRota(
                 id = parada.passageiroId,
                 nome = parada.nomePassageiro,
@@ -86,33 +125,39 @@ class RecalcularRotaUseCase(
             )
         }
 
-        // -----------------------------------------------------
-        // 7. Calcula a nova rota
-        // -----------------------------------------------------
+        // 7. Calcula
         val resultado = routesClient.calcularMelhorRota(
             origem = origem,
             destino = destino,
             paradas = pontosIntermediarios
         )
 
-        // -----------------------------------------------------
-        // 8. Aplica a ordem retornada pelo Google
-        // -----------------------------------------------------
-        val paradasOrdenadas = if (
-            resultado.ordemOtimizada.isNotEmpty() &&
-            resultado.ordemOtimizada.all { it in paradasIntermediarias.indices }
-        ) {
-            val intermediariasReordenadas = resultado.ordemOtimizada.map { indice ->
-                paradasIntermediarias[indice]
-            }
-            listOf(primeiraParada) + intermediariasReordenadas
-        } else {
-            todasParadas
-        }
+        // 8. Aplica a ordem otimizada devolvida pela Google
+        val ordemValida =
+            resultado.ordemOtimizada.size == candidatasIntermediarias.size &&
+                    resultado.ordemOtimizada.all { it in candidatasIntermediarias.indices }
 
-        // -----------------------------------------------------
-        // 9. Atualiza a rota
-        // -----------------------------------------------------
+        val intermediariasEmOrdem =
+            if (ordemValida && candidatasIntermediarias.isNotEmpty()) {
+                resultado.ordemOtimizada.map { candidatasIntermediarias[it] }
+            } else {
+                candidatasIntermediarias
+            }
+
+        val paradasOrdenadas =
+            if (primeiraParadaEhASaida) {
+                listOf(todasParadas.first()) + intermediariasEmOrdem
+            } else {
+                intermediariasEmOrdem
+            }
+
+        // 9. Horários de embarque (minutos desde a saída)
+        val horarios = HorariosDaRota.minutosPorParada(
+            duracoesPernasSegundos = resultado.pernas.map { it.duracaoSegundos },
+            quantidadeParadas = paradasOrdenadas.size,
+            primeiraParadaEhASaida = primeiraParadaEhASaida
+        )
+
         val agora = System.currentTimeMillis()
 
         val rotaAtualizada = rotaAtual.copy(
@@ -125,17 +170,11 @@ class RecalcularRotaUseCase(
             lastUpdated = agora
         )
 
-        // -----------------------------------------------------
-        // 10. Cria as entidades das paradas
-        // -----------------------------------------------------
-        var acumuladoSegundos = 0
-
+        // 10. Entidades das paradas
         val paradasEntities = paradasOrdenadas.mapIndexed { index, parada ->
-            val perna = resultado.pernas.getOrNull(index)
-            val duracaoTrecho = perna?.duracaoSegundos ?: 0
-            val distanciaTrecho = perna?.distanciaMetros ?: 0
 
-            acumuladoSegundos += duracaoTrecho
+            val indicePerna = if (primeiraParadaEhASaida) index - 1 else index
+            val perna = resultado.pernas.getOrNull(indicePerna)
 
             val idExistente = paradasExistentes.firstOrNull {
                 it.passageiroId == parada.passageiroId
@@ -152,23 +191,17 @@ class RecalcularRotaUseCase(
                 latitude = parada.latitude,
                 longitude = parada.longitude,
                 ordem = index,
-                distanciaTrechoMetros = distanciaTrecho,
-                duracaoTrechoSegundos = duracaoTrecho,
-                horarioEstimadoMinutos = acumuladoSegundos / 60,
+                distanciaTrechoMetros = perna?.distanciaMetros ?: 0,
+                duracaoTrechoSegundos = perna?.duracaoSegundos ?: 0,
+                horarioEstimadoMinutos = horarios[index],
                 lastUpdated = agora
             )
         }
 
-        // -----------------------------------------------------
-        // 11. Salva tudo
-        // -----------------------------------------------------
-        rotaRepository.salvarRotaRecalculada(rotaAtualizada)
-
-        rotaRepository.salvarParadasRecalculadas(
-            rotaId = rotaId,
-            paradas = paradasEntities
+        Resultado(
+            rota = rotaAtualizada,
+            paradas = paradasEntities,
+            baseCalculadoEm = rotaAtual.calculadoEm
         )
-
-        rotaAtualizada
     }
 }

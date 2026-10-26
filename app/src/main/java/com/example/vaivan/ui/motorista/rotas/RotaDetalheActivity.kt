@@ -104,7 +104,8 @@ class RotaDetalheActivity : AppCompatActivity() {
         val aceitarSolicitacaoUseCase =
             AceitarSolicitacaoUseCase(
                 solicitacaoInclusaoRepository = solicitacaoRepository,
-                recalcularRotaUseCase = recalcularRotaUseCase
+                recalcularRotaUseCase = recalcularRotaUseCase,
+                rotaRepository = rotaRepository
             )
 
         ViewModelProvider(

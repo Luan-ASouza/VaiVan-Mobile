@@ -3,7 +3,9 @@ package com.example.vaivan.data.repository
 import android.content.Context
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +31,68 @@ class SolicitacaoInclusaoRepository(
         motoristaId: String
     ): Flow<List<SolicitacaoInclusaoEntity>> =
         dao.getPendentesPorMotorista(motoristaId)
+
+
+    /**
+     * Mantém o Room do MOTORISTA atualizado com as solicitações que chegam no Firestore.
+     * (Antes, a solicitação só aparecia no mesmo celular em que foi criada.)
+     */
+    fun iniciarSincronizacaoDoMotorista(
+        motoristaId: String
+    ): ListenerRegistration =
+        collection
+            .whereEqualTo("motoristaId", motoristaId)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null || snapshot == null) {
+                    return@addSnapshotListener
+                }
+
+                scope.launch {
+
+                    for (mudanca in snapshot.documentChanges) {
+
+                        val documento = mudanca.document
+
+                        when (mudanca.type) {
+
+                            DocumentChange.Type.ADDED,
+                            DocumentChange.Type.MODIFIED -> {
+
+                                val item =
+                                    documento.toObject(
+                                        SolicitacaoInclusaoEntity::class.java
+                                    ).copy(
+                                        id = documento.id,
+                                        lastUpdated =
+                                            System.currentTimeMillis()
+                                    )
+
+                                dao.upsert(item)
+                            }
+
+                            DocumentChange.Type.REMOVED ->
+                                dao.deleteById(documento.id)
+                        }
+                    }
+                }
+            }
+
+
+    /** Guarda no Room a solicitação aceita (a gravação no Firestore foi feita na transação). */
+    suspend fun registrarAceitaLocalmente(
+        solicitacao: SolicitacaoInclusaoEntity,
+        respondidaEm: Long
+    ) = withContext(Dispatchers.IO) {
+
+        dao.upsert(
+            solicitacao.copy(
+                status = "ACEITA",
+                respondidoEm = respondidaEm,
+                lastUpdated = System.currentTimeMillis()
+            )
+        )
+    }
 
 
     fun observarPorResponsavel(

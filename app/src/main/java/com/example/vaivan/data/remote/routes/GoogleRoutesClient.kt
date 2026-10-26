@@ -11,7 +11,6 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Um ponto (origem, destino ou parada) a ser enviado para a Routes API. */
 data class PontoRota(
     val id: String,
     val nome: String,
@@ -20,13 +19,11 @@ data class PontoRota(
     val longitude: Double
 )
 
-/** Trecho entre dois pontos consecutivos da rota já calculada. */
 data class PernaRota(
     val distanciaMetros: Int,
     val duracaoSegundos: Int
 )
 
-/** Resultado devolvido pela Routes API, já interpretado. */
 data class RotaCalculada(
     val ordemOtimizada: List<Int>,
     val polylineEncoded: String,

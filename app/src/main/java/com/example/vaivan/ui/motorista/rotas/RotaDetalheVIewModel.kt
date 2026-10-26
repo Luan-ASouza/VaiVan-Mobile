@@ -6,6 +6,8 @@ import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.Flow
 
 class RotaDetalheViewModel(
@@ -13,6 +15,23 @@ class RotaDetalheViewModel(
     private val solicitacaoRepository: SolicitacaoInclusaoRepository,
     private val aceitarSolicitacaoUseCase: AceitarSolicitacaoUseCase
 ) : ViewModel() {
+
+    // Traz do Firestore para o Room do motorista as solicitações recebidas.
+    private var listenerSolicitacoes: ListenerRegistration? = null
+
+    init {
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
+        if (motoristaId != null) {
+            listenerSolicitacoes =
+                solicitacaoRepository.iniciarSincronizacaoDoMotorista(motoristaId)
+        }
+    }
+
+    override fun onCleared() {
+        listenerSolicitacoes?.remove()
+        listenerSolicitacoes = null
+        super.onCleared()
+    }
 
     fun observarRota(
         rotaId: String

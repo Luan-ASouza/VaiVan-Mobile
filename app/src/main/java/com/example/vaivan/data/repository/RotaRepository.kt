@@ -12,6 +12,7 @@ import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
@@ -31,7 +32,8 @@ class RotaRepository(
     private val rotaDao: RotaDao,
     private val paradaRotaDao: ParadaRotaDao,
     private val routesClient: GoogleRoutesClient,
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(firestore)
 ) {
 
     private val collectionRotas = firestore.collection("rotas")
@@ -274,13 +276,19 @@ class RotaRepository(
 
         val snapshot = query.get().await()
 
-        val rotas = snapshot.documents
+        val comVaga = snapshot.documents
             .mapNotNull { document ->
                 document.toObject(RotaEntity::class.java)?.copy(id = document.id)
             }
             .filter { rota ->
                 rota.vagasOcupadas < rota.capacidadeTotal
             }
+
+        // Só aparecem rotas de motoristas com assinatura em dia (ativa ou em carência).
+        val motoristasEmDia = assinaturaRepository
+            .motoristasOperacionais(comVaga.map { it.motoristaId })
+
+        val rotas = comVaga.filter { it.motoristaId in motoristasEmDia }
 
         if (textoBusca.isBlank()) {
             rotas
@@ -343,8 +351,16 @@ class RotaRepository(
 
         Log.d("RADAR", "Rotas ATIVAS encontradas: ${rotas.size}")
 
-        rotas
-            .filter { it.vagasOcupadas < it.capacidadeTotal }
+        val rotasComVaga = rotas.filter { it.vagasOcupadas < it.capacidadeTotal }
+
+        // Só aparecem rotas de motoristas com assinatura em dia (ativa ou em carência).
+        val motoristasEmDia = assinaturaRepository
+            .motoristasOperacionais(rotasComVaga.map { it.motoristaId })
+
+        Log.d("RADAR", "Motoristas com assinatura em dia: ${motoristasEmDia.size}")
+
+        rotasComVaga
+            .filter { it.motoristaId in motoristasEmDia }
             .filter { rota ->
                 val diasDaRota = rota.diasSemana.split(",").map { it.trim() }
                 dias.isEmpty() || diasDaRota.containsAll(dias)
@@ -458,6 +474,75 @@ class RotaRepository(
 
     fun novoIdParada(): String {
         return collectionParadas.document().id
+    }
+
+    /**
+     * Grava, numa única transação, o resultado de aceitar uma solicitação:
+     * a rota recalculada, as paradas e a solicitação marcada como ACEITA.
+     *
+     * Nada é gravado se: a solicitação já foi respondida, a rota ficou sem vagas ou a rota
+     * foi alterada depois que o cálculo começou (nesse caso o motorista tenta de novo).
+     */
+    suspend fun confirmarInclusaoNaRota(
+        solicitacaoId: String,
+        rotaAtualizada: RotaEntity,
+        paradas: List<ParadaRotaEntity>,
+        baseCalculadoEm: Long,
+        respondidaEm: Long
+    ) = withContext(Dispatchers.IO) {
+
+        val rotaRef = collectionRotas.document(rotaAtualizada.id)
+        val solicitacaoRef = firestore.collection("solicitacoes_inclusao").document(solicitacaoId)
+
+        fun falha(mensagem: String) = FirebaseFirestoreException(
+            mensagem,
+            FirebaseFirestoreException.Code.FAILED_PRECONDITION
+        )
+
+        firestore.runTransaction { transaction ->
+
+            // Primeiro lemos tudo, depois escrevemos.
+            val rotaServidor = transaction.get(rotaRef)
+            val solicitacaoServidor = transaction.get(solicitacaoRef)
+
+            if (!rotaServidor.exists()) {
+                throw falha("Rota não encontrada.")
+            }
+            if (solicitacaoServidor.getString("status") != "PENDENTE") {
+                throw falha("Esta solicitação já foi respondida.")
+            }
+
+            val vagasOcupadas = rotaServidor.getLong("vagasOcupadas") ?: 0L
+            val capacidadeTotal = rotaServidor.getLong("capacidadeTotal") ?: 0L
+            if (vagasOcupadas >= capacidadeTotal) {
+                throw falha("Esta rota já está com todas as vagas ocupadas.")
+            }
+
+            val calculadoEmServidor = rotaServidor.getLong("calculadoEm") ?: 0L
+            if (calculadoEmServidor != baseCalculadoEm) {
+                throw falha("A rota foi alterada durante o cálculo. Toque em aceitar novamente.")
+            }
+
+            transaction.set(rotaRef, rotaAtualizada)
+            paradas.forEach { parada ->
+                transaction.set(collectionParadas.document(parada.id), parada)
+            }
+            transaction.update(
+                solicitacaoRef,
+                mapOf(
+                    "status" to "ACEITA",
+                    "respondidoEm" to respondidaEm,
+                    "lastUpdated" to respondidaEm
+                )
+            )
+
+            null
+        }.await()
+
+        // Cache local
+        paradaRotaDao.deleteByRota(rotaAtualizada.id)
+        paradaRotaDao.upsertAll(paradas)
+        rotaDao.upsert(rotaAtualizada)
     }
 
     // =========================================================
