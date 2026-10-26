@@ -13,7 +13,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.vaivan.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 
@@ -179,25 +178,38 @@ class EnvioCnhActivity : AppCompatActivity() {
 
     private fun salvarDadosNoFirestore(urlFrente: String, urlVerso: String) {
         val userId = auth.currentUser?.uid ?: return
-        val dados = mapOf(
-            "cnhFrenteUrl" to urlFrente,
-            "cnhVersoUrl" to urlVerso,
-            "statusValidacao" to "em_analise",
-            "dataEnvio" to FieldValue.serverTimestamp()
-        )
 
-        db.collection("usuarios")
-            .document(userId)
-            .collection("documentos")
-            .document("cnh")
-            .set(dados)
+        // Cada lado da CNH é um documento da coleção "documentos", que é a fila
+        // lida pelo painel administrativo.
+        val batch = db.batch()
+        listOf(
+            VerificarProgressoDocumentos.TIPO_CNH_FRENTE to urlFrente,
+            VerificarProgressoDocumentos.TIPO_CNH_VERSO to urlVerso
+        ).forEach { (tipo, url) ->
+            val ref = db.collection("documentos")
+                .document(VerificarProgressoDocumentos.idDoDocumento(userId, tipo))
+            batch.set(
+                ref, mapOf(
+                    "tipo" to tipo,
+                    "arquivo" to url,
+                    "dataEnvio" to java.text.SimpleDateFormat(
+                        "dd/MM/yyyy HH:mm", java.util.Locale("pt", "BR")
+                    ).format(java.util.Date()),
+                    "statusValidacao" to VerificarProgressoDocumentos.ANALISE,
+                    "motoristaId" to userId,
+                    "veiculoId" to ""
+                )
+            )
+        }
+
+        batch.commit()
             .addOnSuccessListener {
                 Toast.makeText(this, "Documentos enviados com sucesso!", Toast.LENGTH_SHORT).show()
-                // Ir para a próxima tela
                 VerificarProgressoDocumentos(this).verificar()
+                finish()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Erro ao salvar dados", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Erro ao salvar dados: ${it.message}", Toast.LENGTH_LONG).show()
             }
     }
 }

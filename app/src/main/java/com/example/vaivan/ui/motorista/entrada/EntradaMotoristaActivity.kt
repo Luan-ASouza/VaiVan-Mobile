@@ -8,7 +8,6 @@ import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
 import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.AnaliseDocumentosActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.EnvioCnhActivity
-import com.example.vaivan.ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.VerificarProgressoDocumentos
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -119,7 +118,7 @@ class EntradaMotoristaActivity : AppCompatActivity() {
         startActivity(
             Intent(
                 this,
-                StatusDocumentosVeiculoActivity::class.java
+                AnaliseDocumentosActivity::class.java
             )
         )
 

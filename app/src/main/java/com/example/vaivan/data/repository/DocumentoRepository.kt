@@ -28,7 +28,10 @@ class DocumentoRepository(
 
     fun iniciarSincronizacao() {
         listenerRegistration?.remove()
-        listenerRegistration = collection.addSnapshotListener { snapshot, error ->
+        // A consulta precisa ser filtrada por motorista: as regras só permitem
+        // ler os documentos do próprio usuário (ou tudo, no caso do admin).
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        listenerRegistration = collection.whereEqualTo("motoristaId", uid).addSnapshotListener { snapshot, error ->
             if (error != null || snapshot == null) return@addSnapshotListener
             scope.launch {
                 val itens = snapshot.documents.mapNotNull { doc ->
@@ -48,7 +51,8 @@ class DocumentoRepository(
     }
 
     suspend fun sincronizarUmaVez() {
-        val snapshot = collection.get().await()
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val snapshot = collection.whereEqualTo("motoristaId", uid).get().await()
         val itens = snapshot.documents.mapNotNull { doc ->
             doc.toObject(DocumentoEntity::class.java)?.copy(
                 id = doc.id,
@@ -91,4 +95,3 @@ class DocumentoRepository(
         }
     }
 }
-

@@ -13,7 +13,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.vaivan.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 
@@ -179,11 +178,23 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         }
 
         val dados = mapOf(
-            "comprovanteUrl" to url,
-            "statusValidacao" to "em_analise",
-            "dataEnvio" to FieldValue.serverTimestamp()
+            "tipo" to VerificarProgressoDocumentos.TIPO_COMPROVANTE,
+            "arquivo" to url,
+            "dataEnvio" to java.text.SimpleDateFormat(
+                "dd/MM/yyyy HH:mm", java.util.Locale("pt", "BR")
+            ).format(java.util.Date()),
+            "statusValidacao" to VerificarProgressoDocumentos.ANALISE,
+            "motoristaId" to userId,
+            "veiculoId" to ""
         )
 
+        db.collection("documentos")
+            .document(
+                VerificarProgressoDocumentos.idDoDocumento(
+                    userId, VerificarProgressoDocumentos.TIPO_COMPROVANTE
+                )
+            )
+            .set(dados)
         db.collection("usuarios")
             .document(userId)
             .collection("documentos")

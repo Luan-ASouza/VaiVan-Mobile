@@ -149,10 +149,11 @@ class UsuarioRepository(
                     System.currentTimeMillis()
             )
 
+        // merge: preserva campos que não existem no Room (ex.: statusMotorista),
+        // que são gravados por outras telas e pelo painel administrativo.
         documentReference
-            .set(usuarioSalvo)
+            .set(usuarioSalvo, com.google.firebase.firestore.SetOptions.merge())
             .await()
-
         usuarioDao.upsert(
             usuarioSalvo
         )
