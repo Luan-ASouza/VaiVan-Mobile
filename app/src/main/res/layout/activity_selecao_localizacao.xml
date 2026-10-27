@@ -1,48 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
 
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomGap"
+    <!-- Status bar gap -->
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <View
-        android:id="@+id/bottomGap"
-        android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:background="@color/dark_gray"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <!-- Área do mapa -->
+    <FrameLayout
+        android:id="@+id/mapContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomGap"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/topGap">
 
-    <!-- NOVO: BARRA DE BUSCA (toque para pesquisar um endereço) -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="FragmentTagUsage" />
+
+        <!-- Pinça fixa: o mapa se movimenta por baixo dela -->
+        <ImageView
+            android:id="@+id/imgPinCentral"
+            android:layout_width="44dp"
+            android:layout_height="52dp"
+            android:layout_gravity="center"
+            android:contentDescription="Ponto selecionado no mapa"
+            android:elevation="8dp"
+            android:src="@drawable/ic_pin_central"
+            android:translationY="-90dp" />
+
+    </FrameLayout>
+
+    <!-- Busca flutuante -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardBusca"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_height="58dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:clickable="true"
         android:focusable="true"
-        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="18dp"
         app:cardElevation="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/topGap"
+        app:strokeColor="#E8EAF0"
+        app:strokeWidth="1dp"
+        android:layout_marginTop="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp">
@@ -50,9 +75,9 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:contentDescription="Buscar"
+                android:contentDescription="Pesquisar"
                 android:src="@drawable/ic_lupa"
-                tools:ignore="HardcodedText" />
+                app:tint="@color/dark_gray" />
 
             <TextView
                 android:id="@+id/txtBusca"
@@ -60,73 +85,112 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:text="Buscar endereço"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Buscar endereço ou lugar"
                 android:textColor="@color/dark_gray"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 tools:ignore="HardcodedText" />
+
         </LinearLayout>
+
     </com.google.android.material.card.MaterialCardView>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout2"
-        android:layout_width="match_parent"
+    <!-- Botão flutuante de localização -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnMinhaLocalizacao"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="20dp"
+        android:contentDescription="Usar minha localização"
+        app:backgroundTint="@android:color/white"
+        app:layout_constraintBottom_toTopOf="@+id/cardLocalizacao"
+        app:layout_constraintEnd_toEndOf="@+id/mapContainer"
+        app:srcCompat="@drawable/ic_minha_localizacao"
+        app:tint="@color/dark_gray" />
+
+    <!-- Painel inferior -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLocalizacao"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomGap"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="#ECEEF3"
+        app:strokeWidth="1dp"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginBottom="10dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardLocalizacao"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:orientation="vertical"
+            android:paddingStart="22dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="24dp">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:text="Ponto de embarque"
+                android:textColor="#20243A"
+                android:textSize="19sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ponto de embarque"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Mova o mapa para posicionar a pinça no local desejado."
+                android:textColor="#73798A"
+                android:textSize="13sp" />
 
-                <TextView
-                    android:id="@+id/txtEndereco"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Selecione um ponto no mapa"
-                    android:textSize="14sp" />
+            <TextView
+                android:id="@+id/txtEndereco"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="#F5F6FA"
+                android:gravity="center_vertical"
+                android:minHeight="52dp"
+                android:padding="14dp"
+                android:text="Aguardando seleção do local"
+                android:textColor="#30354B"
+                android:textSize="14sp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnMinhaLocalizacao"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:icon="@drawable/ic_minha_localizacao"
-                    android:text="Usar minha localização" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmar"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="16dp"
+                android:enabled="false"
+                android:text="Confirmar ponto"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                app:backgroundTint="#F6B12F"
+                app:cornerRadius="14dp"
+                app:elevation="0dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConfirmar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:enabled="false"
-                    android:text="Confirmar ponto" />
+        </LinearLayout>
 
-            </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-        </com.google.android.material.card.MaterialCardView>
+    <!-- Navigation bar gap -->
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
