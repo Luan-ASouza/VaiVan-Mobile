@@ -177,6 +177,10 @@
             android:name=".ui.responsavel.rotas.ResultadosRotasActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.admin.ImportarEscolasActivity"
+            android:exported="true" />
+
     </application>
 
 </manifest>
