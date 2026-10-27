@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Importar escolas (INEP)"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Tela temporária. Lê o arquivo de escolas de Caxias do Sul e grava no Firestore. Escolas que já existem não são sobrescritas."
+        android:textSize="14sp"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/btnIniciarImportacao"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Iniciar importação"
+        tools:ignore="HardcodedText" />
+
+    <ProgressBar
+        android:id="@+id/progressImportacao"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/txtStatusImportacao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pronto. Toque em &quot;Iniciar importação&quot;."
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+    </ScrollView>
+</LinearLayout>
