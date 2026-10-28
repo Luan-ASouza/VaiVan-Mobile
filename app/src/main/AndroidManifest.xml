@@ -181,6 +181,12 @@
             android:name=".ui.admin.ImportarEscolasActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".ui.escolas.SelecionarEscolaActivity"
+            android:exported="false" />
+
     </application>
+
+
 
 </manifest>

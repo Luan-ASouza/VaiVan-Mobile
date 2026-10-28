@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_card_rounded"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/txtNomeEscolaItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/dark_gray"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtEnderecoEscolaItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/light_gray"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/txtDependenciaEscolaItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_chip_bairro"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:textColor="@color/dark_gray"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</LinearLayout>

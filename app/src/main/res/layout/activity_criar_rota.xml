@@ -82,6 +82,52 @@
                     tools:ignore="Autofill" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- ESCOLA (sempre é um dos extremos da rota) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Escola"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:cardBackgroundColor="@color/background_card"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/txtDestinoAtual"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Nenhuma escola selecionada"
+                        android:textColor="@color/light_gray"
+                        android:textSize="14sp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnDefinirDestino"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/btn_gray_filled"
+                        android:text="Selecionar escola"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- SENTIDO DA ROTA (Substituiu a Ponto de Partida/Origem) -->
             <TextView
                 android:layout_width="wrap_content"
@@ -137,97 +183,80 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- PONTO DE PARTIDA (PONTO A) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Ponto de partida"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <androidx.cardview.widget.CardView
+            <!-- PONTO DA ROTA: o nome e a explicação mudam conforme o sentido (Ida / Volta / Ida e volta) -->
+            <LinearLayout
+                android:id="@+id/containerPonto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/txtTituloPonto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Ponto de embarque"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/txtExplicacaoPonto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/light_gray"
+                    android:textSize="13sp" />
 
-                    <TextView
-                        android:id="@+id/txtOrigemAtual"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Nenhum ponto de partida selecionado"
-                        android:textColor="@color/light_gray"
-                        android:textSize="14sp" />
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btnDefinirOrigem"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Selecionar ponto de partida no mapa"
-                        android:textAllCaps="false"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- ESCOLA (DESTINO) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Escola"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginTop="8dp"
+                    app:cardBackgroundColor="@color/background_card"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp">
 
-                    <TextView
-                        android:id="@+id/txtDestinoAtual"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nenhuma escola selecionada"
-                        android:textColor="@color/light_gray"
-                        android:textSize="14sp" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btnDefinirDestino"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Selecionar escola"
-                        android:textAllCaps="false"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                        <TextView
+                            android:id="@+id/txtOrigemAtual"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nenhum ponto selecionado"
+                            android:textColor="@color/light_gray"
+                            android:textSize="14sp"
+                            tools:ignore="HardcodedText" />
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btnDefinirOrigem"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/btn_gray_filled"
+                            android:text="Selecionar ponto no mapa"
+                            android:textAllCaps="false"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:ignore="HardcodedText" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:id="@+id/txtResumoSentido"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="13sp" />
+            </LinearLayout>
 
             <!-- BAIRROS ATENDIDOS -->
             <TextView

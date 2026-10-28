@@ -3,6 +3,7 @@ package com.example.vaivan.ui.motorista.rotas
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
@@ -10,7 +11,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -20,14 +20,11 @@ import com.example.vaivan.core.util.TextoUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.models.Escola
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
-import com.example.vaivan.data.repository.EscolaRepository
 import com.example.vaivan.data.repository.RotaRepository
+import com.example.vaivan.ui.escolas.SelecionarEscolaActivity
 import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import com.example.vaivan.data.repository.AssinaturaBloqueadaException
-import com.example.vaivan.data.repository.AssinaturaRepository
-import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 
 class CriarRotaActivity : AppCompatActivity() {
 
@@ -53,6 +50,10 @@ class CriarRotaActivity : AppCompatActivity() {
     private var origemLatitude: Double? = null
     private var origemLongitude: Double? = null
     private lateinit var txtOrigemAtual: TextView
+    private lateinit var containerPonto: View
+    private lateinit var txtTituloPonto: TextView
+    private lateinit var txtExplicacaoPonto: TextView
+    private lateinit var txtResumoSentido: TextView
     private lateinit var selecaoOrigemLauncher: ActivityResultLauncher<Intent>
 
     private var escolaSelecionada: Escola? = null
@@ -61,9 +62,8 @@ class CriarRotaActivity : AppCompatActivity() {
     // chave normalizada -> nome para mostrar na tela
     private val bairrosAtendidos = linkedMapOf<String, String>()
 
-    private val escolaRepository = EscolaRepository()
     private lateinit var selecaoBairroLauncher: ActivityResultLauncher<Intent>
-    private lateinit var selecaoDestinoLauncher: ActivityResultLauncher<Intent>
+    private lateinit var selecaoEscolaLauncher: ActivityResultLauncher<Intent>
 
     val db by lazy { VaivanDatabase.getInstance(this) }
 
@@ -85,6 +85,10 @@ class CriarRotaActivity : AppCompatActivity() {
         edtCapacidade = findViewById(R.id.edtCapacidade)
         txtDestinoAtual = findViewById(R.id.txtDestinoAtual)
         txtOrigemAtual = findViewById(R.id.txtOrigemAtual)
+        containerPonto = findViewById(R.id.containerPonto)
+        txtTituloPonto = findViewById(R.id.txtTituloPonto)
+        txtExplicacaoPonto = findViewById(R.id.txtExplicacaoPonto)
+        txtResumoSentido = findViewById(R.id.txtResumoSentido)
         txtBairros = findViewById(R.id.txtBairros)
         btnCriarRota = findViewById(R.id.btnCriarRota)
 
@@ -117,7 +121,7 @@ class CriarRotaActivity : AppCompatActivity() {
         configurarLaunchers()
 
         findViewById<Button>(R.id.btnDefinirDestino).setOnClickListener {
-            mostrarDialogEscolas()
+            selecaoEscolaLauncher.launch(Intent(this, SelecionarEscolaActivity::class.java))
         }
 
         findViewById<Button>(R.id.btnDefinirOrigem).setOnClickListener {
@@ -149,9 +153,60 @@ class CriarRotaActivity : AppCompatActivity() {
             botao.setOnClickListener {
                 tipoTrajetoSelecionado = chave
                 atualizarCoresTipoTrajeto()
+                atualizarCamposDoPonto()
             }
         }
         atualizarCoresTipoTrajeto()
+        atualizarCamposDoPonto()
+    }
+
+    /**
+     * A escola é sempre um dos extremos da rota, então o motorista só informa UM ponto:
+     *  - Ida e Ida e volta: o ponto de EMBARQUE (a escola é o desembarque)
+     *  - Volta: o ponto de DESEMBARQUE (a escola é o embarque)
+     * O campo só aparece depois que o sentido for escolhido.
+     */
+    private fun atualizarCamposDoPonto() {
+
+        val tipo = tipoTrajetoSelecionado
+
+        if (tipo == null) {
+            containerPonto.visibility = View.GONE
+            return
+        }
+
+        containerPonto.visibility = View.VISIBLE
+
+        val botaoPonto = findViewById<Button>(R.id.btnDefinirOrigem)
+
+        if (tipo == "VOLTA") {
+
+            txtTituloPonto.text = "Ponto de desembarque"
+            txtExplicacaoPonto.text = "Onde a van deixa os alunos na volta da escola."
+            botaoPonto.text = "Selecionar ponto de desembarque no mapa"
+
+            if (origemEndereco == null) {
+                txtOrigemAtual.text = "Nenhum ponto de desembarque selecionado"
+            }
+
+        } else {
+
+            txtTituloPonto.text = "Ponto de embarque"
+            txtExplicacaoPonto.text =
+                if (tipo == "IDA") "Onde a van busca os alunos para levar à escola."
+                else "Onde a van busca os alunos na ida e deixa na volta."
+            botaoPonto.text = "Selecionar ponto de embarque no mapa"
+
+            if (origemEndereco == null) {
+                txtOrigemAtual.text = "Nenhum ponto de embarque selecionado"
+            }
+        }
+
+        txtResumoSentido.text = when (tipo) {
+            "IDA" -> "Ida: embarque no ponto escolhido e desembarque na escola."
+            "VOLTA" -> "Volta: embarque na escola e desembarque no ponto escolhido."
+            else -> "Ida: do ponto escolhido até a escola.\nVolta: da escola de volta ao ponto escolhido."
+        }
     }
 
     private fun atualizarCoresTipoTrajeto() {
@@ -237,16 +292,13 @@ class CriarRotaActivity : AppCompatActivity() {
             txtOrigemAtual.text = dados.first
         }
 
-        // Mapa aberto para CADASTRAR UMA NOVA ESCOLA
-        selecaoDestinoLauncher = registerForActivityResult(
+        // Tela de busca de escolas (lista oficial, não permite cadastrar)
+        selecaoEscolaLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            val dados = extrairResultado(result) ?: return@registerForActivityResult
-            val cidade = result.data
-                ?.getStringExtra(SelecaoLocalizacaoActivity.EXTRA_CIDADE)
-                .orEmpty()
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
 
-            pedirNomeDaEscola(dados.first, cidade, dados.second, dados.third)
+            SelecionarEscolaActivity.extrairEscola(result.data)?.let { escolherEscola(it) }
         }
 
         // Mapa aberto para ADICIONAR UM BAIRRO
@@ -297,79 +349,6 @@ class CriarRotaActivity : AppCompatActivity() {
         txtDestinoAtual.text = escola.nome
     }
 
-    private fun mostrarDialogEscolas() {
-        lifecycleScope.launch {
-            try {
-                val escolas = escolaRepository.listarEscolas()
-                val itens = escolas.map { it.nome } + "+ Cadastrar nova escola"
-
-                AlertDialog.Builder(this@CriarRotaActivity)
-                    .setTitle("Escolha a escola")
-                    .setItems(itens.toTypedArray()) { _, posicao ->
-                        if (posicao < escolas.size) {
-                            escolherEscola(escolas[posicao])
-                        } else {
-                            selecaoDestinoLauncher.launch(
-                                Intent(this@CriarRotaActivity, SelecaoLocalizacaoActivity::class.java)
-                            )
-                        }
-                    }
-                    .setNegativeButton("Cancelar", null)
-                    .show()
-
-            } catch (e: Exception) {
-                Toast.makeText(
-                    this@CriarRotaActivity,
-                    "Erro ao carregar escolas: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-    }
-
-    private fun pedirNomeDaEscola(
-        endereco: String,
-        cidade: String,
-        latitude: Double,
-        longitude: Double
-    ) {
-        val campo = EditText(this).apply {
-            hint = "Nome da escola (ex: La Salle Carmo)"
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Nome da escola")
-            .setMessage(endereco)
-            .setView(campo)
-            .setPositiveButton("Cadastrar") { _, _ ->
-                val nome = campo.text?.toString()?.trim().orEmpty()
-
-                if (nome.length < 3) {
-                    Toast.makeText(this, "Informe o nome da escola.", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                val uid = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-
-                lifecycleScope.launch {
-                    try {
-                        val escola = escolaRepository.cadastrarEscola(
-                            nome, endereco, cidade, latitude, longitude, uid
-                        )
-                        escolherEscola(escola)
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            this@CriarRotaActivity,
-                            "Erro ao cadastrar escola: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
     // ---------------------------------------------------------
     // CRIAÇÃO DA ROTA
     // ---------------------------------------------------------
@@ -397,7 +376,8 @@ class CriarRotaActivity : AppCompatActivity() {
         val oLat = origemLatitude
         val oLng = origemLongitude
         if (oEndereco == null || oLat == null || oLng == null) {
-            Toast.makeText(this, "Selecione o ponto de partida.", Toast.LENGTH_SHORT).show()
+            val ponto = if (tipoTrajeto == "VOLTA") "desembarque" else "embarque"
+            Toast.makeText(this, "Selecione o ponto de $ponto.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -434,8 +414,6 @@ class CriarRotaActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // Plano de assinatura: exige plano em dia e respeita o limite de rotas
-                AssinaturaRepository().exigirPodeCriarRota(uid)
                 val rota = rotaRepository.criarRota(
                     motoristaId = uid,
                     veiculoId = null,
@@ -462,9 +440,6 @@ class CriarRotaActivity : AppCompatActivity() {
                         .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rota.id)
                 )
                 finish()
-            } catch (e: AssinaturaBloqueadaException) {
-                btnCriarRota.isEnabled = true
-                AssinaturaUi.mostrarBloqueio(this@CriarRotaActivity, e.message ?: "Assinatura necessária.")
             } catch (e: Exception) {
                 btnCriarRota.isEnabled = true
                 Toast.makeText(this@CriarRotaActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()

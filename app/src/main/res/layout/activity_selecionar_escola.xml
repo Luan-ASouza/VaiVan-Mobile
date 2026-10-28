@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/beige"
+    android:orientation="vertical">
+
+    <!-- BARRA DO TOPO -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnVoltar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrowback"
+            app:tint="@color/black" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Escolher escola"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <!-- CAMPO DE BUSCA -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="Buscar"
+                android:src="@drawable/ic_lupa"
+                tools:ignore="HardcodedText" />
+
+            <EditText
+                android:id="@+id/edtBuscaEscola"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="Nome da escola ou bairro"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/dark_gray"
+                android:textColorHint="@color/light_gray"
+                android:textSize="16sp"
+                tools:ignore="Autofill,HardcodedText" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- AJUDA: PROCURAR PELO MAPA -->
+    <TextView
+        android:id="@+id/txtProcurarNoMapa"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:padding="4dp"
+        android:text="Não achou? Procurar pelo mapa"
+        android:textColor="@color/orange"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/txtContagemEscolas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Carregando escolas..."
+        android:textColor="@color/light_gray"
+        android:textSize="13sp"
+        tools:ignore="HardcodedText" />
+
+    <ProgressBar
+        android:id="@+id/progressEscolas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:indeterminateTint="@color/orange" />
+
+    <!-- LISTA -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerEscolas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="24dp" />
+
+    <!-- NENHUM RESULTADO -->
+    <TextView
+        android:id="@+id/txtSemEscolas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/bg_card_rounded"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:padding="24dp"
+        android:text="Nenhuma escola encontrada.\nTente outro nome ou use o mapa."
+        android:textColor="@color/light_gray"
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
+</LinearLayout>
