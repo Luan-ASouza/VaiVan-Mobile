@@ -44,7 +44,7 @@
         android:textColor="@android:color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:backgroundTint="@color/danger_red"
+        app:backgroundTint="@color/status_danger"
         app:cornerRadius="16dp" />
 
     <com.google.android.material.button.MaterialButton

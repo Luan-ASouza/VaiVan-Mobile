@@ -1,18 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- ========================================== -->
+    <!-- 1. PALETA BASE (As cores puras)            -->
+    <!-- ========================================== -->
     <color name="white">#FFFFFFFF</color>
+    <color name="white_solitude">#F4F5F7</color>
     <color name="black">#000000</color>
+
     <color name="dark_gray">#1E1E1E</color>
     <color name="gray">#3A3A3A</color>
     <color name="medium_gray">#6B6B6B</color>
     <color name="light_gray">#AFAFAF</color>
+
     <color name="orange">#F6B12F</color>
-    <color name="background_card">#E5E0DA</color>
     <color name="green">#2CA144</color>
     <color name="light_blue">#0170CC</color>
+    <color name="red">#E53935</color>
+
     <color name="beige">#E4DBD4</color>
     <color name="beige_cream">#FAD897</color>
-    <color name="red">#E53935</color>
-    <color name="danger_red">#E53935</color>
+    <color name="background_card_base">#E5E0DA</color>
+
+
+    <!-- ========================================== -->
+    <!-- 2. CLASSES DE CORES (Uso Semântico)        -->
+    <!-- ========================================== -->
+
+    <!-- Classe: Backgrounds (Fundos) -->
+    <color name="background_screen">@color/white_solitude</color>
+    <color name="background_card">@color/background_card_base</color>
+    <color name="background_container">@color/white</color>
+
+    <!-- Classe: Typography (Textos) -->
+    <color name="text_primary">@color/dark_gray</color>
+    <color name="text_secondary">@color/medium_gray</color>
+    <color name="text_tertiary">@color/light_gray</color>
+    <color name="text_on_dark">@color/white</color>
+
+    <!-- Classe: Brand & Actions (Identidade e Botões) -->
+    <color name="color_primary">@color/orange</color>
+    <color name="color_secondary">@color/white</color>
+    <color name="accent_color">@color/dark_gray</color>
+
+    <!-- Classe: Feedback (Alertas e Estados) -->
+    <color name="status_success">@color/green</color>
+    <color name="status_danger">@color/red</color>
+    <color name="status_warning">@color/orange</color>
+
+    <!-- Classe: Borders & Dividers (Linhas e Contornos) -->
+    <color name="border_light">@color/light_gray</color>
+    <color name="divider">@color/light_gray</color>
 
 </resources>

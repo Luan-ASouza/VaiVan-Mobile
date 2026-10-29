@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.motorista.entrada.documentos
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -7,16 +8,6 @@ import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-/**
- * Decide qual é a próxima tela do cadastro do motorista, olhando os documentos
- * obrigatórios (coleção "documentos"): CNH (frente e verso) e comprovante de residência.
- *
- *  - falta algum documento, ou algum foi REJEITADO  -> statusMotorista = PENDENTE e abre o envio;
- *  - todos enviados e algum ainda em análise        -> statusMotorista = EM_ANALISE e abre a tela de análise;
- *  - todos APROVADOS                                -> abre a Home.
- *
- * O status ATIVO só é gravado pelo painel administrativo, quando aprova o último documento.
- */
 class VerificarProgressoDocumentos(
     private val context: Context
 ) {
@@ -27,74 +18,82 @@ class VerificarProgressoDocumentos(
     companion object {
         const val TIPO_CNH_FRENTE = "CNH_FRENTE"
         const val TIPO_CNH_VERSO = "CNH_VERSO"
+        const val TIPO_CNH_DIGITAL = "CNH_DIGITAL_PDF"
         const val TIPO_COMPROVANTE = "COMPROVANTE_RESIDENCIA"
 
         const val ANALISE = "EM_ANALISE"
         const val APROVADO = "APROVADO"
         const val REJEITADO = "REJEITADO"
 
-        /** Id do documento: um por motorista e por tipo (reenviar substitui o anterior). */
-        fun idDoDocumento(uid: String, tipo: String) = "${uid}_$tipo"
+        fun idDoDocumento(
+            uid: String,
+            tipo: String
+        ) = "${uid}_$tipo"
     }
 
     fun verificar() {
-        val uid = auth.currentUser?.uid ?: return
 
-        db.collection("documentos")
-            .whereEqualTo("motoristaId", uid)
+        val uid = auth.currentUser?.uid
+
+        if (uid == null) {
+            mostrarErro("Usuário não autenticado.")
+            return
+        }
+
+        db.collection("usuarios")
+            .document(uid)
             .get()
-            .addOnSuccessListener { resultado ->
+            .addOnSuccessListener { usuario ->
 
-                // tipo -> status (ignora documentos de veículo e outros tipos)
-                val status = resultado.documents
-                    .mapNotNull { d ->
-                        val tipo = d.getString("tipo") ?: return@mapNotNull null
-                        tipo to (d.getString("statusValidacao") ?: ANALISE)
+                if (!usuario.exists()) {
+                    mostrarErro("Cadastro não encontrado.")
+                    return@addOnSuccessListener
+                }
+
+                when (usuario.getString("statusMotorista")) {
+
+                    "ATIVO" -> {
+                        abrirTela(HomeMotoristaActivity::class.java)
                     }
-                    .toMap()
 
-                determinarProximaTela(uid, status)
+                    null, "PENDENTE", "EM_ANALISE" -> {
+                        abrirTela(DocumentosMotoristaActivity::class.java)
+                    }
+
+                    "SUSPENSO", "INATIVO" -> {
+                        mostrarErro("Seu cadastro de motorista está indisponível.")
+                    }
+
+                    else -> {
+                        mostrarErro("Status do motorista desconhecido.")
+                    }
+                }
             }
             .addOnFailureListener {
-                Toast.makeText(
-                    context, "Não foi possível verificar seus documentos.", Toast.LENGTH_SHORT
-                ).show()
+                mostrarErro("Não foi possível verificar seu cadastro.")
             }
     }
 
-    private fun precisaEnviar(status: String?) = status == null || status == REJEITADO
+    private fun abrirTela(tela: Class<*>) {
 
-    private fun determinarProximaTela(uid: String, status: Map<String, String>) {
+        val intent = Intent(context, tela)
 
-        val cnhPendente = precisaEnviar(status[TIPO_CNH_FRENTE]) ||
-                precisaEnviar(status[TIPO_CNH_VERSO])
-        val comprovantePendente = precisaEnviar(status[TIPO_COMPROVANTE])
+        if (context !is Activity) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
 
-        val obrigatorios = listOf(TIPO_CNH_FRENTE, TIPO_CNH_VERSO, TIPO_COMPROVANTE)
+        context.startActivity(intent)
 
-        when {
-            cnhPendente ->
-                gravarStatusEAbrir(uid, "PENDENTE", EnvioCnhActivity::class.java)
-
-            comprovantePendente ->
-                gravarStatusEAbrir(uid, "PENDENTE", EnvioComprovanteResidenciaActivity::class.java)
-
-            obrigatorios.all { status[it] == APROVADO } ->
-                abrirTela(HomeMotoristaActivity::class.java)
-
-            else ->
-                gravarStatusEAbrir(uid, "EM_ANALISE", AnaliseDocumentosActivity::class.java)
+        if (context is Activity) {
+            context.finish()
         }
     }
 
-    private fun gravarStatusEAbrir(uid: String, statusMotorista: String, tela: Class<*>) {
-        db.collection("usuarios")
-            .document(uid)
-            .update("statusMotorista", statusMotorista)
-            .addOnCompleteListener { abrirTela(tela) }
-    }
-
-    private fun abrirTela(activity: Class<*>) {
-        context.startActivity(Intent(context, activity))
+    private fun mostrarErro(mensagem: String) {
+        Toast.makeText(
+            context,
+            mensagem,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }

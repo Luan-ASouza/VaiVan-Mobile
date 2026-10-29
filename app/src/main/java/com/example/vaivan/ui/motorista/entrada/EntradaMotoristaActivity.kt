@@ -2,23 +2,18 @@ package com.example.vaivan.ui.motorista.entrada
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.vaivan.ui.inicio.LoginActivity
-import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
 import com.example.vaivan.ui.motorista.HomeMotoristaActivity
-import com.example.vaivan.ui.motorista.entrada.documentos.AnaliseDocumentosActivity
-import com.example.vaivan.ui.motorista.entrada.documentos.EnvioCnhActivity
-import com.example.vaivan.ui.motorista.entrada.documentos.VerificarProgressoDocumentos
+import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class EntradaMotoristaActivity : AppCompatActivity() {
 
-    private val auth =
-        FirebaseAuth.getInstance()
-
-    private val firestore =
-        FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,146 +23,68 @@ class EntradaMotoristaActivity : AppCompatActivity() {
 
     private fun verificarCadastroMotorista() {
 
-        val usuarioId =
-            auth.currentUser?.uid
+        val uid = auth.currentUser?.uid
 
-        if (usuarioId == null) {
-            abrirLogin()
+        if (uid == null) {
+            abrirTela(LoginActivity::class.java)
             return
         }
 
-        firestore
-            .collection("usuarios")
-            .document(usuarioId)
+        firestore.collection("usuarios")
+            .document(uid)
             .get()
-            .addOnSuccessListener { documento ->
+            .addOnSuccessListener { usuario ->
 
-                if (!documento.exists()) {
-                    abrirLogin()
+                if (!usuario.exists()) {
+                    abrirTela(LoginActivity::class.java)
                     return@addOnSuccessListener
                 }
 
-                val statusMotorista =
-                    documento.getString("statusMotorista")
-
-                when (statusMotorista) {
-
-                    null -> {
-                        // Usuário ainda não iniciou
-                        // o cadastro de motorista.
-                        abrirCadastroMotorista()
-                    }
-
-                    "PENDENTE" -> {
-                        // Faltam documentos ou informações.
-                        abrirCadastroPendente()
-                    }
-
-                    "EM_ANALISE" -> {
-                        // Documentos enviados,
-                        // aguardando aprovação.
-                        abrirEmAnalise()
-                    }
+                when (usuario.getString("statusMotorista")) {
 
                     "ATIVO" -> {
-                        // Motorista aprovado.
-                        abrirHomeMotorista()
+                        abrirTela(HomeMotoristaActivity::class.java)
                     }
 
-                    "SUSPENSO" -> {
-                        // Motorista teve o acesso suspenso.
-                        abrirMotoristaSuspenso()
+                    null, "PENDENTE", "EM_ANALISE" -> {
+                        abrirTela(DocumentosMotoristaActivity::class.java)
+                    }
+
+                    "SUSPENSO", "INATIVO" -> {
+                        Toast.makeText(
+                            this,
+                            "Seu cadastro de motorista está indisponível.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        finish()
                     }
 
                     else -> {
-                        // Status desconhecido.
-                        abrirCadastroMotorista()
+                        Toast.makeText(
+                            this,
+                            "Status do motorista desconhecido.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
                     }
                 }
             }
             .addOnFailureListener {
-                // Se não conseguiu consultar o Firebase,
-                // não libera o acesso à Home.
+                Toast.makeText(
+                    this,
+                    "Não foi possível verificar seu cadastro.",
+                    Toast.LENGTH_SHORT
+                ).show()
                 finish()
             }
     }
 
-    private fun abrirCadastroMotorista() {
+    private fun abrirTela(tela: Class<*>) {
 
-        startActivity(
-            Intent(
-                this,
-                EnvioCnhActivity::class.java
-            )
-        )
-
-        finish()
-    }
-
-    private fun abrirCadastroPendente() {
-
-        val verificarProgressoDocumentos = VerificarProgressoDocumentos(this)
-
-        verificarProgressoDocumentos.verificar()
-
-        finish()
-    }
-
-    private fun abrirEmAnalise() {
-
-        startActivity(
-            Intent(
-                this,
-                AnaliseDocumentosActivity::class.java
-            )
-        )
-
-        finish()
-    }
-
-    private fun abrirHomeMotorista() {
-
-        startActivity(
-            Intent(
-                this,
-                HomeMotoristaActivity::class.java
-            )
-        )
-
-        finish()
-    }
-
-    private fun abrirMotoristaSuspenso() {
-
-        // Crie essa Activity quando implementar
-        // a tela de motorista suspenso.
-
-        /*
-        startActivity(
-            Intent(
-                this,
-                StatusMotoristaActivity::class.java
-            )
-        )
-
-        finish()
-        */
-
-        finish()
-    }
-
-    private fun abrirLogin() {
-
-        val intent =
-            Intent(
-                this,
-                LoginActivity::class.java
-            ).apply {
-
-                flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
+        val intent = Intent(this, tela).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
 
         startActivity(intent)
         finish()

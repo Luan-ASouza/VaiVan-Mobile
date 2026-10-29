@@ -1,168 +1,331 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollValidacaoEmail"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF"
-    android:fontFamily="@font/montserrat">
+    android:background="@color/white_solitude"
+    android:fillViewport="true">
 
-    <ScrollView
-        android:id="@+id/scrollValidacaoEmail"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="@color/dark_gray"
-        android:padding="10dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="20dp"
+        android:fontFamily="@font/montserrat">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:text="Validação da CNH"
+            android:textColor="#202124"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="24dp"
+            android:text="Escolha o tipo da sua habilitação e envie os documentos para análise."
+            android:textColor="#686D75"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tipo de CNH"
+            android:textColor="#202124"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginBottom="10dp" />
+
+
+        <RadioGroup
+            android:id="@+id/grupoTipoCnh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_container_round_30"
+            android:padding="5dp"
+            android:gravity="center_vertical">
+
+            <RadioButton
+                android:id="@+id/radioCnhDigital"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:button="@null"
+                android:gravity="center"
+                android:checked="true"
+                android:background="@drawable/bg_white_rounded"
+                android:backgroundTint="@color/button_toggle_background"
+                android:text="CNH digital"
+                android:textColor="@color/button_toggle_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioButton
+                android:id="@+id/radioCnhFisica"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:button="@null"
+                android:gravity="center"
+                android:background="@drawable/bg_white_rounded"
+                android:backgroundTint="@color/button_toggle_background"
+                android:text="CNH física"
+                android:textColor="@color/button_toggle_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </RadioGroup>
 
         <LinearLayout
-            android:id="@+id/containerPrincipal"
+            android:id="@+id/secaoCnhFisica"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="10dp"
-            android:layout_marginVertical="10dp"
-            android:background="@drawable/bg_white">
-
-            <TextView
-                android:id="@+id/txtDescricaoCnh"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Valide sua CNH"
-                android:textColor="@color/dark_gray"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="20dp" />
-
-        <!-- TEXTO EXPLICATIVO -->
-        <TextView
-            android:id="@+id/txtDescricaoCnh"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Envie a frente e o verso da sua CNH."
-            android:textColor="#111111"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="30dp" />
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="30dp">
-
-            <!-- LABEL FOTO DA FRENTE -->
-            <TextView
-                android:id="@+id/txtFotoFrente"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Foto da frente"
-                android:textColor="#111111"
-                android:textSize="14sp"
+                android:text="Frente da CNH"
+                android:textColor="#202124"
                 android:textStyle="bold"
+                android:textSize="15sp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- LINHA COM BOTÃO EDITAR ENVIO E NOME DO ARQUIVO -->
-            <LinearLayout
-                android:id="@+id/layoutArquivoFrente"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginTop="10dp">
 
-                <!-- BOTÃO EDITAR ENVIO -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEnviarArquivoFrente"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_hollow_darkgray"
-                    app:backgroundTint="@null"
-                    android:text="Selecionar Arquivo"
-                    android:textAllCaps="false"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
-
-                <!-- NOME DO ARQUIVO ENVIADO -->
-                <TextView
-                    android:id="@+id/txtNomeArquivoFrente"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textColor="@color/dark_gray"
-                    android:textSize="13sp"
-                    android:layout_marginStart="12dp" />
-
-            </LinearLayout>
-
-            <!-- LABEL FOTO DO VERSO -->
-            <TextView
-                android:id="@+id/txtFotoVerso"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Foto do verso"
-                android:textColor="#111111"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
+                <!-- Área pontilhada: estado inicial -->
                 <LinearLayout
-                    android:id="@+id/layoutArquivoFrente"
+                    android:id="@+id/btnEnviarFrente"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="40dp">
+                    android:layout_height="112dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_file_upload">
 
-                    <!-- BOTÃO ENVIAR ARQUIVO DO VERSO -->
-                    <Button
-                        android:id="@+id/btnEnviarArquivoVerso"
-                        android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_hollow_darkgray"
-                        app:backgroundTint="@null"
-                        android:text="Selecionar Arquivo"
-                        android:textAllCaps="false"
-                        android:textColor="@color/dark_gray"
-                        android:textStyle="bold"
-                        android:textSize="13sp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="12dp">
 
-                    <!-- NOME DO ARQUIVO ENVIADO -->
-                    <TextView
-                        android:id="@+id/txtNomeArquivoVerso"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="@color/dark_gray"
-                        android:textSize="13sp"
-                        android:layout_marginStart="12dp" />
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@android:drawable/ic_menu_upload"
+                            android:contentDescription="Enviar frente da CNH" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Enviar frente da CNH"
+                            android:textColor="#202124"
+                            android:textStyle="bold"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Toque aqui para abrir a câmera ou escolher o arquivo"
+                            android:textColor="#686D75"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
+                <!-- Cartão do arquivo: aparece após a seleção -->
 
-            <!-- BOTÃO PRINCIPAL ENVIAR E CONTINUAR -->
+                <include
+                    layout="@layout/item_arquivo_cnh"
+                    android:id="@+id/itemFrenteFisica"
+                    android:visibility="gone"/>
 
-            </LinearLayout>
+            </FrameLayout>
 
-        <Button
-            android:id="@+id/btnEnviarContinuarCnh"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:background="@drawable/btn_black_white_selector"
-            app:backgroundTint="@null"
-            android:text="Enviar e Continuar"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="14sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Verso da CNH"
+                android:textColor="#202124"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="8dp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <!-- Área pontilhada: estado inicial -->
+                <LinearLayout
+                    android:id="@+id/btnEnviarVerso"
+                    android:layout_width="match_parent"
+                    android:layout_height="112dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_file_upload">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@android:drawable/ic_menu_upload"
+                            android:contentDescription="Enviar verso da CNH" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Enviar verso da CNH"
+                            android:textColor="#202124"
+                            android:textStyle="bold"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Toque aqui para abrir a câmera ou escolher o arquivo"
+                            android:textColor="#686D75"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Cartão do arquivo: aparece após a seleção -->
+
+                <include
+                    layout="@layout/item_arquivo_cnh"
+                    android:id="@+id/itemVersoFisica"
+                    android:visibility="gone"/>
+
+            </FrameLayout>
+
+
+
+
         </LinearLayout>
 
-    </ScrollView>
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/secaoCnhDigital"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Arquivo da CNH digital"
+                android:textColor="#202124"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="8dp" />
+
+            <FrameLayout
+                android:id="@+id/containerUploadPdfDigital"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <!-- Área pontilhada: estado inicial -->
+                <LinearLayout
+                    android:id="@+id/btnSelecionarPdf"
+                    android:layout_width="match_parent"
+                    android:layout_height="112dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_file_upload">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@android:drawable/ic_menu_upload"
+                            android:contentDescription="Selecionar arquivo" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Selecionar PDF da CNH"
+                            android:textColor="#202124"
+                            android:textStyle="bold"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Toque aqui para escolher o arquivo"
+                            android:textColor="#686D75"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Cartão do arquivo: aparece após a seleção -->
+                <include
+                    android:id="@+id/itemPdfDigital"
+                    layout="@layout/item_arquivo_cnh"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtStatusGeral"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Selecione os documentos para começar."
+            android:textColor="#686D75"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEnviarContinuarCnh"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="#202124"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:backgroundTint="#F6B12F"
+            app:cornerRadius="14dp" />
+
+    </LinearLayout>
+</ScrollView>

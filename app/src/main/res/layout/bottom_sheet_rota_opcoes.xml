@@ -66,11 +66,11 @@
         android:layout_marginTop="10dp"
         android:text="Excluir rota"
         android:textAllCaps="false"
-        android:textColor="@color/danger_red"
+        android:textColor="@color/status_danger"
         android:textSize="15sp"
         android:textStyle="bold"
         app:backgroundTint="@android:color/transparent"
         app:cornerRadius="16dp"
-        app:strokeColor="@color/danger_red"
+        app:strokeColor="@color/status_danger"
         app:strokeWidth="2dp" />
 </LinearLayout>
