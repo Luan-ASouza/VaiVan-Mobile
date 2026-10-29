@@ -1,4 +1,3 @@
-
 package com.example.vaivan.ui.responsavel.rotas
 
 import android.app.Activity
@@ -14,9 +13,9 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.vaivan.R
+import com.example.vaivan.ui.escolas.SelecionarEscolaActivity
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputLayout
@@ -26,7 +25,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 class PesquisarRotasFragment : Fragment() {
 
     private lateinit var edtEmbarque: AutoCompleteTextView
-    private lateinit var edtDesembarque: AutoCompleteTextView
+    private lateinit var edtEscola: AutoCompleteTextView
+    private lateinit var layoutEscola: TextInputLayout
     private lateinit var btnAdicionarNovoLocal: Button
     private lateinit var txtNomePassageiro: TextView
     private lateinit var btnPesquisar: Button
@@ -35,7 +35,14 @@ class PesquisarRotasFragment : Fragment() {
     private lateinit var btnVolta: MaterialButton
     private lateinit var btnIdaVolta: MaterialButton
 
-    private var modalidadeSelecionada = "IDA_E_VOLTA"
+    // Campos que vão aparecendo conforme a modalidade
+    private lateinit var txtAvisoModalidade: TextView
+    private lateinit var containerCamposRota: View
+    private lateinit var txtTituloLocal: TextView
+    private lateinit var txtExplicacaoLocal: TextView
+
+    // Começa SEM modalidade: os campos só aparecem depois que ela for escolhida
+    private var modalidadeSelecionada: String? = null
 
     private lateinit var botoesTurno: Map<String, Button>
     private lateinit var botoesDias: Map<String, Button>
@@ -68,8 +75,9 @@ class PesquisarRotasFragment : Fragment() {
 
     private val locais = mutableListOf<LocalItem>()
 
-    private var embarque: PontoSelecionado? = null
-    private var desembarque: PontoSelecionado? = null
+    // O local da família (casa, avó...) e a escola da lista oficial
+    private var localSelecionado: PontoSelecionado? = null
+    private var escolaSelecionada: PontoSelecionado? = null
 
     private val adicionarLocalLauncher =
         registerForActivityResult(
@@ -77,6 +85,27 @@ class PesquisarRotasFragment : Fragment() {
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 carregarLocais()
+            }
+        }
+
+    // Tela de busca de escolas (lista oficial)
+    private val selecaoEscolaLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != Activity.RESULT_OK) {
+                return@registerForActivityResult
+            }
+
+            SelecionarEscolaActivity.extrairEscola(result.data)?.let { escola ->
+                escolaSelecionada = PontoSelecionado(
+                    id = escola.id,
+                    nome = escola.nome,
+                    endereco = escola.endereco,
+                    latitude = escola.latitude,
+                    longitude = escola.longitude
+                )
+                edtEscola.setText(escola.nome, false)
             }
         }
 
@@ -127,7 +156,13 @@ class PesquisarRotasFragment : Fragment() {
 
     private fun inicializarViews(view: View) {
         edtEmbarque = view.findViewById(R.id.edtEmbarque)
-        edtDesembarque = view.findViewById(R.id.edtEscola)
+        edtEscola = view.findViewById(R.id.edtEscola)
+        layoutEscola = view.findViewById(R.id.layoutEscola)
+
+        txtAvisoModalidade = view.findViewById(R.id.txtAvisoModalidade)
+        containerCamposRota = view.findViewById(R.id.containerCamposRota)
+        txtTituloLocal = view.findViewById(R.id.txtTituloLocal)
+        txtExplicacaoLocal = view.findViewById(R.id.txtExplicacaoLocal)
 
         btnIda = view.findViewById(R.id.btnIda)
         btnVolta = view.findViewById(R.id.btnVolta)
@@ -147,8 +182,6 @@ class PesquisarRotasFragment : Fragment() {
             modalidadeSelecionada = "IDA_E_VOLTA"
             atualizarModalidade()
         }
-
-        atualizarModalidade()
 
         btnAdicionarNovoLocal =
             view.findViewById(R.id.btnAdicionarNovoLocal)
@@ -177,30 +210,39 @@ class PesquisarRotasFragment : Fragment() {
 
         txtNomePassageiro.text =
             nomePassageiro.ifBlank { "Passageiro" }
+
+        // Só depois de ligar todas as views
+        atualizarModalidade()
     }
 
     private fun configurarSelecaoDePontos() {
+        // LOCAL: continua sendo a lista de locais salvos do pai
         edtEmbarque.setOnClickListener {
             edtEmbarque.showDropDown()
         }
 
-        edtDesembarque.setOnClickListener {
-            edtDesembarque.showDropDown()
-        }
-
         edtEmbarque.setOnItemClickListener { _, _, position, _ ->
             locais.getOrNull(position)?.let { local ->
-                embarque = local.paraPonto()
+                localSelecionado = local.paraPonto()
                 edtEmbarque.setText(local.nome, false)
             }
         }
 
-        edtDesembarque.setOnItemClickListener { _, _, position, _ ->
-            locais.getOrNull(position)?.let { local ->
-                desembarque = local.paraPonto()
-                edtDesembarque.setText(local.nome, false)
-            }
+        // ESCOLA: abre a busca com as escolas oficiais (no campo e na lupa do canto)
+        edtEscola.setOnClickListener {
+            abrirBuscaEscola()
         }
+
+        layoutEscola.setEndIconDrawable(R.drawable.ic_lupa)
+        layoutEscola.setEndIconOnClickListener {
+            abrirBuscaEscola()
+        }
+    }
+
+    private fun abrirBuscaEscola() {
+        selecaoEscolaLauncher.launch(
+            Intent(requireContext(), SelecionarEscolaActivity::class.java)
+        )
     }
 
     private fun LocalItem.paraPonto() = PontoSelecionado(
@@ -310,8 +352,9 @@ class PesquisarRotasFragment : Fragment() {
             }
         }
 
+        // A lista de locais salvos agora serve só para o campo de LOCAL.
+        // O campo de escola não tem adapter: ele abre a busca de escolas.
         edtEmbarque.setAdapter(adapter)
-        edtDesembarque.setAdapter(adapter)
     }
 
     private fun configurarBotoes() {
@@ -388,55 +431,64 @@ class PesquisarRotasFragment : Fragment() {
 
 
     private fun pesquisar() {
-        val pontoEmbarque = embarque
-        if (pontoEmbarque == null) {
+        val escola = escolaSelecionada
+        if (escola == null) {
             Toast.makeText(
                 requireContext(),
-                "Escolha o ponto de embarque.",
+                "Escolha a escola.",
                 Toast.LENGTH_SHORT
             ).show()
             return
         }
 
-        val pontoDestino = desembarque
-        if (pontoDestino == null) {
+        val modalidade = modalidadeSelecionada
+        if (modalidade == null) {
             Toast.makeText(
                 requireContext(),
-                "Escolha o destino.",
+                "Selecione a modalidade (Ida, Volta ou Ida e Volta).",
                 Toast.LENGTH_SHORT
             ).show()
             return
         }
+
+        val local = localSelecionado
+        if (local == null) {
+            val qual = if (modalidade == "VOLTA") "desembarque" else "embarque"
+
+            Toast.makeText(
+                requireContext(),
+                "Escolha o local de $qual.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        // A busca precisa do trajeto na ordem REAL:
+        //  - Ida e Ida e volta: sai do local da família e vai para a escola
+        //  - Volta: sai da escola e vai para o local da família
+        val ehVolta = modalidade == "VOLTA"
+
+        val textoLocal = local.endereco.ifBlank { local.nome }
+
+        val embarqueTexto = if (ehVolta) escola.nome else textoLocal
+        val embarqueLat = if (ehVolta) escola.latitude else local.latitude
+        val embarqueLng = if (ehVolta) escola.longitude else local.longitude
+
+        val desembarqueTexto = if (ehVolta) textoLocal else escola.nome
+        val desembarqueLat = if (ehVolta) local.latitude else escola.latitude
+        val desembarqueLng = if (ehVolta) local.longitude else escola.longitude
 
         val intent = Intent(
             requireContext(),
             ResultadosRotasActivity::class.java
         ).apply {
-            putExtra(
-                ResultadosRotasActivity.EXTRA_EMBARQUE_ENDERECO,
-                pontoEmbarque.endereco
-            )
-            putExtra(
-                ResultadosRotasActivity.EXTRA_EMBARQUE_LAT,
-                pontoEmbarque.latitude
-            )
-            putExtra(
-                ResultadosRotasActivity.EXTRA_EMBARQUE_LNG,
-                pontoEmbarque.longitude
-            )
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_ENDERECO, embarqueTexto)
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_LAT, embarqueLat)
+            putExtra(ResultadosRotasActivity.EXTRA_EMBARQUE_LNG, embarqueLng)
 
-            putExtra(
-                ResultadosRotasActivity.EXTRA_DESTINO_ENDERECO,
-                pontoDestino.endereco
-            )
-            putExtra(
-                ResultadosRotasActivity.EXTRA_DESTINO_LAT,
-                pontoDestino.latitude
-            )
-            putExtra(
-                ResultadosRotasActivity.EXTRA_DESTINO_LNG,
-                pontoDestino.longitude
-            )
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_ENDERECO, desembarqueTexto)
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_LAT, desembarqueLat)
+            putExtra(ResultadosRotasActivity.EXTRA_DESTINO_LNG, desembarqueLng)
 
             putExtra(ResultadosRotasActivity.EXTRA_TURNO, turnoSelecionado)
 
@@ -465,16 +517,54 @@ class PesquisarRotasFragment : Fragment() {
 
             putExtra(
                 ResultadosRotasActivity.EXTRA_MODALIDADE,
-                modalidadeSelecionada
+                modalidade
             )
         }
 
         resultadosLauncher.launch(intent)
     }
 
+    /**
+     * Pinta os botões da modalidade e abre os campos conforme a escolha:
+     *  - sem modalidade: só o aviso aparece
+     *  - Ida / Ida e volta: "Local de embarque" (a escola é o desembarque)
+     *  - Volta: "Local de desembarque" (a escola é o embarque)
+     */
     private fun atualizarModalidade() {
         pintar(btnIda, modalidadeSelecionada == "IDA")
         pintar(btnVolta, modalidadeSelecionada == "VOLTA")
         pintar(btnIdaVolta, modalidadeSelecionada == "IDA_E_VOLTA")
+
+        val modalidade = modalidadeSelecionada
+
+        txtAvisoModalidade.visibility =
+            if (modalidade == null) View.VISIBLE else View.GONE
+
+        containerCamposRota.visibility =
+            if (modalidade == null) View.GONE else View.VISIBLE
+
+        if (modalidade == null) {
+            return
+        }
+
+        when (modalidade) {
+            "VOLTA" -> {
+                txtTituloLocal.text = "Local de desembarque"
+                txtExplicacaoLocal.text =
+                    "Onde o aluno é deixado na volta da escola."
+            }
+
+            "IDA" -> {
+                txtTituloLocal.text = "Local de embarque"
+                txtExplicacaoLocal.text =
+                    "Onde o aluno é buscado para ir à escola."
+            }
+
+            else -> {
+                txtTituloLocal.text = "Local de embarque"
+                txtExplicacaoLocal.text =
+                    "Onde o aluno é buscado na ida e deixado na volta."
+            }
+        }
     }
 }

@@ -183,6 +183,20 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- AVISO: os campos abaixo vão aparecendo conforme o sentido escolhido -->
+            <TextView
+                android:id="@+id/txtAvisoSentido"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_aviso_info"
+                android:lineSpacingExtra="3dp"
+                android:padding="14dp"
+                android:text="Antes de definir a rota, selecione o sentido (Ida, Volta ou Ida e volta). Os próximos campos vão aparecendo conforme a sua escolha."
+                android:textColor="@color/dark_gray"
+                android:textSize="13sp"
+                tools:ignore="HardcodedText" />
+
             <!-- PONTO DA ROTA: o nome e a explicação mudam conforme o sentido (Ida / Volta / Ida e volta) -->
             <LinearLayout
                 android:id="@+id/containerPonto"

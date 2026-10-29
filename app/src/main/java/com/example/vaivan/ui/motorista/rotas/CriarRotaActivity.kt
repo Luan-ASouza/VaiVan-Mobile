@@ -51,6 +51,7 @@ class CriarRotaActivity : AppCompatActivity() {
     private var origemLongitude: Double? = null
     private lateinit var txtOrigemAtual: TextView
     private lateinit var containerPonto: View
+    private lateinit var txtAvisoSentido: TextView
     private lateinit var txtTituloPonto: TextView
     private lateinit var txtExplicacaoPonto: TextView
     private lateinit var txtResumoSentido: TextView
@@ -86,6 +87,7 @@ class CriarRotaActivity : AppCompatActivity() {
         txtDestinoAtual = findViewById(R.id.txtDestinoAtual)
         txtOrigemAtual = findViewById(R.id.txtOrigemAtual)
         containerPonto = findViewById(R.id.containerPonto)
+        txtAvisoSentido = findViewById(R.id.txtAvisoSentido)
         txtTituloPonto = findViewById(R.id.txtTituloPonto)
         txtExplicacaoPonto = findViewById(R.id.txtExplicacaoPonto)
         txtResumoSentido = findViewById(R.id.txtResumoSentido)
@@ -169,6 +171,9 @@ class CriarRotaActivity : AppCompatActivity() {
     private fun atualizarCamposDoPonto() {
 
         val tipo = tipoTrajetoSelecionado
+
+        // O aviso só aparece enquanto o sentido ainda não foi escolhido
+        txtAvisoSentido.visibility = if (tipo == null) View.VISIBLE else View.GONE
 
         if (tipo == null) {
             containerPonto.visibility = View.GONE

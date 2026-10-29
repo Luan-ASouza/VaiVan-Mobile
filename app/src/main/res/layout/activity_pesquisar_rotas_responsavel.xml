@@ -79,9 +79,44 @@
                         android:textStyle="bold"/>
                 </LinearLayout>
 
+                <!-- ESCOLA (agora é o primeiro campo: abre a busca de escolas) -->
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Escola"
+                    android:textColor="@color/dark_gray"
+                    android:textStyle="bold"/>
 
-                <!-- EMBARQUE -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutEscola"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:hint="Buscar escola pelo nome"
+                    android:textColorHint="@color/dark_gray"
+                    app:boxBackgroundColor="@color/white">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/edtEscola"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:cursorVisible="false"
+                        android:clickable="true"
+                        android:minHeight="48dp"
+                        android:textColorHint="@color/dark_gray"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="14sp"
+                        tools:ignore="TextFields"
+                        android:popupBackground="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- MODALIDADE -->
 
                 <TextView
                     android:id="@+id/textView3"
@@ -132,247 +167,244 @@
 
                 </LinearLayout>
 
-                <!-- LOCAL DE EMBARQUE -->
+                <!-- AVISO: os campos abaixo vão aparecendo conforme a modalidade escolhida -->
+
                 <TextView
+                    android:id="@+id/txtAvisoModalidade"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Local de embarque"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_aviso_info"
+                    android:lineSpacingExtra="3dp"
+                    android:padding="14dp"
+                    android:text="Antes de definir a sua rota, selecione a modalidade (Ida, Volta ou Ida e Volta). Os próximos campos vão aparecendo conforme a sua escolha."
                     android:textColor="@color/dark_gray"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
+                    android:textSize="13sp"
                     tools:ignore="HardcodedText" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/layoutLocal"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                <!-- CAMPOS QUE SÓ APARECEM DEPOIS DE ESCOLHER A MODALIDADE -->
+
+                <LinearLayout
+                    android:id="@+id/containerCamposRota"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:hint="Selecione um local"
-                    android:textColorHint="@color/dark_gray"
-                    app:boxBackgroundColor="@color/white">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                    <AutoCompleteTextView
-                        android:id="@+id/edtEmbarque"
+                    <!-- LOCAL (o nome muda: embarque na Ida / desembarque na Volta) -->
+                    <TextView
+                        android:id="@+id/txtTituloLocal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:focusable="false"
-                        android:cursorVisible="false"
-                        android:clickable="true"
-                        android:textColorHint="@color/dark_gray"
-                        android:minHeight="48dp"
-                        android:paddingHorizontal="12dp"
+                        android:layout_marginTop="20dp"
+                        android:text="Local de embarque"
                         android:textColor="@color/dark_gray"
                         android:textSize="14sp"
-                        tools:ignore="TextFields"
-                        android:popupBackground="@color/white"/>
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
 
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- ADICIONAR NOVO LOCAL -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAdicionarNovoLocal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:layout_marginTop="2dp"
-                    android:paddingHorizontal="0dp"
-                    android:text="+ Adicionar novo local"
-                    android:textAllCaps="false"
-                    android:textColor="@color/orange"
-                    android:backgroundTint="@android:color/transparent"
-                    app:backgroundTint="@android:color/transparent"
-                    app:icon="@drawable/ic_adicionar_localizacao"
-                    app:iconTint="@color/orange"
-                    app:iconGravity="textStart"
-                    app:iconPadding="6dp"
-                    tools:ignore="HardcodedText" />
-
-
-                <!-- DESEMBARQUE -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Escola"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold"/>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/layoutEscola"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:hint="Selecione uma Escola"
-                    android:textColorHint="@color/dark_gray"
-                    app:boxBackgroundColor="@color/white">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/edtEscola"
+                    <TextView
+                        android:id="@+id/txtExplicacaoLocal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:focusable="false"
-                        android:cursorVisible="false"
-                        android:clickable="true"
-                        android:minHeight="48dp"
+                        android:layout_marginTop="2dp"
+                        android:textColor="#707070"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutLocal"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:hint="Selecione um local"
                         android:textColorHint="@color/dark_gray"
-                        android:paddingHorizontal="12dp"
+                        app:boxBackgroundColor="@color/white">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/edtEmbarque"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:cursorVisible="false"
+                            android:clickable="true"
+                            android:textColorHint="@color/dark_gray"
+                            android:minHeight="48dp"
+                            android:paddingHorizontal="12dp"
+                            android:textColor="@color/dark_gray"
+                            android:textSize="14sp"
+                            tools:ignore="TextFields"
+                            android:popupBackground="@color/white"/>
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- ADICIONAR NOVO LOCAL -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAdicionarNovoLocal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:layout_marginTop="2dp"
+                        android:paddingHorizontal="0dp"
+                        android:text="+ Adicionar novo local"
+                        android:textAllCaps="false"
+                        android:textColor="@color/orange"
+                        android:backgroundTint="@android:color/transparent"
+                        app:backgroundTint="@android:color/transparent"
+                        app:icon="@drawable/ic_adicionar_localizacao"
+                        app:iconTint="@color/orange"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        tools:ignore="HardcodedText" />
+
+                    <!-- TURNO -->
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="Turno"
                         android:textColor="@color/dark_gray"
-                        android:textSize="14sp"
-                        tools:ignore="TextFields"
-                        android:popupBackground="@color/white"/>
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:textStyle="bold"/>
 
-                <!-- TURNO -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Turno"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnManha"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:text="Manhã"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal"
+                        android:gravity="center">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnTarde"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:text="Tarde"
-                        android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnManha"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="Manhã"
+                            android:textAllCaps="false"
+                            app:backgroundTint="@color/dark_gray"/>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnNoite"
-                        android:layout_width="0dp"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTarde"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="Tarde"
+                            android:textAllCaps="false"
+                            app:backgroundTint="@color/dark_gray"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnNoite"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Noite"
+                            android:textAllCaps="false"
+                            app:backgroundTint="@color/dark_gray"/>
+
+                    </LinearLayout>
+
+                    <!-- DIAS -->
+
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Noite"
+                        android:layout_marginTop="20dp"
+                        android:text="Dias da Semana"
+                        android:textColor="@color/dark_gray"
+                        android:textStyle="bold"/>
+
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:weightSum="7">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDomingo"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="D" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSegunda"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="S" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTerca"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="T" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnQuarta"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="Q" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnQuinta"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="Q" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSexta"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="S" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSabado"
+                            style="@style/DiaSemanaButton"
+                            android:layout_weight="1"
+                            android:text="S" />
+
+                    </LinearLayout>
+
+                    <!-- HORÁRIO -->
+
+                    <!-- BOTÃO PESQUISAR -->
+
+                    <Button
+                        android:id="@+id/btnPesquisarRotas"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:backgroundTint="@color/orange"
+                        android:text="Pesquisar"
                         android:textAllCaps="false"
-                        app:backgroundTint="@color/dark_gray"/>
+                        android:textColor="@android:color/white"
+                        tools:ignore="HardcodedText" />
+
+                    <!-- RESULTADOS (sobra antiga: os resultados agora abrem em tela própria) -->
+
+                    <LinearLayout
+                        android:id="@+id/containerResultadosRotas"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/txtSemResultados"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:text="Nenhuma rota encontrada."
+                        android:textColor="#707070"
+                        android:visibility="gone"
+                        tools:ignore="HardcodedText" />
 
                 </LinearLayout>
-
-                <!-- DIAS -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Dias da Semana"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold"/>
-
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:weightSum="7">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnDomingo"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="D" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSegunda"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="S" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnTerca"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="T" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnQuarta"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="Q" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnQuinta"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="Q" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSexta"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="S" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSabado"
-                        style="@style/DiaSemanaButton"
-                        android:layout_weight="1"
-                        android:text="S" />
-
-                </LinearLayout>
-
-                <!-- HORÁRIO -->
-
-                <!-- BOTÃO PESQUISAR -->
-
-                <Button
-                    android:id="@+id/btnPesquisarRotas"
-                    android:layout_width="match_parent"
-                    android:layout_height="46dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:backgroundTint="@color/orange"
-                    android:text="Pesquisar"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    tools:ignore="HardcodedText" />
-
-                <!-- RESULTADOS -->
-
-                <LinearLayout
-                    android:id="@+id/containerResultadosRotas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-
-                <TextView
-                    android:id="@+id/txtSemResultados"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="Nenhuma rota encontrada."
-                    android:textColor="#707070"
-                    android:visibility="gone"
-                    tools:ignore="HardcodedText" />
 
             </LinearLayout>
 
