@@ -15,22 +15,6 @@ class VerificarProgressoDocumentos(
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    companion object {
-        const val TIPO_CNH_FRENTE = "CNH_FRENTE"
-        const val TIPO_CNH_VERSO = "CNH_VERSO"
-        const val TIPO_CNH_DIGITAL = "CNH_DIGITAL_PDF"
-        const val TIPO_COMPROVANTE = "COMPROVANTE_RESIDENCIA"
-
-        const val ANALISE = "EM_ANALISE"
-        const val APROVADO = "APROVADO"
-        const val REJEITADO = "REJEITADO"
-
-        fun idDoDocumento(
-            uid: String,
-            tipo: String
-        ) = "${uid}_$tipo"
-    }
-
     fun verificar() {
 
         val uid = auth.currentUser?.uid

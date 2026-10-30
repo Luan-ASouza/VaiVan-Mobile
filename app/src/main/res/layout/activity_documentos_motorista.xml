@@ -7,13 +7,18 @@
     android:background="#FFFFFF"
     android:orientation="vertical">
 
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"/>
+
     <!-- CABEÇALHO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="24dp"
+        android:paddingStart="10dp"
         android:paddingEnd="24dp">
 
         <ImageButton
@@ -22,7 +27,6 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Voltar"
-            android:padding="12dp"
             android:src="@drawable/ic_arrowback"
             app:tint="#202124" />
 
@@ -43,54 +47,6 @@
 
     </LinearLayout>
 
-    <!-- PROGRESSO -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="5dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="28dp"
-        android:layout_marginEnd="24dp"
-        android:orientation="horizontal">
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:backgroundTint="#F6B12F"
-            android:background="@android:drawable/progress_horizontal" />
-
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="1dp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="#F6B12F" />
-
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="1dp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="#F6B12F" />
-
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="1dp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0.2"
-            android:background="#EEEEEE" />
-
-    </LinearLayout>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -101,9 +57,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="24dp"
+            android:paddingHorizontal="24dp"
             android:paddingTop="48dp"
-            android:paddingEnd="24dp"
             android:paddingBottom="32dp">
 
             <!-- TÍTULO -->
@@ -296,7 +251,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="64dp"
+                android:layout_marginTop="30dp"
                 android:text="Dicas"
                 android:textColor="#929292"
                 android:textSize="16sp" />
@@ -313,13 +268,9 @@
 
     </ScrollView>
 
-    <ProgressBar
-        android:id="@+id/progressDocumentos"
-        style="?android:attr/progressBarStyleHorizontal"
+    <View
+        android:id="@+id/bottomGap"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:indeterminate="true"
-        android:indeterminateTint="#F6B12F"
-        android:visibility="gone" />
+        android:layout_height="30dp"/>
 
 </LinearLayout>

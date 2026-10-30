@@ -15,6 +15,7 @@ composeBom = "2024.09.00"
 materialVersion = "1.14.0"
 navigationFragmentKtx = "2.10.1"
 navigationUiKtx = "2.10.1"
+cameraView = "1.6.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,6 +39,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

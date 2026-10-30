@@ -547,14 +547,14 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         ).format(Date())
 
         val documento = DocumentoEntity(
-            "",
-            tipo,
-            url,
-            data,
-            STATUS_DOCUMENTO,
-            motoristaId,
-            veiculoId,
-            0L
+            id = "",
+            tipo = tipo,
+            arquivo = url,
+            dataEnvio = data,
+            statusValidacao = STATUS_DOCUMENTO,
+            motoristaId = motoristaId,
+            veiculoId = veiculoId,
+            lastUpdated = 0L
         )
 
         documentoRepository.salvarAsync(

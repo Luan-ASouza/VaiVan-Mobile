@@ -12,9 +12,14 @@ data class DocumentoEntity(
     @PrimaryKey val id: String = "",
     val tipo: String = "",
     val arquivo: String = "",
+    val arquivoVerso: String? = null,
+    val modalidadeCnh: String? = null,
     val dataEnvio: String = "",
     val statusValidacao: String = "",
+    val motivoRejeicao: String? = null,
+    val analisadoEm: Long? = null,
+    val analisadoPor: String? = null,
     val motoristaId: String = "",
-    val veiculoId: String = "",   // <-- NOVO CAMPO
+    val veiculoId: String = "",
     val lastUpdated: Long = 0L
 )

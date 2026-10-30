@@ -13,15 +13,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.DocumentoRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
-import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,8 +31,7 @@ import java.util.Locale
 class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
-    private lateinit var storage: FirebaseStorage
+    private lateinit var documentoRepository: DocumentoRepository
     private lateinit var btnSelecionar: View
     private lateinit var itemArquivo: View
     private lateinit var btnContinuar: MaterialButton
@@ -74,8 +74,7 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         setContentView(R.layout.activity_envio_comprovante_residencia)
 
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
-        storage = FirebaseStorage.getInstance()
+        documentoRepository = DocumentoRepository(VaivanDatabase.getInstance(this).documentoDao())
 
         btnSelecionar = findViewById(R.id.btnSelecionarComprovante)
         itemArquivo = findViewById(R.id.itemComprovante)
@@ -149,9 +148,6 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         enviarParaStorage(uri)
     }
 
-    private fun referenciaStorage(userId: String, nome: String) =
-        storage.reference.child("documentos/ComprovanteResidencia/$userId/$nome")
-
     private fun enviarParaStorage(uri: Uri) {
         val userId = auth.currentUser?.uid
         if (userId == null) {
@@ -163,16 +159,9 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
             return
         }
 
-        val extensao = when (mimeType) {
-            "application/pdf" -> "pdf"
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-        val nomeStorage = "comprovante_${System.currentTimeMillis()}.$extensao"
-        val referencia = referenciaStorage(userId, nomeStorage)
-        val metadata = StorageMetadata.Builder().setContentType(mimeType).build()
-        val tarefa = referencia.putFile(uri, metadata)
+        val upload = documentoRepository.iniciarUploadComprovante(userId, uri, mimeType)
+        val referencia = upload.referencia
+        val tarefa = upload.tarefa
         uploadAtual = tarefa
 
         tarefa.addOnProgressListener { snapshot ->
@@ -263,6 +252,7 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
     private fun excluirArquivo() {
         if (salvando) return
         val urlAnterior = urlArquivo
+        val mimeTypeAnterior = mimeType
         val tarefaAnterior = uploadAtual
         uploadAtual = null
         tarefaAnterior?.cancel()
@@ -280,15 +270,15 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
 
         // Exclui somente o objeto enviado nesta seleção. Não remove o registro
         // do Firestore porque ele só é confirmado ao tocar em Continuar.
-        if (urlAnterior != null) {
-            try {
-                storage.getReferenceFromUrl(urlAnterior).delete()
-                    .addOnFailureListener { erro ->
-                        Log.e("EnvioComprovante", "Falha ao excluir do Storage", erro)
-                        txtStatus.text = "Arquivo removido da tela, mas falhou a exclusão no Storage."
-                    }
-            } catch (e: Exception) {
-                Log.e("EnvioComprovante", "URL inválida para exclusão", e)
+        val userId = auth.currentUser?.uid
+        if (urlAnterior != null && userId != null) {
+            lifecycleScope.launch {
+                try {
+                    documentoRepository.excluirArquivoComprovante(userId, mimeTypeAnterior)
+                } catch (erro: Exception) {
+                    Log.e("EnvioComprovante", "Falha ao excluir do Storage", erro)
+                    txtStatus.text = "Arquivo removido da tela, mas falhou a exclusão no Storage."
+                }
             }
         }
     }
@@ -309,38 +299,21 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         desenharArquivo()
         atualizarContinuar()
 
-        val dados = mapOf(
-            "tipo" to VerificarProgressoDocumentos.TIPO_COMPROVANTE,
-            "arquivo" to url,
-            "nomeArquivo" to nomeArquivo,
-            "contentType" to mimeType,
-            "dataEnvio" to SimpleDateFormat(
-                "dd/MM/yyyy HH:mm",
-                Locale("pt", "BR")
-            ).format(Date()),
-            "statusValidacao" to VerificarProgressoDocumentos.ANALISE,
-            "motoristaId" to userId,
-            "veiculoId" to ""
-        )
+        val dataEnvio = SimpleDateFormat(
+            "dd/MM/yyyy HH:mm",
+            Locale("pt", "BR")
+        ).format(Date())
 
-        val idDocumento = VerificarProgressoDocumentos.idDoDocumento(
-            userId,
-            VerificarProgressoDocumentos.TIPO_COMPROVANTE
-        )
-
-        val referenciaDocumento = db.collection("documentos")
-            .document(idDocumento)
-
-        referenciaDocumento.set(dados)
-            .addOnSuccessListener {
+        lifecycleScope.launch {
+            try {
+                documentoRepository.salvarComprovante(userId, url, dataEnvio)
 
                 txtStatus.text = "Comprovante registrado com sucesso."
 
-                VerificarProgressoDocumentos(this).verificar()
+                VerificarProgressoDocumentos(this@EnvioComprovanteResidenciaActivity).verificar()
 
                 finish()
-            }
-            .addOnFailureListener { erro ->
+            } catch (erro: Exception) {
 
                 Log.e(
                     "EnvioComprovante",
@@ -356,6 +329,7 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
                 desenharArquivo()
                 atualizarContinuar()
             }
+        }
     }
 
     private fun nomeDoArquivo(uri: Uri): String {

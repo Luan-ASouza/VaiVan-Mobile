@@ -6,21 +6,25 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
+import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.local.entities.DocumentoEntity
+import com.example.vaivan.data.models.StatusDocumento
+import com.example.vaivan.data.repository.DocumentoRepository
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.DocumentSnapshot
+import kotlinx.coroutines.launch
 
 class DocumentosMotoristaActivity : AppCompatActivity() {
 
     private val auth = FirebaseAuth.getInstance()
-    private val firestore = FirebaseFirestore.getInstance()
+    private lateinit var documentoRepository: DocumentoRepository
 
     private lateinit var itemCnh: LinearLayout
     private lateinit var itemComprovante: LinearLayout
@@ -34,35 +38,22 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
     private lateinit var iconeComprovante: ImageView
     private lateinit var iconeFoto: ImageView
 
-    private lateinit var progressDocumentos: ProgressBar
-
-    private var listenerDocumentos: ListenerRegistration? = null
-
-    private enum class StatusDocumento {
-        PENDENTE,
-        EM_ANALISE,
-        APROVADO,
-        REJEITADO
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_documentos_motorista)
 
+        documentoRepository = DocumentoRepository(VaivanDatabase.getInstance(this).documentoDao())
+
         inicializarViews()
         configurarCliques()
-    }
-
-    override fun onStart() {
-        super.onStart()
         observarDocumentos()
+
+        applyTopAndBottomGaps(findViewById(android.R.id.content))
     }
 
     override fun onStop() {
-        listenerDocumentos?.remove()
-        listenerDocumentos = null
-
+        documentoRepository.pararSincronizacao()
         super.onStop()
     }
 
@@ -79,8 +70,6 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
         iconeCnh = findViewById(R.id.iconeCnh)
         iconeComprovante = findViewById(R.id.iconeComprovante)
         iconeFoto = findViewById(R.id.iconeFoto)
-
-        progressDocumentos = findViewById(R.id.progressDocumentos)
     }
 
     private fun configurarCliques() {
@@ -111,7 +100,7 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
 
         itemFoto.setOnClickListener {
             startActivity(
-                Intent(this, VerificacaoFacialActivity::class.java)
+                Intent(this, CapturaSelfieActivity::class.java)
             )
         }
     }
@@ -130,192 +119,36 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
             return
         }
 
-        listenerDocumentos?.remove()
+        documentoRepository.iniciarSincronizacao()
 
-        progressDocumentos.visibility = View.VISIBLE
-
-        listenerDocumentos = firestore
-            .collection("documentos")
-            .whereEqualTo("motoristaId", motoristaId)
-            .addSnapshotListener { snapshot, erro ->
-
-                progressDocumentos.visibility = View.GONE
-
-                if (erro != null) {
-                    Toast.makeText(
-                        this,
-                        "Não foi possível consultar os documentos.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null) {
-                    atualizarDocumentos(snapshot)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                documentoRepository.observarPorMotorista(motoristaId).collect { documentos ->
+                    atualizarDocumentos(documentos)
                 }
             }
-    }
-
-    private fun atualizarDocumentos(snapshot: QuerySnapshot) {
-
-        val documentos = snapshot.documents
-
-        // CNH
-        val frente = documentos.find {
-            it.getString("tipo") == "CNH_FRENTE"
-        }
-
-        val verso = documentos.find {
-            it.getString("tipo") == "CNH_VERSO"
-        }
-
-        val digital = documentos.find {
-            it.getString("tipo") == "CNH_DIGITAL_PDF"
-        }
-
-        val statusCnh = calcularStatusCnh(
-            frente,
-            verso,
-            digital
-        )
-
-        atualizarStatusVisual(
-            txtStatusCnh,
-            iconeCnh,
-            statusCnh
-        )
-
-        // Comprovante de residência
-        val documentosComprovante = documentos.filter {
-            it.getString("tipo") == "COMPROVANTE_RESIDENCIA"
-        }
-
-        val statusComprovante = calcularStatusGrupo(documentosComprovante)
-
-        atualizarStatusVisual(
-            txtStatusComprovante,
-            iconeComprovante,
-            statusComprovante
-        )
-
-        // FOTO / VERIFICAÇÃO FACIAL
-        val documentosFoto = documentos.filter {
-            it.getString("tipo") in listOf(
-                "FOTO_MOTORISTA",
-                "FOTO",
-                "FACIAL",
-                "VERIFICACAO_FACIAL"
-            )
-        }
-
-        val statusFoto = calcularStatusGrupo(documentosFoto)
-
-        atualizarStatusVisual(
-            txtStatusFoto,
-            iconeFoto,
-            statusFoto
-        )
-    }
-
-    private fun calcularStatusCnh(
-        frente: DocumentSnapshot?,
-        verso: DocumentSnapshot?,
-        digital: DocumentSnapshot?
-    ): StatusDocumento {
-
-        // CNH digital em PDF
-        if (digital != null) {
-            return lerStatus(digital)
-        }
-
-        // Nenhum documento enviado
-        if (frente == null && verso == null) {
-            return StatusDocumento.PENDENTE
-        }
-
-        // Apenas um lado enviado
-        if (frente == null || verso == null) {
-            return StatusDocumento.PENDENTE
-        }
-
-        val statusFrente = lerStatus(frente)
-        val statusVerso = lerStatus(verso)
-
-        if (
-            statusFrente == StatusDocumento.REJEITADO ||
-            statusVerso == StatusDocumento.REJEITADO
-        ) {
-            return StatusDocumento.REJEITADO
-        }
-
-        if (
-            statusFrente == StatusDocumento.APROVADO &&
-            statusVerso == StatusDocumento.APROVADO
-        ) {
-            return StatusDocumento.APROVADO
-        }
-
-        if (
-            statusFrente == StatusDocumento.PENDENTE ||
-            statusVerso == StatusDocumento.PENDENTE
-        ) {
-            return StatusDocumento.PENDENTE
-        }
-
-        return StatusDocumento.EM_ANALISE
-    }
-
-    private fun calcularStatusGrupo(
-        documentos: List<DocumentSnapshot>
-    ): StatusDocumento {
-
-        if (documentos.isEmpty()) {
-            return StatusDocumento.PENDENTE
-        }
-
-        val status = documentos.map { lerStatus(it) }
-
-        return when {
-            status.any {
-                it == StatusDocumento.REJEITADO
-            } -> StatusDocumento.REJEITADO
-
-            status.all {
-                it == StatusDocumento.APROVADO
-            } -> StatusDocumento.APROVADO
-
-            status.any {
-                it == StatusDocumento.EM_ANALISE
-            } -> StatusDocumento.EM_ANALISE
-
-            else -> StatusDocumento.PENDENTE
         }
     }
 
-    private fun lerStatus(
-        documento: DocumentSnapshot
-    ): StatusDocumento {
+    private fun atualizarDocumentos(documentos: List<DocumentoEntity>) {
 
-        val valor = (
-                documento.getString("statusValidacao")
-                    ?: documento.getString("status")
-                    ?: "PENDENTE"
-                ).uppercase()
+        val cnh = documentos.find { it.tipo == DocumentoRepository.TIPO_CNH }
+        val statusCnh = cnh?.let { StatusDocumento.fromString(it.statusValidacao) }
+            ?: StatusDocumento.NAO_ENVIADO
 
-        return when (valor) {
+        atualizarStatusVisual(txtStatusCnh, iconeCnh, statusCnh)
 
-            "APROVADO", "APROVADA", "ATIVO" ->
-                StatusDocumento.APROVADO
+        val comprovante = documentos.find { it.tipo == DocumentoRepository.TIPO_COMPROVANTE_RESIDENCIA }
+        val statusComprovante = comprovante?.let { StatusDocumento.fromString(it.statusValidacao) }
+            ?: StatusDocumento.NAO_ENVIADO
 
-            "EM_ANALISE", "ANALISE", "ENVIADO" ->
-                StatusDocumento.EM_ANALISE
+        atualizarStatusVisual(txtStatusComprovante, iconeComprovante, statusComprovante)
 
-            "REJEITADO", "REPROVADO", "REPROVADA" ->
-                StatusDocumento.REJEITADO
+        val selfie = documentos.find { it.tipo == DocumentoRepository.TIPO_SELFIE }
+        val statusSelfie = selfie?.let { StatusDocumento.fromString(it.statusValidacao) }
+            ?: StatusDocumento.NAO_ENVIADO
 
-            else ->
-                StatusDocumento.PENDENTE
-        }
+        atualizarStatusVisual(txtStatusFoto, iconeFoto, statusSelfie)
     }
 
     private fun atualizarStatusVisual(
@@ -326,7 +159,7 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
 
         when (status) {
 
-            StatusDocumento.PENDENTE -> {
+            StatusDocumento.NAO_ENVIADO, StatusDocumento.PENDENTE -> {
 
             }
 

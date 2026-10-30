@@ -3,6 +3,7 @@ package com.example.vaivan.core
 import android.app.Application
 import com.example.vaivan.core.sync.SyncManager
 import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 
@@ -26,10 +27,16 @@ class VaiVanApplication : Application() {
                 database.passageiroDao()
             )
 
+        val documentoRepository =
+            DocumentoRepository(
+                database.documentoDao()
+            )
+
         syncManager =
             SyncManager(
                 usuarioRepository,
-                passageiroRepository
+                passageiroRepository,
+                documentoRepository
             )
 
         syncManager.iniciar()

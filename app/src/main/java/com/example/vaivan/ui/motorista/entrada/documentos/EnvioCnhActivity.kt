@@ -16,15 +16,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.DocumentoRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
-import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -33,8 +34,7 @@ import java.util.Locale
 class EnvioCnhActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
-    private lateinit var storage: FirebaseStorage
+    private lateinit var documentoRepository: DocumentoRepository
 
     private lateinit var grupoTipo: RadioGroup
     private lateinit var secaoFisica: View
@@ -56,7 +56,6 @@ class EnvioCnhActivity : AppCompatActivity() {
 
     private data class ArquivoCnh(
         val slot: String,
-        val tipoDocumento: String,
         val view: View,
         var uri: Uri? = null,
         var nome: String = "",
@@ -157,8 +156,7 @@ class EnvioCnhActivity : AppCompatActivity() {
 
 
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
-        storage = FirebaseStorage.getInstance()
+        documentoRepository = DocumentoRepository(VaivanDatabase.getInstance(this).documentoDao())
 
         grupoTipo = findViewById(R.id.grupoTipoCnh)
         secaoFisica = findViewById(R.id.secaoCnhFisica)
@@ -166,21 +164,9 @@ class EnvioCnhActivity : AppCompatActivity() {
         btnContinuar = findViewById(R.id.btnEnviarContinuarCnh)
         txtStatusGeral = findViewById(R.id.txtStatusGeral)
 
-        configurarArquivo(
-            "FRENTE_FISICA",
-            R.id.itemFrenteFisica,
-            VerificarProgressoDocumentos.TIPO_CNH_FRENTE
-        )
-        configurarArquivo(
-            "VERSO_FISICA",
-            R.id.itemVersoFisica,
-            VerificarProgressoDocumentos.TIPO_CNH_VERSO
-        )
-        configurarArquivo(
-            "PDF_DIGITAL",
-            R.id.itemPdfDigital,
-            TIPO_CNH_DIGITAL_PDF
-        )
+        configurarArquivo("FRENTE_FISICA", R.id.itemFrenteFisica)
+        configurarArquivo("VERSO_FISICA", R.id.itemVersoFisica)
+        configurarArquivo("PDF_DIGITAL", R.id.itemPdfDigital)
 
         findViewById<LinearLayout>(R.id.btnEnviarFrente)
             .setOnClickListener {
@@ -228,13 +214,11 @@ class EnvioCnhActivity : AppCompatActivity() {
 
     private fun configurarArquivo(
         slot: String,
-        idView: Int,
-        tipoDocumento: String
+        idView: Int
     ) {
         val item = findViewById<View>(idView)
         arquivos[slot] = ArquivoCnh(
             slot = slot,
-            tipoDocumento = tipoDocumento,
             view = item
         )
     }
@@ -307,26 +291,14 @@ class EnvioCnhActivity : AppCompatActivity() {
             return
         }
 
-        val extensao = when (arquivo.mimeType) {
-            "application/pdf" -> "pdf"
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val nomeStorage = when (arquivo.slot) {
-            "FRENTE_FISICA", "FRENTE_DIGITAL" -> "frente"
-            "VERSO_FISICA", "VERSO_DIGITAL" -> "verso"
-            else -> "digital"
-        } + ".$extensao"
-
-        val referencia = referenciaStorage(arquivo, userId)
-
-        val metadata = StorageMetadata.Builder()
-            .setContentType(arquivo.mimeType)
-            .build()
-
-        val tarefa = referencia.putFile(arquivo.uri!!, metadata)
+        val upload = documentoRepository.iniciarUploadCnh(
+            userId,
+            slotStorage(arquivo.slot),
+            arquivo.uri!!,
+            arquivo.mimeType
+        )
+        val referencia = upload.referencia
+        val tarefa = upload.tarefa
         uploads[arquivo.slot] = tarefa
 
         tarefa.addOnProgressListener { snapshot ->
@@ -519,52 +491,40 @@ class EnvioCnhActivity : AppCompatActivity() {
         salvando = true
         atualizarContinuar()
 
-        val batch = db.batch()
         val dataEnvio = SimpleDateFormat(
             "dd/MM/yyyy HH:mm",
             Locale("pt", "BR")
         ).format(Date())
 
-        selecionados.forEach { arquivo ->
-            val referencia = db.collection("documentos")
-                .document(
-                    if (arquivo.slot == "PDF_DIGITAL") {
-                        "${userId}_CNH_DIGITAL_PDF"
-                    } else {
-                        VerificarProgressoDocumentos.idDoDocumento(
-                            userId,
-                            arquivo.tipoDocumento
-                        )
-                    }
-                )
+        lifecycleScope.launch {
+            try {
+                if (tipoSelecionado == TIPO_FISICA) {
+                    val frente = selecionados.first { it.slot == "FRENTE_FISICA" }
+                    val verso = selecionados.first { it.slot == "VERSO_FISICA" }
+                    documentoRepository.salvarCnhFisica(
+                        userId,
+                        frente.url!!,
+                        verso.url!!,
+                        dataEnvio
+                    )
+                } else {
+                    val digital = selecionados.first { it.slot == "PDF_DIGITAL" }
+                    documentoRepository.salvarCnhDigital(
+                        userId,
+                        digital.url!!,
+                        dataEnvio
+                    )
+                }
 
-            batch.set(
-                referencia,
-                mapOf(
-                    "tipo" to arquivo.tipoDocumento,
-                    "arquivo" to arquivo.url,
-                    "nomeArquivo" to arquivo.nome,
-                    "contentType" to arquivo.mimeType,
-                    "dataEnvio" to dataEnvio,
-                    "statusValidacao" to VerificarProgressoDocumentos.ANALISE,
-                    "motoristaId" to userId,
-                    "veiculoId" to "",
-                    "modalidadeCnh" to tipoSelecionado
-                )
-            )
-        }
-
-        batch.commit()
-            .addOnSuccessListener {
-                VerificarProgressoDocumentos(this).verificar()
+                VerificarProgressoDocumentos(this@EnvioCnhActivity).verificar()
                 finish()
-            }
-            .addOnFailureListener {
+            } catch (erro: Exception) {
                 salvando = false
                 txtStatusGeral.text =
                     "Não foi possível registrar os documentos. Tente novamente."
                 atualizarContinuar()
             }
+        }
     }
 
     private fun configurarBotaoExcluir(arquivo: ArquivoCnh) {
@@ -607,9 +567,8 @@ class EnvioCnhActivity : AppCompatActivity() {
             return
         }
 
-        // Monta o caminho antes de limpar os dados.
-        val referencia = referenciaStorage(arquivo, userId)
         val urlAnterior = arquivo.url
+        val mimeTypeAnterior = arquivo.mimeType
         val tarefa = uploads.remove(arquivo.slot)
 
         // Cancela eventual upload em andamento.
@@ -626,17 +585,22 @@ class EnvioCnhActivity : AppCompatActivity() {
         desenharArquivo(arquivo)
         atualizarContinuar()
 
-        referencia.delete()
-            .addOnSuccessListener {
-                if (urlAnterior != null) {
-                    excluirRegistroFirestore(arquivo, userId) {
-                        txtStatusGeral.text = "Arquivo excluído com sucesso."
-                    }
-                } else {
-                    txtStatusGeral.text = "Arquivo removido."
-                }
-            }
-            .addOnFailureListener { erro ->
+        // Só remove o objeto do Storage. O documento "CNH" no Firestore só é
+        // confirmado/sobrescrito ao tocar em Continuar (mesmo critério do comprovante).
+        if (urlAnterior == null) {
+            txtStatusGeral.text = "Arquivo removido."
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                documentoRepository.excluirArquivoCnh(
+                    userId,
+                    slotStorage(arquivo.slot),
+                    mimeTypeAnterior
+                )
+                txtStatusGeral.text = "Arquivo excluído com sucesso."
+            } catch (erro: Exception) {
                 Log.e(
                     "EnvioCNH",
                     "Erro ao excluir arquivo no Storage: ${erro.message}",
@@ -657,63 +621,14 @@ class EnvioCnhActivity : AppCompatActivity() {
                         "Não foi possível excluir o arquivo. Consulte o Logcat para ver o erro."
                 }
             }
+        }
     }
 
-    private fun referenciaStorage(
-        arquivo: ArquivoCnh,
-        userId: String
-    ) = storage.reference.child(
-        "documentos/CNH/$userId/${arquivo.slot}/" +
-                nomeStorage(arquivo)
-    )
-
-    private fun nomeStorage(arquivo: ArquivoCnh): String {
-        val extensao = when (arquivo.mimeType) {
-            "application/pdf" -> "pdf"
-            "image/png" -> "png"
-            "image/webp" -> "webp"
-            else -> "jpg"
-        }
-
-        val nomeBase = when (arquivo.slot) {
-            "FRENTE_FISICA", "FRENTE_DIGITAL" -> "frente"
-            "VERSO_FISICA", "VERSO_DIGITAL" -> "verso"
-            else -> "digital"
-        }
-
-        return "$nomeBase.$extensao"
-    }
-
-    private fun excluirRegistroFirestore(
-        arquivo: ArquivoCnh,
-        userId: String,
-        aoConcluir: () -> Unit
-    ) {
-        val idDocumento = if (arquivo.slot == "PDF_DIGITAL") {
-            "${userId}_CNH_DIGITAL_PDF"
-        } else {
-            VerificarProgressoDocumentos.idDoDocumento(
-                userId,
-                arquivo.tipoDocumento
-            )
-        }
-
-        db.collection("documentos")
-            .document(idDocumento)
-            .delete()
-            .addOnSuccessListener {
-                aoConcluir()
-            }
-            .addOnFailureListener { erro ->
-                Log.e(
-                    "EnvioCNH",
-                    "Arquivo removido do Storage, mas falhou ao excluir o registro.",
-                    erro
-                )
-
-                txtStatusGeral.text =
-                    "Arquivo removido, mas não foi possível atualizar o registro no Firestore."
-            }
+    /** Mapeia o slot da UI (ex.: FRENTE_FISICA) para o slot de armazenamento usado no repository. */
+    private fun slotStorage(slot: String): String = when (slot) {
+        "FRENTE_FISICA", "FRENTE_DIGITAL" -> DocumentoRepository.SLOT_FRENTE
+        "VERSO_FISICA", "VERSO_DIGITAL" -> DocumentoRepository.SLOT_VERSO
+        else -> DocumentoRepository.SLOT_DIGITAL
     }
 
     private fun mostrarOpcoesArquivo(slot: String) {
@@ -766,8 +681,7 @@ class EnvioCnhActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TIPO_FISICA = "FISICA"
-        private const val TIPO_DIGITAL = "DIGITAL"
-        private const val TIPO_CNH_DIGITAL_PDF = "CNH_DIGITAL_PDF"
+        private const val TIPO_FISICA = DocumentoRepository.MODALIDADE_CNH_FISICA
+        private const val TIPO_DIGITAL = DocumentoRepository.MODALIDADE_CNH_DIGITAL
     }
 }

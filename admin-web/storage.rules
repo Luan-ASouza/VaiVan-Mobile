@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Documentos do motorista (CNH, comprovante de residência, ...).
+    // Caminho atual: documentos/{motoristaId}/{tipo}/{arquivo}
+    // ex.: documentos/abc123/CNH/frente.jpg, documentos/abc123/COMPROVANTE_RESIDENCIA/arquivo.pdf
+    match /documentos/{motoristaId}/{tipo}/{arquivo} {
+      allow read, write, delete: if request.auth != null
+                         && request.auth.uid == motoristaId;
+    }
+
+    // Documentos dos veículos (CRLV, autorização de transporte escolar).
+    match /documentos_veiculos/{veiculoId}/{arquivo} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

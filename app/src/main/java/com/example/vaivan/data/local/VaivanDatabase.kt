@@ -36,7 +36,7 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
         ParadaRotaEntity::class,
         SolicitacaoInclusaoEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

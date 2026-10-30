@@ -5,6 +5,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
 
     <application
         android:name=".core.VaiVanApplication"
@@ -17,9 +22,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VaiVan"
         tools:targetApi="31">
-        <activity
-            android:name=".ui.motorista.entrada.documentos.DocumentosMotoristaAprovados"
-            android:exported="false" />
         <activity
             android:name=".ui.motorista.entrada.documentos.DocumentosMotoristaActivity"
             android:exported="false" />
@@ -71,7 +73,7 @@
             android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
             android:exported="false" /> <!-- Cadastro / Documentos -->
         <activity
-            android:name=".ui.motorista.entrada.documentos.VerificacaoFacialActivity"
+            android:name=".ui.motorista.entrada.documentos.CapturaSelfieActivity"
             android:exported="false" />
         <activity
             android:name=".ui.motorista.entrada.documentos.EnvioCnhActivity"
@@ -81,9 +83,6 @@
             android:exported="false" />
         <activity
             android:name=".ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.motorista.entrada.documentos.AnaliseDocumentosActivity"
             android:exported="false" /> <!-- Rotas -->
         <activity
             android:name=".ui.motorista.rotas.CriarRotaActivity"

@@ -43,6 +43,7 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.camera.view)
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
@@ -56,6 +57,12 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
+
+    val camerax_version = "1.3.4"
+    implementation("androidx.camera:camera-core:$camerax_version")
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
 
     implementation("com.google.android.libraries.places:places:4.4.1")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
