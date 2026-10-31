@@ -25,11 +25,17 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
+import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
+import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
+import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -42,8 +48,12 @@ class RotaDetalheActivity : AppCompatActivity() {
     private lateinit var rotaId: String
 
     private lateinit var txtNomeRotaDetalhe: TextView
+    private lateinit var btnIniciarRotaDetalhe: Button
     private lateinit var btnVerMapaDetalhe: Button
     private lateinit var btnTrajetoDetalhe: Button
+
+    private var rotaCarregada: RotaEntity? = null
+    private var iniciandoViagem = false
     private lateinit var containerSolicitacoesDetalhe: LinearLayout
     private lateinit var txtSemSolicitacoesDetalhe: TextView
     private lateinit var txtAlunosConfirmadosDetalhe: TextView
@@ -108,6 +118,20 @@ class RotaDetalheActivity : AppCompatActivity() {
                 rotaRepository = rotaRepository
             )
 
+        val viagemRepository =
+            ViagemRepository(
+                viagemDao = db.viagemDao(),
+                paradaViagemDao = db.paradaViagemDao(),
+                eventoViagemDao = db.eventoViagemDao()
+            )
+
+        val iniciarViagemUseCase =
+            IniciarViagemUseCase(
+                rotaRepository = rotaRepository,
+                passageiroRepository = PassageiroRepository(db.passageiroDao()),
+                viagemRepository = viagemRepository
+            )
+
         ViewModelProvider(
             this,
             object : ViewModelProvider.Factory {
@@ -123,7 +147,9 @@ class RotaDetalheActivity : AppCompatActivity() {
                         solicitacaoRepository =
                             solicitacaoRepository,
                         aceitarSolicitacaoUseCase =
-                            aceitarSolicitacaoUseCase
+                            aceitarSolicitacaoUseCase,
+                        iniciarViagemUseCase =
+                            iniciarViagemUseCase
                     ) as T
                 }
             }
@@ -158,6 +184,11 @@ class RotaDetalheActivity : AppCompatActivity() {
         txtNomeRotaDetalhe =
             findViewById(
                 R.id.txtNomeRotaDetalhe
+            )
+
+        btnIniciarRotaDetalhe =
+            findViewById(
+                R.id.btnIniciarRotaDetalhe
             )
 
         btnVerMapaDetalhe =
@@ -248,6 +279,10 @@ class RotaDetalheActivity : AppCompatActivity() {
             )
         }
 
+        btnIniciarRotaDetalhe.setOnClickListener {
+            iniciarRota()
+        }
+
         observarRota()
         observarSolicitacoes()
         observarParadas()
@@ -292,6 +327,8 @@ class RotaDetalheActivity : AppCompatActivity() {
         if (rota == null) {
             return
         }
+
+        rotaCarregada = rota
 
         txtNomeRotaDetalhe.text = rota.nome
 
@@ -377,6 +414,76 @@ class RotaDetalheActivity : AppCompatActivity() {
 
         btnVerMapaDetalhe.isEnabled =
             rota.vagasOcupadas > 0
+
+        btnIniciarRotaDetalhe.isEnabled =
+            rota.vagasOcupadas > 0 && rota.status == "ATIVA" && !iniciandoViagem
+    }
+
+    // ---------------------------------------------------------
+    // INICIAR ROTA (viagem)
+    // ---------------------------------------------------------
+
+    private fun iniciarRota() {
+        val rota = rotaCarregada ?: return
+
+        if (rota.tipoTrajeto == "IDA_E_VOLTA") {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Qual sentido?")
+                .setItems(arrayOf("Ida (buscar alunos)", "Volta (levar alunos)")) { _, opcao ->
+                    val direcao = if (opcao == 0) ViagemRepository.DIRECAO_IDA else ViagemRepository.DIRECAO_VOLTA
+                    confirmarEIniciarViagem(rota.id, direcao)
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        } else {
+            val direcao = if (rota.tipoTrajeto == "VOLTA") {
+                ViagemRepository.DIRECAO_VOLTA
+            } else {
+                ViagemRepository.DIRECAO_IDA
+            }
+            confirmarEIniciarViagem(rota.id, direcao)
+        }
+    }
+
+    private fun confirmarEIniciarViagem(rotaId: String, direcao: String) {
+        if (iniciandoViagem) return
+
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
+        if (motoristaId == null) {
+            Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        iniciandoViagem = true
+        btnIniciarRotaDetalhe.isEnabled = false
+        btnIniciarRotaDetalhe.text = "Iniciando..."
+
+        lifecycleScope.launch {
+            try {
+                val viagem = viewModel.iniciarViagem(
+                    rotaId = rotaId,
+                    motoristaId = motoristaId,
+                    direcao = direcao
+                )
+
+                val intent = Intent(this@RotaDetalheActivity, NavegacaoViagemActivity::class.java)
+                intent.putExtra(NavegacaoViagemActivity.EXTRA_VIAGEM_ID, viagem.id)
+                startActivity(intent)
+
+            } catch (erro: Exception) {
+
+                Toast.makeText(
+                    this@RotaDetalheActivity,
+                    "Não foi possível iniciar a viagem: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } finally {
+                iniciandoViagem = false
+                btnIniciarRotaDetalhe.text = "Iniciar rota"
+                rotaCarregada?.let { btnIniciarRotaDetalhe.isEnabled = it.vagasOcupadas > 0 && it.status == "ATIVA" }
+            }
+        }
     }
 
     // ---------------------------------------------------------

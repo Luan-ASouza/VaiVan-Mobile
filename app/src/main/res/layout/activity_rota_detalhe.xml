@@ -480,6 +480,24 @@
                     app:chipSpacingVertical="8dp" />
             </LinearLayout>
 
+            <!-- ===== INICIAR ROTA ===== -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarRotaDetalhe"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="18dp"
+                android:enabled="false"
+                android:text="Iniciar rota"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/orange"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_van"
+                app:iconTint="@android:color/white"
+                tools:ignore="HardcodedText" />
+
             <!-- ===== BOTÕES DE MAPA ===== -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTrajetoDetalhe"
