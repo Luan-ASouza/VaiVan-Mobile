@@ -37,7 +37,7 @@
         </provider> <!-- ==================== GOOGLE MAPS ==================== -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyA15teu0qEshSlBTOIT72UBTGpOojvUhmc" /> <!-- ==================== INICIALIZAÇÃO ==================== -->
+            android:value="AIzaSyAC4LdrVL7j8NPbG1Sfyfeb0qWE9rNs9Qs" /> <!-- ==================== INICIALIZAÇÃO ==================== -->
         <activity
             android:name=".ui.inicio.SplashActivity"
             android:exported="true">
