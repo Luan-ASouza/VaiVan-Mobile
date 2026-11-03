@@ -4,16 +4,25 @@ package com.example.vaivan.ui.responsavel.passageiros
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
@@ -28,13 +37,14 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompletePrediction
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.widget.Autocomplete
-import com.google.android.libraries.places.widget.AutocompleteActivity
-import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -55,9 +65,12 @@ class SelecaoLocalizacaoActivity :
 
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var placesClient: PlacesClient
 
     private lateinit var txtEndereco: TextView
-    private lateinit var txtBusca: TextView
+    private lateinit var edtBusca: EditText
+    private lateinit var cardSugestoesBusca: View
+    private lateinit var containerSugestoesBusca: LinearLayout
     private lateinit var btnMinhaLocalizacao: FloatingActionButton
     private lateinit var btnConfirmar: MaterialButton
 
@@ -72,53 +85,14 @@ class SelecaoLocalizacaoActivity :
 
     private val executor = Executors.newSingleThreadExecutor()
 
-    private val buscaEnderecoLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
+    // Um token é criado ao começar a digitar e "gasto" numa única chamada de
+    // fetchPlace() ao escolher um resultado — agrupa toda a sessão de busca
+    // (cada tecla + a escolha final) numa cobrança só, em vez de uma por chamada.
+    private var sessionToken: AutocompleteSessionToken? = null
 
-            when (result.resultCode) {
-
-                Activity.RESULT_OK -> {
-                    val data = result.data ?: return@registerForActivityResult
-
-                    val lugar = Autocomplete.getPlaceFromIntent(data)
-                    val latLng = lugar.location
-
-                    if (latLng == null) {
-                        Toast.makeText(
-                            this,
-                            "Não foi possível localizar esse resultado. Tente outro endereço.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@registerForActivityResult
-                    }
-
-                    placeIdSelecionado = lugar.id
-                    txtBusca.text = lugar.name ?: lugar.address ?: "Local selecionado"
-
-                    if (::googleMap.isInitialized) {
-                        localSelecionado = latLng
-                        posicionarLocalNaPinca(latLng)
-                    }
-                }
-
-                AutocompleteActivity.RESULT_ERROR -> {
-                    val data = result.data
-                    val status = data?.let {
-                        Autocomplete.getStatusFromIntent(it)
-                    }
-
-                    Toast.makeText(
-                        this,
-                        "Falha na pesquisa: ${
-                            status?.statusMessage ?: "verifique sua conexão e a configuração do Google Places"
-                        }",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
+    private val debounceHandler = Handler(Looper.getMainLooper())
+    private var buscaPendente: Runnable? = null
+    private var preenchendoBuscaProgramaticamente = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,16 +118,23 @@ class SelecaoLocalizacaoActivity :
 
     private fun inicializarViews() {
         txtEndereco = findViewById(R.id.txtEndereco)
-        txtBusca = findViewById(R.id.txtBusca)
+        edtBusca = findViewById(R.id.edtBusca)
+        cardSugestoesBusca = findViewById(R.id.cardSugestoesBusca)
+        containerSugestoesBusca = findViewById(R.id.containerSugestoesBusca)
         btnMinhaLocalizacao = findViewById(R.id.btnMinhaLocalizacao)
         btnConfirmar = findViewById(R.id.btnConfirmar)
 
         btnConfirmar.isEnabled = false
 
-        findViewById<MaterialCardView>(R.id.cardBusca)
-            .setOnClickListener {
-                abrirBuscaEndereco()
+        edtBusca.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(texto: Editable?) {
+                if (preenchendoBuscaProgramaticamente) return
+                agendarBusca(texto?.toString().orEmpty())
             }
+        })
     }
 
     @Suppress("DEPRECATION")
@@ -182,44 +163,177 @@ class SelecaoLocalizacaoActivity :
             return
         }
 
+        // Places.initialize() puro CONTINUA chamando a Places API (Legacy) nesta
+        // versão do SDK, mesmo com os endpoints renomeados/o field set novo -
+        // confirmado testando: a chamada aparecia no Cloud Console como "Places API"
+        // (legada), não "Places API (New)". initializeWithNewPlacesApiEnabled() está
+        // marcado @Deprecated pelo Google, mas ainda é o único jeito de fato ligar
+        // a API New nesta versão do SDK (5.3.0). Suprime o aviso de propósito.
         Places.initializeWithNewPlacesApiEnabled(
             applicationContext,
             chave
         )
+
+        placesClient = Places.createClient(this)
     }
 
-    private fun abrirBuscaEndereco() {
-        if (!Places.isInitialized()) {
-            Toast.makeText(
-                this,
-                "Pesquisa indisponível. Verifique a chave do Google Places.",
-                Toast.LENGTH_LONG
-            ).show()
+    // =========================================================
+    // AUTOCOMPLETE (busca própria, com sessão/campos controlados)
+    // =========================================================
+
+    private fun obterSessionToken(): AutocompleteSessionToken {
+        return sessionToken ?: AutocompleteSessionToken.newInstance().also {
+            sessionToken = it
+        }
+    }
+
+    /** Debounce: cancela a busca anterior e só dispara uma nova requisição
+     * depois que o usuário parar de digitar por um instante — evita uma
+     * chamada de autocomplete por tecla. */
+    private fun agendarBusca(texto: String) {
+        buscaPendente?.let { debounceHandler.removeCallbacks(it) }
+
+        if (texto.isBlank()) {
+            placeIdSelecionado = null
+            ocultarSugestoes()
             return
         }
 
-        val intent = try {
-            Autocomplete.IntentBuilder(
-                AutocompleteActivityMode.OVERLAY,
-                listOf(
-                    Place.Field.ID,
-                    Place.Field.NAME,
-                    Place.Field.ADDRESS,
-                    Place.Field.LOCATION
-                )
+        val runnable = Runnable { buscarPredicoes(texto) }
+        buscaPendente = runnable
+        debounceHandler.postDelayed(runnable, 350L)
+    }
+
+    private fun buscarPredicoes(texto: String) {
+        if (!Places.isInitialized()) return
+
+        val request = FindAutocompletePredictionsRequest.builder()
+            .setSessionToken(obterSessionToken())
+            .setCountries(listOf("BR"))
+            .setQuery(texto)
+            .build()
+
+        placesClient.findAutocompletePredictions(request)
+            .addOnSuccessListener { resposta ->
+                exibirSugestoes(resposta.autocompletePredictions)
+            }
+            .addOnFailureListener { erro ->
+                ocultarSugestoes()
+                Toast.makeText(
+                    this,
+                    "Falha na pesquisa: ${erro.localizedMessage ?: "verifique sua conexão e a configuração do Google Places"}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+    }
+
+    private fun exibirSugestoes(predicoes: List<AutocompletePrediction>) {
+        containerSugestoesBusca.removeAllViews()
+
+        if (predicoes.isEmpty()) {
+            ocultarSugestoes()
+            return
+        }
+
+        val inflater = LayoutInflater.from(this)
+
+        predicoes.forEach { predicao ->
+            val item = inflater.inflate(
+                R.layout.item_sugestao_local,
+                containerSugestoesBusca,
+                false
             )
-                .setCountries(listOf("BR"))
-                .build(this)
-        } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                "Não foi possível abrir a pesquisa: ${e.localizedMessage}",
-                Toast.LENGTH_LONG
-            ).show()
-            return
+
+            item.findViewById<TextView>(R.id.txtPrincipalSugestao).text =
+                predicao.getPrimaryText(null)
+
+            item.findViewById<TextView>(R.id.txtSecundarioSugestao).text =
+                predicao.getSecondaryText(null)
+
+            item.setOnClickListener {
+                selecionarSugestao(predicao)
+            }
+
+            containerSugestoesBusca.addView(item)
         }
 
-        buscaEnderecoLauncher.launch(intent)
+        cardSugestoesBusca.visibility = View.VISIBLE
+    }
+
+    private fun ocultarSugestoes() {
+        cardSugestoesBusca.visibility = View.GONE
+        containerSugestoesBusca.removeAllViews()
+    }
+
+    private fun selecionarSugestao(predicao: AutocompletePrediction) {
+        if (buscaEmAndamento) return
+        buscaEmAndamento = true
+
+        ocultarSugestoes()
+        ocultarTeclado()
+
+        // Só os 4 campos realmente usados: ID (vinculado ao local), DISPLAY_NAME/
+        // FORMATTED_ADDRESS (texto mostrado) e LOCATION (pino no mapa) — pedir
+        // campos extras (telefone, horários, avaliações...) custa mais caro por
+        // sessão e nada mais aqui os usa.
+        val request = FetchPlaceRequest.builder(
+            predicao.placeId,
+            listOf(
+                Place.Field.ID,
+                Place.Field.DISPLAY_NAME,
+                Place.Field.FORMATTED_ADDRESS,
+                Place.Field.LOCATION
+            )
+        )
+            .setSessionToken(obterSessionToken())
+            .build()
+
+        placesClient.fetchPlace(request)
+            .addOnSuccessListener { resposta ->
+                buscaEmAndamento = false
+
+                // O token foi gasto nesse fetchPlace; a próxima busca cria um novo.
+                sessionToken = null
+
+                val lugar = resposta.place
+                val latLng = lugar.location
+
+                if (latLng == null) {
+                    Toast.makeText(
+                        this,
+                        "Não foi possível localizar esse resultado. Tente outro endereço.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@addOnSuccessListener
+                }
+
+                placeIdSelecionado = lugar.id
+
+                preenchendoBuscaProgramaticamente = true
+                edtBusca.setText(lugar.displayName ?: lugar.formattedAddress ?: "Local selecionado")
+                preenchendoBuscaProgramaticamente = false
+
+                if (::googleMap.isInitialized) {
+                    localSelecionado = latLng
+                    posicionarLocalNaPinca(latLng)
+                }
+            }
+            .addOnFailureListener { erro ->
+                buscaEmAndamento = false
+                sessionToken = null
+
+                Toast.makeText(
+                    this,
+                    "Falha ao carregar o local: ${erro.localizedMessage ?: "tente novamente"}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+    }
+
+    private fun ocultarTeclado() {
+        edtBusca.clearFocus()
+        val gerenciador = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        gerenciador?.hideSoftInputFromWindow(edtBusca.windowToken, 0)
     }
 
     private fun inicializarLocalizacao() {
@@ -254,7 +368,12 @@ class SelecaoLocalizacaoActivity :
         googleMap.setOnCameraMoveStartedListener { reason ->
             if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
                 placeIdSelecionado = null
-                txtBusca.text = "Buscar endereço ou lugar"
+                ocultarSugestoes()
+                ocultarTeclado()
+
+                preenchendoBuscaProgramaticamente = true
+                edtBusca.setText("")
+                preenchendoBuscaProgramaticamente = false
             }
         }
 
@@ -492,6 +611,7 @@ class SelecaoLocalizacaoActivity :
     override fun onDestroy() {
         super.onDestroy()
         executor.shutdown()
+        buscaPendente?.let { debounceHandler.removeCallbacks(it) }
     }
 
     private fun posicionarLocalNaPinca(

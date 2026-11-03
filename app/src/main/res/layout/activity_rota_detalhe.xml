@@ -12,7 +12,8 @@
     <View
         android:id="@+id/topGap"
         android:layout_width="match_parent"
-        android:layout_height="0dp" />
+        android:layout_height="0dp"
+        android:background="@color/dark_gray"/>
 
     <!-- BARRA DO TOPO -->
     <LinearLayout
@@ -480,6 +481,43 @@
                     app:chipSpacingVertical="8dp" />
             </LinearLayout>
 
+            <!-- ===== INICIAR ROTA (Ida / Volta, conforme o sentido da rota) ===== -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarIdaDetalhe"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="18dp"
+                android:enabled="false"
+                android:text="Iniciar Ida"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@color/orange"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_van"
+                app:iconTint="@android:color/white"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarVoltaDetalhe"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
+                android:enabled="false"
+                android:text="Iniciar Volta"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@color/orange"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_van"
+                app:iconTint="@android:color/white"
+                tools:ignore="HardcodedText" />
+
             <!-- ===== BOTÕES DE MAPA ===== -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTrajetoDetalhe"
@@ -566,4 +604,10 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/black"/>
 </LinearLayout>
