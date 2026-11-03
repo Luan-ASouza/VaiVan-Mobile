@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.example.vaivan.R
+import com.example.vaivan.core.util.SystemBarUtils.applyTopGap
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.MapsInitializer
@@ -78,6 +79,8 @@ class AdicionarLocalActivity : AppCompatActivity() {
         )
 
         inicializarViews()
+
+        applyTopGap(findViewById(android.R.id.content))
 
         configurarMapaPreview(savedInstanceState)
 

@@ -53,8 +53,6 @@
         android:layout_height="58dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:clickable="true"
-        android:focusable="true"
         app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="18dp"
         app:cardElevation="6dp"
@@ -79,20 +77,49 @@
                 android:src="@drawable/ic_lupa"
                 app:tint="@color/dark_gray" />
 
-            <TextView
-                android:id="@+id/txtBusca"
+            <EditText
+                android:id="@+id/edtBusca"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
+                android:background="@null"
                 android:ellipsize="end"
+                android:hint="Buscar endereço ou lugar"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
                 android:maxLines="1"
-                android:text="Buscar endereço ou lugar"
                 android:textColor="@color/dark_gray"
-                android:textSize="15sp"
-                tools:ignore="HardcodedText" />
+                android:textColorHint="@color/dark_gray"
+                android:textSize="15sp" />
 
         </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Lista de sugestões do autocomplete, aparece embaixo da busca -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardSugestoesBusca"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="6dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardBusca"
+        app:strokeColor="#E8EAF0"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:id="@+id/containerSugestoesBusca"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
     </com.google.android.material.card.MaterialCardView>
 
