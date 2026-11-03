@@ -1,11 +1,14 @@
 package com.example.vaivan.ui.responsavel.rotas
 
+import android.graphics.Typeface
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -14,18 +17,29 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.models.RotasDoResponsavel
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.domain.usecase.rota.BuscarRotasDoResponsavelUseCase
-import com.example.vaivan.data.models.RotasDoResponsavel
-import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import com.example.vaivan.data.local.dao.UsuarioDao
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class ListaRotasFragment : Fragment() {
+
+    companion object {
+        private val ORDEM_DIAS = listOf("SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM")
+        private val ROTULO_DIAS = mapOf(
+            "SEG" to "Seg", "TER" to "Ter", "QUA" to "Qua", "QUI" to "Qui",
+            "SEX" to "Sex", "SAB" to "Sáb", "DOM" to "Dom"
+        )
+    }
 
     private lateinit var containerRotas: LinearLayout
 
@@ -115,6 +129,7 @@ class ListaRotasFragment : Fragment() {
             savedInstanceState
         )
 
+        // Botão genérico lá de cima (será removido na etapa 5)
         view.findViewById<View>(
             R.id.btnAcompanharViagem
         ).setOnClickListener {
@@ -166,102 +181,237 @@ class ListaRotasFragment : Fragment() {
         }
     }
 
+    // ---------------------------------------------------------
+    // LISTA DE CARDS (um por filho e por viagem)
+    // ---------------------------------------------------------
+
     private fun mostrarRotas(
         rotas: List<RotasDoResponsavel>
     ) {
 
         containerRotas.removeAllViews()
 
+        if (rotas.isEmpty()) {
+            containerRotas.addView(criarAvisoVazio())
+            return
+        }
+
         rotas.forEach { item ->
 
-            val rotaView =
+            val card =
                 layoutInflater.inflate(
                     R.layout.item_rota_responsavel,
                     containerRotas,
                     false
                 )
 
-            preencherRota(
-                rotaView,
+            preencherCard(
+                card,
                 item
             )
 
             containerRotas.addView(
-                rotaView
+                card
             )
         }
     }
 
-    private fun preencherRota(
-        view: View,
+    private fun criarAvisoVazio(): TextView {
+
+        return TextView(requireContext()).apply {
+            text =
+                "Nenhum transporte contratado ainda.\n" +
+                        "Procure uma rota na aba Passageiros."
+            gravity = Gravity.CENTER
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.light_gray))
+            setPadding(dp(16), dp(32), dp(16), dp(32))
+        }
+    }
+
+    private fun preencherCard(
+        card: View,
         item: RotasDoResponsavel
     ) {
 
         val rota = item.rota
-        val motorista = item.motorista
-        val veiculo = item.veiculo
+        val parada = item.parada
 
-        view.findViewById<TextView>(
-            R.id.txtNomeMotorista
-        ).text =
-            motorista?.nome
-                ?: "Motorista não informado"
+        // Aluno
+        val nomeAluno =
+            parada?.nomePassageiro
+                .orEmpty()
+                .ifBlank { "Aluno" }
 
-        view.findViewById<TextView>(
-            R.id.txtRotaTurno
-        ).text =
-            rota.turno
+        card.findViewById<TextView>(R.id.txtNomeAlunoCard).text = nomeAluno
+        card.findViewById<TextView>(R.id.txtInicialAlunoCard).text =
+            nomeAluno.first().uppercase()
 
-        view.findViewById<TextView>(
-            R.id.txtRotaDias
-        ).text =
-            rota.diasSemana
+        // Rota, tipo e turno
+        card.findViewById<TextView>(R.id.txtNomeRotaCard).text = rota.nome
+        card.findViewById<TextView>(R.id.txtTipoRotaCard).text =
+            rotuloTipo(rota.tipoTrajeto)
+        card.findViewById<TextView>(R.id.txtTurnoRotaCard).text =
+            traduzirTurno(rota.turno)
 
-        view.findViewById<TextView>(
-            R.id.txtRotaEnderecoDesembarque
-        ).text =
-            rota.destinoEndereco
-
-        view.findViewById<TextView>(
-            R.id.txtPlacaVeiculo
-        ).text =
-            veiculo?.placa
-                ?: "Sem veículo"
-
-        view.findViewById<TextView>(
-            R.id.txtVeiculoModelo
-        ).text =
-            veiculo?.modelo
-                ?: "Veículo não informado"
-
-        view.findViewById<TextView>(
-            R.id.txtVeiculoLugares
-        ).text =
-            veiculo?.capacidadePassageiros?.toString()
-                ?: "-"
-
-        val containerPassageiros =
-            view.findViewById<LinearLayout>(
-                R.id.containerPassageiros
-            )
-
-        containerPassageiros.removeAllViews()
-    }
-
-    private fun formatarHorario(
-        minutos: Int
-    ): String {
-
-        val horas =
-            minutos / 60
-
-        val minutosRestantes =
-            minutos % 60
-
-        return String.format(
-            "%02d:%02d",
-            horas,
-            minutosRestantes
+        // Dias da semana
+        montarDias(
+            card.findViewById(R.id.containerDiasCard),
+            rota.diasSemana.split(",").map { it.trim() }.toSet()
         )
+
+        // Embarque e desembarque:
+        //  - Ida e Ida e volta: embarca no local do aluno, desembarca na escola
+        //  - Volta: embarca na escola, desembarca no local do aluno
+        val localDoAluno = textoDoLocal(item)
+        val escola = rota.escolaNome.ifBlank { rota.destinoNome }
+        val ehVolta = rota.tipoTrajeto == "VOLTA"
+
+        card.findViewById<TextView>(R.id.txtEmbarqueCard).text =
+            if (ehVolta) escola else localDoAluno
+
+        card.findViewById<TextView>(R.id.txtDesembarqueCard).text =
+            if (ehVolta) localDoAluno else escola
+
+        card.findViewById<View>(R.id.txtNotaVoltaCard).visibility =
+            if (rota.tipoTrajeto == "IDA_E_VOLTA") View.VISIBLE else View.GONE
+
+        // Motorista e veículo
+        card.findViewById<TextView>(R.id.txtMotoristaCard).text =
+            textoDoMotorista(item)
+
+        // Próxima cobrança (apenas um aviso)
+        card.findViewById<TextView>(R.id.txtProximaCobrancaCard).text =
+            "Próxima cobrança: " + textoProximaCobranca(parada?.contratadoEm ?: 0L)
     }
+
+    // ---------------------------------------------------------
+    // TEXTOS
+    // ---------------------------------------------------------
+
+    private fun textoDoLocal(item: RotasDoResponsavel): String {
+
+        val parada = item.parada
+
+        val nome = parada?.nomeLocal.orEmpty()
+        val endereco = parada?.endereco.orEmpty()
+
+        return when {
+            nome.isNotBlank() && endereco.isNotBlank() -> "$nome · $endereco"
+            endereco.isNotBlank() -> endereco
+            nome.isNotBlank() -> nome
+            else -> "Local não informado"
+        }
+    }
+
+    private fun textoDoMotorista(item: RotasDoResponsavel): String {
+
+        val nome = item.motorista?.nome ?: "Motorista não informado"
+        val placa = item.veiculo?.placa
+
+        return if (placa.isNullOrBlank()) {
+            nome
+        } else {
+            "$nome · $placa"
+        }
+    }
+
+    /**
+     * A cobrança cai no mesmo dia do mês da contratação (o 1º mês é pago ao contratar).
+     * Em meses mais curtos, usa o último dia do mês.
+     * Sem a data de contratação registrada, mostra "A definir".
+     */
+    private fun textoProximaCobranca(contratadoEm: Long): String {
+
+        if (contratadoEm <= 0L) {
+            return "a definir"
+        }
+
+        val agora = System.currentTimeMillis()
+
+        val diaDaCobranca =
+            Calendar.getInstance()
+                .apply { timeInMillis = contratadoEm }
+                .get(Calendar.DAY_OF_MONTH)
+
+        var meses = 1
+
+        while (true) {
+
+            val candidata = Calendar.getInstance().apply {
+                timeInMillis = contratadoEm
+                set(Calendar.DAY_OF_MONTH, 1)
+                add(Calendar.MONTH, meses)
+                set(
+                    Calendar.DAY_OF_MONTH,
+                    minOf(diaDaCobranca, getActualMaximum(Calendar.DAY_OF_MONTH))
+                )
+            }
+
+            if (candidata.timeInMillis > agora) {
+                return SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                    .format(Date(candidata.timeInMillis))
+            }
+
+            meses++
+        }
+    }
+
+    private fun rotuloTipo(tipoTrajeto: String): String =
+        when (tipoTrajeto) {
+            "IDA" -> "Ida"
+            "VOLTA" -> "Volta"
+            "IDA_E_VOLTA" -> "Ida e volta"
+            else -> tipoTrajeto
+        }
+
+    private fun traduzirTurno(turno: String): String =
+        when (turno) {
+            "MANHA" -> "Manhã"
+            "TARDE" -> "Tarde"
+            "NOITE" -> "Noite"
+            else -> turno
+        }
+
+    // ---------------------------------------------------------
+    // DIAS DA SEMANA (os da rota em laranja, os outros em cinza)
+    // ---------------------------------------------------------
+
+    private fun montarDias(
+        container: LinearLayout,
+        diasDaRota: Set<String>
+    ) {
+
+        container.removeAllViews()
+
+        ORDEM_DIAS.forEach { chave ->
+
+            val ativo = chave in diasDaRota
+
+            val quadrado = TextView(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(0, dp(32), 1f).apply {
+                    marginStart = dp(2)
+                    marginEnd = dp(2)
+                }
+                gravity = Gravity.CENTER
+                text = ROTULO_DIAS[chave]
+                textSize = 11f
+                setTypeface(typeface, Typeface.BOLD)
+                setBackgroundResource(
+                    if (ativo) R.drawable.bg_dia_ativo else R.drawable.bg_dia_inativo
+                )
+                setTextColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        if (ativo) android.R.color.white else R.color.light_gray
+                    )
+                )
+            }
+
+            container.addView(quadrado)
+        }
+    }
+
+    private fun dp(valor: Int): Int =
+        (valor * resources.displayMetrics.density).toInt()
 }

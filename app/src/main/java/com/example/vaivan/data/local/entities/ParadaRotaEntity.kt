@@ -26,5 +26,9 @@ data class ParadaRotaEntity(
     val duracaoTrechoSegundos: Int = 0,
     val horarioEstimadoMinutos: Int = 0,
 
+    // NOVO: quando o aluno foi vinculado à rota (base da cobrança mensal).
+    // 0 = ainda não registrado.
+    val contratadoEm: Long = 0L,
+
     val lastUpdated: Long = 0L
 )

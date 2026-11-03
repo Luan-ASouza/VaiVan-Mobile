@@ -57,7 +57,7 @@
         </LinearLayout>
 
 
-        <!-- ROTAS -->
+        <!-- TRANSPORTES (o id continua navRotas para não quebrar a navegação) -->
 
         <LinearLayout
             android:id="@+id/navRotas"
@@ -72,7 +72,7 @@
                 android:layout_width="23dp"
                 android:layout_height="23dp"
                 android:src="@drawable/ic_rotas"
-                android:contentDescription="Rotas" />
+                android:contentDescription="Transportes" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -80,7 +80,7 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Rotas"
+                android:text="Transportes"
                 android:textColor="@color/dark_gray"
                 android:textSize="10sp"
                 android:textStyle="bold" />

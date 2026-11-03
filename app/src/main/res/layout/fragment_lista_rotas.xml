@@ -167,7 +167,7 @@
             </LinearLayout>
 
 
-            <!-- SUAS ROTAS -->
+            <!-- SEUS TRANSPORTES -->
 
             <TextView
                 android:id="@+id/r81pvr3oowbo"
@@ -175,12 +175,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="10dp"
-                android:text="Suas Rotas"
+                android:text="Seus Transportes"
                 android:textColor="@color/dark_gray"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <!-- LISTA DE ROTAS -->
+            <!-- LISTA DE TRANSPORTES -->
 
             <LinearLayout
                 android:id="@+id/containerListaRotas"
@@ -190,47 +190,6 @@
                 android:orientation="vertical"
                 android:clipChildren="false"
                 android:clipToPadding="false" />
-
-            <!-- NOVA ROTA -->
-
-            <LinearLayout
-                android:id="@+id/r86awhd1ah19"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="8dp"
-                android:background="@drawable/bg_beige_round_20"
-                android:clickable="true"
-                android:elevation="4dp"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="15dp">
-
-                <TextView
-                    android:id="@+id/rego8jf4ll7m"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Nova Rota"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:id="@+id/r05o09rcd62wo"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:contentDescription="Adicionar rota"
-                    android:src="@drawable/ic_plus" />
-
-            </LinearLayout>
 
         </LinearLayout>
 

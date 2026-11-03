@@ -1,6 +1,9 @@
 package com.example.vaivan.domain.usecase.rota
 
 import com.example.vaivan.data.local.entities.PassageiroEntity
+import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.local.entities.UsuarioEntity
+import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -15,11 +18,22 @@ class BuscarRotasDoResponsavelUseCase(
     private val veiculoRepository: VeiculoRepository
 ) {
 
+    /** Dados da rota que são os mesmos para todos os filhos que estão nela. */
+    private data class DadosDaRota(
+        val rota: RotaEntity,
+        val motorista: UsuarioEntity?,
+        val veiculo: VeiculoEntity?
+    )
+
+    /**
+     * Devolve UM item por filho e por viagem (uma parada = um filho em uma rota).
+     * Se dois filhos estão na mesma van, aparecem dois itens.
+     */
     suspend operator fun invoke(
         responsavelId: String
     ): List<RotasDoResponsavel> {
 
-        // 1. Pega somente os passageiros desse responsável.
+        // 1. Passageiros desse responsável.
         val passageiros: List<PassageiroEntity> =
             passageiroRepository
                 .observarPassageirosDoResponsavel(
@@ -27,8 +41,7 @@ class BuscarRotasDoResponsavelUseCase(
                 )
                 .first()
 
-        // 2. Para cada passageiro, procura as paradas
-        //    em que ele está associado a uma rota.
+        // 2. Paradas (vínculos aluno-rota) de cada passageiro.
         val paradasDoResponsavel =
             passageiros.flatMap { passageiro ->
 
@@ -37,54 +50,84 @@ class BuscarRotasDoResponsavelUseCase(
                 )
             }
 
-        // 3. Agrupa as paradas pelo ID da rota.
+        // 3. Paradas agrupadas por rota (continua disponível em "paradas").
         val paradasPorRota =
             paradasDoResponsavel.groupBy {
                 it.rotaId
             }
 
-        // 4. Monta os dados de cada rota.
-        return paradasPorRota.mapNotNull { (rotaId, paradas) ->
+        // 4. Rota, motorista e veículo são buscados uma vez por rota.
+        val cache = mutableMapOf<String, DadosDaRota?>()
 
-            val rota =
-                try {
-                    rotaRepository.buscarRotaNoFirestore(
-                        rotaId
-                    )
-                } catch (e: Exception) {
-                    null
+        val itens = paradasDoResponsavel.mapNotNull { parada ->
+
+            val dados =
+                if (cache.containsKey(parada.rotaId)) {
+                    cache[parada.rotaId]
+                } else {
+                    buscarDadosDaRota(parada.rotaId)
+                        .also { cache[parada.rotaId] = it }
                 }
 
-            if (rota == null) {
+            if (dados == null) {
                 return@mapNotNull null
             }
 
-            // Motorista da rota.
-            val motorista =
-                usuarioRepository
-                    .observarUsuario(
-                        rota.motoristaId
-                    )
-                    .first()
-
-            // Veículo da rota.
-            val veiculo =
-                rota.veiculoId
-                    ?.takeIf { it.isNotBlank() }
-                    ?.let { veiculoId ->
-
-                        veiculoRepository
-                            .consultarVeiculo(
-                                veiculoId
-                            )
-                    }
-
             RotasDoResponsavel(
-                rota = rota,
-                paradas = paradas,
-                motorista = motorista,
-                veiculo = veiculo
+                rota = dados.rota,
+                paradas = paradasPorRota[parada.rotaId].orEmpty(),
+                motorista = dados.motorista,
+                veiculo = dados.veiculo,
+                parada = parada
             )
         }
+
+        // Ordem estável: por nome do aluno e depois pelo nome da rota
+        return itens.sortedWith(
+            compareBy(
+                { it.parada?.nomePassageiro.orEmpty().lowercase() },
+                { it.rota.nome.lowercase() }
+            )
+        )
+    }
+
+    private suspend fun buscarDadosDaRota(
+        rotaId: String
+    ): DadosDaRota? {
+
+        val rota =
+            try {
+                rotaRepository.buscarRotaNoFirestore(
+                    rotaId
+                )
+            } catch (e: Exception) {
+                return null
+            }
+
+        // Motorista da rota.
+        val motorista =
+            usuarioRepository
+                .observarUsuario(
+                    rota.motoristaId
+                )
+                .first()
+
+        // Veículo da rota.
+        val veiculo =
+            rota.veiculoId
+                ?.takeIf { it.isNotBlank() }
+                ?.let { veiculoId ->
+
+                    veiculoRepository
+                        .consultarVeiculo(
+                            veiculoId
+                        )
+                }
+
+        return DadosDaRota(
+            rota = rota,
+            motorista = motorista,
+            veiculo = veiculo
+        )
     }
 }
