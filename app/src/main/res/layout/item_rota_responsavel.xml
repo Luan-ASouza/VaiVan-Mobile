@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -228,5 +229,24 @@
         android:layout_marginTop="4dp"
         android:textColor="@color/dark_gray"
         android:textSize="13sp" />
+
+    <!-- ACOMPANHAR A VIAGEM DESTE FILHO -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAcompanharViagemCard"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="14dp"
+        android:text="Acompanhar viagem"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/dark_gray"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_mylocation"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp"
+        app:iconTint="@android:color/white"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>

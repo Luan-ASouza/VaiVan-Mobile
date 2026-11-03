@@ -129,21 +129,6 @@ class ListaRotasFragment : Fragment() {
             savedInstanceState
         )
 
-        // Botão genérico lá de cima (será removido na etapa 5)
-        view.findViewById<View>(
-            R.id.btnAcompanharViagem
-        ).setOnClickListener {
-
-            parentFragmentManager
-                .beginTransaction()
-                .replace(
-                    R.id.fragmentContainer,
-                    AcompanharViagemFragment()
-                )
-                .addToBackStack(null)
-                .commit()
-        }
-
         observarRotas()
 
         carregarRotas()
@@ -283,6 +268,37 @@ class ListaRotasFragment : Fragment() {
         // Próxima cobrança (apenas um aviso)
         card.findViewById<TextView>(R.id.txtProximaCobrancaCard).text =
             "Próxima cobrança: " + textoProximaCobranca(parada?.contratadoEm ?: 0L)
+
+        // Acompanhar a viagem DESTE filho (cada card leva a sua própria rota)
+        card.findViewById<View>(R.id.btnAcompanharViagemCard).setOnClickListener {
+            abrirAcompanhamento(item)
+        }
+    }
+
+    /**
+     * Abre a tela de acompanhamento já informando de qual filho e de qual rota se trata.
+     */
+    private fun abrirAcompanhamento(
+        item: RotasDoResponsavel
+    ) {
+
+        val tela = AcompanharViagemFragment().apply {
+            arguments = Bundle().apply {
+                putString("rotaId", item.rota.id)
+                putString("motoristaId", item.rota.motoristaId)
+                putString("passageiroId", item.parada?.passageiroId.orEmpty())
+                putString("nomePassageiro", item.parada?.nomePassageiro.orEmpty())
+            }
+        }
+
+        parentFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.fragmentContainer,
+                tela
+            )
+            .addToBackStack(null)
+            .commit()
     }
 
     // ---------------------------------------------------------
