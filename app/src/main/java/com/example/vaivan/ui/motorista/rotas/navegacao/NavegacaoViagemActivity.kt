@@ -3,65 +3,142 @@ package com.example.vaivan.ui.motorista.rotas.navegacao
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.LayoutInflater
+import android.os.CountDownTimer
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.vaivan.BuildConfig
 import com.example.vaivan.R
+import com.example.vaivan.core.util.SystemBarUtils
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
 import com.example.vaivan.data.repository.ViagemRepository
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.libraries.navigation.ArrivalEvent
+import com.google.android.libraries.navigation.AudioGuidanceSettings
 import com.google.android.libraries.navigation.NavigationApi
 import com.google.android.libraries.navigation.NavigationView
 import com.google.android.libraries.navigation.Navigator
+import com.google.android.libraries.navigation.StylingOptions
 import com.google.android.libraries.navigation.Waypoint
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.bumptech.glide.Glide
+import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.util.SystemBarUtils.applyTopGap
+import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * Tela de navegação turno-a-turno do motorista (Google Navigation SDK).
  *
- * Não escreve a posição do GPS em lugar nenhum — isso é tarefa do serviço de
- * rastreamento (Etapa 3). Aqui só reage a chegadas em paradas e repassa a
- * confirmação de embarque/desembarque para o ViagemRepository.
+ * A Activity só cuida de interface e do ciclo de vida do SDK de navegação
+ * (que precisa de uma View real, não pode morar no ViewModel). Todo o estado
+ * da viagem/paradas e o acesso ao Firebase ficam no [NavegacaoViagemViewModel]
+ * e no [ViagemRepository] — não escreve a posição do GPS em lugar nenhum,
+ * isso é tarefa do serviço de rastreamento (Etapa 3).
  */
 class NavegacaoViagemActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_VIAGEM_ID = "viagemId"
+        private const val DURACAO_TIMER_CHEGADA_MS = 120_000L
+
+        // TODO (debug temporário): remover depois de descobrir por que o card
+        // de chegada não aparece. Filtre o Logcat por essa tag.
+        private const val TAG_DEBUG = "NavegacaoViagemDebug"
     }
 
     private lateinit var viagemId: String
-    private lateinit var viagemRepository: ViagemRepository
+
+    private val viewModel: NavegacaoViagemViewModel by lazy {
+        val database = VaivanDatabase.getInstance(this)
+        val viagemRepository = ViagemRepository(
+            database.viagemDao(),
+            database.paradaViagemDao(),
+            database.eventoViagemDao()
+        )
+
+        ViewModelProvider(
+            this,
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return NavegacaoViagemViewModel(viagemId, viagemRepository) as T
+                }
+            }
+        )[NavegacaoViagemViewModel::class.java]
+    }
 
     private lateinit var navigationView: NavigationView
-    private lateinit var barraTopoNavegacao: View
+    private lateinit var fotoProximaParadaNavegacao: ShapeableImageView
     private lateinit var txtProximaParadaNavegacao: TextView
+    private lateinit var txtEnderecoProximaParadaNavegacao: TextView
     private lateinit var btnPausarRetomarNavegacao: MaterialButton
     private lateinit var btnFinalizarNavegacao: MaterialButton
-    private lateinit var painelParadaNavegacao: View
+    private lateinit var btnReiniciarSimulacaoNavegacao: MaterialButton
+    private lateinit var btnRecentralizarNavegacao: FloatingActionButton
+    private lateinit var btnAlternarVozNavegacao: FloatingActionButton
+
+    /** Substitui o botão nativo de voz (o SDK não tem um pronto): true = com
+     * áudio de alertas e instruções de condução; false = silenciado. */
+    private var vozAtiva = true
+
+    // Card de chegada (estilo "atender ligação") — some/aparece sozinho
+    private lateinit var cardChegadaNavegacao: View
     private lateinit var txtTituloPainelParada: TextView
     private lateinit var txtEnderecoPainelParada: TextView
-    private lateinit var containerPassageirosPainelParada: LinearLayout
+    private lateinit var txtTimerCardChegada: TextView
+    private lateinit var recyclerPassageirosPainelParada: RecyclerView
+    private lateinit var btnFinalizarParadaFinal: MaterialButton
+
+    // Bottom Sheet arrastável com o progresso de todos os passageiros da viagem
+    private lateinit var painelProgressoViagem: View
+    private lateinit var recyclerProgressoViagem: RecyclerView
+
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private lateinit var passageiroAdapter: PassageiroParadaAdapter
+    private lateinit var progressoAdapter: ProgressoViagemAdapter
 
     private var navigator: Navigator? = null
-    private var viagemAtual: ViagemEntity? = null
-    private var paradasAtuais: List<ParadaViagemEntity> = emptyList()
+    private var timerChegada: CountDownTimer? = null
 
-    /** O mesmo objeto Waypoint devolvido pelo SDK no evento de chegada -> as paradas daquele ponto. */
-    private val paradasPorWaypoint = mutableMapOf<Waypoint, List<ParadaViagemEntity>>()
+    /** Último valor de ordemPainelAtivo, só pra detectar a transição
+     * "card aberto -> fechado" (resolvido) e então chamar continueToNextDestination. */
+    private var ordemCardAnterior: Int? = null
+
+    /** Guardado só pra poder remover no onDestroy — confirmado em teste real
+     * que o Navigator do SDK não é recriado do zero por Activity: sem isso, o
+     * listener de uma instância antiga (com dados de outra viagem) continua
+     * disparando junto com o da instância atual a cada chegada. */
+    private var arrivalListener: Navigator.ArrivalListener? = null
+
+    /** Mapeia o TÍTULO do Waypoint -> a ORDEM da parada (não o objeto Waypoint:
+     * confirmado em teste real que o Waypoint devolvido no ArrivalEvent não é
+     * `equals()` ao que foi passado em setDestinations — provavelmente porque
+     * o SDK reprocessa a posição ao calcular a rota, então a comparação por
+     * LatLng falha mesmo com coordenadas visualmente idênticas no log).
+     * Guarda só a ordem (imutável), nunca a lista de passageiros: o conteúdo
+     * exibido vem sempre do estado atual do ViewModel, nunca de uma cópia
+     * congelada no momento em que a navegação começou. */
+    private val ordemPorTituloWaypoint = mutableMapOf<String, Int>()
 
     private val solicitarPermissaoLocalizacao =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedida ->
@@ -79,46 +156,107 @@ class NavegacaoViagemActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_navegacao_viagem)
+
+        enableEdgeToEdge()
 
         viagemId = intent.getStringExtra(EXTRA_VIAGEM_ID) ?: run {
             finish()
             return
         }
 
-        val database = VaivanDatabase.getInstance(this)
-        viagemRepository = ViagemRepository(
-            database.viagemDao(),
-            database.paradaViagemDao(),
-            database.eventoViagemDao()
-        )
+        setContentView(R.layout.activity_navegacao_viagem)
 
         inicializarViews(savedInstanceState)
-        observarViagem()
-        observarParadas()
+        observarEstado()
 
         if (temPermissaoLocalizacao()) {
             inicializarNavegador()
         } else {
             solicitarPermissaoLocalizacao.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+
+        applyTopAndBottomGaps(findViewById(android.R.id.content))
     }
 
     private fun inicializarViews(savedInstanceState: Bundle?) {
         navigationView = findViewById(R.id.navigationView)
         navigationView.onCreate(savedInstanceState)
 
-        barraTopoNavegacao = findViewById(R.id.barraTopoNavegacao)
+        // Tira o botão nativo de reportar incidente/alerta e o de
+        // recentralizar (este último é substituído pelo FAB próprio, porque
+        // o SDK não permite trocar o ícone do nativo).
+        navigationView.setReportIncidentButtonEnabled(false)
+        navigationView.setRecenterButtonEnabled(false)
+
+        // Cor do percurso/cabeçalho e cor do texto do banner de distância
+        // ("700 metros"): a API só expõe cor, não o formato/layout do texto.
+        navigationView.setStylingOptions(
+            StylingOptions()
+                .primaryDayModeThemeColor(ContextCompat.getColor(this, R.color.color_primary))
+                .primaryNightModeThemeColor(ContextCompat.getColor(this, R.color.color_primary))
+                .headerDistanceValueTextColor(ContextCompat.getColor(this, R.color.white))
+                .headerDistanceUnitsTextColor(ContextCompat.getColor(this, R.color.white))
+                .headerLargeManeuverIconColor(ContextCompat.getColor(this, R.color.white))
+                .headerSmallManeuverIconColor(ContextCompat.getColor(this, R.color.white))
+        )
+
+        fotoProximaParadaNavegacao = findViewById(R.id.fotoProximaParadaNavegacao)
         txtProximaParadaNavegacao = findViewById(R.id.txtProximaParadaNavegacao)
+        txtEnderecoProximaParadaNavegacao = findViewById(R.id.txtEnderecoProximaParadaNavegacao)
         btnPausarRetomarNavegacao = findViewById(R.id.btnPausarRetomarNavegacao)
         btnFinalizarNavegacao = findViewById(R.id.btnFinalizarNavegacao)
-        painelParadaNavegacao = findViewById(R.id.painelParadaNavegacao)
+        btnReiniciarSimulacaoNavegacao = findViewById(R.id.btnReiniciarSimulacaoNavegacao)
+        btnRecentralizarNavegacao = findViewById(R.id.btnRecentralizarNavegacao)
+        btnAlternarVozNavegacao = findViewById(R.id.btnAlternarVozNavegacao)
+
+        cardChegadaNavegacao = findViewById(R.id.cardChegadaNavegacao)
         txtTituloPainelParada = findViewById(R.id.txtTituloPainelParada)
         txtEnderecoPainelParada = findViewById(R.id.txtEnderecoPainelParada)
-        containerPassageirosPainelParada = findViewById(R.id.containerPassageirosPainelParada)
+        txtTimerCardChegada = findViewById(R.id.txtTimerCardChegada)
+        recyclerPassageirosPainelParada = findViewById(R.id.recyclerPassageirosPainelParada)
+        btnFinalizarParadaFinal = findViewById(R.id.btnFinalizarParadaFinal)
+
+        painelProgressoViagem = findViewById(R.id.painelProgressoViagem)
+        recyclerProgressoViagem = findViewById(R.id.recyclerProgressoViagem)
+
+        passageiroAdapter = PassageiroParadaAdapter(
+            onConfirmar = { parada ->
+                if (parada.tipo == ViagemRepository.TIPO_EMBARQUE) {
+                    viewModel.confirmarEmbarque(parada)
+                } else {
+                    viewModel.confirmarDesembarque(parada)
+                }
+            },
+            onNaoEmbarcou = { parada -> viewModel.marcarNaoEmbarcou(parada) }
+        )
+
+        recyclerPassageirosPainelParada.layoutManager = LinearLayoutManager(this)
+        recyclerPassageirosPainelParada.adapter = passageiroAdapter
+
+        progressoAdapter = ProgressoViagemAdapter()
+        recyclerProgressoViagem.layoutManager = LinearLayoutManager(this)
+        recyclerProgressoViagem.adapter = progressoAdapter
+
+        // O Bottom Sheet é o progresso geral da viagem — sempre disponível pra
+        // arrastar, independente do card de chegada (que tem vida própria).
+        bottomSheetBehavior = BottomSheetBehavior.from(painelProgressoViagem)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
 
         btnPausarRetomarNavegacao.setOnClickListener { alternarPausa() }
         btnFinalizarNavegacao.setOnClickListener { confirmarFinalizarViagem() }
+        btnFinalizarParadaFinal.setOnClickListener { viewModel.finalizarParadaFinal() }
+
+        btnRecentralizarNavegacao.setOnClickListener {
+            navigationView.getMapAsync { googleMap ->
+                googleMap.followMyLocation(GoogleMap.CameraPerspective.TOP_DOWN_HEADING_UP)
+            }
+        }
+        btnAlternarVozNavegacao.setOnClickListener { alternarVoz() }
+
+        if (BuildConfig.DEBUG) {
+            btnReiniciarSimulacaoNavegacao.visibility = View.VISIBLE
+            btnReiniciarSimulacaoNavegacao.setOnClickListener { reiniciarSimulacao() }
+        }
     }
 
     private fun temPermissaoLocalizacao(): Boolean =
@@ -132,24 +270,49 @@ class NavegacaoViagemActivity : AppCompatActivity() {
     private fun inicializarNavegador() {
         NavigationApi.getNavigator(this, object : NavigationApi.NavigatorListener {
             override fun onNavigatorReady(nav: Navigator) {
+                Log.d(TAG_DEBUG, "onNavigatorReady: Navigator pronto.")
                 navigator = nav
 
-                nav.addArrivalListener(object : Navigator.ArrivalListener {
+                // Se já havia um listener de uma instância anterior desta tela
+                // ainda pendurado no Navigator (ele parece ser compartilhado,
+                // não recriado por Activity), remove antes de adicionar o novo.
+                arrivalListener?.let { nav.removeArrivalListener(it) }
+
+                val listener = object : Navigator.ArrivalListener {
                     override fun onArrival(arrivalEvent: ArrivalEvent) {
-                        exibirPainelParaWaypoint(arrivalEvent.waypoint)
+                        val waypoint = arrivalEvent.waypoint
+                        Log.d(
+                            TAG_DEBUG,
+                            "onArrival: evento recebido! waypoint=${waypoint.title} " +
+                                "lat=${waypoint.position?.latitude} lng=${waypoint.position?.longitude}"
+                        )
+
+                        val ordem = waypoint.title?.let { ordemPorTituloWaypoint[it] }
+                        if (ordem == null) {
+                            Log.w(
+                                TAG_DEBUG,
+                                "onArrival: NÃO achei a ordem pro título '${waypoint.title}' " +
+                                    "(ordemPorTituloWaypoint tem ${ordemPorTituloWaypoint.size} entradas)."
+                            )
+                            return
+                        }
+
+                        Log.d(TAG_DEBUG, "onArrival: ordem=$ordem encontrada, exibindo painel.")
+                        runOnUiThread { viewModel.exibirPainelParaOrdem(ordem) }
                     }
-                })
+                }
+                arrivalListener = listener
+                nav.addArrivalListener(listener)
 
                 navigationView.getMapAsync { googleMap ->
-                    googleMap.followMyLocation(GoogleMap.CameraPerspective.TILTED)
+                    googleMap.followMyLocation(GoogleMap.CameraPerspective.TOP_DOWN_HEADING_UP)
                 }
 
-                if (paradasAtuais.isNotEmpty()) {
-                    montarWaypointsEIniciarGuia()
-                }
+                montarWaypointsEIniciarGuiaSePossivel(viewModel.paradas.value)
             }
 
             override fun onError(errorCode: Int) {
+                Log.e(TAG_DEBUG, "onError: Navigator falhou ao iniciar, código=$errorCode")
                 Toast.makeText(
                     this@NavegacaoViagemActivity,
                     "Não foi possível iniciar a navegação (código $errorCode).",
@@ -159,31 +322,61 @@ class NavegacaoViagemActivity : AppCompatActivity() {
         })
     }
 
-    private fun montarWaypointsEIniciarGuia() {
-        val navegador = navigator ?: return
-        if (paradasPorWaypoint.isNotEmpty()) return // já iniciado
-
-        val gruposPorOrdem = paradasAtuais
-            .sortedBy { it.ordem }
-            .groupBy { it.ordem }
-
-        val waypoints = gruposPorOrdem.map { (_, paradasDoGrupo) ->
-            val referencia = paradasDoGrupo.first()
-            val waypoint = Waypoint.builder()
-                .setLatLng(referencia.latitude, referencia.longitude)
-                .setTitle(referencia.nomeLocal.ifBlank { referencia.endereco })
-                .build()
-
-            paradasPorWaypoint[waypoint] = paradasDoGrupo
-            waypoint
+    private fun montarWaypointsEIniciarGuiaSePossivel(paradas: List<ParadaViagemEntity>) {
+        val navegador = navigator ?: run {
+            Log.d(TAG_DEBUG, "montarWaypoints: ainda sem navigator, adiando.")
+            return
+        }
+        if (ordemPorTituloWaypoint.isNotEmpty() || paradas.isEmpty()) {
+            Log.d(
+                TAG_DEBUG,
+                "montarWaypoints: ignorado (ordemPorTituloWaypoint.isNotEmpty=${ordemPorTituloWaypoint.isNotEmpty()}, " +
+                    "paradas.isEmpty=${paradas.isEmpty()})"
+            )
+            return
         }
 
-        if (waypoints.isEmpty()) return
+        val pendentes = paradas.filter {
+            it.status == ViagemRepository.PARADA_AGUARDANDO ||
+                it.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
+        }
+
+        if (pendentes.isEmpty()) {
+            Log.d(TAG_DEBUG, "montarWaypoints: nenhuma parada pendente, nada a fazer.")
+            return
+        }
+
+        val waypoints = pendentes
+            .sortedBy { it.ordem }
+            .groupBy { it.ordem }
+            .map { (ordem, paradasDoGrupo) ->
+                val referencia = paradasDoGrupo.first()
+                val titulo = referencia.nomeLocal.ifBlank { referencia.endereco }
+                val waypoint = Waypoint.builder()
+                    .setLatLng(referencia.latitude, referencia.longitude)
+                    .setTitle(titulo)
+                    .setVehicleStopover(true)
+                    .build()
+
+                Log.d(
+                    TAG_DEBUG,
+                    "montarWaypoints: parada ordem=$ordem título='$titulo' " +
+                        "lat=${referencia.latitude} lng=${referencia.longitude}"
+                )
+
+                ordemPorTituloWaypoint[titulo] = ordem
+                waypoint
+            }
+
+        Log.d(TAG_DEBUG, "montarWaypoints: chamando setDestinations com ${waypoints.size} waypoint(s).")
 
         navegador.setDestinations(waypoints).setOnResultListener { status ->
+            Log.d(TAG_DEBUG, "setDestinations: status=$status")
             if (status == Navigator.RouteStatus.OK) {
+                Log.d(TAG_DEBUG, "setDestinations: OK, chamando startGuidance().")
                 navegador.startGuidance()
             } else {
+                Log.w(TAG_DEBUG, "setDestinations: FALHOU com status=$status")
                 Toast.makeText(
                     this,
                     "Não foi possível calcular a rota de navegação (status: $status).",
@@ -194,52 +387,78 @@ class NavegacaoViagemActivity : AppCompatActivity() {
     }
 
     // =========================================================
-    // ESTADO DA VIAGEM (Firestore/Room via ViagemRepository)
+    // ESTADO DA TELA (ViewModel)
     // =========================================================
 
-    private fun observarViagem() {
-        viagemRepository.iniciarSincronizacao(viagemId)
-
+    private fun observarEstado() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viagemRepository.observarViagem(viagemId).collect { viagem ->
-                    viagemAtual = viagem
-                    atualizarBotaoPausa(viagem)
+                launch {
+                    viewModel.viagem.collect { atualizarBotaoPausa(it) }
                 }
-            }
-        }
-    }
+                launch {
+                    viewModel.paradas.collect { paradas ->
+                        montarWaypointsEIniciarGuiaSePossivel(paradas)
+                        progressoAdapter.submitLista(paradas)
+                    }
+                }
+                launch {
+                    viewModel.proximaParadaPendente.collect { atualizarResumoParada(it) }
+                }
+                launch {
+                    viewModel.ordemPainelAtivo.collect { ordem ->
+                        if (ordem != null) {
+                            cardChegadaNavegacao.visibility = View.VISIBLE
+                            iniciarTimerChegada()
+                        } else {
+                            cardChegadaNavegacao.visibility = View.GONE
+                            pararTimerChegada()
 
-    private fun observarParadas() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viagemRepository.observarParadas(viagemId).collect { paradas ->
-                    paradasAtuais = paradas
-                    atualizarTextoProximaParada(paradas)
-
-                    if (navigator != null && paradasPorWaypoint.isEmpty() && paradas.isNotEmpty()) {
-                        montarWaypointsEIniciarGuia()
+                            // Card fechou porque a parada foi resolvida (não é o
+                            // estado inicial, antes de qualquer chegada) -> avisa
+                            // o SDK que pode seguir pra próxima parada da rota.
+                            // Sem isso, o veículo continua andando fisicamente
+                            // (inclusive no simulador), mas o SDK nunca troca o
+                            // alvo de detecção de chegada pro próximo waypoint.
+                            if (ordemCardAnterior != null) {
+                                Log.d(TAG_DEBUG, "continueToNextDestination: chamando.")
+                                navigator?.continueToNextDestination()
+                            }
+                        }
+                        ordemCardAnterior = ordem
+                    }
+                }
+                launch {
+                    viewModel.paradasDoPainel.collect { paradasDoPainel ->
+                        atualizarCardChegada(paradasDoPainel)
+                    }
+                }
+                launch {
+                    viewModel.ehParadaFinal.collect {
+                        atualizarCardChegada(viewModel.paradasDoPainel.value)
                     }
                 }
             }
         }
     }
 
-    private fun atualizarTextoProximaParada(paradas: List<ParadaViagemEntity>) {
-        val proxima = paradas
-            .filter { it.status == ViagemRepository.PARADA_AGUARDANDO || it.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE }
-            .minByOrNull { it.ordem }
-
-        txtProximaParadaNavegacao.text = if (proxima == null) {
-            "Todas as paradas foram concluídas."
-        } else {
-            val quantosNessaParada = paradas.count { it.ordem == proxima.ordem }
-            if (quantosNessaParada > 1) {
-                "Próxima parada: ${proxima.nomeLocal} ($quantosNessaParada passageiros)"
-            } else {
-                "Próxima parada: ${proxima.nomeLocal}"
-            }
+    private fun atualizarResumoParada(proxima: ParadaViagemEntity?) {
+        if (proxima == null) {
+            txtProximaParadaNavegacao.text = "Todas as paradas foram concluídas."
+            txtEnderecoProximaParadaNavegacao.text = ""
+            fotoProximaParadaNavegacao.setImageResource(R.drawable.ic_perfil)
+            return
         }
+
+        txtProximaParadaNavegacao.text = "A caminho de: ${proxima.nomePassageiro}"
+        txtEnderecoProximaParadaNavegacao.text = proxima.endereco.ifBlank { proxima.nomeLocal }
+
+        Glide.with(fotoProximaParadaNavegacao)
+            .load(proxima.fotoPassageiroUrl)
+            .placeholder(R.drawable.ic_perfil)
+            .error(R.drawable.ic_perfil)
+            .circleCrop()
+            .into(fotoProximaParadaNavegacao)
     }
 
     private fun atualizarBotaoPausa(viagem: ViagemEntity?) {
@@ -250,136 +469,64 @@ class NavegacaoViagemActivity : AppCompatActivity() {
         }
     }
 
-    // =========================================================
-    // PAINEL DE EMBARQUE / DESEMBARQUE
-    // =========================================================
+    private fun atualizarCardChegada(paradas: List<ParadaViagemEntity>) {
+        val ehParadaFinal = viewModel.ehParadaFinal.value
 
-    private fun exibirPainelParaWaypoint(waypoint: Waypoint) {
-        val paradas = paradasPorWaypoint[waypoint] ?: return
-        runOnUiThread { exibirPainelDeParadas(paradas) }
-    }
-
-    private fun exibirPainelDeParadas(paradas: List<ParadaViagemEntity>) {
-        if (paradas.isEmpty()) return
-
-        val referencia = paradas.first()
-        val ehEmbarque = referencia.tipo == ViagemRepository.TIPO_EMBARQUE
-
-        txtTituloPainelParada.text = if (ehEmbarque) "Próxima parada — Embarque" else "Próxima parada — Desembarque"
-        txtEnderecoPainelParada.text = referencia.endereco.ifBlank { referencia.nomeLocal }
-
-        containerPassageirosPainelParada.removeAllViews()
-
-        val inflater = LayoutInflater.from(this)
-
-        paradas.forEach { parada ->
-            val item = inflater.inflate(
-                R.layout.item_passageiro_parada_navegacao,
-                containerPassageirosPainelParada,
-                false
-            )
-
-            desenharItemPassageiro(item, parada, paradas)
-            containerPassageirosPainelParada.addView(item)
-        }
-
-        painelParadaNavegacao.visibility = View.VISIBLE
-    }
-
-    private fun desenharItemPassageiro(
-        item: View,
-        parada: ParadaViagemEntity,
-        paradasDoGrupo: List<ParadaViagemEntity>
-    ) {
-        val nome = item.findViewById<TextView>(R.id.nomePassageiroItemParada)
-        val status = item.findViewById<TextView>(R.id.statusPassageiroItemParada)
-        val btnConfirmar = item.findViewById<MaterialButton>(R.id.btnConfirmarAcaoItemParada)
-        val btnNao = item.findViewById<MaterialButton>(R.id.btnNaoAcaoItemParada)
-
-        nome.text = parada.nomePassageiro
-
-        val resolvido = parada.status != ViagemRepository.PARADA_AGUARDANDO &&
-            parada.status != ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
-
-        status.text = textoStatus(parada.status)
-        btnConfirmar.isEnabled = !resolvido
-        btnNao.isEnabled = !resolvido
-
-        if (parada.tipo == ViagemRepository.TIPO_EMBARQUE) {
-            btnConfirmar.text = "Confirmar embarque"
-            btnNao.text = "Não embarcou"
-            btnNao.visibility = View.VISIBLE
-
-            btnConfirmar.setOnClickListener {
-                resolverParada(parada, paradasDoGrupo) { viagemRepository.confirmarEmbarque(parada) }
-            }
-            btnNao.setOnClickListener {
-                resolverParada(parada, paradasDoGrupo) { viagemRepository.marcarNaoEmbarcou(parada, null) }
-            }
+        if (ehParadaFinal) {
+            recyclerPassageirosPainelParada.visibility = View.GONE
+            btnFinalizarParadaFinal.visibility = View.VISIBLE
+            txtTituloPainelParada.text = "Chegada ao destino final"
         } else {
-            btnConfirmar.text = "Confirmar desembarque"
-            btnNao.visibility = View.GONE
+            recyclerPassageirosPainelParada.visibility = View.VISIBLE
+            btnFinalizarParadaFinal.visibility = View.GONE
+            passageiroAdapter.submitLista(paradas)
 
-            btnConfirmar.setOnClickListener {
-                resolverParada(parada, paradasDoGrupo) { viagemRepository.confirmarDesembarque(parada) }
+            val referencia = paradas.firstOrNull()
+            if (referencia != null) {
+                val ehEmbarque = referencia.tipo == ViagemRepository.TIPO_EMBARQUE
+                txtTituloPainelParada.text = if (ehEmbarque) "Chegada — Embarque" else "Chegada — Desembarque"
             }
         }
+
+        val referencia = paradas.firstOrNull() ?: return
+        txtEnderecoPainelParada.text = referencia.endereco.ifBlank { referencia.nomeLocal }
     }
 
-    private fun textoStatus(status: String): String = when (status) {
-        ViagemRepository.PARADA_EMBARCADO -> "Embarcado"
-        ViagemRepository.PARADA_NAO_EMBARCOU -> "Não embarcou"
-        ViagemRepository.PARADA_DESEMBARCADO -> "Desembarcado"
-        else -> "Aguardando"
-    }
+    // =========================================================
+    // TIMER DE 2 MINUTOS NO CARD DE CHEGADA
+    // =========================================================
 
-    private fun resolverParada(
-        parada: ParadaViagemEntity,
-        paradasDoGrupo: List<ParadaViagemEntity>,
-        acao: suspend () -> Unit
-    ) {
-        lifecycleScope.launch {
-            try {
-                acao()
-                verificarGrupoResolvidoEAvancar(parada.ordem)
-            } catch (erro: Exception) {
+    private fun iniciarTimerChegada() {
+        pararTimerChegada()
+
+        txtTimerCardChegada.setTextColor(ContextCompat.getColor(this, R.color.dark_gray))
+
+        timerChegada = object : CountDownTimer(DURACAO_TIMER_CHEGADA_MS, 1_000L) {
+            override fun onTick(millisRestantes: Long) {
+                val segundosTotais = (millisRestantes / 1000).toInt()
+                txtTimerCardChegada.text = String.format(
+                    Locale("pt", "BR"),
+                    "%d:%02d",
+                    segundosTotais / 60,
+                    segundosTotais % 60
+                )
+            }
+
+            override fun onFinish() {
+                txtTimerCardChegada.text = "Tempo esgotado"
+                txtTimerCardChegada.setTextColor(ContextCompat.getColor(this@NavegacaoViagemActivity, R.color.status_danger))
                 Toast.makeText(
                     this@NavegacaoViagemActivity,
-                    "Falha ao registrar: ${erro.message}",
+                    "Tempo de espera esgotado. Confirme o embarque para continuar.",
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
+        }.start()
     }
 
-    private fun verificarGrupoResolvidoEAvancar(ordem: Int) {
-        val grupo = paradasAtuais.filter { it.ordem == ordem }
-        val todosResolvidos = grupo.all {
-            it.status != ViagemRepository.PARADA_AGUARDANDO &&
-                it.status != ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
-        }
-
-        if (todosResolvidos) {
-            painelParadaNavegacao.visibility = View.GONE
-
-            val proxima = paradasAtuais
-                .filter { it.ordem > ordem }
-                .minByOrNull { it.ordem }
-
-            lifecycleScope.launch {
-                viagemRepository.avancarParaProximaParada(viagemId, proxima?.id)
-
-                if (proxima == null) {
-                    viagemRepository.finalizarViagem(viagemId)
-                    Toast.makeText(
-                        this@NavegacaoViagemActivity,
-                        "Viagem finalizada.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish()
-                }
-            }
-        }
+    private fun pararTimerChegada() {
+        timerChegada?.cancel()
+        timerChegada = null
     }
 
     // =========================================================
@@ -389,23 +536,44 @@ class NavegacaoViagemActivity : AppCompatActivity() {
     private fun alternarPausa() {
         val navegador = navigator ?: return
 
-        if (viagemAtual?.status == ViagemRepository.STATUS_PAUSADA) {
+        if (viewModel.viagem.value?.status == ViagemRepository.STATUS_PAUSADA) {
             navegador.startGuidance()
         } else {
             navegador.stopGuidance()
         }
+
+        viewModel.alternarPausa()
+    }
+
+    /** Alterna entre guiagem com voz (alertas + instruções de condução) e
+     * totalmente silenciada. setAudioGuidance(Int) é deprecated — a API atual
+     * é setAudioGuidanceSettings(AudioGuidanceSettings). */
+    private fun alternarVoz() {
+        vozAtiva = !vozAtiva
+
+        val modo = if (vozAtiva) {
+            AudioGuidanceSettings.GuidanceMode.VOICE_ALERTS_AND_GUIDANCE
+        } else {
+            AudioGuidanceSettings.GuidanceMode.SILENT
+        }
+
+        navigator?.setAudioGuidanceSettings(
+            AudioGuidanceSettings.builder().setGuidanceMode(modo).build()
+        )
+
+        btnAlternarVozNavegacao.setImageResource(
+            if (vozAtiva) R.drawable.ic_som_ativado else R.drawable.ic_som_desativado
+        )
     }
 
     private fun confirmarFinalizarViagem() {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Finalizar viagem?")
             .setMessage("Isso encerra a navegação e a viagem atual.")
             .setNegativeButton("Cancelar", null)
             .setPositiveButton("Finalizar") { _, _ ->
-                lifecycleScope.launch {
-                    viagemRepository.finalizarViagem(viagemId)
-                    finish()
-                }
+                viewModel.finalizarViagem()
+                finish()
             }
             .show()
     }
@@ -415,8 +583,17 @@ class NavegacaoViagemActivity : AppCompatActivity() {
     // =========================================================
 
     private fun iniciarSimulacaoSeDebug() {
-        if (!BuildConfig.DEBUG) return
-        navigator?.simulator?.simulateLocationsAlongExistingRoute()
+        val simulador = navigator?.simulator
+        Log.d(TAG_DEBUG, "iniciarSimulacaoSeDebug: navigator=${navigator != null} simulador=${simulador != null}")
+        simulador?.simulateLocationsAlongExistingRoute()
+    }
+
+    /** Volta o veículo simulado para o início da rota e recomeça a simulação. */
+    private fun reiniciarSimulacao() {
+        val simulador = navigator?.simulator ?: return
+        Log.d(TAG_DEBUG, "reiniciarSimulacao: reiniciando.")
+        simulador.unsetUserLocation()
+        simulador.simulateLocationsAlongExistingRoute()
     }
 
     // =========================================================
@@ -441,11 +618,12 @@ class NavegacaoViagemActivity : AppCompatActivity() {
 
     override fun onStop() {
         navigationView.onStop()
-        viagemRepository.pararSincronizacao()
         super.onStop()
     }
 
     override fun onDestroy() {
+        pararTimerChegada()
+        arrivalListener?.let { navigator?.removeArrivalListener(it) }
         navigationView.onDestroy()
         super.onDestroy()
     }

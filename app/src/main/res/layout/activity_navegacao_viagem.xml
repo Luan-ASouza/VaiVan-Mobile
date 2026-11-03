@@ -3,114 +3,386 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rootNavegacaoViagem"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@color/dark_gray">
 
-    <com.google.android.libraries.navigation.NavigationView
-        android:id="@+id/navigationView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+    <!-- ÁREA ÚTIL DA NAVEGAÇÃO -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/rootNavegacaoViagem"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/black"
+        app:layout_constraintTop_toBottomOf="@id/topGap"
+        app:layout_constraintBottom_toTopOf="@id/bottomGap"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <LinearLayout
-        android:id="@+id/barraTopoNavegacao"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#CC202124"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        app:layout_constraintTop_toTopOf="parent">
+        <!-- ================================================== -->
+        <!-- MAPA DE NAVEGAÇÃO                                  -->
+        <!-- ================================================== -->
 
-        <TextView
-            android:id="@+id/txtProximaParadaNavegacao"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fontFamily="@font/montserrat"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            tools:ignore="HardcodedText"
-            android:text="Carregando viagem..." />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPausarRetomarNavegacao"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="Pausar"
-            android:textAllCaps="false"
-            android:textSize="13sp"
-            app:backgroundTint="#3A3A3A"
-            app:cornerRadius="12dp"
-            tools:ignore="HardcodedText" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFinalizarNavegacao"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="Finalizar"
-            android:textAllCaps="false"
-            android:textSize="13sp"
-            app:backgroundTint="#D64545"
-            app:cornerRadius="12dp"
-            tools:ignore="HardcodedText" />
-
-    </LinearLayout>
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/painelParadaNavegacao"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxHeight="420dp"
-        android:background="@drawable/bg_painel_navegacao"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <LinearLayout
+        <com.google.android.libraries.navigation.NavigationView
+            android:id="@+id/navigationView"
             android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- ================================================== -->
+        <!-- BOTÕES FLUTUANTES                                  -->
+        <!-- ================================================== -->
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnRecentralizarNavegacao"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="100dp"
+            android:contentDescription="Recentralizar mapa"
+            android:src="@drawable/ic_mylocation"
+            app:tint="@color/orange"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="mini"
+            app:maxImageSize="22dp"
+            app:shapeAppearanceOverlay="@style/CircleImage" />
 
-            <TextView
-                android:id="@+id/txtTituloPainelParada"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat"
-                android:text="Próxima parada"
-                android:textColor="#101010"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
 
-            <TextView
-                android:id="@+id/txtEnderecoPainelParada"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#686D75"
-                android:textSize="14sp" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnAlternarVozNavegacao"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="100dp"
+            android:contentDescription="Ativar ou desativar a voz"
+            android:src="@drawable/ic_som_ativado"
+            app:tint="@color/orange"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="mini"
+            app:maxImageSize="22dp" />
+
+        <!-- ================================================== -->
+        <!-- BOTTOM SHEET: PROGRESSO DA VIAGEM                  -->
+        <!-- ================================================== -->
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/painelProgressoViagem"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:cardBackgroundColor="@color/dark_gray"
+            app:cardElevation="10dp"
+            app:layout_behavior="@string/bottom_sheet_behavior"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="100dp"
+            app:cardCornerRadius="30dp">
 
             <LinearLayout
-                android:id="@+id/containerPassageirosPainelParada"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <!-- RESUMO DA PRÓXIMA PARADA -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="84dp"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp">
+
+                    <!-- INDICADOR DE ARRASTE -->
+
+                    <View
+                        android:layout_width="100dp"
+                        android:layout_height="4dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_dia_inativo" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/fotoProximaParadaNavegacao"
+                            android:layout_width="70dp"
+                            android:layout_height="70dp"
+                            android:padding="2dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/filho1"
+                            app:shapeAppearanceOverlay="@style/CircleImage"
+                            app:strokeColor="@color/color_primary"
+                            app:strokeWidth="3dp" />
+
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtProximaParadaNavegacao"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/montserrat"
+                                android:text="Carregando viagem..."
+                                android:textColor="@color/color_secondary"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
+
+                            <TextView
+                                android:id="@+id/txtEnderecoProximaParadaNavegacao"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:textColor="#686D75"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- TÍTULO -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/montserrat"
+                    android:text="Passageiros da viagem"
+                    android:textColor="#686D75"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <!-- LISTA DE PASSAGEIROS -->
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerProgressoViagem"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:clipToPadding="false"
+                    android:paddingBottom="24dp" />
+
+                <LinearLayout
+                    android:id="@+id/containerBotoes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:background="#CC202124"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/barraBotoes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="12dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPausarRetomarNavegacao"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="Pausar"
+                            android:textColor="@color/white"
+                            android:textAllCaps="false"
+                            android:textSize="13sp"
+                            app:backgroundTint="#3A3A3A"
+                            app:cornerRadius="12dp"
+                            tools:ignore="HardcodedText" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFinalizarNavegacao"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="Finalizar"
+                            android:textAllCaps="false"
+                            android:textSize="13sp"
+                            android:textColor="@color/white"
+                            app:backgroundTint="#D64545"
+                            app:cornerRadius="12dp"
+                            tools:ignore="HardcodedText" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnReiniciarSimulacaoNavegacao"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:text="Reiniciar simulação"
+                            android:textAllCaps="false"
+                            android:textSize="12sp"
+                            android:textColor="@color/white"
+                            app:backgroundTint="#F6B12F"
+                            app:cornerRadius="10dp"
+                            tools:ignore="HardcodedText" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <!-- ================================================== -->
+        <!-- CARD DE CHEGADA À PARADA                           -->
+        <!-- ================================================== -->
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardChegadaNavegacao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="20dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="16dp"
+            tools:visibility="visible">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:padding="22dp">
 
-        </LinearLayout>
+                <!-- CABEÇALHO -->
 
-    </androidx.core.widget.NestedScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtTituloPainelParada"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat"
+                            android:text="Chegando à parada"
+                            android:textColor="#101010"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            tools:ignore="HardcodedText" />
+
+                        <TextView
+                            android:id="@+id/txtEnderecoPainelParada"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="#686D75"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
+
+                    <!-- TIMER -->
+
+                    <TextView
+                        android:id="@+id/txtTimerCardChegada"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_container_round_30"
+                        android:fontFamily="@font/montserrat"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:text="2:00" />
+
+                </LinearLayout>
+
+                <!-- PASSAGEIROS DA PARADA -->
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerPassageirosPainelParada"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:nestedScrollingEnabled="false" />
+
+                <!-- FINALIZAR PARADA FINAL -->
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFinalizarParadaFinal"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Finalizar viagem"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    app:backgroundTint="#2E9D62"
+                    app:cornerRadius="14dp"
+                    tools:ignore="HardcodedText" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- ================================================== -->
+    <!-- GAPS ABSOLUTOS                                     -->
+    <!-- DEVEM FICAR ACIMA DE TODOS OS COMPONENTES          -->
+    <!-- ================================================== -->
+
+    <!-- TOP GAP -->
+
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/dark_gray"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- BOTTOM GAP -->
+
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/dark_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

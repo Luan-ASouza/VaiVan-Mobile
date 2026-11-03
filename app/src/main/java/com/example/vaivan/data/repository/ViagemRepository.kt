@@ -68,6 +68,23 @@ class ViagemRepository(
     fun observarViagemAtivaDoMotorista(motoristaId: String): Flow<ViagemEntity?> =
         viagemDao.getViagemAtivaDoMotorista(motoristaId)
 
+    /** Consulta direto no Firestore (não confia no cache) se o motorista já
+     * tem uma viagem em andamento/pausada — usado antes de criar uma viagem
+     * nova, pra não reiniciar o progresso se a tela de navegação for fechada
+     * e reaberta (ex.: Activity recriada, app foi pra background e voltou). */
+    suspend fun consultarViagemAtivaDoMotorista(motoristaId: String): ViagemEntity? {
+        val snapshot = collectionViagens
+            .whereEqualTo("motoristaId", motoristaId)
+            .whereIn("status", listOf(STATUS_EM_ANDAMENTO, STATUS_PAUSADA))
+            .limit(1)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let { documento ->
+            documento.toObject(ViagemEntity::class.java)?.copy(id = documento.id)
+        }
+    }
+
     fun observarParadas(viagemId: String): Flow<List<ParadaViagemEntity>> =
         paradaViagemDao.getByViagem(viagemId)
 
@@ -250,6 +267,24 @@ class ViagemRepository(
         atualizarStatusParada(parada, PARADA_DESEMBARCADO, "DESEMBARQUE")
     }
 
+    /** Confirma de uma vez o desembarque de todo um grupo (ex.: chegada ao
+     * ponto final, onde não faz sentido confirmar aluno por aluno). */
+    suspend fun confirmarDesembarqueColetivo(paradas: List<ParadaViagemEntity>) {
+        if (paradas.isEmpty()) return
+
+        val agora = System.currentTimeMillis()
+        val atualizadas = paradas.map {
+            it.copy(status = PARADA_DESEMBARCADO, horarioRealMillis = agora, lastUpdated = agora)
+        }
+
+        val batch = firestore.batch()
+        atualizadas.forEach { batch.set(collectionParadas.document(it.id), it) }
+        batch.commit().await()
+
+        paradaViagemDao.upsertAll(atualizadas)
+        atualizadas.forEach { registrarEvento(it.viagemId, it.id, "DESEMBARQUE") }
+    }
+
     private suspend fun atualizarStatusParada(
         parada: ParadaViagemEntity,
         novoStatus: String,
@@ -272,6 +307,20 @@ class ViagemRepository(
         val agora = System.currentTimeMillis()
         collectionViagens.document(viagemId)
             .update(mapOf("paradaAtualId" to proximaParadaId, "lastUpdated" to agora))
+            .await()
+    }
+
+    suspend fun pausarViagem(viagemId: String) {
+        val agora = System.currentTimeMillis()
+        collectionViagens.document(viagemId)
+            .update(mapOf("status" to STATUS_PAUSADA, "pausadaEm" to agora, "lastUpdated" to agora))
+            .await()
+    }
+
+    suspend fun retomarViagem(viagemId: String) {
+        val agora = System.currentTimeMillis()
+        collectionViagens.document(viagemId)
+            .update(mapOf("status" to STATUS_EM_ANDAMENTO, "pausadaEm" to null, "lastUpdated" to agora))
             .await()
     }
 

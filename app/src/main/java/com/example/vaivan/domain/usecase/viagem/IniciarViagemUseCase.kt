@@ -22,6 +22,13 @@ class IniciarViagemUseCase(
         direcao: String
     ): ViagemEntity {
 
+        // Se o motorista já tem uma viagem em andamento/pausada (ex.: a tela de
+        // navegação foi fechada e reaberta), retoma ela em vez de começar do
+        // zero — senão o progresso de embarque já confirmado se perde.
+        viagemRepository.consultarViagemAtivaDoMotorista(motoristaId)?.let { ativa ->
+            return ativa
+        }
+
         val rota = rotaRepository.consultarRota(rotaId)
             ?: throw IllegalStateException("Rota não encontrada.")
 

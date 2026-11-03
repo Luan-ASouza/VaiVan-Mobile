@@ -34,7 +34,6 @@ import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
 import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -48,7 +47,8 @@ class RotaDetalheActivity : AppCompatActivity() {
     private lateinit var rotaId: String
 
     private lateinit var txtNomeRotaDetalhe: TextView
-    private lateinit var btnIniciarRotaDetalhe: Button
+    private lateinit var btnIniciarIdaDetalhe: Button
+    private lateinit var btnIniciarVoltaDetalhe: Button
     private lateinit var btnVerMapaDetalhe: Button
     private lateinit var btnTrajetoDetalhe: Button
 
@@ -186,9 +186,14 @@ class RotaDetalheActivity : AppCompatActivity() {
                 R.id.txtNomeRotaDetalhe
             )
 
-        btnIniciarRotaDetalhe =
+        btnIniciarIdaDetalhe =
             findViewById(
-                R.id.btnIniciarRotaDetalhe
+                R.id.btnIniciarIdaDetalhe
+            )
+
+        btnIniciarVoltaDetalhe =
+            findViewById(
+                R.id.btnIniciarVoltaDetalhe
             )
 
         btnVerMapaDetalhe =
@@ -279,8 +284,12 @@ class RotaDetalheActivity : AppCompatActivity() {
             )
         }
 
-        btnIniciarRotaDetalhe.setOnClickListener {
-            iniciarRota()
+        btnIniciarIdaDetalhe.setOnClickListener {
+            rotaCarregada?.let { confirmarEIniciarViagem(it.id, ViagemRepository.DIRECAO_IDA, btnIniciarIdaDetalhe) }
+        }
+
+        btnIniciarVoltaDetalhe.setOnClickListener {
+            rotaCarregada?.let { confirmarEIniciarViagem(it.id, ViagemRepository.DIRECAO_VOLTA, btnIniciarVoltaDetalhe) }
         }
 
         observarRota()
@@ -415,37 +424,32 @@ class RotaDetalheActivity : AppCompatActivity() {
         btnVerMapaDetalhe.isEnabled =
             rota.vagasOcupadas > 0
 
-        btnIniciarRotaDetalhe.isEnabled =
-            rota.vagasOcupadas > 0 && rota.status == "ATIVA" && !iniciandoViagem
+        val habilitado = rota.vagasOcupadas > 0 && rota.status == "ATIVA" && !iniciandoViagem
+
+        when (rota.tipoTrajeto) {
+            "IDA" -> {
+                btnIniciarIdaDetalhe.visibility = View.VISIBLE
+                btnIniciarVoltaDetalhe.visibility = View.GONE
+            }
+            "VOLTA" -> {
+                btnIniciarIdaDetalhe.visibility = View.GONE
+                btnIniciarVoltaDetalhe.visibility = View.VISIBLE
+            }
+            else -> { // IDA_E_VOLTA
+                btnIniciarIdaDetalhe.visibility = View.VISIBLE
+                btnIniciarVoltaDetalhe.visibility = View.VISIBLE
+            }
+        }
+
+        btnIniciarIdaDetalhe.isEnabled = habilitado
+        btnIniciarVoltaDetalhe.isEnabled = habilitado
     }
 
     // ---------------------------------------------------------
     // INICIAR ROTA (viagem)
     // ---------------------------------------------------------
 
-    private fun iniciarRota() {
-        val rota = rotaCarregada ?: return
-
-        if (rota.tipoTrajeto == "IDA_E_VOLTA") {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Qual sentido?")
-                .setItems(arrayOf("Ida (buscar alunos)", "Volta (levar alunos)")) { _, opcao ->
-                    val direcao = if (opcao == 0) ViagemRepository.DIRECAO_IDA else ViagemRepository.DIRECAO_VOLTA
-                    confirmarEIniciarViagem(rota.id, direcao)
-                }
-                .setNegativeButton("Cancelar", null)
-                .show()
-        } else {
-            val direcao = if (rota.tipoTrajeto == "VOLTA") {
-                ViagemRepository.DIRECAO_VOLTA
-            } else {
-                ViagemRepository.DIRECAO_IDA
-            }
-            confirmarEIniciarViagem(rota.id, direcao)
-        }
-    }
-
-    private fun confirmarEIniciarViagem(rotaId: String, direcao: String) {
+    private fun confirmarEIniciarViagem(rotaId: String, direcao: String, botaoTocado: Button) {
         if (iniciandoViagem) return
 
         val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
@@ -455,8 +459,9 @@ class RotaDetalheActivity : AppCompatActivity() {
         }
 
         iniciandoViagem = true
-        btnIniciarRotaDetalhe.isEnabled = false
-        btnIniciarRotaDetalhe.text = "Iniciando..."
+        btnIniciarIdaDetalhe.isEnabled = false
+        btnIniciarVoltaDetalhe.isEnabled = false
+        botaoTocado.text = "Iniciando..."
 
         lifecycleScope.launch {
             try {
@@ -480,8 +485,11 @@ class RotaDetalheActivity : AppCompatActivity() {
 
             } finally {
                 iniciandoViagem = false
-                btnIniciarRotaDetalhe.text = "Iniciar rota"
-                rotaCarregada?.let { btnIniciarRotaDetalhe.isEnabled = it.vagasOcupadas > 0 && it.status == "ATIVA" }
+                botaoTocado.text = if (botaoTocado === btnIniciarIdaDetalhe) "Iniciar Ida" else "Iniciar Volta"
+                val rota = rotaCarregada
+                val habilitado = rota != null && rota.vagasOcupadas > 0 && rota.status == "ATIVA"
+                btnIniciarIdaDetalhe.isEnabled = habilitado
+                btnIniciarVoltaDetalhe.isEnabled = habilitado
             }
         }
     }

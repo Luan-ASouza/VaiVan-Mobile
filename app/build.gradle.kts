@@ -79,7 +79,12 @@ dependencies {
     // da API key já usada pelo Maps SDK/Routes API/Places.
     implementation("com.google.android.libraries.navigation:navigation:8.0.0")
 
-    implementation("com.google.android.libraries.places:places:4.4.1")
+    // Places SDK for Android (New) - a partir da 5.x o SDK fala só com a Places API (New).
+    // Fixado em 5.3.0 (não a mais recente, 6.0.2): essa é a versão mais nova cujo
+    // kotlin-stdlib embutido (2.3.0) ainda é compatível com o compilador Kotlin do
+    // projeto (2.2.10, que só lê metadata até 2.3.0) - 6.0.2 usa stdlib 2.4.0 e
+    // quebra a compilação inteira (até "listOf"/"mapOf" param de resolver).
+    implementation("com.google.android.libraries.places:places:5.3.0")
     // play-services-maps NÃO é declarado diretamente: o Navigation SDK já traz embutida
     // uma cópia compatível das classes do Maps SDK (com.google.android.gms.maps.*), e
     // declarar as duas juntas gera classes duplicadas na hora de montar o APK.
@@ -87,8 +92,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
     implementation("androidx.fragment:fragment-ktx:1.9.0")
 
+    // Glide - carregamento das fotos reais dos passageiros (foto do Firebase
+    // Storage) no roteiro de navegação; uso básico só, sem AppGlideModule/KSP.
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.3.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
