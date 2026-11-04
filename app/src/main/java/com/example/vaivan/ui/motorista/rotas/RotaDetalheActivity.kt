@@ -634,9 +634,21 @@ class RotaDetalheActivity : AppCompatActivity() {
                 .findViewById<TextView>(
                     R.id.txtHorarioSolicitacao
                 )
+
                 .text =
                 "Horário desejado: " +
                         solicitacao.horarioDesejado
+
+            // Mensagem do responsável (o bloco só aparece se ele escreveu algo)
+            val mensagem = solicitacao.mensagem.trim()
+            val blocoMensagem = itemView.findViewById<View>(R.id.containerMensagemSolicitacao)
+
+            if (mensagem.isBlank()) {
+                blocoMensagem.visibility = View.GONE
+            } else {
+                blocoMensagem.visibility = View.VISIBLE
+                itemView.findViewById<TextView>(R.id.txtMensagemSolicitacao).text = mensagem
+            }
 
             val btnAceitar =
                 itemView.findViewById<Button>(
