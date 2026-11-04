@@ -15,24 +15,70 @@ object ChatRepository {
         return if (uid1 < uid2) "${uid1}_$uid2" else "${uid2}_$uid1"
     }
 
-    suspend fun iniciarOuObterChat(outroUsuarioId: String): String {
+    /**
+     * Abre (ou cria) a conversa entre o usuário logado e [outroUsuarioId].
+     *
+     * Os parâmetros novos são opcionais, então as chamadas antigas continuam funcionando:
+     *  - [solicitacaoId]: guarda no chat de qual solicitação aprovada ele nasceu
+     *    (usado pela regra do Firestore que limita o chat a quem foi aprovado).
+     *  - [mensagemInicial]: o pedido que o responsável escreveu na solicitação.
+     *    Vira a primeira mensagem da conversa, enviada pelo usuário logado
+     *    (portanto, chame isto pelo app do RESPONSÁVEL).
+     *  - [mensagemInicialEm]: horário da mensagem (use o criadoEm da solicitação
+     *    para ela ficar no topo da conversa).
+     *
+     * A mensagem do pedido tem ID fixo ("pedido_<solicitacaoId>"), então, mesmo que
+     * esta função rode várias vezes, ela é gravada uma única vez.
+     */
+    suspend fun iniciarOuObterChat(
+        outroUsuarioId: String,
+        solicitacaoId: String? = null,
+        mensagemInicial: String? = null,
+        mensagemInicialEm: Long? = null
+    ): String {
         val meuUid = auth.currentUser?.uid
             ?: throw IllegalStateException("Usuário não está logado")
 
         val chatId = gerarChatId(meuUid, outroUsuarioId)
         val chatRef = db.collection("chats").document(chatId)
 
+        val textoInicial = mensagemInicial?.trim().orEmpty()
+        val momentoInicial = mensagemInicialEm ?: System.currentTimeMillis()
+
         val snapshot = chatRef.get().await()
 
         if (!snapshot.exists()) {
-            val novoChat = hashMapOf(
+            val novoChat = hashMapOf<String, Any>(
                 "participantes" to listOf(meuUid, outroUsuarioId),
                 "criadoEm" to System.currentTimeMillis(),
-                "ultimaMensagem" to "",
-                "ultimaMensagemEm" to System.currentTimeMillis(),
-                "ultimaMensagemPor" to ""
+                "ultimaMensagem" to textoInicial,
+                "ultimaMensagemEm" to if (textoInicial.isNotEmpty()) momentoInicial
+                else System.currentTimeMillis(),
+                "ultimaMensagemPor" to if (textoInicial.isNotEmpty()) meuUid else ""
             )
+
+            if (solicitacaoId != null) {
+                novoChat["solicitacaoId"] = solicitacaoId
+            }
+
             chatRef.set(novoChat).await()
+        }
+
+        // O chat já existe aqui (novo ou antigo): grava o pedido como 1ª mensagem.
+        if (solicitacaoId != null && textoInicial.isNotEmpty()) {
+            val pedidoRef = chatRef.collection("mensagens")
+                .document("pedido_$solicitacaoId")
+
+            if (!pedidoRef.get().await().exists()) {
+                pedidoRef.set(
+                    hashMapOf(
+                        "remetenteId" to meuUid,
+                        "texto" to textoInicial,
+                        "enviadoEm" to momentoInicial,
+                        "lida" to false
+                    )
+                ).await()
+            }
         }
 
         return chatId

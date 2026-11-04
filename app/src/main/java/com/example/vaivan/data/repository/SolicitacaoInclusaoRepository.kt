@@ -26,6 +26,47 @@ class SolicitacaoInclusaoRepository(
     private val scope =
         CoroutineScope(Dispatchers.IO)
 
+    /** Mantém o Room do RESPONSÁVEL atualizado com as respostas do motorista. */
+    fun iniciarSincronizacaoDoResponsavel(
+        responsavelId: String
+    ): ListenerRegistration =
+        collection
+            .whereEqualTo("responsavelId", responsavelId)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null || snapshot == null) {
+                    return@addSnapshotListener
+                }
+
+                scope.launch {
+
+                    for (mudanca in snapshot.documentChanges) {
+
+                        val documento = mudanca.document
+
+                        when (mudanca.type) {
+
+                            DocumentChange.Type.ADDED,
+                            DocumentChange.Type.MODIFIED -> {
+
+                                val item =
+                                    documento.toObject(
+                                        SolicitacaoInclusaoEntity::class.java
+                                    ).copy(
+                                        id = documento.id,
+                                        lastUpdated = System.currentTimeMillis()
+                                    )
+
+                                dao.upsert(item)
+                            }
+
+                            DocumentChange.Type.REMOVED ->
+                                dao.deleteById(documento.id)
+                        }
+                    }
+                }
+            }
+
 
     fun observarPendentesPorMotorista(
         motoristaId: String
@@ -94,6 +135,25 @@ class SolicitacaoInclusaoRepository(
         )
     }
 
+    /** Acha a solicitação ACEITA de um filho em uma rota (consulta o Firestore, não o Room). */
+    suspend fun buscarAceita(
+        responsavelId: String,
+        rotaId: String,
+        passageiroId: String
+    ): SolicitacaoInclusaoEntity? = withContext(Dispatchers.IO) {
+
+        val resultado = collection
+            .whereEqualTo("responsavelId", responsavelId)
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("passageiroId", passageiroId)
+            .whereEqualTo("status", "ACEITA")
+            .get()
+            .await()
+
+        resultado.documents.firstOrNull()?.let { doc ->
+            doc.toObject(SolicitacaoInclusaoEntity::class.java)?.copy(id = doc.id)
+        }
+    }
 
     fun observarPorResponsavel(
         responsavelId: String
