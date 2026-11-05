@@ -26,6 +26,9 @@ data class SolicitacaoInclusaoEntity(
 
     val horarioDesejado: String = "",
 
+    // NOVO: pedido ou observação do responsável para o motorista (opcional, até 300 caracteres)
+    val mensagem: String = "",
+
     val status: String = "PENDENTE", // PENDENTE | ACEITA | RECUSADA
 
     val criadoEm: Long = 0L,

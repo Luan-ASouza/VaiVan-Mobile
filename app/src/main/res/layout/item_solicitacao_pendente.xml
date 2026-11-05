@@ -40,6 +40,35 @@
             android:textColor="#707070"
             android:textSize="12sp" />
 
+        <!-- NOVO: mensagem do responsável (só aparece se ele escreveu algo) -->
+        <LinearLayout
+            android:id="@+id/containerMensagemSolicitacao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_card_rounded"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mensagem do responsável"
+                android:textColor="#707070"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/txtMensagemSolicitacao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/dark_gray"
+                android:textSize="13sp" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -176,12 +176,12 @@ class RecalcularRotaUseCase(
             val indicePerna = if (primeiraParadaEhASaida) index - 1 else index
             val perna = resultado.pernas.getOrNull(indicePerna)
 
-            val idExistente = paradasExistentes.firstOrNull {
+            val existente = paradasExistentes.firstOrNull {
                 it.passageiroId == parada.passageiroId
-            }?.id
+            }
 
             ParadaRotaEntity(
-                id = idExistente ?: rotaRepository.novoIdParada(),
+                id = existente?.id ?: rotaRepository.novoIdParada(),
                 rotaId = rotaId,
                 passageiroId = parada.passageiroId,
                 localId = parada.localId,
@@ -194,6 +194,7 @@ class RecalcularRotaUseCase(
                 distanciaTrechoMetros = perna?.distanciaMetros ?: 0,
                 duracaoTrechoSegundos = perna?.duracaoSegundos ?: 0,
                 horarioEstimadoMinutos = horarios[index],
+                contratadoEm = existente?.contratadoEm ?: agora,
                 lastUpdated = agora
             )
         }

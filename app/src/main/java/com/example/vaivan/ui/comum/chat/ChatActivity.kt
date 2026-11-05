@@ -97,7 +97,11 @@ class ChatActivity : AppCompatActivity() {
 
                 val id =
                     ChatRepository.iniciarOuObterChat(
-                        outroUsuarioId
+                        outroUsuarioId = outroUsuarioId,
+                        solicitacaoId = intent.getStringExtra("solicitacaoId"),
+                        mensagemInicial = intent.getStringExtra("mensagemInicial"),
+                        mensagemInicialEm = intent.getLongExtra("mensagemInicialEm", 0L)
+                            .takeIf { it > 0L }
                     )
 
                 chatId = id

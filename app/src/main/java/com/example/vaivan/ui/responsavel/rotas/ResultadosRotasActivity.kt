@@ -27,6 +27,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Locale
+import android.graphics.Color
+import android.widget.EditText
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 /**
  * Tela de resultados da pesquisa de vans.
@@ -289,7 +293,7 @@ class ResultadosRotasActivity : AppCompatActivity() {
 
         val btnReservar = card.findViewById<MaterialButton>(R.id.btnReservarResultado)
         btnReservar.setOnClickListener {
-            enviarSolicitacao(item, btnReservar)
+            abrirPainelSolicitacao(item, btnReservar)
         }
 
         containerResultados.addView(card)
@@ -325,10 +329,51 @@ class ResultadosRotasActivity : AppCompatActivity() {
     }
 
     // ---------------------------------------------------------
-    // SOLICITAÇÃO
+    // SOLICITAÇÃO (com mensagem opcional para o motorista)
     // ---------------------------------------------------------
 
-    private fun enviarSolicitacao(item: RotaCompativel, botao: MaterialButton) {
+    private fun abrirPainelSolicitacao(item: RotaCompativel, botaoReservar: MaterialButton) {
+
+        val rota = item.rota
+
+        val sheet = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_solicitar_vaga, null)
+        sheet.setContentView(view)
+
+        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+
+        view.findViewById<TextView>(R.id.txtSolicitacaoAluno).text =
+            nomePassageiro.ifBlank { "Aluno" }
+
+        view.findViewById<TextView>(R.id.txtSolicitacaoResumo).text =
+            "${rota.nome}\n${rotuloSentido(rota.tipoTrajeto)} · ${traduzirTurno(rota.turno)}"
+
+        val edtMensagem = view.findViewById<EditText>(R.id.edtMensagemMotorista)
+
+        view.findViewById<View>(R.id.btnSolicitacaoCancelar).setOnClickListener {
+            sheet.dismiss()
+        }
+
+        view.findViewById<View>(R.id.btnSolicitacaoEnviar).setOnClickListener {
+            val mensagem = edtMensagem.text?.toString()?.trim().orEmpty()
+            sheet.dismiss()
+            enviarSolicitacao(item, botaoReservar, mensagem)
+        }
+
+        // O teclado não pode cobrir o campo de mensagem
+        sheet.window?.setSoftInputMode(
+            android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+        sheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+
+        sheet.show()
+    }
+
+    private fun enviarSolicitacao(
+        item: RotaCompativel,
+        botao: MaterialButton,
+        mensagem: String
+    ) {
         val uid = auth.currentUser?.uid
         if (uid == null) {
             Toast.makeText(this, "Sessão expirada.", Toast.LENGTH_SHORT).show()
@@ -337,6 +382,13 @@ class ResultadosRotasActivity : AppCompatActivity() {
 
         val rota = item.rota
 
+        // O ponto do aluno é sempre o local da família:
+        // na volta ele é o desembarque; na ida e na ida e volta, o embarque.
+        val ehVolta = modalidade.equals("VOLTA", ignoreCase = true)
+        val enderecoLocal = if (ehVolta) destinoEndereco else embarqueEndereco
+        val latitudeLocal = if (ehVolta) destinoLat else embarqueLat
+        val longitudeLocal = if (ehVolta) destinoLng else embarqueLng
+
         val solicitacao = SolicitacaoInclusaoEntity(
             rotaId = rota.id,
             passageiroId = passageiroId,
@@ -344,11 +396,12 @@ class ResultadosRotasActivity : AppCompatActivity() {
             responsavelId = uid,
             motoristaId = rota.motoristaId,
             localEmbarqueId = localId.orEmpty(),
-            nomeLocalEmbarque = embarqueEndereco,
-            enderecoEmbarque = embarqueEndereco,
-            latitudeEmbarque = embarqueLat,
-            longitudeEmbarque = embarqueLng,
-            horarioDesejado = horarioDesejado
+            nomeLocalEmbarque = enderecoLocal,
+            enderecoEmbarque = enderecoLocal,
+            latitudeEmbarque = latitudeLocal,
+            longitudeEmbarque = longitudeLocal,
+            horarioDesejado = horarioDesejado,
+            mensagem = mensagem.take(300)
         )
 
         botao.isEnabled = false

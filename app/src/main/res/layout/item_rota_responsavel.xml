@@ -249,4 +249,21 @@
         app:iconTint="@android:color/white"
         tools:ignore="HardcodedText" />
 
+    <!-- ENVIAR MENSAGEM AO MOTORISTA DESTA VIAGEM -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEnviarMensagemCard"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:text="Enviar mensagem"
+        android:textAllCaps="false"
+        android:textColor="@color/dark_gray"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="@android:color/transparent"
+        app:cornerRadius="16dp"
+        app:strokeColor="@color/dark_gray"
+        app:strokeWidth="1dp"
+        tools:ignore="HardcodedText" />
+
 </LinearLayout>
