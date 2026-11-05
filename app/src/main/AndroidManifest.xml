@@ -114,6 +114,9 @@
             android:exported="false" /> <!-- Rotas -->
         <activity
             android:name=".ui.responsavel.rotas.PesquisarRotasActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.responsavel.rotas.AcompanharViagemActivity"
             android:exported="false" /> <!-- ==================== COMUM ==================== -->
         <activity
             android:name=".ui.comum.chat.ChatActivity"

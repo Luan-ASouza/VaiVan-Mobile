@@ -1,0 +1,15 @@
+<!-- Placeholder simples pro ponto da escola no mapa do responsável — troque
+     este arquivo quando tiver um ícone definitivo, nenhum código precisa
+     mudar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M12,3L1,9L12,15L21,10.09L21,17L23,17L23,9L12,3Z"
+        android:fillColor="#4A4A4A"/>
+    <path
+        android:pathData="M5,13.18L5,17.18L12,21L19,17.18L19,13.18L12,17L5,13.18Z"
+        android:fillColor="#4A4A4A"/>
+</vector>

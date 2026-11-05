@@ -85,6 +85,22 @@ class ViagemRepository(
         }
     }
 
+    /** Mesma ideia de [consultarViagemAtivaDoMotorista], só que pelo lado do
+     * responsável: ele não tem o motoristaId em mãos, mas sabe o rotaId da
+     * viagem que quer acompanhar. */
+    suspend fun consultarViagemAtivaParaRota(rotaId: String): ViagemEntity? {
+        val snapshot = collectionViagens
+            .whereEqualTo("rotaId", rotaId)
+            .whereIn("status", listOf(STATUS_EM_ANDAMENTO, STATUS_PAUSADA))
+            .limit(1)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let { documento ->
+            documento.toObject(ViagemEntity::class.java)?.copy(id = documento.id)
+        }
+    }
+
     fun observarParadas(viagemId: String): Flow<List<ParadaViagemEntity>> =
         paradaViagemDao.getByViagem(viagemId)
 

@@ -373,18 +373,17 @@ class ListaRotasFragment : Fragment() {
 
     private fun abrirAcompanharViagem(item: RotasDoResponsavel) {
 
-        val fragment = AcompanharViagemFragment().apply {
-            arguments = Bundle().apply {
-                putString("rotaId", item.rota.id)
-                putString("alunoNome", item.parada?.nomePassageiro)
+        startActivity(
+            Intent(requireContext(), AcompanharViagemActivity::class.java).apply {
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_ID, item.rota.id)
+                putExtra(AcompanharViagemActivity.EXTRA_ALUNO_NOME, item.parada?.nomePassageiro)
+                putExtra(AcompanharViagemActivity.EXTRA_PASSAGEIRO_ID, item.parada?.passageiroId)
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_POLYLINE, item.rota.polylineEncoded)
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_NOME, item.rota.nome)
+                putExtra(AcompanharViagemActivity.EXTRA_MOTORISTA_NOME, item.motorista?.nome)
+                putExtra(AcompanharViagemActivity.EXTRA_VEICULO_PLACA, item.veiculo?.placa)
             }
-        }
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .addToBackStack(null)
-            .commit()
+        )
     }
 
     private fun abrirChatComMotorista(item: RotasDoResponsavel) {
