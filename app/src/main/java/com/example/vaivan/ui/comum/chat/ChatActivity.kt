@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
  *  - "chatId": id de uma conversa que já existe (usado pela lista de conversas)
  *  - "rotaId", "passageiroId", "passageiroNome", "rotaNome": identificam a viagem e o aluno;
  *    cada combinação tem a sua própria conversa
+ *  - "solicitacaoId", "mensagemInicial", "mensagemInicialEm": a solicitação aprovada e o
+ *    pedido do responsável, que vira a primeira mensagem da conversa
  */
 class ChatActivity : AppCompatActivity() {
 
@@ -86,6 +88,12 @@ class ChatActivity : AppCompatActivity() {
         }
 
         val chatIdExistente = intent.getStringExtra("chatId")
+
+        // Dados da solicitação aprovada (vêm do botão de mensagem do responsável)
+        val solicitacaoId = intent.getStringExtra("solicitacaoId")
+        val mensagemInicial = intent.getStringExtra("mensagemInicial")
+        val mensagemInicialEm =
+            intent.getLongExtra("mensagemInicialEm", 0L).takeIf { it > 0L }
         val rotaId = intent.getStringExtra("rotaId").orEmpty()
         val passageiroId = intent.getStringExtra("passageiroId").orEmpty()
         val passageiroNome = intent.getStringExtra("passageiroNome").orEmpty()
@@ -129,7 +137,10 @@ class ChatActivity : AppCompatActivity() {
                 val id =
                     chatIdExistente
                         ?: ChatRepository.iniciarOuObterChat(
-                            outroUsuarioId,
+                            outroUsuarioId = outroUsuarioId,
+                            solicitacaoId = solicitacaoId,
+                            mensagemInicial = mensagemInicial,
+                            mensagemInicialEm = mensagemInicialEm,
                             contexto = contexto
                         )
 

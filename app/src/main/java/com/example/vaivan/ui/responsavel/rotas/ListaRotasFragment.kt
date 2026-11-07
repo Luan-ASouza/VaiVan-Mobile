@@ -198,6 +198,11 @@ class ListaRotasFragment : Fragment() {
                 putExtra("solicitacaoId", solicitacao.id)
                 putExtra("mensagemInicial", solicitacao.mensagem)
                 putExtra("mensagemInicialEm", solicitacao.criadoEm)
+
+                // Cada filho e cada rota têm a sua própria conversa
+                putExtra("rotaId", solicitacao.rotaId)
+                putExtra("passageiroId", solicitacao.passageiroId)
+                putExtra("passageiroNome", solicitacao.nomePassageiro)
             }
         )
     }
@@ -424,6 +429,12 @@ class ListaRotasFragment : Fragment() {
                         putExtra("solicitacaoId", solicitacao.id)
                         putExtra("mensagemInicial", solicitacao.mensagem)
                         putExtra("mensagemInicialEm", solicitacao.criadoEm)
+
+                        // Cada filho e cada rota têm a sua própria conversa
+                        putExtra("rotaId", item.rota.id)
+                        putExtra("passageiroId", passageiroId)
+                        putExtra("passageiroNome", item.parada?.nomePassageiro.orEmpty())
+                        putExtra("rotaNome", item.rota.nome)
                     }
                 )
             } catch (e: Exception) {
