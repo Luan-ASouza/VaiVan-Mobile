@@ -16,6 +16,15 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgFotoContato"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_perfil"
+            app:shapeAppearanceOverlay="@style/CircleImage" />
+
         <TextView
             android:id="@+id/txtNomeContato"
             android:layout_width="0dp"

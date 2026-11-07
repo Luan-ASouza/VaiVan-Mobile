@@ -1,38 +1,23 @@
 package com.example.vaivan.ui.motorista.veiculos
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import com.example.vaivan.data.local.VaivanDatabase
+import androidx.lifecycle.ViewModel
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 
 class ListaVeiculosViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
     private val repository: VeiculoRepository
+) : ViewModel() {
 
-    private val motoristaId: String
+    private val motoristaId: String =
+        FirebaseAuth
+            .getInstance()
+            .currentUser
+            ?.uid
+            ?: ""
 
     init {
-
-        motoristaId =
-            FirebaseAuth
-                .getInstance()
-                .currentUser
-                ?.uid
-                ?: ""
-
-        val database =
-            VaivanDatabase.getInstance(application)
-
-        repository =
-            VeiculoRepository(
-                database.veiculoDao()
-            )
-
         repository.iniciarSincronizacao(motoristaId)
     }
 
@@ -41,4 +26,11 @@ class ListaVeiculosViewModel(
             repository.observarVeiculosPorMotorista(
                 motoristaId
             )
+
+    /** Bloqueio de exclusão com veículo vinculado a rota já vem do
+     * VeiculoRepository.excluirVeiculo (VeiculoVinculadoARotaException) —
+     * aqui é só a ponte pra UI. */
+    suspend fun excluirVeiculo(id: String) {
+        repository.excluirVeiculo(id)
+    }
 }

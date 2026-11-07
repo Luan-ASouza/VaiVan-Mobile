@@ -11,11 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.TextoUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.models.Escola
@@ -26,7 +25,13 @@ import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
-class CriarRotaActivity : AppCompatActivity() {
+class CriarRotaActivity : BaseActivity() {
+
+    companion object {
+        const val EXTRA_ROTA_ID = "extra_rota_id"
+    }
+
+    private var rotaId: String? = null
 
     private lateinit var edtNomeRota: EditText
     private lateinit var edtCapacidade: EditText
@@ -143,7 +148,89 @@ class CriarRotaActivity : AppCompatActivity() {
             criarRota()
         }
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        rotaId = intent.getStringExtra(EXTRA_ROTA_ID)
+
+        if (rotaId != null) {
+            findViewById<TextView>(R.id.txtTituloCriarRota).text = "Editar Rota"
+            btnCriarRota.text = "Salvar alterações"
+            carregarRotaParaEdicao(rotaId!!)
+        }
+
+        aplicarGapsDeSistema()
+    }
+
+    // ---------------------------------------------------------
+    // MODO EDIÇÃO
+    // ---------------------------------------------------------
+
+    private fun carregarRotaParaEdicao(id: String) {
+        lifecycleScope.launch {
+            try {
+                val rota = rotaRepository.consultarRota(id)
+
+                if (rota == null) {
+                    Toast.makeText(this@CriarRotaActivity, "Rota não encontrada.", Toast.LENGTH_SHORT).show()
+                    finish()
+                    return@launch
+                }
+
+                preencherFormulario(rota)
+
+            } catch (erro: Exception) {
+                Toast.makeText(this@CriarRotaActivity, "Erro ao carregar rota: ${erro.message}", Toast.LENGTH_LONG).show()
+                finish()
+            }
+        }
+    }
+
+    private fun preencherFormulario(rota: com.example.vaivan.data.local.entities.RotaEntity) {
+        edtNomeRota.setText(rota.nome)
+        edtCapacidade.setText(rota.capacidadeTotal.toString())
+
+        tipoTrajetoSelecionado = rota.tipoTrajeto
+        atualizarCoresTipoTrajeto()
+        atualizarCamposDoPonto()
+
+        origemNome = rota.origemNome
+        origemEndereco = rota.origemEndereco
+        origemLatitude = rota.origemLatitude
+        origemLongitude = rota.origemLongitude
+        txtOrigemAtual.text = rota.origemEndereco
+
+        destinoNome = rota.destinoNome
+        destinoLatitude = rota.destinoLatitude
+        destinoLongitude = rota.destinoLongitude
+        txtDestinoAtual.text = rota.destinoNome
+
+        escolaSelecionada = Escola(
+            id = rota.escolaId,
+            nome = rota.escolaNome,
+            endereco = rota.destinoEndereco,
+            latitude = rota.destinoLatitude,
+            longitude = rota.destinoLongitude
+        )
+
+        turnoSelecionado = rota.turno
+        atualizarCoresTurno()
+
+        diasSelecionados.clear()
+        diasSelecionados.addAll(rota.diasSemana.split(",").filter { it.isNotBlank() })
+        atualizarCoresDias()
+
+        bairrosAtendidos.clear()
+        rota.bairrosAtendidos.forEach { chave -> bairrosAtendidos[chave] = formatarBairroSimples(chave) }
+        atualizarTextoBairros()
+    }
+
+    /** O bairro é salvo só como chave normalizada (ver TextoUtil.chaveBairro) —
+     * não existe nome de exibição guardado separadamente, então na edição
+     * só é possível reconstituir uma versão legível da própria chave. */
+    private fun formatarBairroSimples(chave: String): String {
+        return chave
+            .replace("-", " ")
+            .split(" ")
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { palavra -> palavra.replaceFirstChar { it.uppercase() } }
     }
 
     // ---------------------------------------------------------
@@ -417,34 +504,64 @@ class CriarRotaActivity : AppCompatActivity() {
 
         btnCriarRota.isEnabled = false
 
+        val idExistente = rotaId
+
         lifecycleScope.launch {
             try {
-                val rota = rotaRepository.criarRota(
-                    motoristaId = uid,
-                    veiculoId = null,
-                    nome = nome,
-                    tipoTrajeto = tipoTrajeto,
-                    origemNome = origemNome ?: oEndereco,
-                    origemEndereco = oEndereco,
-                    origemLatitude = oLat,
-                    origemLongitude = oLng,
-                    destinoNome = dNome,
-                    destinoEndereco = escola.endereco,
-                    destinoLatitude = dLat,
-                    destinoLongitude = dLng,
-                    turno = turno,
-                    diasSemana = diasSelecionados.toList(),
-                    capacidadeTotal = capacidade,
-                    escolaId = escola.id,
-                    escolaNome = escola.nome,
-                    bairrosAtendidos = bairrosAtendidos.keys.toList()
-                )
-                Toast.makeText(this@CriarRotaActivity, "Rota criada!", Toast.LENGTH_SHORT).show()
-                startActivity(
-                    Intent(this@CriarRotaActivity, VisualizarRotaActivity::class.java)
-                        .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rota.id)
-                )
-                finish()
+                if (idExistente != null) {
+
+                    rotaRepository.atualizarRota(
+                        rotaId = idExistente,
+                        nome = nome,
+                        tipoTrajeto = tipoTrajeto,
+                        origemNome = origemNome ?: oEndereco,
+                        origemEndereco = oEndereco,
+                        origemLatitude = oLat,
+                        origemLongitude = oLng,
+                        destinoNome = dNome,
+                        destinoEndereco = escola.endereco,
+                        destinoLatitude = dLat,
+                        destinoLongitude = dLng,
+                        turno = turno,
+                        diasSemana = diasSelecionados.toList(),
+                        capacidadeTotal = capacidade,
+                        escolaId = escola.id,
+                        escolaNome = escola.nome,
+                        bairrosAtendidos = bairrosAtendidos.keys.toList()
+                    )
+
+                    Toast.makeText(this@CriarRotaActivity, "Rota atualizada!", Toast.LENGTH_SHORT).show()
+                    finish()
+
+                } else {
+
+                    val rota = rotaRepository.criarRota(
+                        motoristaId = uid,
+                        veiculoId = null,
+                        nome = nome,
+                        tipoTrajeto = tipoTrajeto,
+                        origemNome = origemNome ?: oEndereco,
+                        origemEndereco = oEndereco,
+                        origemLatitude = oLat,
+                        origemLongitude = oLng,
+                        destinoNome = dNome,
+                        destinoEndereco = escola.endereco,
+                        destinoLatitude = dLat,
+                        destinoLongitude = dLng,
+                        turno = turno,
+                        diasSemana = diasSelecionados.toList(),
+                        capacidadeTotal = capacidade,
+                        escolaId = escola.id,
+                        escolaNome = escola.nome,
+                        bairrosAtendidos = bairrosAtendidos.keys.toList()
+                    )
+                    Toast.makeText(this@CriarRotaActivity, "Rota criada!", Toast.LENGTH_SHORT).show()
+                    startActivity(
+                        Intent(this@CriarRotaActivity, VisualizarRotaActivity::class.java)
+                            .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rota.id)
+                    )
+                    finish()
+                }
             } catch (e: Exception) {
                 btnCriarRota.isEnabled = true
                 Toast.makeText(this@CriarRotaActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()

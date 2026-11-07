@@ -22,6 +22,15 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgFotoAlunoSolicitacaoResp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="10dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/filho1"
+                app:shapeAppearanceOverlay="@style/CircleImage" />
+
             <TextView
                 android:id="@+id/txtNomeAlunoSolicitacaoResp"
                 android:layout_width="0dp"

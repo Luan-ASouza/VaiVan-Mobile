@@ -5,13 +5,11 @@ import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopGap
+import com.example.vaivan.core.base.BaseActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.MapsInitializer
@@ -24,7 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
-class AdicionarLocalActivity : AppCompatActivity() {
+class AdicionarLocalActivity : BaseActivity() {
 
     // ---------------------------------------------------------
     // VIEWS
@@ -72,15 +70,13 @@ class AdicionarLocalActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
-
         setContentView(
             R.layout.activity_adicionar_local
         )
 
         inicializarViews()
 
-        applyTopGap(findViewById(android.R.id.content))
+        aplicarGapsDeSistema(aplicarBase = false)
 
         configurarMapaPreview(savedInstanceState)
 

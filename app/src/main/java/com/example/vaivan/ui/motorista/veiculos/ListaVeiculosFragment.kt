@@ -8,12 +8,19 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.example.vaivan.data.repository.VeiculoRepository
+import com.example.vaivan.data.repository.VeiculoVinculadoARotaException
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import androidx.fragment.app.viewModels
@@ -23,7 +30,19 @@ class ListaVeiculosFragment : Fragment() {
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemVeiculos: TextView
 
-    private val viewModel: ListaVeiculosViewModel by viewModels()
+    private val viewModel: ListaVeiculosViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val database = VaivanDatabase.getInstance(requireContext())
+                ListaVeiculosViewModel(
+                    VeiculoRepository(
+                        veiculoDao = database.veiculoDao(),
+                        documentoDao = database.documentoDao()
+                    )
+                )
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -111,6 +130,16 @@ class ListaVeiculosFragment : Fragment() {
             val imgChevron =
                 itemView.findViewById<ImageView>(
                     R.id.imgChevronItem
+                )
+
+            val imgEditar =
+                itemView.findViewById<ImageView>(
+                    R.id.imgEditarVeiculoItem
+                )
+
+            val imgExcluir =
+                itemView.findViewById<ImageView>(
+                    R.id.imgExcluirVeiculoItem
                 )
 
             val containerDetalhes =
@@ -253,7 +282,40 @@ class ListaVeiculosFragment : Fragment() {
                     .start()
             }
 
+            imgEditar.setOnClickListener {
+                startActivity(
+                    Intent(requireContext(), CadastroVeiculoActivity::class.java)
+                        .putExtra(CadastroVeiculoActivity.EXTRA_VEICULO_ID, veiculo.id)
+                )
+            }
+
+            imgExcluir.setOnClickListener {
+                ConfirmacaoExclusaoHelper.confirmar(
+                    contexto = requireContext(),
+                    titulo = "Excluir \"${veiculo.placa.ifBlank { "este veículo" }}\"?",
+                    mensagem = "Essa ação não pode ser desfeita."
+                ) {
+                    excluirVeiculo(veiculo)
+                }
+            }
+
             containerConfirmados.addView(itemView)
+        }
+    }
+
+    private fun excluirVeiculo(veiculo: VeiculoEntity) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                viewModel.excluirVeiculo(veiculo.id)
+
+                Toast.makeText(requireContext(), "Veículo excluído.", Toast.LENGTH_SHORT).show()
+
+            } catch (erro: VeiculoVinculadoARotaException) {
+                Toast.makeText(requireContext(), erro.message, Toast.LENGTH_LONG).show()
+
+            } catch (erro: Exception) {
+                Toast.makeText(requireContext(), "Erro ao excluir: ${erro.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

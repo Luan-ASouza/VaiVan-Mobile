@@ -48,6 +48,11 @@ class DocumentoRepository(
 
         fun idDocumentoMotorista(motoristaId: String, tipo: String) = "${motoristaId}_$tipo"
 
+        /** Id determinístico pra documento de veículo (CRLV/autorização) —
+         * assim uma edição que troca o arquivo substitui o documento
+         * existente em vez de criar um novo a cada upload. */
+        fun idDocumentoVeiculo(veiculoId: String, tipo: String) = "${veiculoId}_$tipo"
+
         fun extensaoPara(mimeType: String): String = when (mimeType) {
             "application/pdf" -> "pdf"
             "image/png" -> "png"
@@ -62,6 +67,23 @@ class DocumentoRepository(
 
     fun observarPorMotorista(motoristaId: String): Flow<List<DocumentoEntity>> =
         documentoDao.getByMotorista(motoristaId)
+
+    /** Consulta diretamente no Firebase os documentos de um motorista
+     * (usado pela exclusão de conta — não pode confiar no cache do Room). */
+    /** Consulta um documento específico diretamente no Firebase. */
+    suspend fun consultarPorId(id: String): DocumentoEntity? {
+        val documento = collection.document(id).get().await()
+        if (!documento.exists()) return null
+
+        return documento.toObject(DocumentoEntity::class.java)?.copy(id = documento.id)
+    }
+
+    suspend fun consultarPorMotorista(motoristaId: String): List<DocumentoEntity> {
+        val snapshot = collection.whereEqualTo("motoristaId", motoristaId).get().await()
+        return snapshot.documents.mapNotNull { documento ->
+            documento.toObject(DocumentoEntity::class.java)?.copy(id = documento.id)
+        }
+    }
 
     fun observarCnh(motoristaId: String): Flow<DocumentoEntity?> =
         documentoDao.getById(idDocumentoMotorista(motoristaId, TIPO_CNH))

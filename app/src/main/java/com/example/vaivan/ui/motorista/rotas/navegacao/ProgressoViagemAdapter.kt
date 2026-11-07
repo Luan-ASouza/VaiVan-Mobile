@@ -11,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.domain.statusDoPassageiro
 import com.google.android.material.imageview.ShapeableImageView
 
 /**
@@ -45,15 +46,7 @@ class ProgressoViagemAdapter : RecyclerView.Adapter<ProgressoViagemAdapter.Progr
                 val embarque = grupo.firstOrNull { it.tipo == ViagemRepository.TIPO_EMBARQUE } ?: return@mapNotNull null
                 val desembarque = grupo.firstOrNull { it.tipo == ViagemRepository.TIPO_DESEMBARQUE } ?: return@mapNotNull null
 
-                val (texto, cor) = when {
-                    desembarque.status == ViagemRepository.PARADA_DESEMBARCADO ->
-                        "Desceu" to R.color.status_success
-                    embarque.status == ViagemRepository.PARADA_NAO_EMBARCOU ->
-                        "Não embarcou" to R.color.status_danger
-                    embarque.status == ViagemRepository.PARADA_EMBARCADO ->
-                        "Na van" to R.color.status_success
-                    else -> "Aguardando" to R.color.light_gray
-                }
+                val status = statusDoPassageiro(embarque, desembarque)
 
                 // Mostra o endereço do destino ainda pendente; quando os dois
                 // já foram resolvidos, mostra o do desembarque (o final).
@@ -65,8 +58,8 @@ class ProgressoViagemAdapter : RecyclerView.Adapter<ProgressoViagemAdapter.Progr
                     titulo = embarque.nomePassageiro,
                     subtitulo = pendente.endereco.ifBlank { pendente.nomeLocal },
                     fotoUrl = embarque.fotoPassageiroUrl,
-                    status = texto,
-                    corStatus = cor
+                    status = status.texto,
+                    corStatus = status.cor
                 )
             }
             .sortedWith(compareBy({ it.ordemEmbarque }, { it.ordemDesembarque }))

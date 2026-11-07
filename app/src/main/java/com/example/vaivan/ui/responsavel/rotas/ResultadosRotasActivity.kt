@@ -9,11 +9,11 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.models.RotaCompativel
@@ -36,7 +36,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
  * Tela de resultados da pesquisa de vans.
  * Recebe os filtros da tela de pesquisa, refaz a busca e mostra um card por van.
  */
-class ResultadosRotasActivity : AppCompatActivity() {
+class ResultadosRotasActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_EMBARQUE_ENDERECO = "embarqueEndereco"
@@ -116,7 +116,7 @@ class ResultadosRotasActivity : AppCompatActivity() {
 
         preencherResumo()
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
 
         buscar()
     }
@@ -248,6 +248,7 @@ class ResultadosRotasActivity : AppCompatActivity() {
 
         val txtNomeMotorista = card.findViewById<TextView>(R.id.txtNomeMotoristaResultado)
         val txtInicial = card.findViewById<TextView>(R.id.txtInicialMotorista)
+        val imgFotoMotorista = card.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.imgFotoMotoristaResultado)
 
         card.findViewById<TextView>(R.id.txtNomeRotaResultado).text = rota.nome
         card.findViewById<TextView>(R.id.txtSentidoResultado).text =
@@ -270,18 +271,26 @@ class ResultadosRotasActivity : AppCompatActivity() {
         card.findViewById<TextView>(R.id.txtEscolaResultado).text =
             "Escola: ${rota.escolaNome.ifBlank { rota.destinoNome }}"
 
-        // Nome do motorista (vem do Firestore)
+        // Nome e foto do motorista (vem do Firestore)
         lifecycleScope.launch {
-            val nome = try {
+            val documento = try {
                 firestore.collection("usuarios")
                     .document(rota.motoristaId)
                     .get().await()
-                    .getString("nome") ?: "Motorista"
             } catch (e: Exception) {
-                "Motorista"
+                null
             }
+
+            val nome = documento?.getString("nome") ?: "Motorista"
             txtNomeMotorista.text = nome
             txtInicial.text = nome.firstOrNull()?.uppercase() ?: "M"
+
+            val fotoUrl = documento?.getString("fotoUrl")
+            if (!fotoUrl.isNullOrBlank()) {
+                txtInicial.visibility = View.GONE
+                imgFotoMotorista.visibility = View.VISIBLE
+                Glide.with(imgFotoMotorista).load(fotoUrl).circleCrop().into(imgFotoMotorista)
+            }
         }
 
         card.findViewById<MaterialButton>(R.id.btnTrajetoResultado).setOnClickListener {

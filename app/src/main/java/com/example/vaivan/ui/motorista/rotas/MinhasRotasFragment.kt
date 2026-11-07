@@ -10,11 +10,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
@@ -43,51 +44,25 @@ class MinhasRotasFragment : Fragment() {
         RotaRepository(
             rotaDao = db.rotaDao(),
             paradaRotaDao = db.paradaRotaDao(),
-            routesClient = GoogleRoutesClient(requireContext())
+            routesClient = GoogleRoutesClient(requireContext()),
+            passageiroDao = db.passageiroDao(),
+            solicitacaoInclusaoDao = db.solicitacaoInclusaoDao()
         )
     }
 
 
-    private val viewModel: MinhasRotasViewModel by lazy {
-
-        val db =
-            VaivanDatabase.getInstance(
-                requireContext()
-            )
-
-        val repository =
-            RotaRepository(
-
-                rotaDao =
-                    db.rotaDao(),
-
-                paradaRotaDao =
-                    db.paradaRotaDao(),
-
-                routesClient =
-                    GoogleRoutesClient(
-                        requireContext()
-                    )
-            )
-
-        ViewModelProvider(
-            this,
-
-            object :
-                ViewModelProvider.Factory {
-
-                override fun <T : ViewModel>
-                        create(
-                    modelClass: Class<T>
-                ): T {
-
-                    return MinhasRotasViewModel(
-                        repository
-                    ) as T
-                }
+    private val viewModel: MinhasRotasViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = VaivanDatabase.getInstance(requireContext())
+                val repository = RotaRepository(
+                    rotaDao = db.rotaDao(),
+                    paradaRotaDao = db.paradaRotaDao(),
+                    routesClient = GoogleRoutesClient(requireContext())
+                )
+                MinhasRotasViewModel(repository)
             }
-
-        )[MinhasRotasViewModel::class.java]
+        }
     }
 
 
@@ -310,6 +285,23 @@ class MinhasRotasFragment : Fragment() {
 
             intent.putExtra(
                 VisualizarRotaActivity.EXTRA_ROTA_ID,
+                rota.id
+            )
+
+            startActivity(intent)
+        }
+
+        view.findViewById<View>(R.id.btnSheetEditar).setOnClickListener {
+            sheet.dismiss()
+
+            val intent =
+                Intent(
+                    requireContext(),
+                    CriarRotaActivity::class.java
+                )
+
+            intent.putExtra(
+                CriarRotaActivity.EXTRA_ROTA_ID,
                 rota.id
             )
 

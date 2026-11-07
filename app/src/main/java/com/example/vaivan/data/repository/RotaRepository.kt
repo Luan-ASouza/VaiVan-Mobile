@@ -4,7 +4,9 @@ import android.util.Log
 import com.example.vaivan.core.util.GeoUtil
 import com.example.vaivan.core.util.PolylineUtil
 import com.example.vaivan.data.local.dao.ParadaRotaDao
+import com.example.vaivan.data.local.dao.PassageiroDao
 import com.example.vaivan.data.local.dao.RotaDao
+import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.models.RotaCompativel
@@ -33,11 +35,18 @@ class RotaRepository(
     private val paradaRotaDao: ParadaRotaDao,
     private val routesClient: GoogleRoutesClient,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(firestore)
+    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(firestore),
+    // Opcionais: só quem aciona excluirRota precisa passar, pra limpeza em
+    // cascata (desvincular passageiro, apagar solicitação pendente) também
+    // refletir no Room na hora.
+    private val passageiroDao: PassageiroDao? = null,
+    private val solicitacaoInclusaoDao: SolicitacaoInclusaoDao? = null
 ) {
 
     private val collectionRotas = firestore.collection("rotas")
     private val collectionParadas = firestore.collection("paradas_rota")
+    private val collectionPassageiros = firestore.collection("passageiros")
+    private val collectionSolicitacoes = firestore.collection("solicitacoes_inclusao")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var listenerRotas: ListenerRegistration? = null
@@ -64,6 +73,15 @@ class RotaRepository(
     // =========================================================
     // CONSULTAS
     // =========================================================
+
+    /** Consulta diretamente no Firebase todas as rotas de um motorista
+     * (usado pela exclusão de conta — não pode confiar no cache do Room). */
+    suspend fun consultarRotasDoMotorista(motoristaId: String): List<RotaEntity> {
+        val snapshot = collectionRotas.whereEqualTo("motoristaId", motoristaId).get().await()
+        return snapshot.documents.mapNotNull { documento ->
+            documento.toObject(RotaEntity::class.java)?.copy(id = documento.id)
+        }
+    }
 
     /** Consulta uma rota diretamente no Firebase. */
     suspend fun consultarRota(rotaId: String): RotaEntity? {
@@ -260,6 +278,124 @@ class RotaRepository(
 
         rota
     }
+
+    /** Atualiza uma rota existente. Só recalcula o trajeto via
+     * GoogleRoutesClient se origem/destino realmente mudaram em relação ao
+     * que já estava salvo — senão é só atualização de metadados (nome,
+     * turno, dias, capacidade etc.), sem gastar chamada de API nem arriscar
+     * falhar por um problema de rede numa edição que não mudou o trajeto. */
+    suspend fun atualizarRota(
+        rotaId: String,
+        nome: String,
+        tipoTrajeto: String,
+        origemNome: String,
+        origemEndereco: String,
+        origemLatitude: Double,
+        origemLongitude: Double,
+        destinoNome: String,
+        destinoEndereco: String,
+        destinoLatitude: Double,
+        destinoLongitude: Double,
+        turno: String,
+        diasSemana: List<String>,
+        capacidadeTotal: Int,
+        escolaId: String = "",
+        escolaNome: String = "",
+        bairrosAtendidos: List<String> = emptyList()
+    ): RotaEntity = withContext(Dispatchers.IO) {
+
+        val atual = consultarRota(rotaId)
+            ?: throw IllegalStateException("Rota não encontrada.")
+
+        val agora = System.currentTimeMillis()
+
+        val trajetoMudou =
+            atual.origemLatitude != origemLatitude ||
+                    atual.origemLongitude != origemLongitude ||
+                    atual.destinoLatitude != destinoLatitude ||
+                    atual.destinoLongitude != destinoLongitude
+
+        val rotaAtualizada = if (trajetoMudou) {
+
+            val origem = PontoRota(
+                id = "origem",
+                nome = origemNome,
+                endereco = origemEndereco,
+                latitude = origemLatitude,
+                longitude = origemLongitude
+            )
+
+            val destino = PontoRota(
+                id = "destino",
+                nome = destinoNome,
+                endereco = destinoEndereco,
+                latitude = destinoLatitude,
+                longitude = destinoLongitude
+            )
+
+            val resultado = try {
+                routesClient.calcularMelhorRota(
+                    origem = origem,
+                    destino = destino,
+                    paradas = emptyList()
+                )
+            } catch (e: Exception) {
+                Log.e("RotaRepository", "Erro ao recalcular rota", e)
+                throw IllegalStateException(
+                    "Não foi possível traçar a rota. Verifique a internet e os endereços.", e
+                )
+            }
+
+            if (resultado.polylineEncoded.isNullOrBlank()) {
+                throw IllegalStateException("O Google não retornou um trajeto para esses endereços.")
+            }
+
+            atual.copy(
+                nome = nome,
+                tipoTrajeto = tipoTrajeto,
+                origemNome = origemNome,
+                origemEndereco = origemEndereco,
+                origemLatitude = origemLatitude,
+                origemLongitude = origemLongitude,
+                destinoNome = destinoNome,
+                destinoEndereco = destinoEndereco,
+                destinoLatitude = destinoLatitude,
+                destinoLongitude = destinoLongitude,
+                turno = turno,
+                diasSemana = diasSemana.joinToString(","),
+                escolaId = escolaId,
+                escolaNome = escolaNome,
+                bairrosAtendidos = bairrosAtendidos,
+                capacidadeTotal = capacidadeTotal,
+                distanciaMetros = resultado.distanciaMetros,
+                duracaoSegundos = resultado.duracaoSegundos,
+                duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
+                polylineEncoded = resultado.polylineEncoded,
+                calculadoEm = agora,
+                lastUpdated = agora
+            )
+
+        } else {
+
+            atual.copy(
+                nome = nome,
+                tipoTrajeto = tipoTrajeto,
+                turno = turno,
+                diasSemana = diasSemana.joinToString(","),
+                escolaId = escolaId,
+                escolaNome = escolaNome,
+                bairrosAtendidos = bairrosAtendidos,
+                capacidadeTotal = capacidadeTotal,
+                lastUpdated = agora
+            )
+        }
+
+        collectionRotas.document(rotaId).set(rotaAtualizada).await()
+        rotaDao.upsert(rotaAtualizada)
+
+        rotaAtualizada
+    }
+
     // =========================================================
     // BUSCA TEMPORÁRIA DE ROTAS
     // =========================================================
@@ -428,18 +564,37 @@ class RotaRepository(
     // =========================================================
 
     /** Apaga a rota e as paradas dela no Firestore e no cache local (Room). */
+    /** Exclui a rota e cascateia: apaga as paradas_rota dela, desvincula os
+     * passageiros que apontavam pra ela (rotaId -> null, o passageiro
+     * continua existindo) e apaga solicitações de inclusão ainda pendentes.
+     * Nunca toca em ViagemEntity/histórico. */
     suspend fun excluirRota(rotaId: String) = withContext(Dispatchers.IO) {
         val paradas = collectionParadas
             .whereEqualTo("rotaId", rotaId)
             .get()
             .await()
 
+        val passageirosVinculados = collectionPassageiros
+            .whereEqualTo("rotaId", rotaId)
+            .get()
+            .await()
+
+        val solicitacoesPendentes = collectionSolicitacoes
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("status", "PENDENTE")
+            .get()
+            .await()
+
         val batch = firestore.batch()
         paradas.documents.forEach { batch.delete(it.reference) }
+        solicitacoesPendentes.documents.forEach { batch.delete(it.reference) }
+        passageirosVinculados.documents.forEach { batch.update(it.reference, "rotaId", null) }
         batch.delete(collectionRotas.document(rotaId))
         batch.commit().await()
 
         paradaRotaDao.deleteByRota(rotaId)
+        solicitacaoInclusaoDao?.deletePendentesPorRota(rotaId)
+        passageiroDao?.desvincularRota(rotaId)
         rotaDao.deleteById(rotaId)
     }
 

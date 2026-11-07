@@ -128,7 +128,7 @@
                                 android:id="@+id/txtProximaParadaNavegacao"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="@font/montserrat"
+
                                 android:text="Carregando viagem..."
                                 android:textColor="@color/color_secondary"
                                 android:textSize="24sp"
@@ -160,7 +160,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
                     android:layout_marginTop="4dp"
-                    android:fontFamily="@font/montserrat"
+
                     android:text="Passageiros da viagem"
                     android:textColor="#686D75"
                     android:textSize="16sp"
@@ -293,7 +293,7 @@
                             android:id="@+id/txtTituloPainelParada"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/montserrat"
+
                             android:text="Chegando à parada"
                             android:textColor="#101010"
                             android:textSize="18sp"
@@ -317,7 +317,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_container_round_30"
-                        android:fontFamily="@font/montserrat"
+
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="6dp"
                         android:textColor="@color/dark_gray"

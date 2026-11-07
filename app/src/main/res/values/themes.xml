@@ -4,8 +4,8 @@
     <style name="Base.Theme.VaiVan" parent="Theme.Material3.DayNight.NoActionBar">
 
         <!-- Fonte global -->
-        <item name="android:fontFamily">@font/montserrat</item>
-        <item name="fontFamily">@font/montserrat</item>
+<!--        <item name="android:fontFamily">@font/montserrat</item>-->
+<!--        <item name="fontFamily">@font/montserrat</item>-->
 
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

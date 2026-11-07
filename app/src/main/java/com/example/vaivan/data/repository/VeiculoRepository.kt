@@ -1,9 +1,11 @@
 package com.example.vaivan.data.repository
 
+import com.example.vaivan.data.local.dao.DocumentoDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,14 +27,28 @@ import kotlinx.coroutines.tasks.await
  * O Repository executa as operações de dados.
  * O SyncManager controla o ciclo de vida dos listeners.
  */
+/** Exclusão bloqueada: o veículo está vinculado a uma ou mais rotas. */
+class VeiculoVinculadoARotaException : Exception(
+    "Este veículo está vinculado a uma rota. Troque ou remova o veículo da rota antes de excluí-lo."
+)
+
 class VeiculoRepository(
     private val veiculoDao: VeiculoDao,
     private val firestore: FirebaseFirestore =
-        FirebaseFirestore.getInstance()
+        FirebaseFirestore.getInstance(),
+    // Opcional: só quem aciona excluirVeiculo precisa passar, pra limpeza em
+    // cascata dos documentos também refletir no Room na hora.
+    private val documentoDao: DocumentoDao? = null
 ) {
 
     private val collection =
         firestore.collection("veiculos")
+
+    private val collectionRotas =
+        firestore.collection("rotas")
+
+    private val collectionDocumentos =
+        firestore.collection("documentos")
 
     private val scope =
         CoroutineScope(
@@ -73,6 +89,15 @@ class VeiculoRepository(
     // =========================================================
     // CONSULTA
     // =========================================================
+
+    /** Consulta diretamente no Firebase todos os veículos de um motorista
+     * (usado pela exclusão de conta — não pode confiar no cache do Room). */
+    suspend fun consultarVeiculosDoMotorista(motoristaId: String): List<VeiculoEntity> {
+        val snapshot = collection.whereEqualTo("motoristaId", motoristaId).get().await()
+        return snapshot.documents.mapNotNull { documento ->
+            documento.toObject(VeiculoEntity::class.java)?.copy(id = documento.id)
+        }
+    }
 
     /** Consulta um veículo diretamente no Firebase. */
     suspend fun consultarVeiculo(
@@ -243,16 +268,40 @@ class VeiculoRepository(
     // EXCLUSÃO
     // =========================================================
 
-    /** Exclui o veículo do Firebase e do Room. */
+    /** Exclui o veículo do Firebase e do Room. Bloqueia (lança
+     * [VeiculoVinculadoARotaException]) se alguma rota ainda estiver
+     * vinculada a ele — precisa trocar/desvincular o veículo da rota
+     * primeiro. Sem bloqueio, cascateia pros documentos (CRLV/autorização)
+     * desse veículo, Firestore + Room + arquivos no Storage. */
     suspend fun excluirVeiculo(
         id: String
     ) {
-
-        collection
-            .document(id)
-            .delete()
+        val rotasVinculadas = collectionRotas
+            .whereEqualTo("veiculoId", id)
+            .limit(1)
+            .get()
             .await()
 
+        if (!rotasVinculadas.isEmpty) {
+            throw VeiculoVinculadoARotaException()
+        }
+
+        val documentos = collectionDocumentos
+            .whereEqualTo("veiculoId", id)
+            .get()
+            .await()
+
+        val batch = firestore.batch()
+        documentos.documents.forEach { batch.delete(it.reference) }
+        batch.delete(collection.document(id))
+        batch.commit().await()
+
+        documentoDao?.deleteByVeiculo(id)
         veiculoDao.deleteById(id)
+
+        runCatching {
+            val pasta = FirebaseStorage.getInstance().reference.child("documentos_veiculos/$id")
+            pasta.listAll().await().items.forEach { it.delete().await() }
+        }
     }
 }

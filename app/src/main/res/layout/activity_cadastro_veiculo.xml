@@ -23,6 +23,7 @@
             android:layout_marginBottom="12dp" />
 
         <TextView
+            android:id="@+id/txtTituloVeiculo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cadastre seu veículo"
@@ -31,6 +32,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/txtSubtituloVeiculo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -89,7 +91,7 @@
                             android:text="Dados do veículo"
                             android:textColor="@color/dark_gray"
                             android:textSize="18sp"
-                            android:fontFamily="@font/montserrat"
+
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -305,7 +307,7 @@
                             android:text="Documentos do veículo"
                             android:textColor="@color/dark_gray"
                             android:textSize="18sp"
-                            android:fontFamily="@font/montserrat"
+
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -460,7 +462,7 @@
                 android:text="Salvar e continuar"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
-                android:fontFamily="@font/montserrat"
+
                 android:textStyle="bold"
                 android:textSize="16sp" />
 

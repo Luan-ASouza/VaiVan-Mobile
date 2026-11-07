@@ -12,8 +12,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.util.WindowInsetsUtil.aplicarInsets
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.UsuarioRepository
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
@@ -34,7 +38,12 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var edtMensagem: EditText
     private lateinit var btnEnviar: ImageButton
     private lateinit var txtNomeContato: TextView
+    private lateinit var imgFotoContato: ShapeableImageView
     private lateinit var barraMensagem: ConstraintLayout
+
+    private val usuarioRepository by lazy {
+        UsuarioRepository(VaivanDatabase.getInstance(this).usuarioDao())
+    }
 
     private val adapter = MensagemAdapter()
 
@@ -55,6 +64,7 @@ class ChatActivity : AppCompatActivity() {
         edtMensagem = findViewById(R.id.edtMensagem)
         btnEnviar = findViewById(R.id.btnEnviar)
         txtNomeContato = findViewById(R.id.txtNomeContato)
+        imgFotoContato = findViewById(R.id.imgFotoContato)
         barraMensagem = findViewById(R.id.barraMensagem)
 
         aplicarInsets(activityChat)
@@ -125,6 +135,25 @@ class ChatActivity : AppCompatActivity() {
                 passageiroNome.isNotBlank() -> "$nomeContato · $passageiroNome"
                 else -> nomeContato
             }
+
+        // --------------------------------------------------
+        // FOTO DO CONTATO
+        // --------------------------------------------------
+
+        lifecycleScope.launch {
+            val usuario = try {
+                usuarioRepository.consultarUsuario(outroUsuarioId)
+            } catch (e: Exception) {
+                null
+            }
+
+            Glide.with(imgFotoContato)
+                .load(usuario?.fotoUrl)
+                .placeholder(R.drawable.ic_perfil)
+                .error(R.drawable.ic_perfil)
+                .circleCrop()
+                .into(imgFotoContato)
+        }
 
         // --------------------------------------------------
         // CARREGAR CHAT

@@ -116,9 +116,19 @@ service cloud.firestore {
                         && resource.data.responsavelId == request.auth.uid;
     }
 
-    // LOCALIZAÇÕES (rastreamento em tempo real)
-    match /localizacoes/{localizacaoId} {
-      allow read, write: if request.auth != null;
+    // LOCALIZAÇÕES (rastreamento em tempo real) — um documento por viagem
+    // (localizacoes/{viagemId}, sempre sobrescrito), com motoristaId e
+    // responsaveisAutorizados denormalizados nele mesmo, no mesmo espírito
+    // de "viagens", pra não depender de getAfter() numa escrita de alta
+    // frequência.
+    match /localizacoes/{viagemId} {
+      allow read: if logado() && (
+        request.auth.uid == resource.data.motoristaId ||
+        request.auth.uid in resource.data.responsaveisAutorizados ||
+        ehAdmin()
+      );
+
+      allow write: if logado() && request.auth.uid == request.resource.data.motoristaId;
     }
 
     // CHAT

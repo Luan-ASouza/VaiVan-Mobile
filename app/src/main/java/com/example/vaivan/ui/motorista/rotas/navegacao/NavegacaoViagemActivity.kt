@@ -9,23 +9,24 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.vaivan.BuildConfig
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
+import com.example.vaivan.data.remote.localizacao.FirestoreLocalizacaoViagemRemoteSource
+import com.example.vaivan.data.repository.LocalizacaoViagemRepository
 import com.example.vaivan.data.repository.ViagemRepository
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.libraries.navigation.ArrivalEvent
@@ -40,9 +41,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.bumptech.glide.Glide
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
-import com.example.vaivan.core.util.SystemBarUtils.applyTopGap
 import com.google.android.material.imageview.ShapeableImageView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -55,7 +55,7 @@ import java.util.Locale
  * e no [ViagemRepository] — não escreve a posição do GPS em lugar nenhum,
  * isso é tarefa do serviço de rastreamento (Etapa 3).
  */
-class NavegacaoViagemActivity : AppCompatActivity() {
+class NavegacaoViagemActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_VIAGEM_ID = "viagemId"
@@ -68,23 +68,26 @@ class NavegacaoViagemActivity : AppCompatActivity() {
 
     private lateinit var viagemId: String
 
-    private val viewModel: NavegacaoViagemViewModel by lazy {
+    private val localizacaoViagemRepository: LocalizacaoViagemRepository by lazy {
         val database = VaivanDatabase.getInstance(this)
-        val viagemRepository = ViagemRepository(
-            database.viagemDao(),
-            database.paradaViagemDao(),
-            database.eventoViagemDao()
+        LocalizacaoViagemRepository(
+            database.localizacaoViagemDao(),
+            FirestoreLocalizacaoViagemRemoteSource()
         )
+    }
 
-        ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    @Suppress("UNCHECKED_CAST")
-                    return NavegacaoViagemViewModel(viagemId, viagemRepository) as T
-                }
+    private val viewModel: NavegacaoViagemViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val database = VaivanDatabase.getInstance(this@NavegacaoViagemActivity)
+                val viagemRepository = ViagemRepository(
+                    database.viagemDao(),
+                    database.paradaViagemDao(),
+                    database.eventoViagemDao()
+                )
+                NavegacaoViagemViewModel(viagemId, viagemRepository)
             }
-        )[NavegacaoViagemViewModel::class.java]
+        }
     }
 
     private lateinit var navigationView: NavigationView
@@ -157,8 +160,6 @@ class NavegacaoViagemActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
-
         viagemId = intent.getStringExtra(EXTRA_VIAGEM_ID) ?: run {
             finish()
             return
@@ -175,7 +176,7 @@ class NavegacaoViagemActivity : AppCompatActivity() {
             solicitarPermissaoLocalizacao.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
     }
 
     private fun inicializarViews(savedInstanceState: Bundle?) {
@@ -438,6 +439,38 @@ class NavegacaoViagemActivity : AppCompatActivity() {
                         atualizarCardChegada(viewModel.paradasDoPainel.value)
                     }
                 }
+                launch {
+                    publicarLocalizacaoPeriodicamente()
+                }
+            }
+        }
+    }
+
+    // =========================================================
+    // LOCALIZAÇÃO AO VIVO (pro responsável acompanhar no mapa)
+    // =========================================================
+
+    /** Publica a posição que o próprio Navigator está usando pra guiar —
+     * [Navigator.getTraveledRoute] vem do RoadSnappedLocationProvider, então
+     * reflete tanto o GPS real quanto a simulação de debug
+     * (`simulator.simulateLocationsAlongExistingRoute`), ao contrário do
+     * FusedLocationProviderClient, que só lê a localização real do sistema
+     * e por isso fica parado durante uma simulação. */
+    private suspend fun publicarLocalizacaoPeriodicamente() {
+        while (true) {
+            delay(5_000L)
+
+            val posicao = navigator?.getTraveledRoute()?.lastOrNull()
+            val viagem = viewModel.viagem.value
+
+            if (posicao != null && viagem != null) {
+                localizacaoViagemRepository.publicarLocalizacao(
+                    viagemId = viagemId,
+                    motoristaId = viagem.motoristaId,
+                    responsaveisAutorizados = viagem.responsaveisAutorizados,
+                    latitude = posicao.latitude,
+                    longitude = posicao.longitude
+                )
             }
         }
     }

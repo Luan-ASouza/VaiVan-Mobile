@@ -18,6 +18,9 @@ interface PassageiroDao {
     @Query("DELETE FROM passageiros WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("UPDATE passageiros SET rotaId = NULL WHERE rotaId = :rotaId")
+    suspend fun desvincularRota(rotaId: String)
+
     @Query("SELECT * FROM passageiros WHERE id = :id")
     fun getById(id: String): Flow<PassageiroEntity?>
 

@@ -14,13 +14,21 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.ui.escolas.SelecionarEscolaActivity
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 class PesquisarRotasFragment : Fragment() {
 
@@ -29,7 +37,12 @@ class PesquisarRotasFragment : Fragment() {
     private lateinit var layoutEscola: TextInputLayout
     private lateinit var btnAdicionarNovoLocal: Button
     private lateinit var txtNomePassageiro: TextView
+    private lateinit var imgFotoPassageiro: ShapeableImageView
     private lateinit var btnPesquisar: Button
+
+    private val passageiroRepository by lazy {
+        PassageiroRepository(VaivanDatabase.getInstance(requireContext()).passageiroDao())
+    }
 
     private lateinit var btnIda: MaterialButton
     private lateinit var btnVolta: MaterialButton
@@ -52,7 +65,6 @@ class PesquisarRotasFragment : Fragment() {
 
     private var passageiroId = ""
     private var nomePassageiro = ""
-    private var localId: String? = null
 
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val firestore by lazy { FirebaseFirestore.getInstance() }
@@ -146,12 +158,29 @@ class PesquisarRotasFragment : Fragment() {
         configurarSelecaoDePontos()
         atualizarCores()
         carregarLocais()
+        observarFotoPassageiro()
+    }
+
+    private fun observarFotoPassageiro() {
+        if (passageiroId.isBlank()) return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                passageiroRepository.observarPassageiro(passageiroId).collect { passageiro ->
+                    Glide.with(imgFotoPassageiro)
+                        .load(passageiro?.fotoUrl)
+                        .placeholder(R.drawable.filho1)
+                        .error(R.drawable.filho1)
+                        .circleCrop()
+                        .into(imgFotoPassageiro)
+                }
+            }
+        }
     }
 
     private fun inicializarDados() {
         passageiroId = arguments?.getString("passageiroId").orEmpty()
         nomePassageiro = arguments?.getString("nomePassageiro").orEmpty()
-        localId = arguments?.getString("localId")
     }
 
     private fun inicializarViews(view: View) {
@@ -188,6 +217,9 @@ class PesquisarRotasFragment : Fragment() {
 
         txtNomePassageiro =
             view.findViewById(R.id.txtNomePassageiro)
+
+        imgFotoPassageiro =
+            view.findViewById(R.id.imgFotoPassageiro)
 
         btnPesquisar =
             view.findViewById(R.id.btnPesquisarRotas)
@@ -512,7 +544,7 @@ class PesquisarRotasFragment : Fragment() {
             )
             putExtra(
                 ResultadosRotasActivity.EXTRA_LOCAL_ID,
-                localId
+                local.id
             )
 
             putExtra(

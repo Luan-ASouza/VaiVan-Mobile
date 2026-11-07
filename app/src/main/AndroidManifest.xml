@@ -114,11 +114,17 @@
             android:exported="false" /> <!-- Rotas -->
         <activity
             android:name=".ui.responsavel.rotas.PesquisarRotasActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.responsavel.rotas.AcompanharViagemActivity"
             android:exported="false" /> <!-- ==================== COMUM ==================== -->
         <activity
             android:name=".ui.comum.chat.ChatActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.comum.perfil.EditarPerfilActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.responsavel.rotas.ResultadosRotasActivity"
             android:exported="false" />

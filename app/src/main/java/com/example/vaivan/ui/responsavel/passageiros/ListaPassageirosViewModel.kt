@@ -1,10 +1,8 @@
 package com.example.vaivan.ui.responsavel.passageiros
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -13,15 +11,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 class ListaPassageirosViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository =
-        PassageiroRepository(
-            VaivanDatabase
-                .getInstance(application)
-                .passageiroDao()
-        )
+    private val repository: PassageiroRepository
+) : ViewModel() {
 
     private val uid =
         FirebaseAuth
@@ -55,4 +46,10 @@ class ListaPassageirosViewModel(
         } else {
             flowOf(emptyList())
         }
+
+    /** Exclusão em cascata (paradas/solicitações pendentes/foto) já fica no
+     * PassageiroRepository.excluirPassageiro — aqui é só a ponte pra UI. */
+    suspend fun excluirPassageiro(id: String) {
+        repository.excluirPassageiro(id)
+    }
 }

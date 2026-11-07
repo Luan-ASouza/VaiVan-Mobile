@@ -8,12 +8,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.models.StatusDocumento
@@ -21,7 +20,7 @@ import com.example.vaivan.data.repository.DocumentoRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
-class DocumentosMotoristaActivity : AppCompatActivity() {
+class DocumentosMotoristaActivity : BaseActivity() {
 
     private val auth = FirebaseAuth.getInstance()
     private lateinit var documentoRepository: DocumentoRepository
@@ -49,7 +48,7 @@ class DocumentosMotoristaActivity : AppCompatActivity() {
         configurarCliques()
         observarDocumentos()
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
     }
 
     override fun onStop() {

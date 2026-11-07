@@ -9,12 +9,15 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.google.android.material.imageview.ShapeableImageView
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.models.RotasDoResponsavel
@@ -45,39 +48,29 @@ class ListaRotasFragment : Fragment() {
         )
     }
 
-    private val viewModel: ListaRotasViewModel by lazy {
+    private val passageiroRepository: PassageiroRepository by lazy {
+        PassageiroRepository(VaivanDatabase.getInstance(requireContext()).passageiroDao())
+    }
 
-        val db = VaivanDatabase.getInstance(requireContext())
+    private val viewModel: ListaRotasViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = VaivanDatabase.getInstance(requireContext())
 
-        val passageiroRepository = PassageiroRepository(db.passageiroDao())
+                val useCase = BuscarRotasDoResponsavelUseCase(
+                    passageiroRepository = PassageiroRepository(db.passageiroDao()),
+                    rotaRepository = RotaRepository(
+                        db.rotaDao(),
+                        db.paradaRotaDao(),
+                        GoogleRoutesClient(requireContext())
+                    ),
+                    usuarioRepository = UsuarioRepository(db.usuarioDao()),
+                    veiculoRepository = VeiculoRepository(db.veiculoDao())
+                )
 
-        val rotaRepository = RotaRepository(
-            db.rotaDao(),
-            db.paradaRotaDao(),
-            GoogleRoutesClient(requireContext())
-        )
-
-        val usuarioRepository = UsuarioRepository(db.usuarioDao())
-
-        val veiculoRepository = VeiculoRepository(db.veiculoDao())
-
-        val useCase = BuscarRotasDoResponsavelUseCase(
-            passageiroRepository = passageiroRepository,
-            rotaRepository = rotaRepository,
-            usuarioRepository = usuarioRepository,
-            veiculoRepository = veiculoRepository
-        )
-
-        ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
-
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return ListaRotasViewModel(useCase) as T
-                }
+                ListaRotasViewModel(useCase)
             }
-        )[ListaRotasViewModel::class.java]
+        }
     }
 
     override fun onCreateView(
@@ -161,6 +154,23 @@ class ListaRotasFragment : Fragment() {
 
         view.findViewById<TextView>(R.id.txtNomeAlunoSolicitacaoResp).text =
             solicitacao.nomePassageiro
+
+        val imgFotoAluno = view.findViewById<ShapeableImageView>(R.id.imgFotoAlunoSolicitacaoResp)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val passageiro = try {
+                passageiroRepository.consultarPassageiro(solicitacao.passageiroId)
+            } catch (e: Exception) {
+                null
+            }
+
+            Glide.with(imgFotoAluno)
+                .load(passageiro?.fotoUrl)
+                .placeholder(R.drawable.filho1)
+                .error(R.drawable.filho1)
+                .circleCrop()
+                .into(imgFotoAluno)
+        }
 
         view.findViewById<TextView>(R.id.txtStatusSolicitacaoResp).text =
             rotuloStatus(solicitacao.status)
@@ -310,11 +320,31 @@ class ListaRotasFragment : Fragment() {
         val nomeAluno = item.parada?.nomePassageiro.orEmpty()
 
         // Aluno
-        view.findViewById<TextView>(R.id.txtInicialAlunoCard).text =
+        val txtInicialAluno = view.findViewById<TextView>(R.id.txtInicialAlunoCard)
+        val imgFotoAluno = view.findViewById<ShapeableImageView>(R.id.imgFotoAlunoCard)
+
+        txtInicialAluno.text =
             nomeAluno.firstOrNull()?.uppercase() ?: "?"
 
         view.findViewById<TextView>(R.id.txtNomeAlunoCard).text =
             nomeAluno.ifBlank { "Aluno não informado" }
+
+        val passageiroId = item.parada?.passageiroId
+        if (passageiroId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val passageiro = try {
+                    passageiroRepository.consultarPassageiro(passageiroId)
+                } catch (e: Exception) {
+                    null
+                }
+
+                if (!passageiro?.fotoUrl.isNullOrBlank()) {
+                    txtInicialAluno.visibility = View.GONE
+                    imgFotoAluno.visibility = View.VISIBLE
+                    Glide.with(imgFotoAluno).load(passageiro?.fotoUrl).circleCrop().into(imgFotoAluno)
+                }
+            }
+        }
 
         // Rota, turno e desembarque
         view.findViewById<TextView>(R.id.txtNomeRotaCard).text = rota.nome
@@ -378,18 +408,17 @@ class ListaRotasFragment : Fragment() {
 
     private fun abrirAcompanharViagem(item: RotasDoResponsavel) {
 
-        val fragment = AcompanharViagemFragment().apply {
-            arguments = Bundle().apply {
-                putString("rotaId", item.rota.id)
-                putString("alunoNome", item.parada?.nomePassageiro)
+        startActivity(
+            Intent(requireContext(), AcompanharViagemActivity::class.java).apply {
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_ID, item.rota.id)
+                putExtra(AcompanharViagemActivity.EXTRA_ALUNO_NOME, item.parada?.nomePassageiro)
+                putExtra(AcompanharViagemActivity.EXTRA_PASSAGEIRO_ID, item.parada?.passageiroId)
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_POLYLINE, item.rota.polylineEncoded)
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_NOME, item.rota.nome)
+                putExtra(AcompanharViagemActivity.EXTRA_MOTORISTA_NOME, item.motorista?.nome)
+                putExtra(AcompanharViagemActivity.EXTRA_VEICULO_PLACA, item.veiculo?.placa)
             }
-        }
-
-        parentFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .addToBackStack(null)
-            .commit()
+        )
     }
 
     private fun abrirChatComMotorista(item: RotasDoResponsavel) {

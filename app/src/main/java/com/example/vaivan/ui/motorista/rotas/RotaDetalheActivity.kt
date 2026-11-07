@@ -11,15 +11,16 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
@@ -34,17 +35,22 @@ import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
 import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class RotaDetalheActivity : AppCompatActivity() {
+class RotaDetalheActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_ROTA_ID = "rotaId"
     }
 
     private lateinit var rotaId: String
+
+    private val passageiroRepository by lazy {
+        PassageiroRepository(VaivanDatabase.getInstance(this).passageiroDao())
+    }
 
     private lateinit var txtNomeRotaDetalhe: TextView
     private lateinit var btnIniciarIdaDetalhe: Button
@@ -75,85 +81,54 @@ class RotaDetalheActivity : AppCompatActivity() {
     private lateinit var chipGroupBairrosDetalhe: ChipGroup
     private lateinit var mapaDias: Map<String, TextView>
 
-    private val viewModel: RotaDetalheViewModel by lazy {
+    private val viewModel: RotaDetalheViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = VaivanDatabase.getInstance(this@RotaDetalheActivity)
+                val routesClient = GoogleRoutesClient(this@RotaDetalheActivity)
 
-        val db =
-            VaivanDatabase.getInstance(
-                this
-            )
+                val rotaRepository = RotaRepository(
+                    rotaDao = db.rotaDao(),
+                    paradaRotaDao = db.paradaRotaDao(),
+                    routesClient = routesClient
+                )
 
-        val routesClient =
-            GoogleRoutesClient(
-                this
-            )
+                val solicitacaoRepository = SolicitacaoInclusaoRepository(
+                    this@RotaDetalheActivity,
+                    db.solicitacaoInclusaoDao()
+                )
 
-        val rotaRepository =
-            RotaRepository(
-                rotaDao =
-                    db.rotaDao(),
-                paradaRotaDao =
-                    db.paradaRotaDao(),
-                routesClient =
-                    routesClient
-            )
+                val recalcularRotaUseCase = RecalcularRotaUseCase(
+                    rotaRepository = rotaRepository,
+                    routesClient = routesClient
+                )
 
-        val solicitacaoRepository =
-            SolicitacaoInclusaoRepository(
-                this,
-                db.solicitacaoInclusaoDao()
-            )
+                val aceitarSolicitacaoUseCase = AceitarSolicitacaoUseCase(
+                    solicitacaoInclusaoRepository = solicitacaoRepository,
+                    recalcularRotaUseCase = recalcularRotaUseCase,
+                    rotaRepository = rotaRepository
+                )
 
-        val recalcularRotaUseCase =
-            RecalcularRotaUseCase(
-                rotaRepository =
-                    rotaRepository,
-                routesClient =
-                    routesClient
-            )
+                val viagemRepository = ViagemRepository(
+                    viagemDao = db.viagemDao(),
+                    paradaViagemDao = db.paradaViagemDao(),
+                    eventoViagemDao = db.eventoViagemDao()
+                )
 
-        val aceitarSolicitacaoUseCase =
-            AceitarSolicitacaoUseCase(
-                solicitacaoInclusaoRepository = solicitacaoRepository,
-                recalcularRotaUseCase = recalcularRotaUseCase,
-                rotaRepository = rotaRepository
-            )
+                val iniciarViagemUseCase = IniciarViagemUseCase(
+                    rotaRepository = rotaRepository,
+                    passageiroRepository = PassageiroRepository(db.passageiroDao()),
+                    viagemRepository = viagemRepository
+                )
 
-        val viagemRepository =
-            ViagemRepository(
-                viagemDao = db.viagemDao(),
-                paradaViagemDao = db.paradaViagemDao(),
-                eventoViagemDao = db.eventoViagemDao()
-            )
-
-        val iniciarViagemUseCase =
-            IniciarViagemUseCase(
-                rotaRepository = rotaRepository,
-                passageiroRepository = PassageiroRepository(db.passageiroDao()),
-                viagemRepository = viagemRepository
-            )
-
-        ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
-
-                override fun <T : ViewModel>
-                        create(
-                    modelClass: Class<T>
-                ): T {
-
-                    return RotaDetalheViewModel(
-                        rotaRepository =
-                            rotaRepository,
-                        solicitacaoRepository =
-                            solicitacaoRepository,
-                        aceitarSolicitacaoUseCase =
-                            aceitarSolicitacaoUseCase,
-                        iniciarViagemUseCase =
-                            iniciarViagemUseCase
-                    ) as T
-                }
+                RotaDetalheViewModel(
+                    rotaRepository = rotaRepository,
+                    solicitacaoRepository = solicitacaoRepository,
+                    aceitarSolicitacaoUseCase = aceitarSolicitacaoUseCase,
+                    iniciarViagemUseCase = iniciarViagemUseCase
+                )
             }
-        )[RotaDetalheViewModel::class.java]
+        }
     }
 
     override fun onCreate(
@@ -296,11 +271,7 @@ class RotaDetalheActivity : AppCompatActivity() {
         observarSolicitacoes()
         observarParadas()
 
-        applyTopAndBottomGaps(
-            findViewById(
-                android.R.id.content
-            )
-        )
+        aplicarGapsDeSistema()
     }
 
     private fun observarRota() {
@@ -622,6 +593,26 @@ class RotaDetalheActivity : AppCompatActivity() {
                 )
                 .text =
                 solicitacao.nomePassageiro
+
+            val imgFotoAluno =
+                itemView.findViewById<ShapeableImageView>(
+                    R.id.imgFotoAlunoSolicitacao
+                )
+
+            lifecycleScope.launch {
+                val passageiro = try {
+                    passageiroRepository.consultarPassageiro(solicitacao.passageiroId)
+                } catch (e: Exception) {
+                    null
+                }
+
+                Glide.with(imgFotoAluno)
+                    .load(passageiro?.fotoUrl)
+                    .placeholder(R.drawable.filho1)
+                    .error(R.drawable.filho1)
+                    .circleCrop()
+                    .into(imgFotoAluno)
+            }
 
             itemView
                 .findViewById<TextView>(

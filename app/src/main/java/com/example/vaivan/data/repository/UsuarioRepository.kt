@@ -1,5 +1,6 @@
 package com.example.vaivan.data.repository
 
+import android.net.Uri
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.data.local.entities.UsuarioEntity
 import com.google.firebase.firestore.FirebaseFirestore
@@ -28,7 +29,8 @@ import kotlinx.coroutines.tasks.await
 class UsuarioRepository(
     private val usuarioDao: UsuarioDao,
     private val firestore: FirebaseFirestore =
-        FirebaseFirestore.getInstance()
+        FirebaseFirestore.getInstance(),
+    private val arquivoRepository: ArquivoRepository = ArquivoRepository()
 ) {
 
     private val collection =
@@ -161,6 +163,28 @@ class UsuarioRepository(
         return usuarioSalvo.id
     }
 
+
+    // =========================================================
+    // FOTO DE PERFIL
+    // =========================================================
+
+    /** Envia a nova foto pro Storage e atualiza o fotoUrl do usuário
+     * (Firestore + Room, via salvarUsuario). */
+    suspend fun atualizarFoto(uid: String, uri: Uri): String {
+        val url = arquivoRepository.enviar(uri, arquivoRepository.caminhoFotoUsuario(uid))
+        val atual = consultarUsuario(uid) ?: UsuarioEntity(id = uid)
+        salvarUsuario(atual.copy(fotoUrl = url))
+        return url
+    }
+
+    /** Remove a foto do Storage e limpa o fotoUrl do usuário. */
+    suspend fun removerFoto(uid: String) {
+        val atual = consultarUsuario(uid) ?: return
+        if (atual.fotoUrl == null) return
+
+        arquivoRepository.excluir(arquivoRepository.caminhoFotoUsuario(uid))
+        salvarUsuario(atual.copy(fotoUrl = null))
+    }
 
     // =========================================================
     // EXCLUSÃO
