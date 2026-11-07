@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.comum.chat
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -11,8 +12,33 @@ object ChatRepository {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    private fun gerarChatId(uid1: String, uid2: String): String {
-        return if (uid1 < uid2) "${uid1}_$uid2" else "${uid2}_$uid1"
+    /**
+     * Identifica de QUAL viagem e de QUAL aluno é a conversa.
+     * Cada combinação (rota + aluno) tem a sua própria conversa.
+     */
+    data class ContextoChat(
+        val rotaId: String,
+        val passageiroId: String,
+        val passageiroNome: String = "",
+        val rotaNome: String = ""
+    )
+
+    /**
+     * Sem contexto: uma conversa por par de usuários (comportamento antigo).
+     * Com contexto: uma conversa por par de usuários + rota + aluno.
+     */
+    private fun gerarChatId(
+        uid1: String,
+        uid2: String,
+        contexto: ContextoChat? = null
+    ): String {
+        val base = if (uid1 < uid2) "${uid1}_$uid2" else "${uid2}_$uid1"
+
+        return if (contexto == null) {
+            base
+        } else {
+            "${base}_${contexto.rotaId}_${contexto.passageiroId}"
+        }
     }
 
     /**
@@ -26,6 +52,8 @@ object ChatRepository {
      *    (portanto, chame isto pelo app do RESPONSÁVEL).
      *  - [mensagemInicialEm]: horário da mensagem (use o criadoEm da solicitação
      *    para ela ficar no topo da conversa).
+     *  - [contexto]: viagem e aluno da conversa. Com ele, cada filho/viagem tem
+     *    a sua própria conversa em vez de todas caírem no mesmo chat.
      *
      * A mensagem do pedido tem ID fixo ("pedido_<solicitacaoId>"), então, mesmo que
      * esta função rode várias vezes, ela é gravada uma única vez.
@@ -34,12 +62,13 @@ object ChatRepository {
         outroUsuarioId: String,
         solicitacaoId: String? = null,
         mensagemInicial: String? = null,
-        mensagemInicialEm: Long? = null
+        mensagemInicialEm: Long? = null,
+        contexto: ContextoChat? = null
     ): String {
         val meuUid = auth.currentUser?.uid
             ?: throw IllegalStateException("Usuário não está logado")
 
-        val chatId = gerarChatId(meuUid, outroUsuarioId)
+        val chatId = gerarChatId(meuUid, outroUsuarioId, contexto)
         val chatRef = db.collection("chats").document(chatId)
 
         val textoInicial = mensagemInicial?.trim().orEmpty()
@@ -59,6 +88,13 @@ object ChatRepository {
 
             if (solicitacaoId != null) {
                 novoChat["solicitacaoId"] = solicitacaoId
+            }
+
+            if (contexto != null) {
+                novoChat["rotaId"] = contexto.rotaId
+                novoChat["passageiroId"] = contexto.passageiroId
+                novoChat["passageiroNome"] = contexto.passageiroNome
+                novoChat["rotaNome"] = contexto.rotaNome
             }
 
             chatRef.set(novoChat).await()
@@ -111,15 +147,28 @@ object ChatRepository {
             .await()
     }
 
+    /**
+     * [aoErro] é chamado quando o Firestore recusa ou falha a leitura
+     * (por exemplo, regra de segurança negando o acesso). Antes o erro era ignorado,
+     * e a conversa simplesmente ficava vazia sem ninguém saber o motivo.
+     */
     fun escutarMensagens(
         chatId: String,
+        aoErro: ((Exception) -> Unit)? = null,
         aoAtualizar: (List<Mensagem>) -> Unit
     ): ListenerRegistration {
         return db.collection("chats").document(chatId)
             .collection("mensagens")
             .orderBy("enviadoEm", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, erro ->
-                if (erro != null || snapshot == null) return@addSnapshotListener
+
+                if (erro != null) {
+                    Log.e("ChatRepository", "Erro ao escutar mensagens de $chatId", erro)
+                    aoErro?.invoke(erro)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null) return@addSnapshotListener
 
                 val mensagens = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(Mensagem::class.java)?.copy(id = doc.id)

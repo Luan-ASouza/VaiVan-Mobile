@@ -17,6 +17,14 @@ import com.example.vaivan.core.util.WindowInsetsUtil.aplicarInsets
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
+/**
+ * Extras aceitos:
+ *  - "outroUsuarioId" (obrigatório): com quem conversar
+ *  - "nomeContato": nome mostrado no topo
+ *  - "chatId": id de uma conversa que já existe (usado pela lista de conversas)
+ *  - "rotaId", "passageiroId", "passageiroNome", "rotaNome": identificam a viagem e o aluno;
+ *    cada combinação tem a sua própria conversa
+ */
 class ChatActivity : AppCompatActivity() {
 
     private lateinit var activityChat: LinearLayout
@@ -59,7 +67,7 @@ class ChatActivity : AppCompatActivity() {
         recyclerMensagens.adapter = adapter
 
         // --------------------------------------------------
-        // PEGAR USUÁRIO
+        // PEGAR DADOS DA CONVERSA
         // --------------------------------------------------
 
         val outroUsuarioId =
@@ -77,15 +85,38 @@ class ChatActivity : AppCompatActivity() {
             return
         }
 
+        val chatIdExistente = intent.getStringExtra("chatId")
+        val rotaId = intent.getStringExtra("rotaId").orEmpty()
+        val passageiroId = intent.getStringExtra("passageiroId").orEmpty()
+        val passageiroNome = intent.getStringExtra("passageiroNome").orEmpty()
+        val rotaNome = intent.getStringExtra("rotaNome").orEmpty()
+
+        // Só há contexto se soubermos a viagem E o aluno
+        val contexto =
+            if (rotaId.isNotBlank() && passageiroId.isNotBlank()) {
+                ChatRepository.ContextoChat(
+                    rotaId = rotaId,
+                    passageiroId = passageiroId,
+                    passageiroNome = passageiroNome,
+                    rotaNome = rotaNome
+                )
+            } else {
+                null
+            }
+
         // --------------------------------------------------
-        // NOME DO CONTATO
+        // NOME NO TOPO (contato + aluno, quando houver)
         // --------------------------------------------------
 
         val nomeContato =
             intent.getStringExtra("nomeContato")
 
         txtNomeContato.text =
-            nomeContato ?: "Conversa"
+            when {
+                nomeContato.isNullOrBlank() -> "Conversa"
+                passageiroNome.isNotBlank() -> "$nomeContato · $passageiroNome"
+                else -> nomeContato
+            }
 
         // --------------------------------------------------
         // CARREGAR CHAT
@@ -96,18 +127,27 @@ class ChatActivity : AppCompatActivity() {
             try {
 
                 val id =
-                    ChatRepository.iniciarOuObterChat(
-                        outroUsuarioId = outroUsuarioId,
-                        solicitacaoId = intent.getStringExtra("solicitacaoId"),
-                        mensagemInicial = intent.getStringExtra("mensagemInicial"),
-                        mensagemInicialEm = intent.getLongExtra("mensagemInicialEm", 0L)
-                            .takeIf { it > 0L }
-                    )
+                    chatIdExistente
+                        ?: ChatRepository.iniciarOuObterChat(
+                            outroUsuarioId,
+                            contexto = contexto
+                        )
 
                 chatId = id
 
                 listenerMensagens =
-                    ChatRepository.escutarMensagens(id) { mensagens ->
+                    ChatRepository.escutarMensagens(
+                        id,
+                        aoErro = { erro ->
+                            runOnUiThread {
+                                Toast.makeText(
+                                    this@ChatActivity,
+                                    "Não foi possível ler as mensagens: ${erro.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    ) { mensagens ->
 
                         adapter.atualizarMensagens(mensagens)
 
@@ -132,7 +172,7 @@ class ChatActivity : AppCompatActivity() {
 
                 Toast.makeText(
                     this@ChatActivity,
-                    "Erro ao abrir a conversa.",
+                    "Erro ao abrir a conversa: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -197,8 +237,8 @@ class ChatActivity : AppCompatActivity() {
 
                     Toast.makeText(
                         this@ChatActivity,
-                        "Erro ao enviar mensagem.",
-                        Toast.LENGTH_SHORT
+                        "Erro ao enviar mensagem: ${e.message}",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }

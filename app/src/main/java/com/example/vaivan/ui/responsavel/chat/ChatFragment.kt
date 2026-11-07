@@ -1,36 +1,6 @@
 package com.example.vaivan.ui.responsavel.chat
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import com.example.vaivan.R
-import com.example.vaivan.ui.comum.chat.ChatActivity
+import com.example.vaivan.ui.comum.chat.ListaConversasFragment
 
-class ChatFragment : Fragment() {
-
-    // UID do motorista de teste (Firebase Authentication)
-    private val UID_MOTORISTA_TESTE = "UVaDWLnPJgZqhY2TLroajUxdbXk1"
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_chat, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        // Card "Douglas Silva" agora abre a conversa de verdade
-        val cardConversa1 = view.findViewById<View>(R.id.r24dtccizf3f)
-        cardConversa1.setOnClickListener {
-            val intent = Intent(requireContext(), ChatActivity::class.java)
-            intent.putExtra("outroUsuarioId", UID_MOTORISTA_TESTE)
-            intent.putExtra("nomeContato", "Motorista")
-            startActivity(intent)
-        }
-    }
-}
+/** Aba de mensagens do responsável: lista as conversas reais (com os motoristas aprovados). */
+class ChatFragment : ListaConversasFragment()
