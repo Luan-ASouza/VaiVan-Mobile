@@ -25,5 +25,6 @@ data class UsuarioEntity(
 
     val status: String = "",
     val emailConfirmado: Boolean = false,
+    val fotoUrl: String? = null,
     val lastUpdated: Long = 0L
 )

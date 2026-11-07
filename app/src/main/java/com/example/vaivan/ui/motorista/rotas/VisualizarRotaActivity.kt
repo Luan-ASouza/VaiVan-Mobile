@@ -4,12 +4,11 @@ import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.PolylineUtil
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
@@ -26,7 +25,7 @@ import com.google.android.gms.maps.model.PolylineOptions
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class VisualizarRotaActivity : AppCompatActivity(), OnMapReadyCallback {
+class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
 
     companion object {
         const val EXTRA_ROTA_ID = "rotaId"
@@ -67,7 +66,7 @@ class VisualizarRotaActivity : AppCompatActivity(), OnMapReadyCallback {
             supportFragmentManager.findFragmentById(R.id.mapaRota) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
     }
 
     override fun onMapReady(map: GoogleMap) {

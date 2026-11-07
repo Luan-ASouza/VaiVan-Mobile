@@ -15,5 +15,21 @@ service firebase.storage {
     match /documentos_veiculos/{veiculoId}/{arquivo} {
       allow read, write: if request.auth != null;
     }
+
+    // Foto de perfil do próprio usuário (motorista ou responsável) — um
+    // arquivo só, sem extensão no caminho (o Content-Type vai no metadata).
+    // Caminho: usuarios/{uid}/foto
+    match /usuarios/{uid}/foto {
+      allow read: if request.auth != null;
+      allow write, delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Foto do passageiro — escopada pelo uid do responsável dono dele, pro
+    // dono conseguir escrever sem precisar de get() cruzado no Firestore.
+    // Caminho: usuarios/{responsavelId}/passageiros/{passageiroId}/foto
+    match /usuarios/{responsavelId}/passageiros/{passageiroId}/foto {
+      allow read: if request.auth != null;
+      allow write, delete: if request.auth != null && request.auth.uid == responsavelId;
+    }
   }
 }

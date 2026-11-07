@@ -62,10 +62,32 @@
             </LinearLayout>
 
             <ImageView
+                android:id="@+id/imgEditarPassageiroItem"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Editar passageiro"
+                android:padding="4dp"
+                android:src="@drawable/ic_edit"
+                app:tint="@color/dark_gray" />
+
+            <ImageView
+                android:id="@+id/imgExcluirPassageiroItem"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Excluir passageiro"
+                android:padding="4dp"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/status_danger" />
+
+            <ImageView
                 android:id="@+id/imgChevronItem"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:contentDescription="Ver mais detalhes"
                 android:padding="8dp"
                 android:src="@drawable/icon_dropdown"

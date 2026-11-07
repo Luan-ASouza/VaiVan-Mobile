@@ -1,35 +1,34 @@
 package com.example.vaivan.ui.responsavel.passageiros
 
-import android.app.Activity
-import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.core.base.BaseActivity
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.core.util.MascaraUtil
+import com.example.vaivan.core.util.SeletorDeFotoHelper
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.core.util.DataUtil
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
-class AdicionarPassageiroActivity : AppCompatActivity() {
+class AdicionarPassageiroActivity : BaseActivity() {
+
+    companion object {
+        const val EXTRA_PASSAGEIRO_ID = "extra_passageiro_id"
+    }
 
     // ---------------------------------------------------------
     // VIEWS
@@ -47,13 +46,30 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
     private lateinit var btnSim: Button
     private lateinit var btnNao: Button
     private lateinit var btnSalvar: Button
-    private lateinit var btnAdicionarNovoLocal: Button
 
-    private lateinit var layoutLocal:
-            TextInputLayout
+    private lateinit var txtTitulo: TextView
+    private lateinit var imgFoto: ShapeableImageView
+    private lateinit var btnTrocarFoto: TextView
+    private lateinit var btnRemoverFoto: TextView
 
-    private lateinit var edtLocal:
-            AutoCompleteTextView
+    // ---------------------------------------------------------
+    // MODO EDIÇÃO
+    // ---------------------------------------------------------
+
+    private var passageiroId: String? = null
+    private var passageiroCarregado: PassageiroEntity? = null
+
+    // ---------------------------------------------------------
+    // FOTO
+    // ---------------------------------------------------------
+
+    // Precisa ser criado em onCreate (antes da Activity chegar em STARTED) —
+    // ver SeletorDeFotoHelper.
+    private lateinit var seletorDeFoto: SeletorDeFotoHelper
+
+    private var fotoUrlAtual: String? = null
+    private var novaFotoUri: Uri? = null
+    private var fotoRemovida = false
 
     // ---------------------------------------------------------
     // NECESSIDADES ESPECIAIS
@@ -62,24 +78,11 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
     private var temNecessidadeEspecial = false
 
     // ---------------------------------------------------------
-    // LOCAL SELECIONADO
-    // ---------------------------------------------------------
-
-    private var localSelecionadoId: String? = null
-    private var localSelecionadoNome: String? = null
-    private var localSelecionadoEndereco: String? = null
-    private var localSelecionadoLatitude: Double? = null
-    private var localSelecionadoLongitude: Double? = null
-
-    // ---------------------------------------------------------
     // FIREBASE
     // ---------------------------------------------------------
 
     private val auth =
         FirebaseAuth.getInstance()
-
-    private val firestore =
-        FirebaseFirestore.getInstance()
 
     // ---------------------------------------------------------
     // REPOSITORY
@@ -93,28 +96,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                 .passageiroDao()
         )
     }
-
-    // ---------------------------------------------------------
-    // LOCAIS
-    // ---------------------------------------------------------
-
-    private data class LocalItem(
-        val id: String,
-        val nome: String,
-        val endereco: String,
-        val latitude: Double,
-        val longitude: Double
-    )
-
-    private val locais =
-        mutableListOf<LocalItem>()
-
-    // ---------------------------------------------------------
-    // RESULTADO DE ADICIONAR LOCAL
-    // ---------------------------------------------------------
-
-    private lateinit var adicionarLocalLauncher:
-            ActivityResultLauncher<Intent>
 
     // ---------------------------------------------------------
     // ON CREATE
@@ -132,23 +113,24 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
             R.layout.activity_adicionar_passageiro
         )
 
-        inicializarViews()
+        passageiroId = intent.getStringExtra(EXTRA_PASSAGEIRO_ID)
 
-        configurarResultadoAdicionarLocal()
+        seletorDeFoto = SeletorDeFotoHelper(this) { uri -> onFotoEscolhida(uri) }
+
+        inicializarViews()
 
         configurarDataNascimento()
 
         configurarToggleNecessidades()
 
-        configurarDropdownLocal()
-
         configurarBotoes()
 
-        carregarLocais()
+        if (passageiroId != null) {
+            txtTitulo.text = "Editar Passageiro"
+            carregarPassageiroParaEdicao(passageiroId!!)
+        }
 
-        applyTopAndBottomGaps(
-            findViewById(android.R.id.content)
-        )
+        aplicarGapsDeSistema()
     }
 
     // ---------------------------------------------------------
@@ -202,23 +184,139 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                 R.id.btnNaoNecessidade
             )
 
-        layoutLocal =
+        txtTitulo =
             findViewById(
-                R.id.layoutLocal
+                R.id.txtTitulo
             )
 
-        edtLocal =
+        imgFoto =
             findViewById(
-                R.id.edtLocal
+                R.id.imgFotoNovoPassageiro
             )
 
-        btnAdicionarNovoLocal =
+        btnTrocarFoto =
             findViewById(
-                R.id.btnAdicionarNovoLocal
+                R.id.btnTrocarFotoPassageiro
+            )
+
+        btnRemoverFoto =
+            findViewById(
+                R.id.btnRemoverFotoPassageiro
             )
 
         btnVoltar.setOnClickListener {
             finish()
+        }
+
+        btnTrocarFoto.setOnClickListener {
+            seletorDeFoto.abrirSeletor()
+        }
+
+        btnRemoverFoto.setOnClickListener {
+            confirmarRemoverFoto()
+        }
+    }
+
+    // ---------------------------------------------------------
+    // CARREGAR PARA EDIÇÃO
+    // ---------------------------------------------------------
+
+    private fun carregarPassageiroParaEdicao(id: String) {
+
+        lifecycleScope.launch {
+            try {
+                val passageiro = repository.consultarPassageiro(id)
+
+                if (passageiro == null) {
+                    Toast.makeText(
+                        this@AdicionarPassageiroActivity,
+                        "Passageiro não encontrado.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    finish()
+                    return@launch
+                }
+
+                passageiroCarregado = passageiro
+                preencherFormulario(passageiro)
+
+            } catch (erro: Exception) {
+                Toast.makeText(
+                    this@AdicionarPassageiroActivity,
+                    "Erro ao carregar passageiro: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                finish()
+            }
+        }
+    }
+
+    private fun preencherFormulario(passageiro: PassageiroEntity) {
+        edtNome.setText(passageiro.nome)
+        edtNascimento.setText(DataUtil.paraBrasileiro(passageiro.dataNascimento))
+        edtObservacoes.setText(passageiro.observacoes ?: "")
+
+        atualizarBotoesNecessidade(selecionado = passageiro.necessidadesEspeciais)
+        if (passageiro.necessidadesEspeciais) {
+            edtNecessidades.setText(passageiro.descricaoNecessidades ?: "")
+        }
+
+        fotoUrlAtual = passageiro.fotoUrl
+        exibirFoto(fotoUrlAtual)
+    }
+
+    // ---------------------------------------------------------
+    // FOTO
+    // ---------------------------------------------------------
+
+    private fun exibirFoto(url: String?) {
+        if (url == null) {
+            imgFoto.setImageResource(android.R.drawable.ic_menu_camera)
+            btnTrocarFoto.text = "Adicionar foto"
+            btnRemoverFoto.visibility = View.GONE
+            return
+        }
+
+        Glide.with(imgFoto)
+            .load(url)
+            .circleCrop()
+            .into(imgFoto)
+
+        btnTrocarFoto.text = "Trocar foto"
+        btnRemoverFoto.visibility = View.VISIBLE
+    }
+
+    private fun onFotoEscolhida(uri: Uri) {
+        novaFotoUri = uri
+        fotoRemovida = false
+
+        Glide.with(imgFoto).load(uri).circleCrop().into(imgFoto)
+
+        btnTrocarFoto.text = "Trocar foto"
+        btnRemoverFoto.visibility = View.VISIBLE
+    }
+
+    private fun confirmarRemoverFoto() {
+        if (novaFotoUri != null) {
+            // Ainda não foi salva — só desfaz a seleção local.
+            novaFotoUri = null
+            exibirFoto(fotoUrlAtual)
+            return
+        }
+
+        if (fotoUrlAtual == null) return
+
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Remover foto?",
+            mensagem = "A foto deste passageiro será removida ao salvar.",
+            textoConfirmar = "Sim, remover"
+        ) {
+            fotoRemovida = true
+            fotoUrlAtual = null
+            exibirFoto(null)
         }
     }
 
@@ -233,269 +331,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                 "##/##/####",
                 edtNascimento
             )
-        )
-    }
-
-    // ---------------------------------------------------------
-    // RESULTADO DE ADICIONAR LOCAL
-    // ---------------------------------------------------------
-
-    private fun configurarResultadoAdicionarLocal() {
-
-        adicionarLocalLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-
-                if (
-                    result.resultCode !=
-                    Activity.RESULT_OK
-                ) {
-                    return@registerForActivityResult
-                }
-
-                // Voltou da tela de adicionar local.
-                // Atualiza os locais.
-                carregarLocais()
-            }
-    }
-
-    // ---------------------------------------------------------
-    // DROPDOWN DE LOCAL
-    // ---------------------------------------------------------
-
-    private fun configurarDropdownLocal() {
-
-        edtLocal.setOnItemClickListener {
-                _, _, position, _ ->
-
-            if (
-                position < 0 ||
-                position >= locais.size
-            ) {
-                return@setOnItemClickListener
-            }
-
-            val local =
-                locais[position]
-
-            selecionarLocal(
-                local
-            )
-        }
-
-        edtLocal.setOnClickListener {
-            edtLocal.showDropDown()
-        }
-    }
-
-    // ---------------------------------------------------------
-    // SELECIONAR LOCAL
-    // ---------------------------------------------------------
-
-    private fun selecionarLocal(
-        local: LocalItem
-    ) {
-
-        localSelecionadoId =
-            local.id
-
-        localSelecionadoNome =
-            local.nome
-
-        localSelecionadoEndereco =
-            local.endereco
-
-        localSelecionadoLatitude =
-            local.latitude
-
-        localSelecionadoLongitude =
-            local.longitude
-
-        edtLocal.setText(
-            local.nome,
-            false
-        )
-
-        edtLocal.clearFocus()
-    }
-
-    // ---------------------------------------------------------
-    // LIMPAR LOCAL
-    // ---------------------------------------------------------
-
-    private fun limparLocalSelecionado() {
-
-        localSelecionadoId = null
-        localSelecionadoNome = null
-        localSelecionadoEndereco = null
-        localSelecionadoLatitude = null
-        localSelecionadoLongitude = null
-    }
-
-    // ---------------------------------------------------------
-    // CARREGAR LOCAIS
-    // ---------------------------------------------------------
-
-    private fun carregarLocais() {
-
-        val uid =
-            auth.currentUser?.uid
-
-        if (uid == null) {
-
-            Toast.makeText(
-                this,
-                "Sessão expirada. Faça login novamente.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
-        }
-
-        firestore
-            .collection("locais")
-            .whereEqualTo("responsavelId", uid)
-            .get()
-            .addOnSuccessListener { resultado ->
-
-                locais.clear()
-
-                resultado.documents.forEach { documento ->
-
-                    val nome =
-                        documento.getString(
-                            "nome"
-                        ) ?: "Local"
-
-                    val endereco =
-                        documento.getString(
-                            "endereco"
-                        ) ?: ""
-
-                    val latitude =
-                        documento.getDouble(
-                            "latitude"
-                        )
-
-                    val longitude =
-                        documento.getDouble(
-                            "longitude"
-                        )
-
-                    if (
-                        latitude == null ||
-                        longitude == null
-                    ) {
-                        return@forEach
-                    }
-
-                    locais.add(
-                        LocalItem(
-                            id = documento.id,
-                            nome = nome,
-                            endereco = endereco,
-                            latitude = latitude,
-                            longitude = longitude
-                        )
-                    )
-                }
-
-                configurarAdapterLocais()
-            }
-            .addOnFailureListener {
-
-                Toast.makeText(
-                    this,
-                    "Não foi possível carregar os locais.",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-    }
-
-    // ---------------------------------------------------------
-    // ADAPTER
-    // ---------------------------------------------------------
-
-    private fun configurarAdapterLocais() {
-
-        if (locais.isEmpty()) {
-
-            edtLocal.setText(
-                "",
-                false
-            )
-
-            limparLocalSelecionado()
-
-            return
-        }
-
-        val adapter =
-            object : ArrayAdapter<LocalItem>(
-                this,
-                R.layout.item_dropdown_local,
-                locais
-            ) {
-
-                override fun getView(
-                    position: Int,
-                    convertView: View?,
-                    parent: ViewGroup
-                ): View {
-
-                    val view =
-                        convertView
-                            ?: LayoutInflater
-                                .from(context)
-                                .inflate(
-                                    R.layout.item_dropdown_local,
-                                    parent,
-                                    false
-                                )
-
-                    val local =
-                        getItem(position)
-
-                    val txtNome =
-                        view.findViewById<TextView>(
-                            R.id.txtNomeLocal
-                        )
-
-                    val txtEndereco =
-                        view.findViewById<TextView>(
-                            R.id.txtEnderecoLocal
-                        )
-
-                    txtNome.text =
-                        local?.nome ?: ""
-
-                    txtEndereco.text =
-                        local?.endereco ?: ""
-
-                    return view
-                }
-            }
-
-        edtLocal.setAdapter(
-            adapter
-        )
-    }
-
-    // ---------------------------------------------------------
-    // ABRIR ADICIONAR LOCAL
-    // ---------------------------------------------------------
-
-    private fun abrirAdicionarLocal() {
-
-        val intent =
-            Intent(
-                this,
-                AdicionarLocalActivity::class.java
-            )
-
-        adicionarLocalLauncher.launch(
-            intent
         )
     }
 
@@ -569,10 +404,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
         btnSalvar.setOnClickListener {
 
             validarESalvar()
-        }
-
-        btnAdicionarNovoLocal.setOnClickListener {
-            abrirAdicionarLocal()
         }
     }
 
@@ -696,25 +527,6 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
         }
 
         // -----------------------------------------------------
-        // LOCAL
-        // -----------------------------------------------------
-
-        if (
-            localSelecionadoId == null
-        ) {
-
-            Toast.makeText(
-                this,
-                "Selecione um local de embarque.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            edtLocal.requestFocus()
-
-            return
-        }
-
-        // -----------------------------------------------------
         // NECESSIDADES
         // -----------------------------------------------------
 
@@ -741,8 +553,14 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
         // PASSAGEIRO
         // -----------------------------------------------------
 
-        val novoPassageiro =
-            PassageiroEntity(
+        val passageiroParaSalvar =
+            passageiroCarregado?.copy(
+                nome = nome,
+                dataNascimento = nascimentoIso,
+                necessidadesEspeciais = temNecessidadeEspecial,
+                descricaoNecessidades = descricaoNecessidades,
+                observacoes = observacoes
+            ) ?: PassageiroEntity(
                 id = "",
                 nome = nome,
                 dataNascimento = nascimentoIso,
@@ -756,19 +574,27 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
                     uid,
             )
 
+        val editando = passageiroCarregado != null
+
         btnSalvar.isEnabled = false
 
         lifecycleScope.launch {
 
             try {
 
-                repository.salvarPassageiro(
-                    novoPassageiro
+                val idSalvo = repository.salvarPassageiro(
+                    passageiroParaSalvar
                 )
+
+                if (novaFotoUri != null) {
+                    repository.atualizarFoto(uid, idSalvo, novaFotoUri!!)
+                } else if (fotoRemovida) {
+                    repository.removerFoto(uid, idSalvo)
+                }
 
                 Toast.makeText(
                     this@AdicionarPassageiroActivity,
-                    "Passageiro cadastrado com sucesso!",
+                    if (editando) "Passageiro atualizado com sucesso!" else "Passageiro cadastrado com sucesso!",
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -780,7 +606,7 @@ class AdicionarPassageiroActivity : AppCompatActivity() {
 
                 Toast.makeText(
                     this@AdicionarPassageiroActivity,
-                    "Erro ao cadastrar passageiro: ${erro.message}",
+                    "Erro ao salvar passageiro: ${erro.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }

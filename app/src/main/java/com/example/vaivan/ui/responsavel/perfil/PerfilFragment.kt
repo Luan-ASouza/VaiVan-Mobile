@@ -11,18 +11,29 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider // Nativo do Android
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bumptech.glide.Glide
+import com.example.vaivan.core.util.ExclusaoContaHelper
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
+import com.example.vaivan.domain.usecase.conta.ExcluirContaUseCase
+import com.example.vaivan.ui.comum.perfil.EditarPerfilActivity
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
+import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
+import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.example.vaivan.data.local.dao.UsuarioDao
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -52,37 +63,14 @@ class PerfilFragment : Fragment() {
         // BANCO / REPOSITÓRIO / VIEWMODEL
         // =========================================================
 
-        val database =
-            VaivanDatabase.getInstance(
-                requireContext()
-            )
+        val database = VaivanDatabase.getInstance(requireContext())
 
-        val UsuarioDao =
-            database.usuarioDao()
-
-        val repository =
-            UsuarioRepository(
-                UsuarioDao
-            )
-
-        val factory =
-            object : ViewModelProvider.Factory {
-
-                override fun <T : androidx.lifecycle.ViewModel> create(
-                    modelClass: Class<T>
-                ): T {
-
-                    return UsuarioViewModel(
-                        repository
-                    ) as T
-                }
+        viewModel = ViewModelProvider(
+            this,
+            viewModelFactory {
+                initializer { UsuarioViewModel(UsuarioRepository(database.usuarioDao())) }
             }
-
-        viewModel =
-            ViewModelProvider(
-                this,
-                factory
-            )[UsuarioViewModel::class.java]
+        )[UsuarioViewModel::class.java]
 
         // =========================================================
         // VIEWS
@@ -113,6 +101,21 @@ class PerfilFragment : Fragment() {
                 R.id.btnDesconectar
             )
 
+        val imgAvatar =
+            view.findViewById<ShapeableImageView>(
+                R.id.imgUsuarioAvatar
+            )
+
+        val btnEditarPerfil =
+            view.findViewById<View>(
+                R.id.btnEditarPerfil
+            )
+
+        val btnExcluirConta =
+            view.findViewById<View>(
+                R.id.btnExcluirConta
+            )
+
         // =========================================================
         // UID
         // =========================================================
@@ -135,6 +138,44 @@ class PerfilFragment : Fragment() {
                     AdicionarLocalActivity::class.java
                 )
             )
+        }
+
+        // =========================================================
+        // EDITAR PERFIL
+        // =========================================================
+
+        btnEditarPerfil.setOnClickListener {
+
+            startActivity(
+                Intent(
+                    requireContext(),
+                    EditarPerfilActivity::class.java
+                )
+            )
+        }
+
+        // =========================================================
+        // EXCLUIR CONTA
+        // =========================================================
+
+        btnExcluirConta.setOnClickListener {
+
+            ExclusaoContaHelper.confirmarExclusaoConta(this) { uid ->
+
+                val excluirContaUseCase = ExcluirContaUseCase(
+                    usuarioRepository = UsuarioRepository(database.usuarioDao()),
+                    rotaRepository = RotaRepository(
+                        database.rotaDao(),
+                        database.paradaRotaDao(),
+                        GoogleRoutesClient(requireContext())
+                    ),
+                    veiculoRepository = VeiculoRepository(database.veiculoDao()),
+                    documentoRepository = DocumentoRepository(database.documentoDao()),
+                    passageiroRepository = PassageiroRepository(database.passageiroDao())
+                )
+
+                excluirContaUseCase.excluirContaResponsavel(uid)
+            }
         }
 
         // =========================================================
@@ -216,6 +257,16 @@ class PerfilFragment : Fragment() {
                                         txtNascimento.text =
                                             dataNascimento
                                     }
+
+                                /*
+                                 * Foto de perfil
+                                 */
+                                Glide.with(imgAvatar)
+                                    .load(responsavel.fotoUrl)
+                                    .placeholder(R.drawable.ic_perfil)
+                                    .error(R.drawable.ic_perfil)
+                                    .circleCrop()
+                                    .into(imgAvatar)
                             }
                         }
                 }

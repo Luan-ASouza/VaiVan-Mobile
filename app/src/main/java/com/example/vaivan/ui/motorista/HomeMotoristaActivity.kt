@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import com.bumptech.glide.Glide
+import com.google.android.material.imageview.ShapeableImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
@@ -17,6 +19,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -48,21 +52,21 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
+        val imgAvatarHeader = findViewById<ShapeableImageView>(R.id.shapeableImageView)
+        val imgAvatarDrawer = findViewById<ShapeableImageView>(R.id.drawerAvatar)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
+        val btnDrawerPerfil = findViewById<View>(R.id.btnDrawerPerfil)
 
-        // CORREÇÃO: Usar o Singleton do banco de dados para evitar erro de esquema
-        val database = VaivanDatabase.getInstance(this)
-        val UsuarioDao = database.usuarioDao()
-        val repository = UsuarioRepository(UsuarioDao)
-
-        val factory = object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                return UsuarioViewModel(repository) as T
+        viewModel = ViewModelProvider(
+            this,
+            viewModelFactory {
+                initializer {
+                    val database = VaivanDatabase.getInstance(this@HomeMotoristaActivity)
+                    UsuarioViewModel(UsuarioRepository(database.usuarioDao()))
+                }
             }
-        }
-
-        viewModel = ViewModelProvider(this, factory)[UsuarioViewModel::class.java]
+        )[UsuarioViewModel::class.java]
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -73,6 +77,20 @@ class HomeMotoristaActivity : AppCompatActivity() {
                         if (usuario != null) {
                             txtNomeDoUsuario.text = usuario.nome
                             drawerTxtNomeDoUsuario.text = usuario.nome
+
+                            Glide.with(imgAvatarHeader)
+                                .load(usuario.fotoUrl)
+                                .placeholder(R.drawable.ic_perfil)
+                                .error(R.drawable.ic_perfil)
+                                .circleCrop()
+                                .into(imgAvatarHeader)
+
+                            Glide.with(imgAvatarDrawer)
+                                .load(usuario.fotoUrl)
+                                .placeholder(R.drawable.ic_perfil)
+                                .error(R.drawable.ic_perfil)
+                                .circleCrop()
+                                .into(imgAvatarDrawer)
                         }
                     }
                 }
@@ -81,6 +99,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         btnMenu.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.END)
+        }
+
+        btnDrawerPerfil.setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
         }
 
         configurarAssinatura(uid, drawerLayout)

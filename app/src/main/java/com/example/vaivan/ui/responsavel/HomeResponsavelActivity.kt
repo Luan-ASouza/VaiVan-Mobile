@@ -6,19 +6,19 @@ import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
-import androidx.core.view.WindowCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -30,25 +30,27 @@ import com.example.vaivan.ui.responsavel.navigation.NavigationItem
 import com.example.vaivan.ui.responsavel.passageiros.ListaPassageirosFragment
 import com.example.vaivan.ui.responsavel.perfil.PerfilFragment
 import com.example.vaivan.ui.responsavel.rotas.ListaRotasFragment
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class HomeResponsavelActivity : AppCompatActivity() {
+class HomeResponsavelActivity : BaseActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
     private lateinit var viewModel: UsuarioViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         setContentView(R.layout.activity_home_responsavel)
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
+        val imgAvatarHeader = findViewById<ShapeableImageView>(R.id.shapeableImageView)
+        val imgAvatarDrawer = findViewById<ShapeableImageView>(R.id.drawerAvatar)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
         val btnDesconectar = findViewById<LinearLayout>(R.id.btnDrawerDesconectar)
@@ -58,19 +60,13 @@ class HomeResponsavelActivity : AppCompatActivity() {
         // --------------------------------------------------
 
         val database = VaivanDatabase.getInstance(this)
-        val usuarioDao = database.usuarioDao()
-        val repository = UsuarioRepository(usuarioDao)
 
-        val factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : androidx.lifecycle.ViewModel> create(
-                modelClass: Class<T>
-            ): T {
-                return UsuarioViewModel(repository) as T
+        viewModel = ViewModelProvider(
+            this,
+            viewModelFactory {
+                initializer { UsuarioViewModel(UsuarioRepository(database.usuarioDao())) }
             }
-        }
-
-        viewModel = ViewModelProvider(this, factory)[UsuarioViewModel::class.java]
+        )[UsuarioViewModel::class.java]
 
         // --------------------------------------------------
         // USUÁRIO LOGADO E SINCRONIZAÇÃO
@@ -98,6 +94,20 @@ class HomeResponsavelActivity : AppCompatActivity() {
                             if (usuario != null) {
                                 txtNomeDoUsuario.text = usuario.nome
                                 drawerTxtNomeDoUsuario.text = usuario.nome
+
+                                Glide.with(imgAvatarHeader)
+                                    .load(usuario.fotoUrl)
+                                    .placeholder(R.drawable.ic_perfil)
+                                    .error(R.drawable.ic_perfil)
+                                    .circleCrop()
+                                    .into(imgAvatarHeader)
+
+                                Glide.with(imgAvatarDrawer)
+                                    .load(usuario.fotoUrl)
+                                    .placeholder(R.drawable.ic_perfil)
+                                    .error(R.drawable.ic_perfil)
+                                    .circleCrop()
+                                    .into(imgAvatarDrawer)
                             }
                         }
                 }
@@ -143,11 +153,7 @@ class HomeResponsavelActivity : AppCompatActivity() {
         // WINDOW INSETS
         // --------------------------------------------------
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        applyTopAndBottomGaps(
-            findViewById(android.R.id.content)
-        )
+        aplicarGapsDeSistema()
 
         // --------------------------------------------------
         // FRAGMENT INICIAL

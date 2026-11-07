@@ -12,17 +12,17 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.example.vaivan.core.base.BaseActivity
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.util.PolylineUtil
-import com.example.vaivan.core.util.SystemBarUtils
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.LocalizacaoViagemEntity
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
@@ -63,7 +63,7 @@ import java.util.Locale
  * Tela própria (não embutida na HomeResponsavelActivity) pra ter um ciclo de
  * vida de mapa limpo e previsível — fechar aqui sempre destrói tudo de vez.
  */
-class AcompanharViagemActivity : AppCompatActivity(), OnMapReadyCallback {
+class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
 
     companion object {
         const val EXTRA_ROTA_ID = "rotaId"
@@ -112,33 +112,26 @@ class AcompanharViagemActivity : AppCompatActivity(), OnMapReadyCallback {
         if (encoded.isBlank()) emptyList() else PolylineUtil.decode(encoded)
     }
 
-    private val viewModel: AcompanharViagemViewModel by lazy {
-        val db = VaivanDatabase.getInstance(this)
+    private val viewModel: AcompanharViagemViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = VaivanDatabase.getInstance(this@AcompanharViagemActivity)
 
-        val viagemRepository = ViagemRepository(
-            db.viagemDao(),
-            db.paradaViagemDao(),
-            db.eventoViagemDao()
-        )
-        val localizacaoViagemRepository = LocalizacaoViagemRepository(
-            db.localizacaoViagemDao(),
-            FirestoreLocalizacaoViagemRemoteSource()
-        )
-
-        ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return AcompanharViagemViewModel(
-                        rotaId,
-                        passageiroId,
-                        viagemRepository,
-                        localizacaoViagemRepository
-                    ) as T
-                }
+                AcompanharViagemViewModel(
+                    rotaId,
+                    passageiroId,
+                    ViagemRepository(
+                        db.viagemDao(),
+                        db.paradaViagemDao(),
+                        db.eventoViagemDao()
+                    ),
+                    LocalizacaoViagemRepository(
+                        db.localizacaoViagemDao(),
+                        FirestoreLocalizacaoViagemRemoteSource()
+                    )
+                )
             }
-        )[AcompanharViagemViewModel::class.java]
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -166,7 +159,7 @@ class AcompanharViagemActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<View>(R.id.btnCentralizarVanAcompanhar).setOnClickListener { centralizarNaVan() }
         findViewById<View>(R.id.btnCentralizarPassageiroAcompanhar).setOnClickListener { centralizarNoPassageiro() }
 
-        SystemBarUtils.applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)

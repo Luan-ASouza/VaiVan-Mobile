@@ -60,6 +60,19 @@
         app:cornerRadius="16dp" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSheetEditar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:text="Editar rota"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/dark_gray"
+        app:cornerRadius="16dp" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSheetExcluir"
         android:layout_width="match_parent"
         android:layout_height="52dp"

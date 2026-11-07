@@ -25,8 +25,8 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -34,6 +34,26 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 class CadastroVeiculoActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_VEICULO_ID = "extra_veiculo_id"
+
+        private const val ANO_MINIMO = 1990
+        private const val LIMITE_CAPACIDADE = 40
+
+        private const val STATUS_VEICULO = "PENDENTE"
+        private const val STATUS_DOCUMENTO = "EM_ANALISE"
+
+        private const val TIPO_CRLV = "CRLV"
+        private const val TIPO_AUTORIZACAO =
+            "AUTORIZACAO_TRANSPORTE_ESCOLAR"
+
+        private val REGEX_PLACA =
+            Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$")
+    }
+
+    private var veiculoId: String? = null
+    private var veiculoCarregado: VeiculoEntity? = null
 
     private lateinit var edtPlaca: TextInputEditText
     private lateinit var edtMarca: TextInputEditText
@@ -93,30 +113,22 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             }
         }
 
-    companion object {
-        private const val ANO_MINIMO = 1990
-        private const val LIMITE_CAPACIDADE = 40
-
-        private const val STATUS_VEICULO = "PENDENTE"
-        private const val STATUS_DOCUMENTO = "EM_ANALISE"
-
-        private const val TIPO_CRLV = "CRLV"
-        private const val TIPO_AUTORIZACAO =
-            "AUTORIZACAO_TRANSPORTE_ESCOLAR"
-
-        private val REGEX_PLACA =
-            Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$")
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cadastro_veiculo)
+
+        veiculoId = intent.getStringExtra(EXTRA_VEICULO_ID)
 
         configurarRepositories()
         configurarViews()
         configurarSeletorAno()
         configurarListeners()
         configurarErros()
+
+        if (veiculoId != null) {
+            configurarModoEdicao()
+            carregarVeiculoParaEdicao(veiculoId!!)
+        }
     }
 
     private fun configurarRepositories() {
@@ -228,6 +240,61 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         }
     }
 
+    // ---------------------------------------------------------
+    // MODO EDIÇÃO
+    // ---------------------------------------------------------
+
+    private fun configurarModoEdicao() {
+        findViewById<TextView>(R.id.txtTituloVeiculo).text = "Editar veículo"
+        findViewById<TextView>(R.id.txtSubtituloVeiculo).text = "Atualize os dados do seu veículo"
+
+        txtNomeArquivoCrlv.text = "Manter documento atual (opcional trocar)"
+        txtNomeArquivoAutorizacao.text = "Manter documento atual (opcional trocar)"
+
+        btnSalvar.text = "Salvar alterações"
+    }
+
+    private fun carregarVeiculoParaEdicao(id: String) {
+
+        lifecycleScope.launch {
+            try {
+                val veiculo = veiculoRepository.consultarVeiculo(id)
+
+                if (veiculo == null) {
+                    Toast.makeText(
+                        this@CadastroVeiculoActivity,
+                        "Veículo não encontrado.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    finish()
+                    return@launch
+                }
+
+                veiculoCarregado = veiculo
+                preencherFormulario(veiculo)
+
+            } catch (erro: Exception) {
+                Toast.makeText(
+                    this@CadastroVeiculoActivity,
+                    "Erro ao carregar veículo: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                finish()
+            }
+        }
+    }
+
+    private fun preencherFormulario(veiculo: VeiculoEntity) {
+        edtPlaca.setText(veiculo.placa)
+        edtMarca.setText(veiculo.marca)
+        edtModelo.setText(veiculo.modelo)
+        edtAno.setText(veiculo.anoFabricacao.toString(), false)
+        edtCor.setText(veiculo.cor)
+        edtCapacidade.setText(veiculo.capacidadePassageiros.toString())
+    }
+
     private fun nomeDoArquivo(uri: Uri): String {
 
         var nome = "arquivo"
@@ -324,28 +391,28 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
         if (!valido) return
 
-        val crlv = uriCrlv
+        val editando = veiculoCarregado != null
 
-        if (crlv == null) {
-            Toast.makeText(
-                this,
-                "Selecione o arquivo do CRLV",
-                Toast.LENGTH_SHORT
-            ).show()
+        if (!editando) {
+            if (uriCrlv == null) {
+                Toast.makeText(
+                    this,
+                    "Selecione o arquivo do CRLV",
+                    Toast.LENGTH_SHORT
+                ).show()
 
-            return
-        }
+                return
+            }
 
-        val autorizacao = uriAutorizacao
+            if (uriAutorizacao == null) {
+                Toast.makeText(
+                    this,
+                    "Selecione o documento de autorização",
+                    Toast.LENGTH_SHORT
+                ).show()
 
-        if (autorizacao == null) {
-            Toast.makeText(
-                this,
-                "Selecione o documento de autorização",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
+                return
+            }
         }
 
         val motoristaId = FirebaseAuth
@@ -366,7 +433,14 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         btnSalvar.isEnabled = false
         btnSalvar.text = "Salvando..."
 
-        val veiculo = VeiculoEntity(
+        val veiculoParaSalvar = veiculoCarregado?.copy(
+            placa = placa,
+            marca = marca,
+            modelo = modelo,
+            cor = cor,
+            anoFabricacao = ano,
+            capacidadePassageiros = capacidade
+        ) ?: VeiculoEntity(
             "",
             placa,
             marca,
@@ -383,16 +457,20 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
             try {
 
-                val veiculoId =
+                val veiculoIdSalvo =
                     veiculoRepository.salvarVeiculo(
-                        veiculo
+                        veiculoParaSalvar
                     )
 
-                enviarCrlv(
-                    veiculoId,
-                    motoristaId,
-                    crlv
-                )
+                uriCrlv?.let {
+                    enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_CRLV, "crlv", it)
+                }
+
+                uriAutorizacao?.let {
+                    enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_AUTORIZACAO, "autorizacao", it)
+                }
+
+                finalizarCadastro(veiculoIdSalvo, editando)
 
             } catch (erro: Exception) {
 
@@ -425,165 +503,75 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             .orEmpty()
     }
 
-    private fun enviarCrlv(
-        veiculoId: String,
-        motoristaId: String,
-        uri: Uri
-    ) {
-
-        val referencia = FirebaseStorage
-            .getInstance()
-            .reference
-            .child(
-                "documentos_veiculos/" +
-                        "$veiculoId/crlv_${System.currentTimeMillis()}"
-            )
-
-        enviarArquivo(
-            referencia,
-            uri,
-            onSucesso = { url ->
-                salvarDocumento(
-                    veiculoId = veiculoId,
-                    motoristaId = motoristaId,
-                    tipo = TIPO_CRLV,
-                    url = url,
-                    aoSalvar = {
-                        enviarAutorizacao(
-                            veiculoId,
-                            motoristaId,
-                            uriAutorizacao ?: return@salvarDocumento
-                        )
-                    }
-                )
-            }
-        )
-    }
-
-    private fun enviarAutorizacao(
-        veiculoId: String,
-        motoristaId: String,
-        uri: Uri
-    ) {
-
-        val referencia = FirebaseStorage
-            .getInstance()
-            .reference
-            .child(
-                "documentos_veiculos/" +
-                        "$veiculoId/autorizacao_${System.currentTimeMillis()}"
-            )
-
-        enviarArquivo(
-            referencia,
-            uri,
-            onSucesso = { url ->
-                salvarDocumento(
-                    veiculoId = veiculoId,
-                    motoristaId = motoristaId,
-                    tipo = TIPO_AUTORIZACAO,
-                    url = url,
-                    aoSalvar = {
-                        finalizarCadastro(veiculoId)
-                    }
-                )
-            }
-        )
-    }
-
-    private fun enviarArquivo(
-        referencia: StorageReference,
-        uri: Uri,
-        onSucesso: (String) -> Unit
-    ) {
-
-        val usuario = FirebaseAuth
-            .getInstance()
-            .currentUser
-
-        if (usuario == null) {
-            tratarErroUpload(
-                IllegalStateException(
-                    "Usuário não está autenticado."
-                )
-            )
-            return
-        }
-
-        android.util.Log.d(
-            "STORAGE",
-            "UID: ${usuario.uid}"
-        )
-
-        android.util.Log.d(
-            "STORAGE",
-            "Caminho: ${referencia.path}"
-        )
-
-        referencia
-            .putFile(uri)
-            .addOnSuccessListener {
-                referencia
-                    .downloadUrl
-                    .addOnSuccessListener { url ->
-                        onSucesso(url.toString())
-                    }
-                    .addOnFailureListener(::tratarErroUpload)
-            }
-            .addOnFailureListener(::tratarErroUpload)
-    }
-
-    private fun salvarDocumento(
+    /** Envia o arquivo pro Storage e registra o DocumentoEntity
+     * correspondente. Reaproveitado tanto no cadastro (CRLV + autorização
+     * obrigatórios) quanto na edição (troca opcional de um dos dois).
+     *
+     * Id determinístico (idDocumentoVeiculo): uma troca de arquivo na edição
+     * substitui o documento existente — por isso, se já havia um arquivo
+     * aqui, ele é removido do Storage antes do novo upload, pra não sobrar
+     * órfão. */
+    private suspend fun enviarDocumento(
         veiculoId: String,
         motoristaId: String,
         tipo: String,
-        url: String,
-        aoSalvar: () -> Unit
+        prefixoArquivo: String,
+        uri: Uri
     ) {
+
+        val docId = DocumentoRepository.idDocumentoVeiculo(veiculoId, tipo)
+
+        documentoRepository.consultarPorId(docId)?.let { antigo ->
+            runCatching {
+                FirebaseStorage.getInstance()
+                    .getReferenceFromUrl(antigo.arquivo)
+                    .delete()
+                    .await()
+            }
+        }
+
+        val referencia = FirebaseStorage
+            .getInstance()
+            .reference
+            .child(
+                "documentos_veiculos/" +
+                        "$veiculoId/${prefixoArquivo}_${System.currentTimeMillis()}"
+            )
+
+        referencia.putFile(uri).await()
+        val url = referencia.downloadUrl.await().toString()
 
         val data = SimpleDateFormat(
             "dd/MM/yyyy",
             Locale("pt", "BR")
         ).format(Date())
 
-        val documento = DocumentoEntity(
-            id = "",
-            tipo = tipo,
-            arquivo = url,
-            dataEnvio = data,
-            statusValidacao = STATUS_DOCUMENTO,
-            motoristaId = motoristaId,
-            veiculoId = veiculoId,
-            lastUpdated = 0L
-        )
-
-        documentoRepository.salvarAsync(
-            documento,
-            {
-                aoSalvar()
-                null
-            },
-            { erro ->
-                restaurarBotao()
-
-                Toast.makeText(
-                    this,
-                    "Erro ao salvar documento: ${erro.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                null
-            }
+        documentoRepository.salvar(
+            DocumentoEntity(
+                id = docId,
+                tipo = tipo,
+                arquivo = url,
+                dataEnvio = data,
+                statusValidacao = STATUS_DOCUMENTO,
+                motoristaId = motoristaId,
+                veiculoId = veiculoId,
+                lastUpdated = 0L
+            )
         )
     }
 
-    private fun finalizarCadastro(veiculoId: String) {
+    private fun finalizarCadastro(veiculoId: String, editando: Boolean) {
 
         Toast.makeText(
             this,
-            "Veículo e documentos enviados!",
+            if (editando) "Veículo atualizado!" else "Veículo e documentos enviados!",
             Toast.LENGTH_SHORT
         ).show()
+
+        if (editando) {
+            finish()
+            return
+        }
 
         startActivity(
             Intent(
@@ -599,17 +587,6 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
     private fun restaurarBotao() {
         btnSalvar.isEnabled = true
-        btnSalvar.text = "Salvar e continuar"
-    }
-
-    private fun tratarErroUpload(erro: Exception) {
-
-        restaurarBotao()
-
-        Toast.makeText(
-            this,
-            "Erro ao enviar documento: ${erro.message}",
-            Toast.LENGTH_LONG
-        ).show()
+        btnSalvar.text = if (veiculoCarregado != null) "Salvar alterações" else "Salvar e continuar"
     }
 }

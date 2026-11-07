@@ -16,7 +16,6 @@ data class Passageiro(
 
     val responsavelId: String? = null,
     val motoristaId: String? = null,
-    val pontoEmbarqueId: String? = null,
 
     val rotaId: String? = null,
     val lastUpdated: Long = 0L,

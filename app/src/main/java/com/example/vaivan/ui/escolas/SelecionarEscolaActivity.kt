@@ -14,13 +14,12 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.models.Escola
 import com.example.vaivan.data.repository.EscolaRepository
 import com.example.vaivan.ui.responsavel.passageiros.SelecaoLocalizacaoActivity
@@ -38,7 +37,7 @@ import java.util.Locale
  * A lupa/mapa serve só de ajuda: o usuário escolhe um ponto e o app sugere
  * a escola cadastrada mais próxima. Não é possível cadastrar escola nova.
  */
-class SelecionarEscolaActivity : AppCompatActivity() {
+class SelecionarEscolaActivity : BaseActivity() {
 
     companion object {
 
@@ -132,7 +131,7 @@ class SelecionarEscolaActivity : AppCompatActivity() {
             )
         }
 
-        applyTopAndBottomGaps(findViewById(android.R.id.content))
+        aplicarGapsDeSistema()
 
         carregarEscolas()
     }

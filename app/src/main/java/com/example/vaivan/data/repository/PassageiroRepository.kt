@@ -1,6 +1,9 @@
 package com.example.vaivan.data.repository
 
+import android.net.Uri
+import com.example.vaivan.data.local.dao.ParadaRotaDao
 import com.example.vaivan.data.local.dao.PassageiroDao
+import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
@@ -33,11 +36,24 @@ import android.util.Log
 class PassageiroRepository(
     private val passageiroDao: PassageiroDao,
     private val firestore: FirebaseFirestore =
-        FirebaseFirestore.getInstance()
+        FirebaseFirestore.getInstance(),
+    private val arquivoRepository: ArquivoRepository = ArquivoRepository(),
+    // Opcionais: só quem realmente aciona excluirPassageiro precisa passar,
+    // pra limpeza em cascata também refletir no Room na hora (sem eles, a
+    // exclusão no Firestore ainda acontece normalmente — quem cacheia essas
+    // tabelas se atualiza pelo próprio listener quando existir um ativo).
+    private val paradaRotaDao: ParadaRotaDao? = null,
+    private val solicitacaoInclusaoDao: SolicitacaoInclusaoDao? = null
 ) {
 
     private val collection =
         firestore.collection("passageiros")
+
+    private val collectionParadasRota =
+        firestore.collection("paradas_rota")
+
+    private val collectionSolicitacoes =
+        firestore.collection("solicitacoes_inclusao")
 
     private val scope =
         CoroutineScope(
@@ -274,19 +290,68 @@ class PassageiroRepository(
 
 
     // =========================================================
+    // FOTO
+    // =========================================================
+
+    /** Envia a nova foto pro Storage e atualiza o fotoUrl do passageiro. */
+    suspend fun atualizarFoto(responsavelId: String, passageiroId: String, uri: Uri): String {
+        val url = arquivoRepository.enviar(
+            uri,
+            arquivoRepository.caminhoFotoPassageiro(responsavelId, passageiroId)
+        )
+        val atual = consultarPassageiro(passageiroId) ?: return url
+        salvarPassageiro(atual.copy(fotoUrl = url))
+        return url
+    }
+
+    /** Remove a foto do Storage e limpa o fotoUrl do passageiro. */
+    suspend fun removerFoto(responsavelId: String, passageiroId: String) {
+        val atual = consultarPassageiro(passageiroId) ?: return
+        if (atual.fotoUrl == null) return
+
+        arquivoRepository.excluir(arquivoRepository.caminhoFotoPassageiro(responsavelId, passageiroId))
+        salvarPassageiro(atual.copy(fotoUrl = null))
+    }
+
+    // =========================================================
     // EXCLUSÃO
     // =========================================================
 
-    /** Exclui o passageiro do Firebase e do Room. */
+    /** Exclui o passageiro do Firebase e do Room — em cascata, também remove
+     * os vínculos dele com rotas (paradas_rota) e qualquer solicitação de
+     * inclusão ainda pendente, pra não deixar nada órfão. Nunca toca em
+     * ParadaViagemEntity/histórico (já protegido por regra no Firestore). */
     suspend fun excluirPassageiro(
         id: String
     ) {
+        val passageiro = consultarPassageiro(id)
 
-        collection
-            .document(id)
-            .delete()
+        val paradas = collectionParadasRota
+            .whereEqualTo("passageiroId", id)
+            .get()
             .await()
 
+        val solicitacoesPendentes = collectionSolicitacoes
+            .whereEqualTo("passageiroId", id)
+            .whereEqualTo("status", "PENDENTE")
+            .get()
+            .await()
+
+        val batch = firestore.batch()
+        paradas.documents.forEach { batch.delete(it.reference) }
+        solicitacoesPendentes.documents.forEach { batch.delete(it.reference) }
+        batch.delete(collection.document(id))
+        batch.commit().await()
+
+        paradaRotaDao?.deleteByPassageiro(id)
+        solicitacaoInclusaoDao?.deletePendentesPorPassageiro(id)
         passageiroDao.deleteById(id)
+
+        val responsavelId = passageiro?.responsavelId
+        if (passageiro?.fotoUrl != null && !responsavelId.isNullOrBlank()) {
+            runCatching {
+                arquivoRepository.excluir(arquivoRepository.caminhoFotoPassageiro(responsavelId, id))
+            }
+        }
     }
 }

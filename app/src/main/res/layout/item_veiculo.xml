@@ -75,13 +75,37 @@
             </LinearLayout>
 
 
+            <!-- Editar / Excluir -->
+
+            <ImageView
+                android:id="@+id/imgEditarVeiculoItem"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Editar veículo"
+                android:padding="4dp"
+                android:src="@drawable/ic_edit"
+                app:tint="@color/dark_gray" />
+
+            <ImageView
+                android:id="@+id/imgExcluirVeiculoItem"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Excluir veículo"
+                android:padding="4dp"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/status_danger" />
+
             <!-- Seta -->
 
             <ImageView
                 android:id="@+id/imgChevronItem"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:contentDescription="Ver mais detalhes"
                 android:padding="8dp"
                 android:src="@drawable/icon_dropdown"

@@ -22,13 +22,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.WindowCompat
 import com.example.vaivan.R
-import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
-import com.example.vaivan.core.util.SystemBarUtils.applyTopGap
+import com.example.vaivan.core.base.BaseActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -49,7 +45,7 @@ import java.util.Locale
 import java.util.concurrent.Executors
 
 class SelecaoLocalizacaoActivity :
-    AppCompatActivity(),
+    BaseActivity(),
     OnMapReadyCallback {
 
     companion object {
@@ -96,7 +92,6 @@ class SelecaoLocalizacaoActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_selecao_localizacao)
 
         inicializarViews()
@@ -109,11 +104,7 @@ class SelecaoLocalizacaoActivity :
         // WINDOW INSETS
         // --------------------------------------------------
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        applyTopAndBottomGaps(
-            findViewById(android.R.id.content)
-        )
+        aplicarGapsDeSistema()
     }
 
     private fun inicializarViews() {

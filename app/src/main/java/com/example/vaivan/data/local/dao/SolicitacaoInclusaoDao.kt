@@ -19,6 +19,12 @@ interface SolicitacaoInclusaoDao {
     @Query("DELETE FROM solicitacoes_inclusao WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("DELETE FROM solicitacoes_inclusao WHERE passageiroId = :passageiroId AND status = 'PENDENTE'")
+    suspend fun deletePendentesPorPassageiro(passageiroId: String)
+
+    @Query("DELETE FROM solicitacoes_inclusao WHERE rotaId = :rotaId AND status = 'PENDENTE'")
+    suspend fun deletePendentesPorRota(rotaId: String)
+
     @Query("SELECT * FROM solicitacoes_inclusao WHERE motoristaId = :motoristaId AND status = 'PENDENTE' ORDER BY criadoEm ASC")
     fun getPendentesPorMotorista(motoristaId: String): Flow<List<SolicitacaoInclusaoEntity>>
 

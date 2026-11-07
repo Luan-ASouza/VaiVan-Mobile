@@ -123,6 +123,9 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.comum.perfil.EditarPerfilActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.responsavel.rotas.ResultadosRotasActivity"
             android:exported="false" />
         <activity

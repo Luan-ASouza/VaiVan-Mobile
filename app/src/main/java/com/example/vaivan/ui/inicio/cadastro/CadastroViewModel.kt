@@ -12,8 +12,7 @@ class CadastroViewModel : ViewModel() {
         telefone: String,
         senha: String
     ) {
-        cadastro.usuario.email = email
-        cadastro.usuario.telefone = telefone
+        cadastro.usuario = cadastro.usuario.copy(email = email, telefone = telefone)
         cadastro.senha = senha
     }
 
@@ -22,13 +21,11 @@ class CadastroViewModel : ViewModel() {
         cpf: String,
         dataNascimento: String
     ) {
-        cadastro.usuario.nome = nome
-        cadastro.usuario.cpf = cpf
-        cadastro.usuario.dataNascimento = dataNascimento
+        cadastro.usuario = cadastro.usuario.copy(nome = nome, cpf = cpf, dataNascimento = dataNascimento)
     }
 
     fun definirCodigoVerificacao() {
-        cadastro.usuario.emailConfirmado = true
+        cadastro.usuario = cadastro.usuario.copy(emailConfirmado = true)
     }
 
     fun definirEndereco(
@@ -40,12 +37,14 @@ class CadastroViewModel : ViewModel() {
         numero: String,
         complemento: String
     ) {
-        cadastro.usuario.cep = cep
-        cadastro.usuario.estado = estado
-        cadastro.usuario.cidade = cidade
-        cadastro.usuario.bairro = bairro
-        cadastro.usuario.rua = rua
-        cadastro.usuario.numero = numero
-        cadastro.usuario.complemento = complemento
+        cadastro.usuario = cadastro.usuario.copy(
+            cep = cep,
+            estado = estado,
+            cidade = cidade,
+            bairro = bairro,
+            rua = rua,
+            numero = numero,
+            complemento = complemento
+        )
     }
 }

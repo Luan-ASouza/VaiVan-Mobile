@@ -48,7 +48,7 @@ import com.example.vaivan.data.local.entities.ViagemEntity
         EventoViagemEntity::class,
         LocalizacaoViagemEntity::class
     ],
-    version = 14,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

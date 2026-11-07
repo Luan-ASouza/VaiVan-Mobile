@@ -31,6 +31,15 @@ class ArquivoRepository(
         extensao: String
     ): String = "documentos/$motoristaId/$tipo/$slot.$extensao"
 
+    /** Caminho da foto de perfil do próprio usuário: usuarios/{uid}/foto */
+    fun caminhoFotoUsuario(uid: String): String = "usuarios/$uid/foto"
+
+    /** Caminho da foto de um passageiro, escopado pelo responsável dono dele
+     * (mesmo uid que a regra do Storage usa pra liberar escrita):
+     * usuarios/{responsavelId}/passageiros/{passageiroId}/foto */
+    fun caminhoFotoPassageiro(responsavelId: String, passageiroId: String): String =
+        "usuarios/$responsavelId/passageiros/$passageiroId/foto"
+
     /** Inicia o upload e devolve a UploadTask, para quem chamou acompanhar progresso/cancelar. */
     fun iniciarUpload(
         uri: Uri,

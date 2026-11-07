@@ -19,6 +19,12 @@ interface DocumentoDao {
     @Query("DELETE FROM documentos WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("DELETE FROM documentos WHERE veiculoId = :veiculoId")
+    suspend fun deleteByVeiculo(veiculoId: String)
+
+    @Query("DELETE FROM documentos WHERE motoristaId = :motoristaId")
+    suspend fun deleteByMotorista(motoristaId: String)
+
     @Query("SELECT * FROM documentos WHERE id = :id")
     fun getById(id: String): Flow<DocumentoEntity?>
 

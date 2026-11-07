@@ -1,77 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background_screen">
+    android:background="@color/background_screen"
+    android:orientation="vertical">
 
     <View
         android:id="@+id/topGap"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="0dp"
+        android:background="@color/color_primary" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@color/color_primary"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnVoltar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrowback"
+            app:tint="@color/black" />
+
+        <TextView
+            android:id="@+id/txtTitulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adicionar Passageiro"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- FOTO -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/gradient_yellow_white">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgFotoNovoPassageiro"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:padding="5dp"
+            android:background="@color/background_card"
+            android:contentDescription="Foto do passageiro"
+            android:scaleType="centerCrop"
+            android:src="@android:drawable/ic_menu_camera"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:strokeColor="@color/white"
+            app:strokeWidth="5dp"
+            app:contentPadding="5dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnTrocarFotoPassageiro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="Adicionar foto"
+                android:textColor="@color/black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/btnRemoverFotoPassageiro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="Remover Foto"
+                android:textColor="@color/status_danger"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="@color/orange"
-        android:padding="10dp">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
             android:background="@drawable/bg_white"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingVertical="24dp">
 
-            <!-- CABEÇALHO -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp">
-
-                <ImageView
-                    android:id="@+id/btnVoltar"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="start|center_vertical"
-                    android:contentDescription="Voltar"
-                    android:src="@drawable/ic_arrowback"
-                    tools:ignore="HardcodedText" />
-
-                <TextView
-                    android:id="@+id/txtTitulo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Novo Passageiro"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-            </FrameLayout>
-
-            <!-- FOTO -->
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/imgFotoNovoPassageiro"
-                android:layout_width="90dp"
-                android:layout_height="90dp"
-                android:layout_marginBottom="20dp"
-                android:background="@color/background_card"
-                android:contentDescription="Foto do passageiro"
-                android:padding="24dp"
-                android:scaleType="fitCenter"
-                android:src="@android:drawable/ic_menu_camera"
-                app:shapeAppearanceOverlay="@style/CircleImage"
-                app:strokeColor="@color/dark_gray"
-                app:strokeWidth="2dp" />
 
             <!-- NOME -->
             <TextView
@@ -135,8 +179,8 @@
                     android:autofillHints="birthDateFull"
                     android:hint="DD/MM/AAAA"
                     android:inputType="number"
-                    android:minHeight="48dp"
                     android:maxLength="10"
+                    android:minHeight="48dp"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="12dp"
                     android:textColor="@color/dark_gray"
@@ -260,60 +304,6 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- LOCAL DE EMBARQUE -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Local de embarque"
-                android:textColor="@color/dark_gray"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutLocal"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:hint="Selecione um local">
-
-                <AutoCompleteTextView
-                    android:id="@+id/edtLocal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:focusable="false"
-                    android:cursorVisible="false"
-                    android:clickable="true"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="14sp"
-                    tools:ignore="TextFields" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- ADICIONAR NOVO LOCAL -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAdicionarNovoLocal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:layout_marginTop="2dp"
-                android:paddingHorizontal="0dp"
-                android:text="+ Adicionar novo local"
-                android:textAllCaps="false"
-                android:textColor="@color/orange"
-                android:backgroundTint="@android:color/transparent"
-                app:backgroundTint="@android:color/transparent"
-                app:icon="@drawable/ic_adicionar_localizacao"
-                app:iconTint="@color/orange"
-                app:iconGravity="textStart"
-                app:iconPadding="6dp"
-                tools:ignore="HardcodedText" />
-
             <!-- SALVAR -->
             <Button
                 android:id="@+id/btnSalvar"
@@ -333,7 +323,7 @@
             <View
                 android:id="@+id/bottomGap"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 
