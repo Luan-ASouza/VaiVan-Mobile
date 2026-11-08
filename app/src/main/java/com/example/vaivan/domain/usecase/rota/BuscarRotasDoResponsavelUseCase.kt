@@ -10,6 +10,7 @@ import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.data.models.RotasDoResponsavel
 import kotlinx.coroutines.flow.first
+import android.util.Log
 
 class BuscarRotasDoResponsavelUseCase(
     private val passageiroRepository: PassageiroRepository,
@@ -89,6 +90,8 @@ class BuscarRotasDoResponsavelUseCase(
                 { it.rota.nome.lowercase() }
             )
         )
+
+
     }
 
     private suspend fun buscarDadosDaRota(
@@ -101,8 +104,11 @@ class BuscarRotasDoResponsavelUseCase(
                     rotaId
                 )
             } catch (e: Exception) {
+                Log.d("ROTAS_RESP", "rota $rotaId NÃO existe: ${e.message}")
                 return null
             }
+
+        Log.d("ROTAS_RESP", "rota $rotaId existe: ${rota.nome}")
 
         // Motorista da rota.
         val motorista =

@@ -68,6 +68,14 @@ object ChatRepository {
         val meuUid = auth.currentUser?.uid
             ?: throw IllegalStateException("Usuário não está logado")
 
+        if (meuUid == outroUsuarioId) {
+            throw IllegalStateException(
+                "Esta conversa seria da sua conta com ela mesma. " +
+                        "Para testar o chat, use duas contas diferentes " +
+                        "(uma como motorista e outra como responsável)."
+            )
+        }
+
         val chatId = gerarChatId(meuUid, outroUsuarioId, contexto)
         val chatRef = db.collection("chats").document(chatId)
 

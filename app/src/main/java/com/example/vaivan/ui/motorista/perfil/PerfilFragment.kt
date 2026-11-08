@@ -25,10 +25,14 @@ import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.domain.usecase.conta.ExcluirContaUseCase
 import com.example.vaivan.ui.comum.perfil.EditarPerfilActivity
+import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.util.Log
 
 class PerfilFragment : Fragment() {
 
@@ -64,6 +68,7 @@ class PerfilFragment : Fragment() {
         val imgAvatar = view.findViewById<ShapeableImageView>(R.id.imgUsuarioAvatar)
         val btnEditarPerfil = view.findViewById<View>(R.id.btnEditarPerfil)
         val btnExcluirConta = view.findViewById<View>(R.id.btnExcluirConta)
+        val btnDesconectar = view.findViewById<View>(R.id.btnDesconectar)
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -96,6 +101,37 @@ class PerfilFragment : Fragment() {
                 )
 
                 excluirContaUseCase.excluirContaMotorista(motoristaId)
+            }
+        }
+
+        // =========================================================
+        // DESCONECTAR (mesmo fluxo do responsável)
+        // =========================================================
+
+        Log.d("LOGOUT", "PerfilFragment do motorista criado")
+
+        btnDesconectar.setOnClickListener {
+
+            Log.d("LOGOUT", "botão Desconectar clicado")
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        database.clearAllTables()
+                    }
+                    Log.d("LOGOUT", "Room limpo")
+
+                    FirebaseAuth.getInstance().signOut()
+                    Log.d("LOGOUT", "signOut feito")
+
+                    val intent = Intent(requireContext(), LoginActivity::class.java)
+                    intent.flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+
+                } catch (e: Exception) {
+                    Log.e("LOGOUT", "Erro ao desconectar", e)
+                }
             }
         }
 

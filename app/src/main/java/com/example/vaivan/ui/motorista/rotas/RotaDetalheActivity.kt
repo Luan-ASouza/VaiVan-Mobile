@@ -1,10 +1,12 @@
 package com.example.vaivan.ui.motorista.rotas
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -33,11 +35,14 @@ import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
+import com.example.vaivan.ui.comum.chat.ChatActivity
 import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
 class RotaDetalheActivity : BaseActivity() {
@@ -63,6 +68,17 @@ class RotaDetalheActivity : BaseActivity() {
     private lateinit var containerSolicitacoesDetalhe: LinearLayout
     private lateinit var txtSemSolicitacoesDetalhe: TextView
     private lateinit var txtAlunosConfirmadosDetalhe: TextView
+
+    // Lista de alunos confirmados/recusados (criada por código, logo abaixo do texto antigo)
+    private lateinit var containerAlunosDetalhe: LinearLayout
+
+    // Dados recebidos, para redesenhar a lista de alunos
+    private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
+    private var ultimasParadas: List<ParadaRotaEntity> = emptyList()
+
+    // Todas as solicitações dessa rota (aceitas, recusadas e pendentes), vindas do Firestore.
+    // O Room do motorista só guarda as pendentes nessa tela.
+    private var solicitacoesDoServidor: List<SolicitacaoInclusaoEntity> = emptyList()
 
     // Novos campos do visual
     private lateinit var txtEscolaDetalhe: TextView
@@ -196,6 +212,8 @@ class RotaDetalheActivity : BaseActivity() {
                 R.id.txtAlunosConfirmadosDetalhe
             )
 
+        prepararContainerDeAlunos()
+
         txtEscolaDetalhe = findViewById(R.id.txtEscolaDetalhe)
         txtStatusDetalhe = findViewById(R.id.txtStatusDetalhe)
         txtSentidoDetalhe = findViewById(R.id.txtSentidoDetalhe)
@@ -271,7 +289,35 @@ class RotaDetalheActivity : BaseActivity() {
         observarSolicitacoes()
         observarParadas()
 
+        carregarParadasDoServidor()
+        carregarSolicitacoesDoServidor()
+
         aplicarGapsDeSistema()
+    }
+
+    /**
+     * Esconde o texto antigo "Alunos confirmados" e cria, logo abaixo dele,
+     * um container onde cada aluno vira um card.
+     */
+    private fun prepararContainerDeAlunos() {
+
+        txtAlunosConfirmadosDetalhe.visibility = View.GONE
+
+        containerAlunosDetalhe = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        val pai = txtAlunosConfirmadosDetalhe.parent as ViewGroup
+        val indice = pai.indexOfChild(txtAlunosConfirmadosDetalhe)
+
+        pai.addView(
+            containerAlunosDetalhe,
+            indice + 1,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
     }
 
     private fun observarRota() {
@@ -520,7 +566,7 @@ class RotaDetalheActivity : BaseActivity() {
     }
 
     // ---------------------------------------------------------
-    // SOLICITAÇÕES
+    // SOLICITAÇÕES PENDENTES
     // ---------------------------------------------------------
 
     private fun observarSolicitacoes() {
@@ -532,7 +578,7 @@ class RotaDetalheActivity : BaseActivity() {
             ) {
 
                 val motoristaId =
-                    com.google.firebase.auth.FirebaseAuth
+                    FirebaseAuth
                         .getInstance()
                         .currentUser
                         ?.uid
@@ -544,41 +590,34 @@ class RotaDetalheActivity : BaseActivity() {
                     )
                     .collect { todas ->
 
-                        renderizarSolicitacoes(
-                            todas.filter {
-                                it.rotaId == rotaId
-                            }
-                        )
+                        ultimasSolicitacoes = todas.filter {
+                            it.rotaId == rotaId
+                        }
+
+                        renderizarSolicitacoes(ultimasSolicitacoes)
+
+                        // Quando algo muda (aceitou, recusou, chegou uma nova),
+                        // atualiza também a lista de confirmados/recusados.
+                        carregarSolicitacoesDoServidor()
                     }
             }
         }
     }
 
     private fun renderizarSolicitacoes(
-        solicitacoes:
-        List<SolicitacaoInclusaoEntity>
+        solicitacoes: List<SolicitacaoInclusaoEntity>
     ) {
 
-        containerSolicitacoesDetalhe
-            .removeAllViews()
+        containerSolicitacoesDetalhe.removeAllViews()
 
-        if (solicitacoes.isEmpty()) {
-
-            txtSemSolicitacoesDetalhe.visibility =
-                View.VISIBLE
-
-            return
-        }
+        val pendentes = solicitacoes.filter { it.status == "PENDENTE" }
 
         txtSemSolicitacoesDetalhe.visibility =
-            View.GONE
+            if (pendentes.isEmpty()) View.VISIBLE else View.GONE
 
-        val inflater =
-            LayoutInflater.from(
-                this
-            )
+        val inflater = LayoutInflater.from(this)
 
-        solicitacoes.forEach { solicitacao ->
+        pendentes.forEach { solicitacao ->
 
             val itemView =
                 inflater.inflate(
@@ -733,7 +772,7 @@ class RotaDetalheActivity : BaseActivity() {
     }
 
     // ---------------------------------------------------------
-    // ALUNOS CONFIRMADOS
+    // ALUNOS CONFIRMADOS E RECUSADOS
     // ---------------------------------------------------------
 
     private fun observarParadas() {
@@ -750,27 +789,271 @@ class RotaDetalheActivity : BaseActivity() {
                     )
                     .collect { paradas: List<ParadaRotaEntity> ->
 
-                        txtAlunosConfirmadosDetalhe.text =
-                            if (paradas.isEmpty()) {
-
-                                "Nenhum aluno confirmado ainda."
-
-                            } else {
-
-                                paradas
-                                    .sortedBy {
-                                        it.ordem
-                                    }
-                                    .joinToString("\n") {
-
-                                        "${it.ordem + 1}. " +
-                                                "${it.nomePassageiro} — " +
-                                                "embarque em ~" +
-                                                "${it.horarioEstimadoMinutos} min"
-                                    }
-                            }
+                        ultimasParadas = paradas
+                        renderizarAlunos()
                     }
             }
         }
+    }
+
+    /** Traz as paradas (alunos confirmados) do Firestore para o Room. */
+    private fun carregarParadasDoServidor() {
+
+        lifecycleScope.launch {
+            try {
+                val db = VaivanDatabase.getInstance(this@RotaDetalheActivity)
+
+                val rotaRepository = RotaRepository(
+                    db.rotaDao(),
+                    db.paradaRotaDao(),
+                    GoogleRoutesClient(this@RotaDetalheActivity)
+                )
+
+                val paradas = rotaRepository.consultarParadas(rotaId)
+
+                Log.d("DETALHE_ALUNOS", "Firestore devolveu ${paradas.size} paradas para $rotaId")
+
+                // Espelha o servidor no Room; a lista observa o Room e redesenha sozinha
+                db.paradaRotaDao().deleteByRota(rotaId)
+                db.paradaRotaDao().upsertAll(paradas)
+
+            } catch (e: Exception) {
+                Log.e("DETALHE_ALUNOS", "Erro ao buscar paradas", e)
+            }
+        }
+    }
+
+    /** Traz do Firestore todas as solicitações dessa rota (aceitas, recusadas e pendentes). */
+    private fun carregarSolicitacoesDoServidor() {
+
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        lifecycleScope.launch {
+            try {
+                val snapshot = FirebaseFirestore.getInstance()
+                    .collection("solicitacoes_inclusao")
+                    .whereEqualTo("motoristaId", motoristaId)
+                    .whereEqualTo("rotaId", rotaId)
+                    .get()
+                    .await()
+
+                solicitacoesDoServidor = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(SolicitacaoInclusaoEntity::class.java)?.copy(id = doc.id)
+                }
+
+                Log.d(
+                    "DETALHE_ALUNOS",
+                    "Firestore devolveu ${solicitacoesDoServidor.size} solicitações para $rotaId"
+                )
+
+                renderizarAlunos()
+
+            } catch (e: Exception) {
+                Log.e("DETALHE_ALUNOS", "Erro ao buscar solicitações", e)
+            }
+        }
+    }
+
+    /** Desenha "Alunos confirmados" (com botão de mensagem) e "Recusados". */
+    private fun renderizarAlunos() {
+
+        Log.d(
+            "DETALHE_ALUNOS",
+            "renderizarAlunos: paradas=${ultimasParadas.size} " +
+                    "solicitacoes=${solicitacoesDoServidor.size}"
+        )
+
+        containerAlunosDetalhe.removeAllViews()
+
+        // --- Confirmados -------------------------------------------------
+        containerAlunosDetalhe.addView(criarTituloDeSecao("Alunos confirmados"))
+
+        if (ultimasParadas.isEmpty()) {
+
+            containerAlunosDetalhe.addView(
+                TextView(this).apply {
+                    text = "Nenhum aluno confirmado ainda."
+                    textSize = 14f
+                    setPadding(0, dp(4), 0, dp(8))
+                }
+            )
+
+        } else {
+
+            ultimasParadas
+                .sortedBy { it.ordem }
+                .forEach { parada ->
+                    containerAlunosDetalhe.addView(criarCardAlunoConfirmado(parada))
+                }
+        }
+
+        // --- Recusados ---------------------------------------------------
+        val recusadas = solicitacoesDoServidor.filter { it.status == "RECUSADA" }
+
+        if (recusadas.isNotEmpty()) {
+
+            containerAlunosDetalhe.addView(criarTituloDeSecao("Recusados"))
+
+            recusadas.forEach { solicitacao ->
+                containerAlunosDetalhe.addView(
+                    TextView(this).apply {
+                        text = "${solicitacao.nomePassageiro} — ${solicitacao.enderecoEmbarque}"
+                        textSize = 14f
+                        setPadding(dp(12), dp(8), dp(12), dp(8))
+                    }
+                )
+            }
+        }
+    }
+
+    private fun criarTituloDeSecao(titulo: String): TextView =
+        TextView(this).apply {
+            text = titulo
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, dp(16), 0, dp(8))
+        }
+
+    private fun criarCardAlunoConfirmado(parada: ParadaRotaEntity): View {
+
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            setBackgroundResource(R.drawable.bg_beige_round_20)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+        }
+
+        card.addView(
+            TextView(this).apply {
+                text = "${parada.ordem + 1}. ${parada.nomePassageiro}"
+                textSize = 15f
+                setTypeface(typeface, Typeface.BOLD)
+            }
+        )
+
+        val endereco = parada.endereco.orEmpty()
+        val detalhe = buildString {
+            if (endereco.isNotBlank()) append("Embarque: $endereco\n")
+            append("Horário estimado: ~${parada.horarioEstimadoMinutos} min")
+        }
+
+        card.addView(
+            TextView(this).apply {
+                text = detalhe
+                textSize = 13f
+                setPadding(0, dp(4), 0, dp(8))
+            }
+        )
+
+        card.addView(
+            Button(this).apply {
+                text = "Enviar mensagem"
+                setOnClickListener { abrirChatComAluno(parada, this) }
+            }
+        )
+
+        return card
+    }
+
+    // ---------------------------------------------------------
+    // CHAT COM O RESPONSÁVEL
+    // ---------------------------------------------------------
+
+    private fun abrirChatComAluno(parada: ParadaRotaEntity, botao: Button) {
+
+        botao.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                val solicitacao = encontrarSolicitacaoAceita(parada)
+
+                if (solicitacao == null) {
+                    Toast.makeText(
+                        this@RotaDetalheActivity,
+                        "Solicitação aprovada desse aluno não encontrada",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@launch
+                }
+
+                abrirChatComResponsavel(solicitacao)
+
+            } catch (e: Exception) {
+                Log.e("RotaDetalhe", "Erro ao abrir chat", e)
+                Toast.makeText(
+                    this@RotaDetalheActivity,
+                    "Não foi possível abrir o chat: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            } finally {
+                botao.isEnabled = true
+            }
+        }
+    }
+
+    /**
+     * Acha a solicitação ACEITA do aluno: primeiro na lista já carregada;
+     * se não estiver lá, consulta o Firestore pelo motorista logado.
+     */
+    private suspend fun encontrarSolicitacaoAceita(
+        parada: ParadaRotaEntity
+    ): SolicitacaoInclusaoEntity? {
+
+        solicitacoesDoServidor
+            .firstOrNull { it.status == "ACEITA" && it.passageiroId == parada.passageiroId }
+            ?.let { return it }
+
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid ?: return null
+
+        val snapshot = FirebaseFirestore.getInstance()
+            .collection("solicitacoes_inclusao")
+            .whereEqualTo("motoristaId", motoristaId)
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("passageiroId", parada.passageiroId)
+            .whereEqualTo("status", "ACEITA")
+            .get()
+            .await()
+
+        val documento = snapshot.documents.firstOrNull() ?: return null
+
+        return documento
+            .toObject(SolicitacaoInclusaoEntity::class.java)
+            ?.copy(id = documento.id)
+    }
+
+    private fun abrirChatComResponsavel(solicitacao: SolicitacaoInclusaoEntity) {
+
+        val meuId = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (meuId == null || solicitacao.responsavelId.isBlank()) {
+            Toast.makeText(this, "Responsável não encontrado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (solicitacao.responsavelId == meuId) {
+            Toast.makeText(
+                this,
+                "Esta solicitação é da sua própria conta. Para conversar, use duas contas diferentes.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        startActivity(
+            Intent(this, ChatActivity::class.java).apply {
+                putExtra("outroUsuarioId", solicitacao.responsavelId)
+                putExtra("nomeContato", "Responsável")
+                putExtra("solicitacaoId", solicitacao.id)
+
+                // Mesma conversa que a mãe abre: mesma rota + mesmo aluno
+                putExtra("rotaId", solicitacao.rotaId)
+                putExtra("passageiroId", solicitacao.passageiroId)
+                putExtra("passageiroNome", solicitacao.nomePassageiro)
+                putExtra("rotaNome", rotaCarregada?.nome.orEmpty())
+            }
+        )
     }
 }
