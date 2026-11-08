@@ -15,10 +15,22 @@ import {
 const listaDocumentos = document.getElementById("listaDocumentos");
 const listaAssinaturas = document.getElementById("listaAssinaturas");
 const listaPlanos = document.getElementById("listaPlanos");
+const listaHistorico = document.getElementById("listaHistorico");
+const campoBusca = document.getElementById("campoBusca");
+const avisoNovo = document.getElementById("avisoNovo");
+const badgeDocumentos = document.getElementById("badgeDocumentos");
 const btnSair = document.getElementById("btnSair");
 
-// Documentos que o motorista precisa ter APROVADOS para ser liberado
-const TIPOS_OBRIGATORIOS = ["CNH_FRENTE", "CNH_VERSO", "COMPROVANTE_RESIDENCIA"];
+// Documentos que o motorista precisa ter APROVADOS para ser liberado.
+// Mesmos tipos gravados pelo aplicativo (DocumentoRepository.TIPO_*).
+// A CNH é um único documento: frente e verso (ou PDF, na CNH digital).
+const TIPOS_OBRIGATORIOS = ["CNH", "COMPROVANTE_RESIDENCIA", "SELFIE"];
+
+const ROTULOS_TIPO = {
+  CNH: "CNH",
+  COMPROVANTE_RESIDENCIA: "Comprovante de residência",
+  SELFIE: "Foto do motorista"
+};
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 const CARENCIA_DIAS = 3;
@@ -47,6 +59,25 @@ function urlSegura(url) {
   return /^https?:\/\//i.test(url ?? "") ? url : "";
 }
 
+// Identifica PDF pelo nome do arquivo na URL do Storage (ignora o "?token=...")
+function ehPdf(url) {
+  try {
+    return decodeURIComponent(new URL(url).pathname).toLowerCase().endsWith(".pdf");
+  } catch (e) {
+    return false;
+  }
+}
+
+// Imagem clicável (abre em nova aba) ou link, quando o arquivo é PDF
+function htmlDoArquivo(url, legenda) {
+  const segura = urlSegura(url);
+  if (!segura) return "";
+  if (ehPdf(segura)) {
+    return `<p><a href="${esc(segura)}" target="_blank" rel="noopener">Abrir PDF${legenda ? " (" + esc(legenda) + ")" : ""}</a></p>`;
+  }
+  return `<a href="${esc(segura)}" target="_blank" rel="noopener"><img src="${esc(segura)}" alt="${esc(legenda || "Documento")}" class="img-documento" /></a>`;
+}
+
 function dinheiro(centavos) {
   return (Number(centavos || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -54,6 +85,40 @@ function dinheiro(centavos) {
 function data(ms) {
   return ms ? new Date(ms).toLocaleDateString("pt-BR") : "-";
 }
+
+function dataHora(ms) {
+  return ms ? new Date(ms).toLocaleString("pt-BR") : "-";
+}
+
+// Dados do motorista (nome, telefone, e-mail) a partir do UID, com cache
+const cacheUsuarios = new Map();
+
+function buscarUsuario(uid) {
+  if (!uid) return Promise.resolve({});
+  if (!cacheUsuarios.has(uid)) {
+    cacheUsuarios.set(
+      uid,
+      getDoc(doc(db, "usuarios", uid))
+        .then((s) => (s.exists() ? s.data() : {}))
+        .catch(() => ({}))
+    );
+  }
+  return cacheUsuarios.get(uid);
+}
+
+function nomeDe(u, uid) {
+  return u.nome || `Motorista (${String(uid ?? "").slice(0, 6)}…)`;
+}
+
+// Busca: esconde os itens cujo texto (data-busca) não contém o termo digitado
+function aplicarBusca() {
+  const termo = campoBusca.value.trim().toLowerCase();
+  document.querySelectorAll(".item-busca").forEach((el) => {
+    el.hidden = termo !== "" && !(el.dataset.busca ?? "").includes(termo);
+  });
+}
+
+campoBusca.addEventListener("input", aplicarBusca);
 
 // ---------------------------------------------------------
 // Acesso e abas
@@ -75,6 +140,7 @@ onAuthStateChanged(auth, async (usuario) => {
   }
 
   carregarDocumentosPendentes();
+  carregarHistorico();
   carregarAssinaturas();
   carregarPlanos();
 });
@@ -88,6 +154,7 @@ document.querySelectorAll(".aba").forEach((botao) => {
   botao.addEventListener("click", () => {
     document.querySelectorAll(".aba").forEach((b) => b.classList.toggle("ativa", b === botao));
     document.getElementById("abaDocumentos").hidden = botao.dataset.aba !== "documentos";
+    document.getElementById("abaHistorico").hidden = botao.dataset.aba !== "historico";
     document.getElementById("abaAssinaturas").hidden = botao.dataset.aba !== "assinaturas";
     document.getElementById("abaPlanos").hidden = botao.dataset.aba !== "planos";
   });
@@ -97,36 +164,115 @@ document.querySelectorAll(".aba").forEach((botao) => {
 // Documentos
 // ---------------------------------------------------------
 
+let primeiraCargaDocumentos = true;
+let renderizacao = 0;
+const idsNovos = new Set();
+
 function carregarDocumentosPendentes() {
   const consulta = query(collection(db, "documentos"), where("statusValidacao", "==", "EM_ANALISE"));
 
-  onSnapshot(consulta, (snapshot) => {
-    listaDocumentos.innerHTML = "";
+  onSnapshot(consulta, async (snapshot) => {
+
+    // Alerta de novos envios (não dispara na primeira carga da página)
+    if (!primeiraCargaDocumentos) {
+      const chegaram = snapshot.docChanges().filter((c) => c.type === "added");
+      if (chegaram.length > 0) {
+        chegaram.forEach((c) => idsNovos.add(c.doc.id));
+        mostrarAvisoNovo(chegaram.length);
+      }
+    }
+    primeiraCargaDocumentos = false;
+
+    atualizarContadorPendentes(snapshot.size);
+
+    const minha = ++renderizacao;
 
     if (snapshot.empty) {
       listaDocumentos.innerHTML = "<p class='vazio'>Nenhum documento pendente no momento.</p>";
       return;
     }
 
-    snapshot.forEach((docSnapshot) => {
-      listaDocumentos.appendChild(criarCardDocumento(docSnapshot.id, docSnapshot.data()));
+    // Agrupa os documentos por motorista
+    const grupos = new Map();
+    snapshot.forEach((d) => {
+      const dados = d.data();
+      const chave = dados.motoristaId ?? "sem-motorista";
+      if (!grupos.has(chave)) grupos.set(chave, []);
+      grupos.get(chave).push({ id: d.id, dados });
     });
+
+    const cartoes = [];
+    for (const [uid, docs] of grupos) {
+      const usuario = await buscarUsuario(uid === "sem-motorista" ? null : uid);
+      cartoes.push(criarGrupoMotorista(uid, usuario, docs));
+    }
+
+    // Se chegou outra atualização enquanto buscava os nomes, descarta esta
+    if (minha !== renderizacao) return;
+
+    listaDocumentos.innerHTML = "";
+    cartoes.forEach((c) => listaDocumentos.appendChild(c));
+    aplicarBusca();
   });
+}
+
+function atualizarContadorPendentes(total) {
+  badgeDocumentos.textContent = total;
+  badgeDocumentos.hidden = total === 0;
+  document.title = total > 0 ? `(${total}) VaiVan - Painel Admin` : "VaiVan - Painel Admin";
+}
+
+function mostrarAvisoNovo(qtd) {
+  avisoNovo.textContent = qtd === 1
+    ? "Novo documento recebido para análise."
+    : `${qtd} novos documentos recebidos para análise.`;
+  avisoNovo.hidden = false;
+  clearTimeout(mostrarAvisoNovo.timer);
+  mostrarAvisoNovo.timer = setTimeout(() => { avisoNovo.hidden = true; }, 8000);
+}
+
+avisoNovo.addEventListener("click", () => { avisoNovo.hidden = true; });
+
+function criarGrupoMotorista(uid, usuario, docs) {
+  const grupo = document.createElement("div");
+  grupo.className = "grupo-motorista item-busca";
+  grupo.dataset.busca = [usuario.nome, usuario.telefone, usuario.email, usuario.cpf, uid]
+    .filter(Boolean).join(" ").toLowerCase();
+
+  const total = docs.length;
+  grupo.innerHTML = `
+    <div class="cabecalho-motorista">
+      <p class="nome-motorista">${esc(nomeDe(usuario, uid))}</p>
+      <p>${esc(usuario.telefone || "Telefone não informado")}${usuario.email ? " · " + esc(usuario.email) : ""}</p>
+      <p class="resumo-motorista">${total} documento${total > 1 ? "s" : ""} em análise</p>
+    </div>
+  `;
+
+  docs.forEach(({ id, dados }) => {
+    const card = criarCardDocumento(id, dados);
+    if (idsNovos.has(id)) card.classList.add("novo");
+    grupo.appendChild(card);
+  });
+
+  return grupo;
 }
 
 function criarCardDocumento(id, dados) {
   const card = document.createElement("div");
   card.className = "card-documento";
 
-  const arquivo = urlSegura(dados.arquivo);
+  const rotulo = ROTULOS_TIPO[dados.tipo] ?? dados.tipo ?? "Não informado";
+  const modalidade = dados.modalidadeCnh === "DIGITAL" ? " (digital)" : "";
+
+  // CNH física tem frente e verso; os demais têm um arquivo só
+  const imagens = dados.arquivoVerso
+    ? htmlDoArquivo(dados.arquivo, "frente") + htmlDoArquivo(dados.arquivoVerso, "verso")
+    : htmlDoArquivo(dados.arquivo, "");
 
   card.innerHTML = `
-    ${arquivo
-      ? `<a href="${esc(arquivo)}" target="_blank" rel="noopener"><img src="${esc(arquivo)}" alt="Documento" class="img-documento" /></a>`
-      : ""}
+    ${imagens}
     <div class="info-documento">
-      <p><strong>Tipo:</strong> ${esc(dados.tipo ?? "Não informado")}</p>
-      <p><strong>Motorista ID:</strong> ${esc(dados.motoristaId ?? "-")}</p>
+      <p><strong>Tipo:</strong> ${esc(rotulo)}${esc(modalidade)}</p>
       <p><strong>Data de envio:</strong> ${esc(dados.dataEnvio ?? "-")}</p>
     </div>
     <div class="acoes-documento">
@@ -147,13 +293,74 @@ function criarCardDocumento(id, dados) {
   return card;
 }
 
+// ---------------------------------------------------------
+// Histórico de análises
+// ---------------------------------------------------------
+
+function carregarHistorico() {
+  const consulta = query(
+    collection(db, "documentos"),
+    where("statusValidacao", "in", ["APROVADO", "REJEITADO"])
+  );
+
+  onSnapshot(consulta, async (snapshot) => {
+    const minha = ++renderizacaoHistorico;
+
+    if (snapshot.empty) {
+      listaHistorico.innerHTML = "<p class='vazio'>Nenhuma análise realizada ainda.</p>";
+      return;
+    }
+
+    // Mais recentes primeiro (ordena aqui para não exigir índice no Firestore)
+    const itens = snapshot.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((x, y) => (y.analisadoEm ?? 0) - (x.analisadoEm ?? 0))
+      .slice(0, 100);
+
+    const linhas = [];
+    for (const item of itens) {
+      const usuario = await buscarUsuario(item.motoristaId);
+      const rotulo = ROTULOS_TIPO[item.tipo] ?? item.tipo ?? "Documento";
+      const aprovado = item.statusValidacao === "APROVADO";
+
+      const linha = document.createElement("div");
+      linha.className = "card-simples item-busca";
+      linha.dataset.busca = [usuario.nome, usuario.telefone, usuario.email, rotulo]
+        .filter(Boolean).join(" ").toLowerCase();
+      linha.innerHTML = `
+        <div class="info-documento">
+          <p><strong>${esc(nomeDe(usuario, item.motoristaId))}</strong> · ${esc(rotulo)}</p>
+          <p>${esc(usuario.telefone || "")}</p>
+          <p>Analisado em: ${esc(dataHora(item.analisadoEm))}</p>
+          ${!aprovado && item.motivoRejeicao ? `<p class="motivo">Motivo: ${esc(item.motivoRejeicao)}</p>` : ""}
+        </div>
+        <span class="selo ${aprovado ? "selo-ok" : "selo-erro"}">${aprovado ? "Aprovado" : "Rejeitado"}</span>
+      `;
+      linhas.push(linha);
+    }
+
+    if (minha !== renderizacaoHistorico) return;
+
+    listaHistorico.innerHTML = "";
+    linhas.forEach((l) => listaHistorico.appendChild(l));
+    aplicarBusca();
+  });
+}
+
+let renderizacaoHistorico = 0;
+
 async function aprovarDocumento(id, dados) {
-  await updateDoc(doc(db, "documentos", id), { statusValidacao: "APROVADO" });
+  await updateDoc(doc(db, "documentos", id), {
+    statusValidacao: "APROVADO",
+    motivoRejeicao: null,
+    analisadoEm: Date.now(),
+    analisadoPor: auth.currentUser?.uid ?? null
+  });
 
   // Documento de veículo ou sem motorista: nada a liberar
   if (!dados.motoristaId || !TIPOS_OBRIGATORIOS.includes(dados.tipo)) return;
 
-  // Se os 3 documentos obrigatórios estiverem aprovados, libera o motorista
+  // Se os documentos obrigatórios estiverem todos aprovados, libera o motorista
   const resultado = await getDocs(
     query(collection(db, "documentos"), where("motoristaId", "==", dados.motoristaId))
   );
@@ -172,10 +379,12 @@ async function aprovarDocumento(id, dados) {
 async function rejeitarDocumento(id, dados, motivo) {
   await updateDoc(doc(db, "documentos", id), {
     statusValidacao: "REJEITADO",
-    motivoRejeicao: motivo
+    motivoRejeicao: motivo,
+    analisadoEm: Date.now(),
+    analisadoPor: auth.currentUser?.uid ?? null
   });
 
-  // O motorista volta ao envio de documentos
+  // O motorista volta à situação "pendente" até reenviar o documento
   if (dados.motoristaId && TIPOS_OBRIGATORIOS.includes(dados.tipo)) {
     await updateDoc(doc(db, "usuarios", dados.motoristaId), { statusMotorista: "PENDENTE" });
   }
@@ -203,8 +412,8 @@ function estadoEfetivo(a, agora) {
 }
 
 function carregarAssinaturas() {
-  onSnapshot(collection(db, "assinaturas"), (snapshot) => {
-    listaAssinaturas.innerHTML = "";
+  onSnapshot(collection(db, "assinaturas"), async (snapshot) => {
+    const minha = ++renderizacaoAssinaturas;
 
     if (snapshot.empty) {
       listaAssinaturas.innerHTML = "<p class='vazio'>Nenhuma assinatura ainda.</p>";
@@ -212,13 +421,18 @@ function carregarAssinaturas() {
     }
 
     const agora = Date.now();
-    snapshot.forEach((s) => {
+    const cartoes = [];
+    for (const s of snapshot.docs) {
       const a = s.data();
+      const usuario = await buscarUsuario(s.id);
       const card = document.createElement("div");
-      card.className = "card-simples";
+      card.className = "card-simples item-busca";
+      card.dataset.busca = [usuario.nome, usuario.telefone, usuario.email, a.planoNome]
+        .filter(Boolean).join(" ").toLowerCase();
       card.innerHTML = `
         <div class="info-documento">
-          <p><strong>Motorista:</strong> ${esc(s.id)}</p>
+          <p><strong>Motorista:</strong> ${esc(nomeDe(usuario, s.id))}</p>
+          <p>${esc(usuario.telefone || "")}</p>
           <p><strong>Plano:</strong> ${esc(a.planoNome)} · ${dinheiro(a.valorCentavos)}/mês</p>
           <p><strong>Situação:</strong> ${esc(estadoEfetivo(a, agora))}</p>
           <p><strong>Próxima cobrança:</strong> ${data(a.proximaCobranca)}</p>
@@ -248,10 +462,18 @@ function carregarAssinaturas() {
         }
       });
 
-      listaAssinaturas.appendChild(card);
-    });
+      cartoes.push(card);
+    }
+
+    if (minha !== renderizacaoAssinaturas) return;
+
+    listaAssinaturas.innerHTML = "";
+    cartoes.forEach((c) => listaAssinaturas.appendChild(c));
+    aplicarBusca();
   });
 }
+
+let renderizacaoAssinaturas = 0;
 
 // ---------------------------------------------------------
 // Planos

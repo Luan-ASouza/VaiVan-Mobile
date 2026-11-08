@@ -214,3 +214,99 @@ body {
 .barra-planos {
   margin-bottom: 16px;
 }
+
+/* ---- Lote 2: agrupamento, busca, histórico e alerta ---- */
+.badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  border-radius: 10px;
+  background: #E53935;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+}
+
+.badge[hidden] {
+  display: none;
+}
+
+.barra-busca {
+  max-width: 700px;
+  margin: 12px auto 0;
+  padding: 0 24px;
+}
+
+.barra-busca input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.aviso-novo {
+  background: #F6B12F;
+  color: #1E1E1E;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.aviso-novo[hidden] {
+  display: none;
+}
+
+.grupo-motorista {
+  background: #fff8ee;
+  border: 1px solid #FFD9A8;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grupo-motorista[hidden],
+.item-busca[hidden] {
+  display: none;
+}
+
+.cabecalho-motorista p {
+  margin: 2px 0;
+  font-size: 14px;
+  color: #444;
+}
+
+.cabecalho-motorista .nome-motorista {
+  font-size: 17px;
+  font-weight: bold;
+  color: #1E1E1E;
+}
+
+.cabecalho-motorista .resumo-motorista {
+  color: #B26A00;
+  font-weight: bold;
+}
+
+.card-documento.novo {
+  outline: 2px solid #F6B12F;
+}
+
+.selo {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+}
+
+.selo-ok { background: #2CA144; }
+.selo-erro { background: #E53935; }
+
+.motivo {
+  color: #c62828;
+}

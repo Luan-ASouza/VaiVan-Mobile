@@ -20,6 +20,7 @@ import com.example.vaivan.data.repository.DocumentoRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
+
 class DocumentosMotoristaActivity : BaseActivity() {
 
     private val auth = FirebaseAuth.getInstance()
@@ -32,6 +33,12 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private lateinit var txtStatusCnh: TextView
     private lateinit var txtStatusComprovante: TextView
     private lateinit var txtStatusFoto: TextView
+
+    private lateinit var txtMotivoCnh: TextView
+    private lateinit var txtMotivoComprovante: TextView
+    private lateinit var txtMotivoFoto: TextView
+
+    private lateinit var txtProgresso: TextView
 
     private lateinit var iconeCnh: ImageView
     private lateinit var iconeComprovante: ImageView
@@ -65,6 +72,12 @@ class DocumentosMotoristaActivity : BaseActivity() {
         txtStatusCnh = findViewById(R.id.txtStatusCnh)
         txtStatusComprovante = findViewById(R.id.txtStatusComprovante)
         txtStatusFoto = findViewById(R.id.txtStatusFoto)
+
+        txtMotivoCnh = findViewById(R.id.txtMotivoCnh)
+        txtMotivoComprovante = findViewById(R.id.txtMotivoComprovante)
+        txtMotivoFoto = findViewById(R.id.txtMotivoFoto)
+
+        txtProgresso = findViewById(R.id.txtProgressoDocumentos)
 
         iconeCnh = findViewById(R.id.iconeCnh)
         iconeComprovante = findViewById(R.id.iconeComprovante)
@@ -132,34 +145,57 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private fun atualizarDocumentos(documentos: List<DocumentoEntity>) {
 
         val cnh = documentos.find { it.tipo == DocumentoRepository.TIPO_CNH }
-        val statusCnh = cnh?.let { StatusDocumento.fromString(it.statusValidacao) }
-            ?: StatusDocumento.NAO_ENVIADO
-
-        atualizarStatusVisual(txtStatusCnh, iconeCnh, statusCnh)
-
         val comprovante = documentos.find { it.tipo == DocumentoRepository.TIPO_COMPROVANTE_RESIDENCIA }
-        val statusComprovante = comprovante?.let { StatusDocumento.fromString(it.statusValidacao) }
-            ?: StatusDocumento.NAO_ENVIADO
-
-        atualizarStatusVisual(txtStatusComprovante, iconeComprovante, statusComprovante)
-
         val selfie = documentos.find { it.tipo == DocumentoRepository.TIPO_SELFIE }
-        val statusSelfie = selfie?.let { StatusDocumento.fromString(it.statusValidacao) }
-            ?: StatusDocumento.NAO_ENVIADO
 
-        atualizarStatusVisual(txtStatusFoto, iconeFoto, statusSelfie)
+        val statusCnh = statusDe(cnh)
+        val statusComprovante = statusDe(comprovante)
+        val statusSelfie = statusDe(selfie)
+
+        atualizarStatusVisual(txtStatusCnh, iconeCnh, txtMotivoCnh, cnh, statusCnh)
+        atualizarStatusVisual(txtStatusComprovante, iconeComprovante, txtMotivoComprovante, comprovante, statusComprovante)
+        atualizarStatusVisual(txtStatusFoto, iconeFoto, txtMotivoFoto, selfie, statusSelfie)
+
+        // Progresso: conta os documentos já enviados (em análise ou aprovados)
+        val enviados = listOf(statusCnh, statusComprovante, statusSelfie).count {
+            it == StatusDocumento.EM_ANALISE || it == StatusDocumento.APROVADO
+        }
+
+        txtProgresso.text = if (enviados == 3) {
+            "Todos os documentos foram enviados"
+        } else {
+            "$enviados de 3 documentos enviados"
+        }
     }
+
+    private fun statusDe(documento: DocumentoEntity?): StatusDocumento =
+        documento?.let { StatusDocumento.fromString(it.statusValidacao) }
+            ?: StatusDocumento.NAO_ENVIADO
 
     private fun atualizarStatusVisual(
         texto: TextView,
         icone: ImageView,
+        motivo: TextView,
+        documento: DocumentoEntity?,
         status: StatusDocumento
     ) {
+
+        // O motivo só aparece quando o documento foi rejeitado
+        val motivoRejeicao = documento?.motivoRejeicao
+        if (status == StatusDocumento.REJEITADO && !motivoRejeicao.isNullOrBlank()) {
+            motivo.text = "Motivo: $motivoRejeicao"
+            motivo.visibility = View.VISIBLE
+        } else {
+            motivo.visibility = View.GONE
+        }
 
         when (status) {
 
             StatusDocumento.NAO_ENVIADO, StatusDocumento.PENDENTE -> {
+                texto.visibility = View.GONE
 
+                icone.setImageResource(R.drawable.ic_enviar_arquivo)
+                icone.clearColorFilter()
             }
 
             StatusDocumento.EM_ANALISE -> {
@@ -167,7 +203,6 @@ class DocumentosMotoristaActivity : BaseActivity() {
                 texto.visibility = View.VISIBLE
                 texto.setTextColor(Color.parseColor("#E5A000"))
 
-                // Drawable
                 icone.setImageResource(R.drawable.ic_analise)
                 icone.setColorFilter(Color.parseColor("#E5A000"))
             }

@@ -26,6 +26,10 @@
             android:name=".ui.motorista.entrada.documentos.DocumentosMotoristaActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.motorista.entrada.documentos.AnaliseDocumentosActivity"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

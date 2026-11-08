@@ -13,14 +13,25 @@
   <button id="btnSair">Sair</button>
 </div>
 
+<div id="avisoNovo" class="aviso-novo" hidden></div>
+
 <div class="abas">
-  <button class="aba ativa" data-aba="documentos">Documentos</button>
+  <button class="aba ativa" data-aba="documentos">Documentos <span id="badgeDocumentos" class="badge" hidden>0</span></button>
+  <button class="aba" data-aba="historico">Histórico</button>
   <button class="aba" data-aba="assinaturas">Assinaturas</button>
   <button class="aba" data-aba="planos">Planos</button>
 </div>
 
+<div class="barra-busca">
+  <input id="campoBusca" type="search" placeholder="Buscar por nome, telefone ou e-mail do motorista" />
+</div>
+
 <section id="abaDocumentos" class="conteudo-aba">
   <div id="listaDocumentos"></div>
+</section>
+
+<section id="abaHistorico" class="conteudo-aba" hidden>
+  <div id="listaHistorico"></div>
 </section>
 
 <section id="abaAssinaturas" class="conteudo-aba" hidden>

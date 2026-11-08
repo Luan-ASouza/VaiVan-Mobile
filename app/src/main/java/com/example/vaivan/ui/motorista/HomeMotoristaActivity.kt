@@ -39,6 +39,7 @@ import com.example.vaivan.ui.motorista.assinatura.AssinaturaActivity
 import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.ui.motorista.assinatura.PagamentosMotoristaActivity
 import com.example.vaivan.data.local.dao.UsuarioDao
+import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
@@ -104,6 +105,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
         btnDrawerPerfil.setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(PerfilFragment())
+        }
+
+        findViewById<View>(R.id.btnDrawerDocumentos).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, DocumentosMotoristaActivity::class.java))
         }
 
         configurarAssinatura(uid, drawerLayout)

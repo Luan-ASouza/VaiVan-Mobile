@@ -79,18 +79,30 @@
                 android:textColor="#858585"
                 android:textSize="16sp" />
 
+            <!-- PROGRESSO -->
+            <TextView
+                android:id="@+id/txtProgressoDocumentos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="0 de 3 documentos enviados"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
             <!-- LISTA -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="72dp"
+                android:layout_marginTop="40dp"
                 android:orientation="vertical">
 
                 <!-- CNH -->
                 <LinearLayout
                     android:id="@+id/itemCnh"
                     android:layout_width="match_parent"
-                    android:layout_height="96dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="96dp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
@@ -129,6 +141,15 @@
                             android:textColor="#999999"
                             android:textSize="15sp" />
 
+                        <TextView
+                            android:id="@+id/txtMotivoCnh"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/status_danger"
+                            android:textSize="13sp"
+                            android:visibility="gone" />
+
                     </LinearLayout>
 
                     <ImageView
@@ -139,11 +160,12 @@
 
                 </LinearLayout>
 
-                <!-- CRLV -->
+                <!-- COMPROVANTE DE RESIDÊNCIA -->
                 <LinearLayout
                     android:id="@+id/itemComprovante"
                     android:layout_width="match_parent"
-                    android:layout_height="96dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="96dp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
@@ -166,7 +188,7 @@
 
                         <TextView
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:text="Comprovante de Residência"
                             android:textColor="#101010"
                             android:textSize="18sp"
@@ -182,6 +204,15 @@
                             android:textColor="#999999"
                             android:textSize="15sp" />
 
+                        <TextView
+                            android:id="@+id/txtMotivoComprovante"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/status_danger"
+                            android:textSize="13sp"
+                            android:visibility="gone" />
+
                     </LinearLayout>
 
                     <ImageView
@@ -196,7 +227,8 @@
                 <LinearLayout
                     android:id="@+id/itemFoto"
                     android:layout_width="match_parent"
-                    android:layout_height="96dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="96dp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
@@ -234,6 +266,15 @@
                             android:visibility="gone"
                             android:textColor="#999999"
                             android:textSize="15sp" />
+
+                        <TextView
+                            android:id="@+id/txtMotivoFoto"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/status_danger"
+                            android:textSize="13sp"
+                            android:visibility="gone" />
 
                     </LinearLayout>
 

@@ -9,6 +9,7 @@ import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.vaivan.ui.motorista.entrada.documentos.AnaliseDocumentosActivity
 
 class EntradaMotoristaActivity : AppCompatActivity() {
 
@@ -46,8 +47,12 @@ class EntradaMotoristaActivity : AppCompatActivity() {
                         abrirTela(HomeMotoristaActivity::class.java)
                     }
 
-                    null, "PENDENTE", "EM_ANALISE" -> {
+                    null, "PENDENTE" -> {
                         abrirTela(DocumentosMotoristaActivity::class.java)
+                    }
+
+                    "EM_ANALISE" -> {
+                        abrirTela(AnaliseDocumentosActivity::class.java)
                     }
 
                     "SUSPENSO", "INATIVO" -> {

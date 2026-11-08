@@ -295,6 +295,35 @@
                         android:textStyle="bold" />
 
                 </LinearLayout>
+                <!-- Meus documentos -->
+                <LinearLayout
+                    android:id="@+id/btnDrawerDocumentos"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_enviar_arquivo"
+                        app:tint="@color/dark_gray" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="Meus documentos"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
                 <!-- Planos e assinatura -->
                 <LinearLayout
                     android:id="@+id/btnDrawerAssinatura"
@@ -324,6 +353,7 @@
                         android:textStyle="bold" />
 
                 </LinearLayout>
+
 
                 <!-- Gestão de pagamentos -->
                 <LinearLayout
