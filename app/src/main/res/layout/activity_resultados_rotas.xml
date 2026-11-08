@@ -172,6 +172,18 @@
                 android:textColor="@color/light_gray"
                 android:visibility="gone"
                 tools:ignore="HardcodedText" />
+
+            <!-- ===== AVISO FIXO ===== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:text="Mostramos apenas vans de motoristas com a assinatura da plataforma em dia. Se uma van que você conhece não aparece, ela pode estar temporariamente indisponível."
+                android:textColor="@color/light_gray"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
         </LinearLayout>
     </ScrollView>
 

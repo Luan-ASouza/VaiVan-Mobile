@@ -13,7 +13,9 @@ import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.example.vaivan.data.models.Pagamento
 import java.util.Locale
+
 
 /** Funções de apoio compartilhadas pelas telas de assinatura. */
 object AssinaturaUi {
@@ -26,6 +28,27 @@ object AssinaturaUi {
     fun formatarData(milissegundos: Long): String =
         SimpleDateFormat("dd/MM/yyyy", localeBr).format(Date(milissegundos))
 
+
+    fun formatarDataHora(milissegundos: Long): String =
+        SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", localeBr).format(Date(milissegundos))
+
+    /** Texto do recibo de uma cobrança paga (usado na tela e no compartilhamento). */
+    fun textoDoRecibo(pagamento: Pagamento, conta: String): String {
+        val pagoEm = pagamento.pagoEm
+        return buildString {
+            appendLine("RECIBO DE PAGAMENTO - VaiVan")
+            appendLine()
+            appendLine("Nº do recibo: ${pagamento.id.take(8).uppercase(localeBr)}")
+            appendLine("Descrição: ${pagamento.descricao}")
+            appendLine("Plano: ${pagamento.planoNome}")
+            appendLine("Valor: ${formatarValor(pagamento.valorCentavos)}")
+            appendLine("Forma de pagamento: ${pagamento.forma.ifBlank { "-" }}")
+            appendLine("Pago em: ${if (pagoEm != null) formatarDataHora(pagoEm) else "-"}")
+            appendLine("Conta: $conta")
+            appendLine()
+            append("Documento de demonstração: pagamento simulado, sem valor fiscal.")
+        }
+    }
     /** Rótulo e cor do "selo" de status da assinatura. */
     fun rotuloDoEstado(estado: Estado, cancelamentoAgendado: Boolean): Pair<String, Int> =
         when (estado) {

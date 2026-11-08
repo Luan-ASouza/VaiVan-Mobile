@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.motorista.assinatura
 
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -28,6 +29,7 @@ import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -53,6 +55,11 @@ class AssinaturaActivity : AppCompatActivity() {
     private lateinit var containerPlanos: LinearLayout
     private lateinit var containerCobrancas: LinearLayout
     private lateinit var txtSemCobrancas: TextView
+    private lateinit var blocoErro: View
+    private lateinit var progressOperacao: View
+
+    private var assinaturaCarregada = false
+    private var operacaoEmAndamento = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +83,9 @@ class AssinaturaActivity : AppCompatActivity() {
         containerPlanos = findViewById(R.id.containerPlanos)
         containerCobrancas = findViewById(R.id.containerCobrancas)
         txtSemCobrancas = findViewById(R.id.txtSemCobrancas)
+        blocoErro = findViewById(R.id.blocoErroAssinatura)
+        progressOperacao = findViewById(R.id.progressAssinatura)
+        findViewById<Button>(R.id.btnTentarNovamente).setOnClickListener { recreate() }
 
         findViewById<ImageButton>(R.id.btnVoltarAssinatura).setOnClickListener { finish() }
         btnCancelar.setOnClickListener { confirmarCancelamento() }
@@ -95,7 +105,18 @@ class AssinaturaActivity : AppCompatActivity() {
                 launch {
                     repository.observarAssinatura(motoristaId).collect {
                         assinatura = it
+                        assinaturaCarregada = true
+                        blocoErro.visibility = View.GONE
                         renderizar()
+                    }
+                }
+
+                // Se a assinatura não chegar a tempo (sem conexão), mostra o erro
+                launch {
+                    delay(TEMPO_LIMITE_CARREGAMENTO_MS)
+                    if (!assinaturaCarregada) {
+                        txtVigencia.text = "Não foi possível carregar."
+                        blocoErro.visibility = View.VISIBLE
                     }
                 }
 
@@ -129,6 +150,20 @@ class AssinaturaActivity : AppCompatActivity() {
     // ---------------------------------------------------------
 
     private fun renderizar() {
+
+        // Enquanto a assinatura não chegou, não mostra "Sem plano" nem botões de contratar
+        if (!assinaturaCarregada) {
+            txtStatus.text = "Carregando..."
+            txtStatus.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#6B6B6B"))
+            txtPlanoAtual.text = ""
+            txtVigencia.text = "Carregando a sua assinatura..."
+            txtAviso.visibility = View.GONE
+            btnCancelar.visibility = View.GONE
+            btnDesfazer.visibility = View.GONE
+            containerPlanos.removeAllViews()
+            return
+        }
+
         val agora = System.currentTimeMillis()
         val a = assinatura
         val estado = AssinaturaPolicy.estado(a, agora)
@@ -364,6 +399,12 @@ class AssinaturaActivity : AppCompatActivity() {
                     "Vencimento: ${AssinaturaUi.formatarData(pagamento.vencimento)} · $valor"
                 }
 
+            val btnRecibo = item.findViewById<Button>(R.id.btnReciboCobranca)
+            if (pagamento.status == StatusPagamento.PAGO) {
+                btnRecibo.visibility = View.VISIBLE
+                btnRecibo.setOnClickListener { mostrarRecibo(pagamento) }
+            }
+
             val btnPagar = item.findViewById<Button>(R.id.btnPagarCobranca)
             if (pagamento.status == StatusPagamento.PENDENTE) {
                 btnPagar.visibility = View.VISIBLE
@@ -464,6 +505,10 @@ class AssinaturaActivity : AppCompatActivity() {
 
     /** Executa uma ação e mostra o erro (se houver) de forma amigável. */
     private fun executar(bloco: suspend () -> Unit) {
+        if (operacaoEmAndamento) return
+        operacaoEmAndamento = true
+        progressOperacao.visibility = View.VISIBLE
+
         lifecycleScope.launch {
             try {
                 bloco()
@@ -477,8 +522,34 @@ class AssinaturaActivity : AppCompatActivity() {
                 Toast.makeText(
                     this@AssinaturaActivity, "Erro: ${e.message}", Toast.LENGTH_LONG
                 ).show()
+            } finally {
+                operacaoEmAndamento = false
+                progressOperacao.visibility = View.GONE
             }
         }
+    }
+
+    // ---------------------------------------------------------
+    // RECIBO
+    // ---------------------------------------------------------
+
+    private fun mostrarRecibo(pagamento: Pagamento) {
+        val conta = FirebaseAuth.getInstance().currentUser?.email ?: "-"
+        val texto = AssinaturaUi.textoDoRecibo(pagamento, conta)
+
+        AlertDialog.Builder(this)
+            .setTitle("Recibo")
+            .setMessage(texto)
+            .setPositiveButton("Compartilhar") { _, _ ->
+                val envio = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "Recibo VaiVan")
+                    putExtra(Intent.EXTRA_TEXT, texto)
+                }
+                startActivity(Intent.createChooser(envio, "Compartilhar recibo"))
+            }
+            .setNegativeButton("Fechar", null)
+            .show()
     }
 
     // ---------------------------------------------------------
@@ -524,5 +595,6 @@ class AssinaturaActivity : AppCompatActivity() {
 
     private companion object {
         const val TAG = "AssinaturaActivity"
+        const val TEMPO_LIMITE_CARREGAMENTO_MS = 10_000L
     }
 }
