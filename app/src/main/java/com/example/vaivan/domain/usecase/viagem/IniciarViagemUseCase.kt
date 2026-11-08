@@ -1,6 +1,7 @@
 package com.example.vaivan.domain.usecase.viagem
 
 import com.example.vaivan.data.local.entities.ViagemEntity
+import com.example.vaivan.data.repository.AssinaturaRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.ViagemRepository
@@ -10,11 +11,15 @@ import com.example.vaivan.data.repository.ViagemRepository
  * com parada confirmada (ParadaRotaEntity) direto no Firebase — não confia no
  * cache do Room para esse momento, já que precisa do estado mais atual antes
  * de criar a viagem — e delega a criação ao ViagemRepository.
+ *
+ * Uma viagem NOVA exige assinatura em dia (as regras do Firestore também exigem);
+ * retomar uma viagem já em andamento não exige.
  */
 class IniciarViagemUseCase(
     private val rotaRepository: RotaRepository,
     private val passageiroRepository: PassageiroRepository,
-    private val viagemRepository: ViagemRepository
+    private val viagemRepository: ViagemRepository,
+    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository()
 ) {
     suspend operator fun invoke(
         rotaId: String,
@@ -28,6 +33,9 @@ class IniciarViagemUseCase(
         viagemRepository.consultarViagemAtivaDoMotorista(motoristaId)?.let { ativa ->
             return ativa
         }
+
+        // Viagem nova: o plano precisa estar em dia
+        assinaturaRepository.exigirPodeIniciarViagem(motoristaId)
 
         val rota = rotaRepository.consultarRota(rotaId)
             ?: throw IllegalStateException("Rota não encontrada.")

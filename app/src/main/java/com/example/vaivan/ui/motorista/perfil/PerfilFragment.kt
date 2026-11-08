@@ -86,7 +86,11 @@ class PerfilFragment : Fragment() {
 
         btnExcluirConta.setOnClickListener {
 
-            ExclusaoContaHelper.confirmarExclusaoConta(this) { motoristaId ->
+            ExclusaoContaHelper.confirmarExclusaoConta(
+                this,
+                mensagemExtra = "Sua assinatura será encerrada e não haverá novas cobranças; " +
+                        "o histórico de pagamentos é mantido para registro. "
+            ) { motoristaId ->
 
                 val excluirContaUseCase = ExcluirContaUseCase(
                     usuarioRepository = UsuarioRepository(database.usuarioDao()),

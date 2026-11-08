@@ -1,5 +1,6 @@
 package com.example.vaivan.domain.usecase.conta
 
+import com.example.vaivan.data.repository.AssinaturaRepository
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
@@ -17,6 +18,8 @@ import com.example.vaivan.data.repository.VeiculoRepository
  *
  * Nunca toca em ViagemEntity/ParadaViagemEntity/EventoViagemEntity
  * (histórico, protegido por regra no Firestore e preservado de propósito).
+ * A assinatura do motorista também não é apagada: é ENCERRADA (cancelada),
+ * e o histórico de cobranças é mantido para registro.
  *
  * Só cuida dos dados (Firestore + Room + fotos no Storage). A exclusão da
  * conta em si no FirebaseAuth é responsabilidade de quem chama, depois que
@@ -28,7 +31,8 @@ class ExcluirContaUseCase(
     private val rotaRepository: RotaRepository,
     private val veiculoRepository: VeiculoRepository,
     private val documentoRepository: DocumentoRepository,
-    private val passageiroRepository: PassageiroRepository
+    private val passageiroRepository: PassageiroRepository,
+    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository()
 ) {
 
     suspend fun excluirContaMotorista(motoristaId: String) {
@@ -49,6 +53,10 @@ class ExcluirContaUseCase(
         documentoRepository.consultarPorMotorista(motoristaId).forEach { documento ->
             documentoRepository.excluir(documento.id)
         }
+
+        // Encerra a assinatura (sem apagar o histórico de cobranças) antes de
+        // remover o perfil, para não deixar cobrança futura de uma conta que não existe mais.
+        assinaturaRepository.encerrarPorExclusaoDeConta(motoristaId)
 
         usuarioRepository.excluirUsuario(motoristaId)
     }

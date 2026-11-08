@@ -44,6 +44,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Locale
+import com.example.vaivan.data.repository.AssinaturaBloqueadaException
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 
 class RotaDetalheActivity : BaseActivity() {
 
@@ -491,6 +493,13 @@ class RotaDetalheActivity : BaseActivity() {
                 val intent = Intent(this@RotaDetalheActivity, NavegacaoViagemActivity::class.java)
                 intent.putExtra(NavegacaoViagemActivity.EXTRA_VIAGEM_ID, viagem.id)
                 startActivity(intent)
+
+            } catch (erro: AssinaturaBloqueadaException) {
+
+                AssinaturaUi.mostrarBloqueio(
+                    this@RotaDetalheActivity,
+                    erro.message ?: "Assinatura necessária para iniciar a viagem."
+                )
 
             } catch (erro: Exception) {
 

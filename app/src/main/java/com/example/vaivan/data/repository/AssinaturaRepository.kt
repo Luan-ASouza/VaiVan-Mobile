@@ -177,6 +177,15 @@ class AssinaturaRepository(
         if (!decisao.permitido) throw AssinaturaBloqueadaException(decisao.motivo)
     }
 
+    suspend fun exigirPodeIniciarViagem(motoristaId: String) {
+        val assinatura = consultarAssinatura(motoristaId)
+
+        val decisao = AssinaturaPolicy.verificarIniciarViagem(
+            assinatura, System.currentTimeMillis()
+        )
+        if (!decisao.permitido) throw AssinaturaBloqueadaException(decisao.motivo)
+    }
+
     /**
      * Dos motoristas informados, devolve apenas os que podem receber passageiros.
      * Usado para esconder da busca as rotas de motoristas inadimplentes ou sem plano.
@@ -577,6 +586,40 @@ class AssinaturaRepository(
 
         // A cobrança da próxima renovação foi cancelada junto; emite de novo, se for o caso.
         gerarCobrancaDeRenovacaoSeNecessario(motoristaId)
+    }
+    // =========================================================
+    // EXCLUSÃO DE CONTA
+    // =========================================================
+
+    /**
+     * Encerra a assinatura de quem está excluindo a conta: cancela as cobranças pendentes
+     * e marca a assinatura como CANCELADA. O histórico de pagamentos é mantido de propósito.
+     */
+    suspend fun encerrarPorExclusaoDeConta(motoristaId: String) {
+        val assinatura = consultarAssinatura(motoristaId) ?: return
+        val agora = System.currentTimeMillis()
+
+        val batch = firestore.batch()
+
+        cobrancasPendentes(motoristaId, tipo = null)
+            .forEach { batch.update(it, "status", StatusPagamento.CANCELADO) }
+
+        batch.update(
+            colAssinaturas.document(motoristaId),
+            mapOf(
+                "status" to StatusAssinatura.CANCELADA,
+                "cancelamentoAgendado" to false,
+                "planoAgendadoId" to null,
+                "atualizadoEm" to agora
+            )
+        )
+
+        batch.set(
+            novoEvento(motoristaId),
+            evento("EXCLUSAO_CONTA", assinatura.planoId, null, 0L, agora)
+        )
+
+        batch.commit().await()
     }
 
     // =========================================================

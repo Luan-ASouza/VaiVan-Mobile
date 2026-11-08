@@ -29,6 +29,7 @@ object ExclusaoContaHelper {
 
     fun confirmarExclusaoConta(
         fragment: Fragment,
+        mensagemExtra: String = "",
         excluirDados: suspend (uid: String) -> Unit
     ) {
         val contexto = fragment.requireContext()
@@ -36,8 +37,8 @@ object ExclusaoContaHelper {
         ConfirmacaoExclusaoHelper.confirmar(
             contexto = contexto,
             titulo = "Excluir sua conta?",
-            mensagem = "Essa ação é permanente e remove seus dados cadastrados " +
-                    "(veículos, rotas, passageiros, documentos etc.). " +
+            mensagem = "(veículos, rotas, passageiros, documentos etc.). " +
+                    mensagemExtra +
                     "Para confirmar, informe sua senha atual.",
             textoConfirmar = "Continuar"
         ) {

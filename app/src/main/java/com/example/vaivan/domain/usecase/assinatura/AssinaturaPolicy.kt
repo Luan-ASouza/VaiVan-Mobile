@@ -106,6 +106,15 @@ object AssinaturaPolicy {
         }
     }
 
+    fun verificarIniciarViagem(a: Assinatura?, agora: Long): Decisao {
+        val estado = estado(a, agora)
+        return if (operacional(estado)) {
+            Decisao(true)
+        } else {
+            Decisao(false, motivoDeBloqueio(estado, "iniciar novas viagens"))
+        }
+    }
+
     fun podeVerPagamentos(a: Assinatura?, agora: Long): Boolean =
         operacional(a, agora)
 
