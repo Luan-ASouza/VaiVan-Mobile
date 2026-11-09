@@ -30,6 +30,21 @@ object CadastroValidator {
                 }
     }
 
+    /** Força da senha em 0-3 (fraca/média/boa/forte), pro medidor visual —
+     * reaproveita as mesmas checagens de classe de caractere de [senhaValida],
+     * só que como pontuação em vez de booleano. */
+    fun forcaSenha(senha: String): Int {
+
+        var pontos = 0
+
+        if (senha.length >= 8) pontos++
+        if (senha.length >= 12) pontos++
+        if (senha.any { it.isDigit() } && senha.any { it.isLetter() }) pontos++
+        if (senha.any { !it.isLetterOrDigit() }) pontos++
+
+        return pontos.coerceAtMost(3)
+    }
+
     fun senhasConferem(
         senha: String,
         confirmacao: String

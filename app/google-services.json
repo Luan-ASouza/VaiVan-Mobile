@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "639129984068-9mf5j9vd8bni2poesn38oqd995053ksa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.trabalhograua",
+            "certificate_hash": "4a37819074dce4dceb267198938ee96995c4e41d"
+          }
+        },
+        {
+          "client_id": "639129984068-v7fbltmu51raajbl30ee2vl6boj8doh8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.trabalhograua",
+            "certificate_hash": "a8743de799ee9c0fa7531962389da54bb7c4c953"
+          }
+        },
+        {
           "client_id": "639129984068-jknui56elp2qup4k4d89hmeqk1ohej80.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -42,6 +58,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "639129984068-nnibbc636l50pg7tfp91bdit35m7soem.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vaivan",
+            "certificate_hash": "a8743de799ee9c0fa7531962389da54bb7c4c953"
+          }
+        },
         {
           "client_id": "639129984068-jknui56elp2qup4k4d89hmeqk1ohej80.apps.googleusercontent.com",
           "client_type": 3

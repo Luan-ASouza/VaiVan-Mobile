@@ -23,7 +23,7 @@
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:clipToPadding="false"
-        android:background="@color/white_solitude">
+        android:background="@color/background_screen">
 
         <LinearLayout
             android:layout_width="match_parent"

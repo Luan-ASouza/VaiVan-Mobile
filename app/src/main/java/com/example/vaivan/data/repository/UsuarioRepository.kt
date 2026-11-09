@@ -82,6 +82,30 @@ class UsuarioRepository(
     }
 
 
+    /** Verifica se já existe um usuário com esse CPF (checagem de duplicidade
+     * no cadastro). Não precisa de regra nova no Firestore: `usuarios` já
+     * permite leitura (inclusive list/query) pra qualquer usuário logado. */
+    suspend fun consultarUsuarioPorCpf(
+        cpf: String
+    ): UsuarioEntity? {
+
+        val resultado =
+            collection
+                .whereEqualTo("cpf", cpf)
+                .limit(1)
+                .get()
+                .await()
+
+        val document =
+            resultado.documents.firstOrNull()
+                ?: return null
+
+        return document
+            .toObject(UsuarioEntity::class.java)
+            ?.copy(id = document.id)
+    }
+
+
     // =========================================================
     // SINCRONIZAÇÃO
     // =========================================================

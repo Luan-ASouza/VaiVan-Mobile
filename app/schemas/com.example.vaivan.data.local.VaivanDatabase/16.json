@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 16,
-    "identityHash": "8a08cf540bd8d6d8797179700a465d9d",
+    "identityHash": "087a8523ae25977e6fd21d9f35356d66",
     "entities": [
       {
         "tableName": "usuarios",
@@ -99,6 +99,18 @@
           {
             "fieldPath": "emailConfirmado",
             "columnName": "emailConfirmado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "aceitouTermos",
+            "columnName": "aceitouTermos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "aceitaComunicacoes",
+            "columnName": "aceitaComunicacoes",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -555,7 +567,7 @@
       },
       {
         "tableName": "rotas",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `motoristaId` TEXT NOT NULL, `veiculoId` TEXT, `nome` TEXT NOT NULL, `tipoTrajeto` TEXT NOT NULL, `origemNome` TEXT NOT NULL, `origemEndereco` TEXT NOT NULL, `origemLatitude` REAL NOT NULL, `origemLongitude` REAL NOT NULL, `destinoNome` TEXT NOT NULL, `destinoEndereco` TEXT NOT NULL, `destinoLatitude` REAL NOT NULL, `destinoLongitude` REAL NOT NULL, `turno` TEXT NOT NULL, `diasSemana` TEXT NOT NULL, `escolaId` TEXT NOT NULL, `escolaNome` TEXT NOT NULL, `bairrosAtendidos` TEXT NOT NULL, `capacidadeTotal` INTEGER NOT NULL, `vagasOcupadas` INTEGER NOT NULL, `distanciaMetros` INTEGER NOT NULL, `duracaoSegundos` INTEGER NOT NULL, `duracaoSemTrafegoSegundos` INTEGER NOT NULL, `polylineEncoded` TEXT NOT NULL, `status` TEXT NOT NULL, `calculadoEm` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `motoristaId` TEXT NOT NULL, `veiculoId` TEXT, `nome` TEXT NOT NULL, `tipoTrajeto` TEXT NOT NULL, `origemNome` TEXT NOT NULL, `origemEndereco` TEXT NOT NULL, `origemLatitude` REAL NOT NULL, `origemLongitude` REAL NOT NULL, `destinoNome` TEXT NOT NULL, `destinoEndereco` TEXT NOT NULL, `destinoLatitude` REAL NOT NULL, `destinoLongitude` REAL NOT NULL, `turno` TEXT NOT NULL, `diasSemana` TEXT NOT NULL, `escolaId` TEXT NOT NULL, `escolaNome` TEXT NOT NULL, `bairrosAtendidos` TEXT NOT NULL, `capacidadeTotal` INTEGER NOT NULL, `vagasOcupadas` INTEGER NOT NULL, `valorMensalCentavos` INTEGER NOT NULL, `diaVencimento` INTEGER NOT NULL, `distanciaMetros` INTEGER NOT NULL, `duracaoSegundos` INTEGER NOT NULL, `duracaoSemTrafegoSegundos` INTEGER NOT NULL, `polylineEncoded` TEXT NOT NULL, `status` TEXT NOT NULL, `calculadoEm` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -1529,6 +1541,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '087a8523ae25977e6fd21d9f35356d66')"
     ]
   }
 }

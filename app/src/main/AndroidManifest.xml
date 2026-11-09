@@ -53,9 +53,13 @@
         </activity> <!-- ==================== AUTENTICAÇÃO ==================== -->
         <activity
             android:name=".ui.inicio.LoginActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.inicio.EscolhaTipoPerfilActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.inicio.TermosUsoActivity"
             android:exported="false" /> <!-- ==================== CADASTRO ==================== -->
         <activity
             android:name=".ui.inicio.cadastro.CadastroActivity"
