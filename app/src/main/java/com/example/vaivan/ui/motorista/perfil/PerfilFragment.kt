@@ -34,7 +34,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import com.example.vaivan.core.notificacao.TokenDispositivo
 class PerfilFragment : Fragment() {
 
     // 1. Declaras a variável do ViewModel
@@ -130,6 +130,9 @@ class PerfilFragment : Fragment() {
                 withContext(Dispatchers.IO) {
                     database.clearAllTables()
                 }
+
+                // Para de receber notificações desta conta neste aparelho
+                TokenDispositivo.removerDesteDispositivo()
 
                 // Desconecta do Firebase
                 FirebaseAuth.getInstance().signOut()

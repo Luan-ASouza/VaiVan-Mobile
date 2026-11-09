@@ -37,16 +37,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
 class HomeResponsavelActivity : BaseActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
     private lateinit var viewModel: UsuarioViewModel
+    private val permissaoNotificacao = PermissaoNotificacao(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_home_responsavel)
+        permissaoNotificacao.solicitarSeNecessario()
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)

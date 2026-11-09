@@ -46,16 +46,20 @@ import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.ui.motorista.assinatura.PagamentosMotoristaActivity
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationControllerMotorista
     private lateinit var viewModel: UsuarioViewModel
+    private val permissaoNotificacao = PermissaoNotificacao(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_home_motorista)
+
+        permissaoNotificacao.solicitarSeNecessario()
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)

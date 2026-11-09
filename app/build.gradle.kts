@@ -71,6 +71,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
 
     // Alinhado com a versão do catálogo (androidx.camera.view / cameraView = 1.6.2),
     // para não misturar módulos do CameraX em versões diferentes.

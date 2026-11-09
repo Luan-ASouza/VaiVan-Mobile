@@ -16,6 +16,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.core.notificacao.TokenDispositivo
 
 /**
  * Tela de espera: os documentos já foram enviados e estão em análise.
@@ -83,6 +84,8 @@ class AnaliseDocumentosActivity : BaseActivity() {
                 withContext(Dispatchers.IO) {
                     VaivanDatabase.getInstance(this@AnaliseDocumentosActivity).clearAllTables()
                 }
+
+                TokenDispositivo.removerDesteDispositivo()
 
                 FirebaseAuth.getInstance().signOut()
 
