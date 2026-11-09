@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider // Nativo do Android
@@ -16,6 +17,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.util.ExclusaoContaHelper
+import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.DocumentoRepository
@@ -32,7 +34,6 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Log
 
 class PerfilFragment : Fragment() {
 
@@ -67,6 +68,7 @@ class PerfilFragment : Fragment() {
         val txtCPF = view.findViewById<TextView>(R.id.txtCPF)
         val imgAvatar = view.findViewById<ShapeableImageView>(R.id.imgUsuarioAvatar)
         val btnEditarPerfil = view.findViewById<View>(R.id.btnEditarPerfil)
+        val btnTrocarSenha = view.findViewById<View>(R.id.btnTrocarSenha)
         val btnExcluirConta = view.findViewById<View>(R.id.btnExcluirConta)
         val btnDesconectar = view.findViewById<View>(R.id.btnDesconectar)
 
@@ -78,6 +80,14 @@ class PerfilFragment : Fragment() {
 
         btnEditarPerfil.setOnClickListener {
             startActivity(Intent(requireContext(), EditarPerfilActivity::class.java))
+        }
+
+        // =========================================================
+        // TROCAR SENHA
+        // =========================================================
+
+        btnTrocarSenha.setOnClickListener {
+            TrocaSenhaHelper.mostrar(requireActivity() as AppCompatActivity)
         }
 
         // =========================================================
@@ -112,30 +122,26 @@ class PerfilFragment : Fragment() {
         // DESCONECTAR (mesmo fluxo do responsável)
         // =========================================================
 
-        Log.d("LOGOUT", "PerfilFragment do motorista criado")
-
         btnDesconectar.setOnClickListener {
 
-            Log.d("LOGOUT", "botão Desconectar clicado")
-
             viewLifecycleOwner.lifecycleScope.launch {
-                try {
-                    withContext(Dispatchers.IO) {
-                        database.clearAllTables()
-                    }
-                    Log.d("LOGOUT", "Room limpo")
 
-                    FirebaseAuth.getInstance().signOut()
-                    Log.d("LOGOUT", "signOut feito")
-
-                    val intent = Intent(requireContext(), LoginActivity::class.java)
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-
-                } catch (e: Exception) {
-                    Log.e("LOGOUT", "Erro ao desconectar", e)
+                // Limpa o Room fora da Main Thread
+                withContext(Dispatchers.IO) {
+                    database.clearAllTables()
                 }
+
+                // Desconecta do Firebase
+                FirebaseAuth.getInstance().signOut()
+
+                // Volta para o Login, sem deixar telas antigas na pilha
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                startActivity(intent)
             }
         }
 

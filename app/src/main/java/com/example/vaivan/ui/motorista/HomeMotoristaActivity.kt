@@ -1,6 +1,7 @@
 package com.example.vaivan.ui.motorista
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +23,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
+import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.motorista.chat.ChatFragment
@@ -29,9 +31,13 @@ import com.example.vaivan.ui.motorista.navigation.BottomNavigationControllerMoto
 import com.example.vaivan.ui.motorista.navigation.NavigationItem
 import com.example.vaivan.ui.motorista.perfil.PerfilFragment
 import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
+import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
+import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import android.content.Intent
 import com.example.vaivan.data.repository.AssinaturaRepository
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
@@ -57,7 +63,6 @@ class HomeMotoristaActivity : AppCompatActivity() {
         val imgAvatarDrawer = findViewById<ShapeableImageView>(R.id.drawerAvatar)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val btnMenu = findViewById<ConstraintLayout>(R.id.btnMenu)
-        val btnDrawerPerfil = findViewById<View>(R.id.btnDrawerPerfil)
 
         viewModel = ViewModelProvider(
             this,
@@ -72,6 +77,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
         if (uid != null) {
+
+            // Baixa o usuário do Firestore para o Room (o logout limpa o Room,
+            // então sem isso o nome real não aparece e sobra o texto de exemplo).
+            viewModel.sincronizarUsuarioPorId(uid)
+
             lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.observarPorId(uid).collect { usuario ->
@@ -102,10 +112,9 @@ class HomeMotoristaActivity : AppCompatActivity() {
             drawerLayout.openDrawer(GravityCompat.END)
         }
 
-        btnDrawerPerfil.setOnClickListener {
-            drawerLayout.closeDrawers()
-            abrirFragment(PerfilFragment())
-        }
+        configurarMenuLateral(drawerLayout)
+
+        configurarDesconectar()
 
         findViewById<View>(R.id.btnDrawerDocumentos).setOnClickListener {
             drawerLayout.closeDrawers()
@@ -124,6 +133,75 @@ class HomeMotoristaActivity : AppCompatActivity() {
         }
 
     }
+
+    /**
+     * Itens do menu lateral: Meu perfil, Locais salvos, Meus veículos e Trocar senha.
+     */
+    private fun configurarMenuLateral(drawerLayout: DrawerLayout) {
+
+        findViewById<View>(R.id.btnDrawerPerfil).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
+        }
+
+        findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, AdicionarLocalActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnDrawerVeiculos).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(ListaVeiculosFragment())
+        }
+
+        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
+            drawerLayout.closeDrawers()
+            TrocaSenhaHelper.mostrar(this)
+        }
+    }
+
+    /**
+     * Botão "Desconectar" do menu lateral (mesmo fluxo do responsável):
+     * limpa o Room, desconecta do Firebase e volta para o Login.
+     */
+    private fun configurarDesconectar() {
+
+        val btnDesconectar = findViewById<View>(R.id.btnDrawerDesconectar)
+
+        if (btnDesconectar == null) {
+            Log.w(
+                "LOGOUT",
+                "btnDrawerDesconectar não existe no activity_home_motorista.xml"
+            )
+            return
+        }
+
+        btnDesconectar.setOnClickListener {
+
+            lifecycleScope.launch {
+
+                // Limpa o Room fora da Main Thread
+                withContext(Dispatchers.IO) {
+                    VaivanDatabase.getInstance(this@HomeMotoristaActivity).clearAllTables()
+                }
+
+                // Desconecta do Firebase
+                FirebaseAuth.getInstance().signOut()
+
+                // Volta para o Login, sem deixar telas antigas na pilha
+                val intent = Intent(
+                    this@HomeMotoristaActivity,
+                    LoginActivity::class.java
+                )
+
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                startActivity(intent)
+            }
+        }
+    }
+
     /**
      * Plano de assinatura: aviso no topo, atalhos no menu lateral e
      * bloqueio da área de pagamentos quando a assinatura não está em dia.

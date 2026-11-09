@@ -52,7 +52,7 @@
                     android:layout_height="90dp"
                     android:padding="3dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/marina_avatar"
+                    android:src="@drawable/ic_perfil"
                     app:shapeAppearanceOverlay="@style/CircleImage"
                     app:strokeColor="@color/dark_gray"
                     app:strokeWidth="3dp" />
@@ -77,7 +77,7 @@
                             android:id="@+id/txtNomeUsuarioCompleto"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Marina Alves Santos"
+                            android:text=""
                             android:textColor="@color/dark_gray"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -148,7 +148,7 @@
                             android:id="@+id/txtNascimento"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="15 / 06 / 1991"
+                            android:text=""
                             android:textColor="@color/dark_gray"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -157,43 +157,13 @@
                             android:id="@+id/txtCPF"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="123.456.789-10"
+                            android:text=""
                             android:textColor="@color/dark_gray"
                             android:textSize="12sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                 </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/rkuwaoojsf5h"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toTopOf="@+id/btnDesconectar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toStartOf="parent">
-
-                <TextView
-                    android:id="@+id/btnLocais"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/bg_withe_round_5"
-                    android:clickable="true"
-                    android:elevation="4dp"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:padding="10dp"
-                    android:text="Locais"
-
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
             </LinearLayout>
 
             <androidx.constraintlayout.helper.widget.Flow

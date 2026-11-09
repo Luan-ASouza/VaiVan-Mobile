@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider // Nativo do Android
@@ -15,6 +16,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.core.util.ExclusaoContaHelper
+import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.domain.usecase.conta.ExcluirContaUseCase
 import com.example.vaivan.ui.comum.perfil.EditarPerfilActivity
@@ -27,15 +29,12 @@ import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.ui.inicio.UsuarioViewModel
-import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class PerfilFragment : Fragment() {
 
@@ -91,11 +90,6 @@ class PerfilFragment : Fragment() {
                 R.id.txtCPF
             )
 
-        val btnLocais =
-            view.findViewById<TextView>(
-                R.id.btnLocais
-            )
-
         val btnDesconectar =
             view.findViewById<MaterialButton>(
                 R.id.btnDesconectar
@@ -109,6 +103,11 @@ class PerfilFragment : Fragment() {
         val btnEditarPerfil =
             view.findViewById<View>(
                 R.id.btnEditarPerfil
+            )
+
+        val btnTrocarSenha =
+            view.findViewById<View>(
+                R.id.btnTrocarSenha
             )
 
         val btnExcluirConta =
@@ -127,20 +126,6 @@ class PerfilFragment : Fragment() {
                 ?.uid
 
         // =========================================================
-        // BOTÃO LOCAIS
-        // =========================================================
-
-        btnLocais.setOnClickListener {
-
-            startActivity(
-                Intent(
-                    requireContext(),
-                    AdicionarLocalActivity::class.java
-                )
-            )
-        }
-
-        // =========================================================
         // EDITAR PERFIL
         // =========================================================
 
@@ -152,6 +137,14 @@ class PerfilFragment : Fragment() {
                     EditarPerfilActivity::class.java
                 )
             )
+        }
+
+        // =========================================================
+        // TROCAR SENHA
+        // =========================================================
+
+        btnTrocarSenha.setOnClickListener {
+            TrocaSenhaHelper.mostrar(requireActivity() as AppCompatActivity)
         }
 
         // =========================================================
