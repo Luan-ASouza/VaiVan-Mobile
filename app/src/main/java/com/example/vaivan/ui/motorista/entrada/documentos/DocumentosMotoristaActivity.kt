@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
@@ -36,6 +37,7 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private lateinit var iconeCnh: ImageView
     private lateinit var iconeComprovante: ImageView
     private lateinit var iconeFoto: ImageView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +71,17 @@ class DocumentosMotoristaActivity : BaseActivity() {
         iconeCnh = findViewById(R.id.iconeCnh)
         iconeComprovante = findViewById(R.id.iconeComprovante)
         iconeFoto = findViewById(R.id.iconeFoto)
+
+        swipeRefresh = findViewById(R.id.swipeRefreshDocumentosMotorista)
+        swipeRefresh.setOnRefreshListener {
+            lifecycleScope.launch {
+                try {
+                    documentoRepository.sincronizarUmaVez()
+                } finally {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+        }
     }
 
     private fun configurarCliques() {

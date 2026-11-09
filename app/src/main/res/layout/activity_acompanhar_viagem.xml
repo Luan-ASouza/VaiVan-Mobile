@@ -27,236 +27,271 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
+    <!-- ÁREA ÚTIL: mapa + bottom sheet, mesmo padrão de NavegacaoViagemActivity -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/rootAcompanharViagem"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/bottomGap"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topGap" />
+        app:layout_constraintTop_toBottomOf="@id/topGap">
 
-    <!-- Fechar a tela -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnFecharAcompanhar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:contentDescription="Fechar"
-        android:src="@drawable/ic_arrowback"
-        app:backgroundTint="@android:color/white"
-        app:fabSize="mini"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topGap"
-        app:maxImageSize="20dp" />
-
-    <!-- Header: nome da viagem + motorista + placa -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardHeaderAcompanhar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        app:cardBackgroundColor="@android:color/white"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/btnFecharAcompanhar"
-        app:layout_constraintTop_toTopOf="@id/btnFecharAcompanhar">
-
-        <LinearLayout
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Fechar a tela -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnFecharAcompanhar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="12dp">
+            android:layout_gravity="top|start"
+            android:layout_margin="16dp"
+            android:contentDescription="Fechar"
+            android:src="@drawable/ic_arrowback"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="mini"
+            app:maxImageSize="20dp" />
 
-            <TextView
-                android:id="@+id/txtNomeRotaAcompanhar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#101010"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                tools:text="Colégio Sagrado - Manhã" />
+        <!-- Retomar recentralização automática (só aparece depois que o
+             responsável arrasta o mapa manualmente) — ancorado no topo do
+             bottom sheet, acompanha ele ao ser arrastado. -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnRetomarRecentralizacao"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Retomar recentralização automática"
+            android:src="@drawable/ic_mylocation"
+            android:visibility="gone"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="mini"
+            app:layout_anchor="@id/cardStatusAcompanhar"
+            app:layout_anchorGravity="top|end"
+            app:maxImageSize="22dp"
+            app:tint="@color/color_primary" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+        <!-- ================================================== -->
+        <!-- BOTTOM SHEET: toda a informação da viagem, igual Uber -->
+        <!-- ================================================== -->
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/fotoMotoristaAcompanhar"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:padding="1dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_perfil"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    app:strokeColor="@color/color_primary"
-                    app:strokeWidth="1dp" />
-
-                <TextView
-                    android:id="@+id/txtMotoristaAcompanhar"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="#686D75"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    tools:text="João Silva · ABC-1234" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Centralizar na van -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnCentralizarVanAcompanhar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="Centralizar na van"
-        android:src="@drawable/ic_van"
-        app:backgroundTint="@android:color/white"
-        app:fabSize="mini"
-        app:layout_constraintBottom_toTopOf="@id/btnCentralizarPassageiroAcompanhar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:maxImageSize="22dp"
-        app:tint="@color/color_primary" />
-
-    <!-- Centralizar no passageiro -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnCentralizarPassageiroAcompanhar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="Centralizar no passageiro"
-        android:src="@drawable/ic_pin_central"
-        app:backgroundTint="@android:color/white"
-        app:fabSize="mini"
-        app:layout_constraintBottom_toTopOf="@id/cardStatusAcompanhar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:maxImageSize="22dp" />
-
-    <!-- Status real do aluno, no rodapé -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardStatusAcompanhar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="@android:color/white"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
-        app:layout_constraintBottom_toTopOf="@id/bottomGap"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardStatusAcompanhar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="168dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="10dp"
+            app:layout_behavior="@string/bottom_sheet_behavior">
 
-            <LinearLayout
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/fotoAlunoAcompanhar"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:padding="2dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_perfil"
-                    app:shapeAppearanceOverlay="@style/CircleImage"
-                    app:strokeColor="@color/color_primary"
-                    app:strokeWidth="2dp" />
+                android:layout_height="match_parent">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="28dp">
 
-                    <TextView
-                        android:id="@+id/txtNomeAlunoAcompanhar"
+                    <!-- ALÇA DE ARRASTE -->
+                    <View
+                        android:layout_width="100dp"
+                        android:layout_height="4dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="14dp"
+                        android:background="@drawable/bg_dia_inativo" />
+
+                    <!-- MOTORISTA + PLACA (visível recolhido) -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="#101010"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        tools:text="Maria" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/fotoMotoristaAcompanhar"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="1dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_perfil"
+                            app:shapeAppearanceOverlay="@style/CircleImage"
+                            app:strokeColor="@color/color_primary"
+                            app:strokeWidth="1dp" />
+
+                        <TextView
+                            android:id="@+id/txtMotoristaAcompanhar"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="#101010"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:text="João Silva · ABC-1234" />
+
+                    </LinearLayout>
+
+                    <!-- STATUS + QUANTO TEMPO FALTA PRO PONTO DO FILHO (visível recolhido) -->
+                    <TextView
+                        android:id="@+id/txtStatusViagemAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textColor="#686D75"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:text="Carregando viagem..." />
+
+                    <TextView
+                        android:id="@+id/txtEtaAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/color_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="Chegada estimada: 07:42"
+                        tools:visibility="visible" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="16dp"
+                        android:background="#E0E0E0" />
+
+                    <!-- A PARTIR DE AQUI, SÓ VISÍVEL EXPANDIDO (abaixo da peekHeight) -->
+
+                    <TextView
+                        android:id="@+id/txtNomeRotaAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="#101010"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:text="Colégio Sagrado - Manhã" />
+
+                    <!-- ALUNO -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/fotoAlunoAcompanhar"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:padding="2dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_perfil"
+                            app:shapeAppearanceOverlay="@style/CircleImage"
+                            app:strokeColor="@color/color_primary"
+                            app:strokeWidth="2dp" />
+
+                        <TextView
+                            android:id="@+id/txtNomeAlunoAcompanhar"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:textColor="#101010"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            tools:text="Maria" />
+
+                        <TextView
+                            android:id="@+id/txtStatusAlunoAcompanhar"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_container_round_30"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="6dp"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            tools:text="Na van" />
+
+                    </LinearLayout>
+
+                    <!-- ENDEREÇO ATUAL + PONTO DE DESEMBARQUE FINAL -->
                     <TextView
                         android:id="@+id/txtEnderecoAcompanhar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:ellipsize="end"
-                        android:maxLines="1"
+                        android:layout_marginTop="14dp"
                         android:textColor="#686D75"
-                        android:textSize="12sp"
-                        tools:text="Rua Exemplo, 123" />
+                        android:textSize="13sp"
+                        tools:text="Indo para: Rua Exemplo, 123" />
+
+                    <TextView
+                        android:id="@+id/txtDesembarqueFinalAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="#686D75"
+                        android:textSize="13sp"
+                        tools:text="Desembarque final: Colégio Sagrado" />
+
+                    <!-- HORÁRIO DE CHEGADA FINAL -->
+                    <TextView
+                        android:id="@+id/txtEtaFinalAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textColor="@color/color_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="Chegada final estimada: 07:55"
+                        tools:visibility="visible" />
+
+                    <!-- ABRIR CHAT -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAbrirChatAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="16dp"
+                        android:text="Abrir chat"
+                        android:textAllCaps="false"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="16dp"
+                        app:strokeColor="@color/dark_gray"
+                        app:strokeWidth="1dp"
+                        tools:ignore="HardcodedText" />
+
+                    <!-- AVISO DE AUSÊNCIA (preenchido em código — ver AcompanharViagemActivity) -->
+                    <LinearLayout
+                        android:id="@+id/containerAvisoAusenciaAcompanhar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical" />
 
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/txtStatusAlunoAcompanhar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_container_round_30"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    tools:text="Na van" />
+            </androidx.core.widget.NestedScrollView>
 
-            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:id="@+id/txtStatusViagemAcompanhar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textColor="#686D75"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                tools:text="Carregando viagem..." />
-
-            <TextView
-                android:id="@+id/txtEtaAcompanhar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/color_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="Chegada estimada: 07:42"
-                tools:visibility="visible" />
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -11,10 +11,18 @@ import com.example.vaivan.data.repository.ViagemRepository
 data class StatusPassageiro(val texto: String, @ColorRes val cor: Int)
 
 fun statusDoPassageiro(embarque: ParadaViagemEntity, desembarque: ParadaViagemEntity): StatusPassageiro = when {
+    // Checado antes do desembarque: um passageiro com falta avisada nasce com
+    // as duas paradas já resolvidas (embarque=NAO_EMBARCOU, desembarque=
+    // DESEMBARCADO só pra ficar fora de AGUARDANDO_DESEMBARQUE) — sem essa
+    // ordem, ele apareceria como "Desceu" em vez de "Não embarcou".
+    embarque.status == ViagemRepository.PARADA_NAO_EMBARCOU ->
+        if (embarque.motivoAusencia != null) {
+            StatusPassageiro("Falta Avisada", R.color.status_danger)
+        } else {
+            StatusPassageiro("Não embarcou", R.color.status_danger)
+        }
     desembarque.status == ViagemRepository.PARADA_DESEMBARCADO ->
         StatusPassageiro("Desceu", R.color.status_success)
-    embarque.status == ViagemRepository.PARADA_NAO_EMBARCOU ->
-        StatusPassageiro("Não embarcou", R.color.status_danger)
     embarque.status == ViagemRepository.PARADA_EMBARCADO ->
         StatusPassageiro("Na van", R.color.status_success)
     else -> StatusPassageiro("Aguardando", R.color.light_gray)

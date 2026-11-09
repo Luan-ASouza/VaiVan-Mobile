@@ -45,11 +45,16 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <ScrollView
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshRotaDetalhe"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_weight="1">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -578,6 +583,33 @@
                 android:visibility="gone"
                 tools:ignore="HardcodedText" />
 
+            <!-- ===== AVISOS DE AUSÊNCIA (responsável avisou com antecedência) ===== -->
+            <LinearLayout
+                android:id="@+id/containerSecaoAvisosAusenciaDetalhe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="26dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="Avisos de ausência"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <LinearLayout
+                    android:id="@+id/containerAvisosAusenciaDetalhe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+
             <!-- ===== ALUNOS CONFIRMADOS ===== -->
             <TextView
                 android:layout_width="wrap_content"
@@ -603,7 +635,9 @@
                 tools:ignore="HardcodedText" />
 
         </LinearLayout>
-    </ScrollView>
+        </ScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <View
         android:id="@+id/bottomGap"

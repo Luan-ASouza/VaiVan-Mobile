@@ -227,6 +227,27 @@ class VeiculoRepository(
         )
     }
 
+    /** Sincronização pontual (pull-to-refresh) só dos veículos de um
+     * motorista — mesma filtragem/limpeza de [iniciarSincronizacao], mas sem
+     * depender de um listener contínuo estar ativo nesse momento. */
+    suspend fun sincronizarVeiculosDoMotoristaUmaVez(motoristaId: String) {
+        val snapshot = collection
+            .whereEqualTo("motoristaId", motoristaId)
+            .get()
+            .await()
+
+        val veiculos = snapshot.documents.mapNotNull { document ->
+            document.toObject(VeiculoEntity::class.java)
+                ?.copy(id = document.id, lastUpdated = System.currentTimeMillis())
+        }
+
+        val idsFirebase = veiculos.map { it.id }.toSet()
+        val idsRoom = veiculoDao.getIdsByMotoristaId(motoristaId)
+        (idsRoom - idsFirebase).forEach { id -> veiculoDao.deleteById(id) }
+
+        veiculoDao.upsertAll(veiculos)
+    }
+
     // =========================================================
     // ESCRITA
     // =========================================================

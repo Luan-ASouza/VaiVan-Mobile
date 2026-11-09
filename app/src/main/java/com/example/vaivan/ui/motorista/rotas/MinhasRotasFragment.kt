@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
@@ -33,6 +34,8 @@ class MinhasRotasFragment : Fragment() {
     private lateinit var containerRotas: LinearLayout
 
     private lateinit var txtSemRotas: TextView
+
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private val rotaRepository: RotaRepository by lazy {
 
@@ -100,6 +103,17 @@ class MinhasRotasFragment : Fragment() {
             view.findViewById(
                 R.id.txtSemRotas
             )
+
+        swipeRefresh = view.findViewById(R.id.swipeRefreshMinhasRotas)
+        swipeRefresh.setOnRefreshListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    viewModel.atualizarRotas()
+                } finally {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+        }
 
 
         view

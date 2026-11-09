@@ -143,6 +143,12 @@ class NavegacaoViagemActivity : BaseActivity() {
      * congelada no momento em que a navegação começou. */
     private val ordemPorTituloWaypoint = mutableMapOf<String, Int>()
 
+    /** Índice do próximo waypoint ainda não "consumido" (ver [avancarWaypointSdk])
+     * dentro de `ordemPorTituloWaypoint.values` — que preserva a ordem de
+     * inserção, ou seja, a ordem crescente em que os waypoints foram
+     * mandados pro SDK em setDestinations. */
+    private var indiceProximoWaypoint = 0
+
     private val solicitarPermissaoLocalizacao =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedida ->
             if (concedida) {
@@ -300,6 +306,7 @@ class NavegacaoViagemActivity : BaseActivity() {
 
                         Log.d(TAG_DEBUG, "onArrival: ordem=$ordem encontrada, exibindo painel.")
                         runOnUiThread { viewModel.exibirPainelParaOrdem(ordem) }
+                        viewModel.registrarChegadaParaOrdem(ordem)
                     }
                 }
                 arrivalListener = listener
@@ -387,6 +394,44 @@ class NavegacaoViagemActivity : BaseActivity() {
         }
     }
 
+    /** Ordem do waypoint que o SDK ainda não "consumiu" — não necessariamente
+     * o que ele já chegou fisicamente perto, só o próximo da fila que ainda
+     * não recebeu um continueToNextDestination(). */
+    private fun ordemAtualDoSdk(): Int? =
+        ordemPorTituloWaypoint.values.toList().getOrNull(indiceProximoWaypoint)
+
+    private fun avancarWaypointSdk() {
+        Log.d(TAG_DEBUG, "continueToNextDestination: chamando (ordem=${ordemAtualDoSdk()}).")
+        navigator?.continueToNextDestination()
+        indiceProximoWaypoint++
+    }
+
+    /** Libera a navegação pra próxima parada quando o alvo atual do SDK fica
+     * resolvido sem o motorista ter chegado fisicamente lá — ex.: falta
+     * avisada aplicada numa viagem já em andamento
+     * (ViagemRepository.aplicarAusenciaNaParadaAtiva). Sem isso, o SDK
+     * continuaria guiando fisicamente até um ponto que não tem mais ninguém
+     * pra embarcar/desembarcar. */
+    private fun avancarSeAlvoAtualResolvido(paradas: List<ParadaViagemEntity>) {
+        val ordemAtual = ordemAtualDoSdk() ?: return
+        val grupo = paradas.filter { it.ordem == ordemAtual }
+        if (grupo.isEmpty()) return
+
+        val aindaPendente = grupo.any {
+            it.status == ViagemRepository.PARADA_AGUARDANDO ||
+                it.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
+        }
+        if (aindaPendente) return
+
+        if (viewModel.ordemPainelAtivo.value == ordemAtual) {
+            // Card aberto pra esse grupo (motorista já chegou lá) — fecha e
+            // deixa o coletor de ordemPainelAtivo chamar avancarWaypointSdk().
+            viewModel.ocultarPainel()
+        } else {
+            avancarWaypointSdk()
+        }
+    }
+
     // =========================================================
     // ESTADO DA TELA (ViewModel)
     // =========================================================
@@ -401,6 +446,7 @@ class NavegacaoViagemActivity : BaseActivity() {
                     viewModel.paradas.collect { paradas ->
                         montarWaypointsEIniciarGuiaSePossivel(paradas)
                         progressoAdapter.submitLista(paradas)
+                        avancarSeAlvoAtualResolvido(paradas)
                     }
                 }
                 launch {
@@ -422,8 +468,7 @@ class NavegacaoViagemActivity : BaseActivity() {
                             // (inclusive no simulador), mas o SDK nunca troca o
                             // alvo de detecção de chegada pro próximo waypoint.
                             if (ordemCardAnterior != null) {
-                                Log.d(TAG_DEBUG, "continueToNextDestination: chamando.")
-                                navigator?.continueToNextDestination()
+                                avancarWaypointSdk()
                             }
                         }
                         ordemCardAnterior = ordem

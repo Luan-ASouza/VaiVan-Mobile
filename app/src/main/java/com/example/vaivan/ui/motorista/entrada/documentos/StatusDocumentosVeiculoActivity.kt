@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
@@ -30,6 +31,18 @@ class StatusDocumentosVeiculoActivity : AppCompatActivity() {
         val veiculoId = intent.getStringExtra("veiculoId") ?: return
 
         documentoRepository.iniciarSincronizacao()
+
+        findViewById<SwipeRefreshLayout>(R.id.swipeRefreshStatusDocumentosVeiculo).let { swipe ->
+            swipe.setOnRefreshListener {
+                lifecycleScope.launch {
+                    try {
+                        documentoRepository.sincronizarUmaVez()
+                    } finally {
+                        swipe.isRefreshing = false
+                    }
+                }
+            }
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

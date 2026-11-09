@@ -1,0 +1,23 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "viagens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "direcao", "order": "ASCENDING" },
+        { "fieldPath": "rotaId", "order": "ASCENDING" },
+        { "fieldPath": "iniciadaEm", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "viagens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "direcao", "order": "ASCENDING" },
+        { "fieldPath": "rotaId", "order": "ASCENDING" },
+        { "fieldPath": "iniciadaEm", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

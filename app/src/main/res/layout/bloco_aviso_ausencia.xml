@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Botão (visível quando não há aviso ativo pra esse passageiro/rota e
+         ainda dá pra avisar falta pra pelo menos uma direção hoje) -->
+    <LinearLayout
+        android:id="@+id/containerBotoesAvisoAusencia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMarcarFalta"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="Marcar falta"
+            android:textAllCaps="false"
+            android:textColor="@color/status_danger"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@android:color/transparent"
+            app:cornerRadius="16dp"
+            app:strokeColor="@color/status_danger"
+            app:strokeWidth="1dp"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+    <!-- Sem ação disponível hoje (viagens de hoje já em andamento/terminadas
+         nas duas direções) -->
+    <LinearLayout
+        android:id="@+id/containerSemAcaoAvisoAusencia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_card_rounded"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/txtSemAcaoAvisoAusencia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="As viagens de hoje já estão em andamento ou terminaram — não é possível avisar falta agora."
+            android:textColor="@color/light_gray"
+            android:textSize="12sp"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+    <!-- Status (visível quando já existe um aviso ativo) -->
+    <LinearLayout
+        android:id="@+id/containerStatusAvisoAusencia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_card_rounded"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/txtStatusAvisoAusencia"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/dark_gray"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="Falta avisada hoje" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelarAvisoAusencia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingHorizontal="12dp"
+            android:text="Cancelar"
+            android:textAllCaps="false"
+            android:textColor="@color/status_danger"
+            android:textSize="12sp"
+            app:backgroundTint="@android:color/transparent"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+</merge>

@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
@@ -25,7 +26,9 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.example.vaivan.data.local.entities.AvisoAusenciaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
+import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
@@ -62,6 +65,9 @@ class RotaDetalheActivity : BaseActivity() {
     private var iniciandoViagem = false
     private lateinit var containerSolicitacoesDetalhe: LinearLayout
     private lateinit var txtSemSolicitacoesDetalhe: TextView
+    private lateinit var containerSecaoAvisosAusenciaDetalhe: View
+    private lateinit var containerAvisosAusenciaDetalhe: LinearLayout
+    private lateinit var swipeRefreshRotaDetalhe: SwipeRefreshLayout
     private lateinit var txtAlunosConfirmadosDetalhe: TextView
 
     // Novos campos do visual
@@ -115,17 +121,21 @@ class RotaDetalheActivity : BaseActivity() {
                     eventoViagemDao = db.eventoViagemDao()
                 )
 
+                val avisoAusenciaRepository = AvisoAusenciaRepository(db.avisoAusenciaDao())
+
                 val iniciarViagemUseCase = IniciarViagemUseCase(
                     rotaRepository = rotaRepository,
                     passageiroRepository = PassageiroRepository(db.passageiroDao()),
-                    viagemRepository = viagemRepository
+                    viagemRepository = viagemRepository,
+                    avisoAusenciaRepository = avisoAusenciaRepository
                 )
 
                 RotaDetalheViewModel(
                     rotaRepository = rotaRepository,
                     solicitacaoRepository = solicitacaoRepository,
                     aceitarSolicitacaoUseCase = aceitarSolicitacaoUseCase,
-                    iniciarViagemUseCase = iniciarViagemUseCase
+                    iniciarViagemUseCase = iniciarViagemUseCase,
+                    avisoAusenciaRepository = avisoAusenciaRepository
                 )
             }
         }
@@ -185,6 +195,25 @@ class RotaDetalheActivity : BaseActivity() {
             findViewById(
                 R.id.containerSolicitacoesDetalhe
             )
+
+        containerSecaoAvisosAusenciaDetalhe = findViewById(R.id.containerSecaoAvisosAusenciaDetalhe)
+        containerAvisosAusenciaDetalhe = findViewById(R.id.containerAvisosAusenciaDetalhe)
+
+        swipeRefreshRotaDetalhe = findViewById(R.id.swipeRefreshRotaDetalhe)
+        swipeRefreshRotaDetalhe.setOnRefreshListener {
+            val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
+            if (motoristaId == null) {
+                swipeRefreshRotaDetalhe.isRefreshing = false
+            } else {
+                lifecycleScope.launch {
+                    try {
+                        viewModel.atualizarTudo(rotaId, motoristaId)
+                    } finally {
+                        swipeRefreshRotaDetalhe.isRefreshing = false
+                    }
+                }
+            }
+        }
 
         txtSemSolicitacoesDetalhe =
             findViewById(
@@ -269,6 +298,7 @@ class RotaDetalheActivity : BaseActivity() {
 
         observarRota()
         observarSolicitacoes()
+        observarAvisosAusencia()
         observarParadas()
 
         aplicarGapsDeSistema()
@@ -731,6 +761,55 @@ class RotaDetalheActivity : BaseActivity() {
                 )
         }
     }
+
+    // ---------------------------------------------------------
+    // AVISOS DE AUSÊNCIA (responsável avisou com antecedência)
+    // ---------------------------------------------------------
+
+    private fun observarAvisosAusencia() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
+                    ?: return@repeatOnLifecycle
+
+                viewModel.observarAvisosAusencia(motoristaId).collect { todos ->
+                    renderizarAvisosAusencia(todos.filter { it.rotaId == rotaId })
+                }
+            }
+        }
+    }
+
+    /** Só leitura — é um aviso, não uma solicitação pra aceitar/recusar. A
+     * exclusão da parada já aconteceu automaticamente em IniciarViagemUseCase. */
+    private fun renderizarAvisosAusencia(avisos: List<AvisoAusenciaEntity>) {
+        containerAvisosAusenciaDetalhe.removeAllViews()
+
+        containerSecaoAvisosAusenciaDetalhe.visibility =
+            if (avisos.isEmpty()) View.GONE else View.VISIBLE
+
+        avisos.forEach { aviso ->
+            val descricao = when (aviso.tipo) {
+                AvisoAusenciaRepository.TIPO_DIA_INTEIRO -> "não vai usar o transporte hoje (ida e volta)"
+                AvisoAusenciaRepository.TIPO_SOMENTE_VOLTA -> "não vai usar o transporte na volta hoje"
+                else -> "não vai usar o transporte na ida hoje"
+            }
+
+            val linha = TextView(this).apply {
+                text = "${aviso.nomePassageiro} $descricao"
+                setTextColor(ContextCompat.getColor(this@RotaDetalheActivity, R.color.dark_gray))
+                setBackgroundResource(R.drawable.bg_card_rounded)
+                setPadding(16.dpParaPx(), 12.dpParaPx(), 16.dpParaPx(), 12.dpParaPx())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = 8.dpParaPx() }
+            }
+
+            containerAvisosAusenciaDetalhe.addView(linha)
+        }
+    }
+
+    private fun Int.dpParaPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     // ---------------------------------------------------------
     // ALUNOS CONFIRMADOS

@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.vaivan.R
 import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.data.local.VaivanDatabase
@@ -29,6 +30,7 @@ class ListaVeiculosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemVeiculos: TextView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private val viewModel: ListaVeiculosViewModel by viewModels {
         viewModelFactory {
@@ -71,6 +73,17 @@ class ListaVeiculosFragment : Fragment() {
 
         txtSemVeiculos =
             view.findViewById(R.id.txtSemVeiculos)
+
+        swipeRefresh = view.findViewById(R.id.swipeRefreshVeiculos)
+        swipeRefresh.setOnRefreshListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    viewModel.atualizarVeiculos()
+                } finally {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+        }
 
         btnNovoVeiculo.setOnClickListener {
             startActivity(
