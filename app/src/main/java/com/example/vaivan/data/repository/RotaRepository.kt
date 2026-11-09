@@ -209,7 +209,9 @@ class RotaRepository(
         capacidadeTotal: Int,
         escolaId: String = "",
         escolaNome: String = "",
-        bairrosAtendidos: List<String> = emptyList()
+        bairrosAtendidos: List<String> = emptyList(),
+        valorMensalCentavos: Long = 0L,
+        diaVencimento: Int = 10
     ): RotaEntity = withContext(Dispatchers.IO) {
 
         val documentReference = collectionRotas.document()
@@ -271,6 +273,8 @@ class RotaRepository(
             bairrosAtendidos = bairrosAtendidos,
             capacidadeTotal = capacidadeTotal,
             vagasOcupadas = 0,
+            valorMensalCentavos = valorMensalCentavos,
+            diaVencimento = diaVencimento,
             distanciaMetros = resultado.distanciaMetros,
             duracaoSegundos = resultado.duracaoSegundos,
             duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
@@ -308,7 +312,10 @@ class RotaRepository(
         capacidadeTotal: Int,
         escolaId: String = "",
         escolaNome: String = "",
-        bairrosAtendidos: List<String> = emptyList()
+        bairrosAtendidos: List<String> = emptyList(),
+        // null = mantém o que a rota já tem
+        valorMensalCentavos: Long? = null,
+        diaVencimento: Int? = null
     ): RotaEntity = withContext(Dispatchers.IO) {
 
         val atual = consultarRota(rotaId)
@@ -374,6 +381,8 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
+                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
+                diaVencimento = diaVencimento ?: atual.diaVencimento,
                 distanciaMetros = resultado.distanciaMetros,
                 duracaoSegundos = resultado.duracaoSegundos,
                 duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
@@ -393,6 +402,8 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
+                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
+                diaVencimento = diaVencimento ?: atual.diaVencimento,
                 lastUpdated = agora
             )
         }

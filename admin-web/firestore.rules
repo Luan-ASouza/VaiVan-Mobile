@@ -258,6 +258,84 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===================================================================
+    // CONTRATOS E MENSALIDADES (responsável → motorista)
+    // ===================================================================
+
+    // Contrato: id = id da solicitação aceita. Só o motorista cria e altera;
+    // as partes (motorista, responsável, passageiro) nunca mudam.
+    match /contratos/{contratoId} {
+      function ehParteDoContrato(d) {
+        return request.auth.uid == d.motoristaId || request.auth.uid == d.responsavelId;
+      }
+
+      // "get" também precisa funcionar quando o contrato ainda não existe
+      allow get: if logado() &&
+        (resource == null || ehParteDoContrato(resource.data) || ehAdmin());
+      allow list: if logado() && (ehParteDoContrato(resource.data) || ehAdmin());
+
+      allow create: if logado() &&
+        request.resource.data.motoristaId == request.auth.uid &&
+        request.resource.data.status == 'ATIVO' &&
+        exists(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)) &&
+        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status == 'ACEITA' &&
+        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.motoristaId == request.auth.uid &&
+        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.responsavelId == request.resource.data.responsavelId &&
+        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.passageiroId == request.resource.data.passageiroId;
+
+      allow update: if logado() &&
+        resource.data.motoristaId == request.auth.uid &&
+        request.resource.data.diff(resource.data).unchangedKeys()
+          .hasAll(['motoristaId', 'responsavelId', 'passageiroId', 'rotaId', 'inicioEm']);
+
+      allow delete: if false;
+    }
+
+    // Mensalidade: id = "<contratoId>_<AAAA-MM>". Qualquer uma das partes pode
+    // criar (quem abrir o app primeiro), mas sempre PENDENTE e com o valor do
+    // contrato. Valor, vencimento e partes nunca mudam depois.
+    match /mensalidades/{mensalidadeId} {
+      function contrato(id) {
+        return get(/databases/$(database)/documents/contratos/$(id)).data;
+      }
+      function ehParteDaMensalidade(d) {
+        return request.auth.uid == d.motoristaId || request.auth.uid == d.responsavelId;
+      }
+      function confereComContrato(d) {
+        return exists(/databases/$(database)/documents/contratos/$(d.contratoId)) &&
+          d.motoristaId == contrato(d.contratoId).motoristaId &&
+          d.responsavelId == contrato(d.contratoId).responsavelId &&
+          d.valorCentavos == contrato(d.contratoId).valorMensalCentavos;
+      }
+      function camposFixosMantidos() {
+        return request.resource.data.diff(resource.data).unchangedKeys()
+          .hasAll(['contratoId', 'motoristaId', 'responsavelId', 'competencia', 'valorCentavos', 'vencimento']);
+      }
+
+      allow get: if logado() &&
+        (resource == null || ehParteDaMensalidade(resource.data) || ehAdmin());
+      allow list: if logado() && (ehParteDaMensalidade(resource.data) || ehAdmin());
+
+      allow create: if logado() &&
+        ehParteDaMensalidade(request.resource.data) &&
+        mensalidadeId == request.resource.data.contratoId + '_' + request.resource.data.competencia &&
+        request.resource.data.status == 'PENDENTE' &&
+        confereComContrato(request.resource.data);
+
+      allow update: if logado() && camposFixosMantidos() && (
+        // Motorista: registra/desfaz recebimento e cancela (ao encerrar contrato).
+        request.auth.uid == resource.data.motoristaId ||
+        // Responsável: só paga pelo app (SIMULADO), de PENDENTE para PAGA.
+        (request.auth.uid == resource.data.responsavelId &&
+         resource.data.status == 'PENDENTE' &&
+         request.resource.data.status == 'PAGA' &&
+         request.resource.data.forma == 'PIX_APP' &&
+         request.resource.data.registradoPor == 'RESPONSAVEL')
+      );
+
+      allow delete: if false; // histórico financeiro não se apaga
+    }
+
     // Catálogo de planos: todos leem, só o admin altera.
     match /planos/{planoId} {
       allow read: if logado();

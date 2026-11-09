@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
@@ -267,6 +268,10 @@ class ResultadosRotasActivity : BaseActivity() {
 
         card.findViewById<TextView>(R.id.txtDistanciaEmbarqueResultado).text =
             formatarDistancia(item.distanciaEmbarqueMetros)
+
+        card.findViewById<TextView>(R.id.txtValorResultado).text =
+            if (rota.valorMensalCentavos > 0) AssinaturaUi.formatarValor(rota.valorMensalCentavos)
+            else "A combinar"
 
         card.findViewById<TextView>(R.id.txtEscolaResultado).text =
             "Escola: ${rota.escolaNome.ifBlank { rota.destinoNome }}"

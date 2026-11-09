@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 16,
-    "identityHash": "517a52b476562e765ce9d2ff5f8c344a",
+    "identityHash": "8a08cf540bd8d6d8797179700a465d9d",
     "entities": [
       {
         "tableName": "usuarios",
@@ -99,18 +99,6 @@
           {
             "fieldPath": "emailConfirmado",
             "columnName": "emailConfirmado",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "aceitouTermos",
-            "columnName": "aceitouTermos",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "aceitaComunicacoes",
-            "columnName": "aceitaComunicacoes",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -685,6 +673,18 @@
           {
             "fieldPath": "vagasOcupadas",
             "columnName": "vagasOcupadas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "valorMensalCentavos",
+            "columnName": "valorMensalCentavos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "diaVencimento",
+            "columnName": "diaVencimento",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1529,7 +1529,6 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '517a52b476562e765ce9d2ff5f8c344a')"
     ]
   }
 }

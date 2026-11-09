@@ -9,7 +9,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.vaivan.R
-import com.example.vaivan.ui.comum.chat.ChatActivity
 import com.example.vaivan.data.repository.FirebaseAuthRepository
 import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -28,7 +27,6 @@ class LoginActivity : AppCompatActivity() {
         // Botões principais da tela de fundo
         val btnEntrar = findViewById<Button>(R.id.btnEntrar)
         val btnCadastrar = findViewById<Button>(R.id.btnCadastrar)
-        val btnTestarChat = findViewById<Button>(R.id.btnTestarChat)
 
         // Componentes do painel deslizante (Bottom Sheet)
         val edtEmail = findViewById<EditText>(R.id.edtEmail)
@@ -106,14 +104,6 @@ class LoginActivity : AppCompatActivity() {
         // Ir para a tela de Cadastro
         btnCadastrar.setOnClickListener {
             startActivity(Intent(this, CadastroActivity::class.java))
-        }
-
-        // ===== BOTÃO TEMPORÁRIO — testar tela de chat (remover depois) =====
-        btnTestarChat.setOnClickListener {
-            val intentChat = Intent(this, ChatActivity::class.java)
-            intentChat.putExtra("outroUsuarioId", "kjqVvTT9n4NSfoeQiqJjUxgAhjJ3")
-            intentChat.putExtra("nomeContato", "Motorista Teste")
-            startActivity(intentChat)
         }
 
     }

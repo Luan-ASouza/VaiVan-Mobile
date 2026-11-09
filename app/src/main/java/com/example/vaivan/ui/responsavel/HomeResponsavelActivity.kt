@@ -37,6 +37,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.ui.responsavel.mensalidades.MensalidadesResponsavelActivity
 
 class HomeResponsavelActivity : BaseActivity() {
 
@@ -185,6 +186,11 @@ class HomeResponsavelActivity : BaseActivity() {
         findViewById<View>(R.id.btnDrawerTransportes).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaRotasFragment())
+        }
+
+        findViewById<View>(R.id.btnDrawerMensalidades).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, MensalidadesResponsavelActivity::class.java))
         }
 
         findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
