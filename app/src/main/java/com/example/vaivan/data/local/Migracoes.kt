@@ -47,5 +47,13 @@ object Migracoes {
         }
     }
 
-    val TODAS: Array<Migration> = arrayOf(DE_14_PARA_15)
+    /** Rotas passam a ter o valor da mensalidade e o dia de vencimento. */
+    val DE_15_PARA_16 = object : Migration(15, 16) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `rotas` ADD COLUMN `valorMensalCentavos` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `rotas` ADD COLUMN `diaVencimento` INTEGER NOT NULL DEFAULT 10")
+        }
+    }
+
+    val TODAS: Array<Migration> = arrayOf(DE_14_PARA_15, DE_15_PARA_16)
 }

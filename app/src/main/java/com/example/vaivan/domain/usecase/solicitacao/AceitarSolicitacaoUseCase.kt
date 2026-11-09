@@ -1,7 +1,9 @@
 package com.example.vaivan.domain.usecase.solicitacao
 
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import android.util.Log
 import com.example.vaivan.data.repository.AssinaturaRepository
+import com.example.vaivan.data.repository.MensalidadeRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
@@ -14,13 +16,16 @@ import kotlinx.coroutines.withContext
  *  2. recalcula a rota com o novo aluno (sem gravar nada ainda);
  *  3. grava TUDO de uma vez, numa transação: rota, paradas e solicitação "ACEITA".
  *     Se a solicitação já foi respondida, se não há mais vaga ou se a rota mudou no meio
- *     do caminho, nada é gravado e o motorista recebe uma mensagem clara.
+ *     do caminho, nada é gravado e o motorista recebe uma mensagem clara;
+ *  4. guarda a cópia local;
+ *  5. cria o contrato de mensalidade (valor e vencimento copiados da rota).
  */
 class AceitarSolicitacaoUseCase(
     private val solicitacaoInclusaoRepository: SolicitacaoInclusaoRepository,
     private val recalcularRotaUseCase: RecalcularRotaUseCase,
     private val rotaRepository: RotaRepository,
-    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository()
+    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(),
+    private val mensalidadeRepository: MensalidadeRepository = MensalidadeRepository()
 ) {
 
     suspend operator fun invoke(
@@ -57,5 +62,13 @@ class AceitarSolicitacaoUseCase(
 
         // 4. Cópia local da solicitação
         solicitacaoInclusaoRepository.registrarAceitaLocalmente(solicitacao, respondidaEm)
+
+        // 5. Contrato de mensalidade. Se falhar (ex.: sem internet neste instante), o aceite
+        //    continua valendo: a tela de Pagamentos cria o contrato que estiver faltando.
+        try {
+            mensalidadeRepository.garantirContrato(solicitacao.id, inicioEm = respondidaEm)
+        } catch (e: Exception) {
+            Log.w("AceitarSolicitacao", "Contrato será criado depois pela tela de pagamentos", e)
+        }
     }
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootPagamentos"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -57,6 +58,14 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
+                <ProgressBar
+                    android:id="@+id/progressPagamentos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="24dp"
+                    android:indeterminateTint="@color/dark_gray" />
+
                 <!-- CONTEÚDO (somente com assinatura em dia) -->
                 <LinearLayout
                     android:id="@+id/conteudoPagamentos"
@@ -65,43 +74,165 @@
                     android:orientation="vertical"
                     android:visibility="gone">
 
-                    <TextView
+                    <!-- RESUMO DO MÊS -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_withe_round_10"
-                        android:padding="16dp"
-                        android:text="Total recebido: R$ 0,00"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_withe_round_10"
-                        android:padding="16dp"
-                        android:text="A receber: R$ 0,00"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/txtLabelRecebido"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/medium_gray"
+                            android:textSize="13sp"
+                            tools:text="Recebido em novembro" />
 
-                    <TextView
+                        <TextView
+                            android:id="@+id/txtRecebidoMes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/dark_gray"
+                            android:textSize="26sp"
+                            android:textStyle="bold"
+                            tools:text="R$ 3.200,00" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="A receber no mês"
+                                    android:textColor="@color/medium_gray"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/txtAReceberMes"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/dark_gray"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="R$ 800,00" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Em atraso"
+                                    android:textColor="@color/medium_gray"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/txtEmAtraso"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/red"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="R$ 400,00" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txtContagens"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:textColor="@color/medium_gray"
+                            android:textSize="13sp"
+                            tools:text="8 em dia · 1 atrasado · 1 inadimplente" />
+                    </LinearLayout>
+
+                    <!-- FILTRO -->
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/grupoFiltroPagamentos"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="18dp"
-                        android:text="Repasses recentes"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        app:checkedButton="@id/btnFiltroTodos"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFiltroTodos"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:text="Todos"
+                            android:textAllCaps="false"
+                            android:textColor="@color/button_toggle_text"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/button_toggle_background" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFiltroEmDia"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:text="Em dia"
+                            android:textAllCaps="false"
+                            android:textColor="@color/button_toggle_text"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/button_toggle_background" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFiltroPendentes"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:text="Pendentes"
+                            android:textAllCaps="false"
+                            android:textColor="@color/button_toggle_text"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/button_toggle_background" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Nenhum repasse registrado. O recebimento das mensalidades dos responsáveis pelo aplicativo será habilitado em uma próxima versão."
+                        android:layout_marginTop="14dp"
+                        android:text="Passageiros"
+                        android:textColor="@color/dark_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/containerContratos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/txtVazioPagamentos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:textColor="@color/medium_gray"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:visibility="gone"
+                        tools:text="Nenhum passageiro por aqui." />
                 </LinearLayout>
 
                 <!-- BLOQUEIO (assinatura sem condição de operar) -->
