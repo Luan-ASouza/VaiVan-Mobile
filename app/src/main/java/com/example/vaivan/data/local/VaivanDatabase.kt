@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.example.vaivan.data.local.dao.AvisoAusenciaDao
 import com.example.vaivan.data.local.dao.DocumentoDao
 import com.example.vaivan.data.local.dao.EventoViagemDao
 import com.example.vaivan.data.local.dao.LocalizacaoViagemDao
@@ -18,6 +19,7 @@ import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.dao.ViagemDao
+import com.example.vaivan.data.local.entities.AvisoAusenciaEntity
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.EventoViagemEntity
 import com.example.vaivan.data.local.entities.LocalizacaoViagemEntity
@@ -46,9 +48,10 @@ import com.example.vaivan.data.local.entities.ViagemEntity
         ViagemEntity::class,
         ParadaViagemEntity::class,
         EventoViagemEntity::class,
-        LocalizacaoViagemEntity::class
+        LocalizacaoViagemEntity::class,
+        AvisoAusenciaEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -67,6 +70,7 @@ abstract class VaivanDatabase : RoomDatabase() {
     abstract fun paradaViagemDao(): ParadaViagemDao
     abstract fun eventoViagemDao(): EventoViagemDao
     abstract fun localizacaoViagemDao(): LocalizacaoViagemDao
+    abstract fun avisoAusenciaDao(): AvisoAusenciaDao
 
     companion object {
         @Volatile

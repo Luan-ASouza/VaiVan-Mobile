@@ -26,6 +26,14 @@ class MinhasRotasViewModel(
         }
     }
 
+    /** Pull-to-refresh: força uma releitura pontual, sem depender só do
+     * listener contínuo (que pode não estar ativo nesse momento). */
+    suspend fun atualizarRotas() {
+        if (motoristaId != null) {
+            rotaRepository.sincronizarRotasDoMotoristaUmaVez(motoristaId)
+        }
+    }
+
     val rotas: StateFlow<List<RotaEntity>> =
         if (motoristaId != null) {
 

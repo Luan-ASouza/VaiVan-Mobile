@@ -12,6 +12,7 @@ import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.core.util.SeletorDeFotoHelper
 import com.example.vaivan.data.local.VaivanDatabase
@@ -585,11 +586,13 @@ class AdicionarPassageiroActivity : BaseActivity() {
                 val idSalvo = repository.salvarPassageiro(
                     passageiroParaSalvar
                 )
+                val passageiroSalvo = passageiroParaSalvar.copy(id = idSalvo)
 
                 if (novaFotoUri != null) {
-                    repository.atualizarFoto(uid, idSalvo, novaFotoUri!!)
+                    val fotoComprimida = ImagemUtil.comprimirImagem(this@AdicionarPassageiroActivity, novaFotoUri!!)
+                    repository.atualizarFoto(passageiroSalvo, fotoComprimida)
                 } else if (fotoRemovida) {
-                    repository.removerFoto(uid, idSalvo)
+                    repository.removerFoto(passageiroSalvo)
                 }
 
                 Toast.makeText(

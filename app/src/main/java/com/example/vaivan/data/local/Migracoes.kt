@@ -1,6 +1,7 @@
 package com.example.vaivan.data.local
 
 import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * Migrações reais do banco local (Room).
@@ -29,6 +30,22 @@ import androidx.room.migration.Migration
  */
 object Migracoes {
 
-    /** Ainda vazia: a versão 14 é o ponto de partida. */
-    val TODAS: Array<Migration> = arrayOf()
+    /** Tabela nova: avisos de ausência que o responsável registra com antecedência. */
+    val DE_14_PARA_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `avisos_ausencia` (" +
+                    "`id` TEXT NOT NULL, `rotaId` TEXT NOT NULL, `passageiroId` TEXT NOT NULL, " +
+                    "`nomePassageiro` TEXT NOT NULL, `responsavelId` TEXT NOT NULL, `motoristaId` TEXT NOT NULL, " +
+                    "`tipo` TEXT NOT NULL, `pendenteIda` INTEGER NOT NULL, `pendenteVolta` INTEGER NOT NULL, " +
+                    "`criadoEm` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_avisos_ausencia_rotaId` ON `avisos_ausencia` (`rotaId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_avisos_ausencia_passageiroId` ON `avisos_ausencia` (`passageiroId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_avisos_ausencia_responsavelId` ON `avisos_ausencia` (`responsavelId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_avisos_ausencia_motoristaId` ON `avisos_ausencia` (`motoristaId`)")
+        }
+    }
+
+    val TODAS: Array<Migration> = arrayOf(DE_14_PARA_15)
 }

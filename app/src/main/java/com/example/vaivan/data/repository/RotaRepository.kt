@@ -180,6 +180,13 @@ class RotaRepository(
         rotaDao.upsertAll(rotas)
     }
 
+    /** Mesma ideia de [sincronizarRotasDoMotoristaUmaVez], pras paradas de uma
+     * rota específica — usado pelo pull-to-refresh da tela de detalhe, que
+     * não tem (e não precisa manter) um listener próprio o tempo todo. */
+    suspend fun sincronizarParadasUmaVez(rotaId: String) {
+        paradaRotaDao.upsertAll(consultarParadas(rotaId))
+    }
+
     // =========================================================
     // CRIAR ROTA
     // =========================================================

@@ -8,14 +8,17 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 
 /**
  * Porta de entrada para viagens (execuções de uma rota). Segue o mesmo padrão
@@ -36,8 +39,8 @@ class ViagemRepository(
     private val collectionParadas = firestore.collection("paradas_viagem")
     private val collectionEventos = firestore.collection("eventos_viagem")
 
-    private var listenerViagem: ListenerRegistration? = null
-    private var listenerParadas: ListenerRegistration? = null
+    private val listenersPorViagem =
+        mutableMapOf<String, Triple<ListenerRegistration, ListenerRegistration, ListenerRegistration>>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
@@ -101,6 +104,116 @@ class ViagemRepository(
         }
     }
 
+    /** Mesma ideia de [consultarViagemAtivaParaRota], mais específica por
+     * direção — usada quando um aviso de ausência precisa ser aplicado numa
+     * viagem que já está em andamento (ver RegistrarAvisoAusenciaUseCase). */
+    suspend fun consultarViagemAtivaParaRotaEDirecao(rotaId: String, direcao: String): ViagemEntity? {
+        val snapshot = collectionViagens
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("direcao", direcao)
+            .whereIn("status", listOf(STATUS_EM_ANDAMENTO, STATUS_PAUSADA))
+            .limit(1)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let { documento ->
+            documento.toObject(ViagemEntity::class.java)?.copy(id = documento.id)
+        }
+    }
+
+    /** Aplica retroativamente a falta avisada numa viagem já em andamento —
+     * só muda as paradas desse passageiro que ainda estiverem pendentes
+     * (o motorista ainda não passou por elas); se já tiver passado, não há
+     * nada pra mudar e quem chamou consome o aviso do mesmo jeito. Nunca
+     * toca na navegação/waypoints ao vivo — só o status, visível na próxima
+     * atualização do painel do motorista e da tela do responsável.
+     *
+     * Importante: se o EMBARQUE desse passageiro já não estiver mais
+     * AGUARDANDO (ele já subiu na van, ou já foi resolvido por outro
+     * caminho), a função não altera NADA — nem a parada de desembarque
+     * (ex.: a da escola). Sem essa checagem, marcar falta com o aluno já a
+     * bordo resolvia a parada de desembarque dele prematuramente, o que
+     * fazia NavegacaoViagemActivity.avancarSeAlvoAtualResolvido liberar o
+     * SDK pro próximo destino antes da chegada física — o ponto final
+     * "desaparecia" da navegação em andamento. */
+    suspend fun aplicarAusenciaNaParadaAtiva(viagemId: String, passageiroId: String, motivo: String) {
+        val agora = System.currentTimeMillis()
+
+        val paradasDoPassageiro = collectionParadas
+            .whereEqualTo("viagemId", viagemId)
+            .whereEqualTo("passageiroId", passageiroId)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { documento -> documento.toObject(ParadaViagemEntity::class.java)?.copy(id = documento.id) }
+
+        val embarque = paradasDoPassageiro.firstOrNull { it.tipo == TIPO_EMBARQUE } ?: return
+        if (embarque.status != PARADA_AGUARDANDO) return
+
+        val paradas = paradasDoPassageiro
+            .filter { it.status == PARADA_AGUARDANDO || it.status == PARADA_AGUARDANDO_DESEMBARQUE }
+
+        paradas.forEach { parada ->
+            val novoStatus = if (parada.tipo == TIPO_EMBARQUE) PARADA_NAO_EMBARCOU else PARADA_DESEMBARCADO
+            val atualizada = parada.copy(status = novoStatus, motivoAusencia = motivo, lastUpdated = agora)
+
+            collectionParadas.document(parada.id).set(atualizada).await()
+            paradaViagemDao.upsert(atualizada)
+        }
+    }
+
+    /** Diz se ainda faz sentido oferecer a opção "marcar falta" pra essa
+     * rota+direção AGORA — false só quando existe uma viagem de hoje
+     * ATIVA (em andamento/pausada) e o passageiro já embarcou nela (a falta
+     * não teria efeito nenhum nessa viagem, ver aplicarAusenciaNaParadaAtiva
+     * acima). Quando a viagem de hoje já terminou (ou nem começou, ou foi
+     * cancelada), marcar falta agora é válido — não tem nada pra aplicar
+     * hoje, então o aviso só fica pendente pra próxima viagem dessa direção
+     * (pode ser já amanhã). Usado pela UI pra desabilitar a opção
+     * correspondente antes mesmo de o responsável tentar marcar. */
+    suspend fun aindaDaParaAvisarFaltaHoje(rotaId: String, passageiroId: String, direcao: String): Boolean {
+        val viagemHoje = consultarUltimaViagemDeHoje(rotaId, direcao) ?: return true
+        if (viagemHoje.status != STATUS_EM_ANDAMENTO && viagemHoje.status != STATUS_PAUSADA) return true
+
+        val embarque = collectionParadas
+            .whereEqualTo("viagemId", viagemHoje.id)
+            .whereEqualTo("passageiroId", passageiroId)
+            .whereEqualTo("tipo", TIPO_EMBARQUE)
+            .limit(1)
+            .get()
+            .await()
+            .documents
+            .firstOrNull()
+            ?.toObject(ParadaViagemEntity::class.java)
+
+        return embarque?.status == PARADA_AGUARDANDO
+    }
+
+    /** Última viagem de hoje pra essa rota+direção (qualquer status) — usada
+     * pra decidir se ainda dá pra avisar falta, e como base pro sincronizador
+     * ao vivo [iniciarSincronizacaoDoDia]/[observarUltimaViagemDeHoje]. */
+    suspend fun consultarUltimaViagemDeHoje(rotaId: String, direcao: String): ViagemEntity? {
+        val snapshot = collectionViagens
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("direcao", direcao)
+            .whereGreaterThanOrEqualTo("iniciadaEm", inicioDoDiaEmMillis())
+            .orderBy("iniciadaEm", Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .await()
+
+        return snapshot.documents.firstOrNull()?.let { documento ->
+            documento.toObject(ViagemEntity::class.java)?.copy(id = documento.id)
+        }
+    }
+
+    private fun inicioDoDiaEmMillis(): Long = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
     fun observarParadas(viagemId: String): Flow<List<ParadaViagemEntity>> =
         paradaViagemDao.getByViagem(viagemId)
 
@@ -108,13 +221,15 @@ class ViagemRepository(
         eventoViagemDao.getByViagem(viagemId)
 
     // =========================================================
-    // SINCRONIZAÇÃO (uma viagem por vez — a que está ativa)
+    // SINCRONIZAÇÃO (várias viagens em paralelo, uma entrada por viagemId —
+    // ex.: a tela de navegação do motorista, a de acompanhamento do
+    // responsável, e agora também cada card ativo da lista de rotas)
     // =========================================================
 
     fun iniciarSincronizacao(viagemId: String) {
-        pararSincronizacao()
+        if (listenersPorViagem.containsKey(viagemId)) return
 
-        listenerViagem = collectionViagens.document(viagemId)
+        val listenerViagem = collectionViagens.document(viagemId)
             .addSnapshotListener { snapshot, erro ->
                 if (erro != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
 
@@ -123,7 +238,7 @@ class ViagemRepository(
                 }
             }
 
-        listenerParadas = collectionParadas
+        val listenerParadas = collectionParadas
             .whereEqualTo("viagemId", viagemId)
             .addSnapshotListener { snapshot, erro ->
                 if (erro != null || snapshot == null) return@addSnapshotListener
@@ -134,14 +249,64 @@ class ViagemRepository(
 
                 scope.launch { paradaViagemDao.upsertAll(paradas) }
             }
+
+        // Gancho pra notificação push (Etapa 5): mantém o histórico de eventos
+        // sincronizado no Room do responsável também — uma Cloud Function vai
+        // poder observar esses mesmos documentos no Firestore pra disparar o
+        // push, sem precisar de nenhuma mudança aqui quando isso acontecer.
+        val listenerEventos = collectionEventos
+            .whereEqualTo("viagemId", viagemId)
+            .addSnapshotListener { snapshot, erro ->
+                if (erro != null || snapshot == null) return@addSnapshotListener
+
+                val eventos = snapshot.documents.mapNotNull { documento ->
+                    documento.toObject(EventoViagemEntity::class.java)?.copy(id = documento.id)
+                }
+
+                scope.launch { eventoViagemDao.upsertAll(eventos) }
+            }
+
+        listenersPorViagem[viagemId] = Triple(listenerViagem, listenerParadas, listenerEventos)
     }
 
-    fun pararSincronizacao() {
-        listenerViagem?.remove()
-        listenerViagem = null
-        listenerParadas?.remove()
-        listenerParadas = null
+    fun pararSincronizacao(viagemId: String) {
+        listenersPorViagem.remove(viagemId)?.let { (listenerViagem, listenerParadas, listenerEventos) ->
+            listenerViagem.remove()
+            listenerParadas.remove()
+            listenerEventos.remove()
+        }
     }
+
+    /** Sincronizador leve (só o documento da viagem, sem paradas/eventos) pra
+     * descobrir QUAL é a viagem de hoje de uma rota+direção sem precisar
+     * saber o id de antemão — base pra [observarUltimaViagemDeHoje], usado
+     * pela lista de rotas do responsável. Mesmo padrão de
+     * AvisoAusenciaRepository.mirrorarMudancas. */
+    fun iniciarSincronizacaoDoDia(rotaId: String, direcao: String): ListenerRegistration =
+        collectionViagens
+            .whereEqualTo("rotaId", rotaId)
+            .whereEqualTo("direcao", direcao)
+            .whereGreaterThanOrEqualTo("iniciadaEm", inicioDoDiaEmMillis())
+            .addSnapshotListener { snapshot, erro ->
+                if (erro != null || snapshot == null) return@addSnapshotListener
+
+                scope.launch {
+                    for (mudanca in snapshot.documentChanges) {
+                        val documento = mudanca.document
+                        when (mudanca.type) {
+                            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED ->
+                                documento.toObject(ViagemEntity::class.java)
+                                    ?.copy(id = documento.id)
+                                    ?.let { viagemDao.upsert(it) }
+
+                            DocumentChange.Type.REMOVED -> viagemDao.deleteById(documento.id)
+                        }
+                    }
+                }
+            }
+
+    fun observarUltimaViagemDeHoje(rotaId: String, direcao: String): Flow<ViagemEntity?> =
+        viagemDao.getUltimaViagemDoDia(rotaId, direcao, inicioDoDiaEmMillis())
 
     // =========================================================
     // INICIAR VIAGEM
@@ -153,13 +318,34 @@ class ViagemRepository(
      *  - IDA: paradas dos alunos (embarque, na ordem da rota) + escola (desembarque, todos).
      *  - VOLTA: escola (embarque, todos) + paradas dos alunos (desembarque, na ordem da rota).
      */
+    /** Passageiro com falta avisada nasce direto no status terminal
+     * correspondente ao tipo da própria linha (embarque->NAO_EMBARCOU,
+     * desembarque->DESEMBARCADO) — nunca entra em AGUARDANDO/
+     * AGUARDANDO_DESEMBARQUE, então nunca aparece como pendente pro
+     * motorista nem entra nos waypoints da navegação (ver
+     * NavegacaoViagemActivity.montarWaypointsEIniciarGuiaSePossivel). */
+    private fun statusAusenteOu(
+        passageiroId: String,
+        passageirosAusentes: Set<String>,
+        tipo: String,
+        statusPadrao: String
+    ): String {
+        if (passageiroId !in passageirosAusentes) return statusPadrao
+        return if (tipo == TIPO_EMBARQUE) PARADA_NAO_EMBARCOU else PARADA_DESEMBARCADO
+    }
+
+    private fun motivoAusenciaOu(passageiroId: String, passageirosAusentes: Set<String>): String? =
+        if (passageiroId in passageirosAusentes) "Aviso prévio do responsável" else null
+
     suspend fun iniciarViagem(
         rota: RotaEntity,
         paradasRota: List<ParadaRotaEntity>,
         motoristaId: String,
         veiculoId: String?,
         direcao: String,
-        responsavelPorPassageiro: Map<String, String>
+        responsavelPorPassageiro: Map<String, String>,
+        fotoPorPassageiro: Map<String, String?> = emptyMap(),
+        passageirosAusentes: Set<String> = emptySet()
     ): ViagemEntity {
 
         val agora = System.currentTimeMillis()
@@ -180,6 +366,7 @@ class ViagemRepository(
                 viagemId = viagemRef.id,
                 passageiroId = paradaRota.passageiroId,
                 nomePassageiro = paradaRota.nomePassageiro,
+                fotoPassageiroUrl = fotoPorPassageiro[paradaRota.passageiroId],
                 responsavelId = responsavelPorPassageiro[paradaRota.passageiroId].orEmpty(),
                 localId = paradaRota.localId,
                 nomeLocal = paradaRota.nomeLocal,
@@ -188,7 +375,8 @@ class ViagemRepository(
                 longitude = paradaRota.longitude,
                 tipo = tipoParadasAluno,
                 ordem = index,
-                status = statusInicialAluno,
+                status = statusAusenteOu(paradaRota.passageiroId, passageirosAusentes, tipoParadasAluno, statusInicialAluno),
+                motivoAusencia = motivoAusenciaOu(paradaRota.passageiroId, passageirosAusentes),
                 horarioPrevistoMinutos = paradaRota.horarioEstimadoMinutos,
                 horarioEstimadoMinutos = paradaRota.horarioEstimadoMinutos,
                 lastUpdated = agora
@@ -204,6 +392,7 @@ class ViagemRepository(
                 viagemId = viagemRef.id,
                 passageiroId = paradaRota.passageiroId,
                 nomePassageiro = paradaRota.nomePassageiro,
+                fotoPassageiroUrl = fotoPorPassageiro[paradaRota.passageiroId],
                 responsavelId = responsavelPorPassageiro[paradaRota.passageiroId].orEmpty(),
                 localId = "escola",
                 nomeLocal = rota.escolaNome.ifBlank { rota.destinoNome },
@@ -212,7 +401,8 @@ class ViagemRepository(
                 longitude = rota.destinoLongitude,
                 tipo = tipoParadaEscola,
                 ordem = ordemEscola,
-                status = statusInicialEscola,
+                status = statusAusenteOu(paradaRota.passageiroId, passageirosAusentes, tipoParadaEscola, statusInicialEscola),
+                motivoAusencia = motivoAusenciaOu(paradaRota.passageiroId, passageirosAusentes),
                 horarioPrevistoMinutos = duracaoTotalMinutos,
                 horarioEstimadoMinutos = duracaoTotalMinutos,
                 lastUpdated = agora
@@ -358,6 +548,12 @@ class ViagemRepository(
     // =========================================================
     // EVENTOS
     // =========================================================
+
+    /** Chamado pelo responsável (client-side, via proximidade GPS) quando a
+     * van entra no raio do ponto do filho — ver AcompanharViagemActivity. */
+    suspend fun registrarChegada(viagemId: String, paradaViagemId: String) {
+        registrarEvento(viagemId, paradaViagemId, "CHEGADA")
+    }
 
     private suspend fun registrarEvento(viagemId: String, paradaViagemId: String?, tipo: String) {
         val agora = System.currentTimeMillis()

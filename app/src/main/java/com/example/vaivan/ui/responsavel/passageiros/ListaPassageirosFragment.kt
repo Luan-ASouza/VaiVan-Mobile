@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
@@ -32,6 +33,7 @@ class ListaPassageirosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemPassageiros: TextView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private val viewModel: ListaPassageirosViewModel by viewModels {
         viewModelFactory {
@@ -74,6 +76,17 @@ class ListaPassageirosFragment : Fragment() {
     private fun configurarViews(view: View) {
         containerConfirmados = view.findViewById(R.id.containerConfirmados)
         txtSemPassageiros = view.findViewById(R.id.txtSemPassageiros)
+
+        swipeRefresh = view.findViewById(R.id.swipeRefreshPassageiros)
+        swipeRefresh.setOnRefreshListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    viewModel.atualizarPassageiros()
+                } finally {
+                    swipeRefresh.isRefreshing = false
+                }
+            }
+        }
     }
 
     private fun configurarBotoes() {
