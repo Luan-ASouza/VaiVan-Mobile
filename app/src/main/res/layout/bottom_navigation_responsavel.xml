@@ -103,7 +103,7 @@
                 android:layout_width="23dp"
                 android:layout_height="23dp"
                 android:src="@drawable/ic_chat"
-                android:contentDescription="Assinaturas" />
+                android:contentDescription="Conversas" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -111,7 +111,7 @@
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="Assinaturas"
+                android:text="Conversas"
                 android:textColor="@color/dark_gray"
                 android:textSize="10sp"
                 android:textStyle="bold" />
