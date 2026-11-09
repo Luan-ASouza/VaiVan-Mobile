@@ -42,6 +42,12 @@ android {
         buildConfig = true
     }
 }
+// Exporta o esquema do banco local (pasta app/schemas) a cada compilação. Esses arquivos
+// JSON são a "foto" de cada versão e DEVEM ser versionados no Git: o Room usa a foto para
+// conferir se as migrações estão certas.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
 
 // O Navigation SDK traz embutida sua própria cópia das classes do Maps SDK
 // (com.google.android.gms.maps.*). Excluímos o play-services-maps de qualquer

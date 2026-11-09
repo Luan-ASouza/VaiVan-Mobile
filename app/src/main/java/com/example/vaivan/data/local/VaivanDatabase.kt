@@ -49,7 +49,7 @@ import com.example.vaivan.data.local.entities.ViagemEntity
         LocalizacaoViagemEntity::class
     ],
     version = 14,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class VaivanDatabase : RoomDatabase() {
@@ -72,6 +72,10 @@ abstract class VaivanDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: VaivanDatabase? = null
 
+        private val VERSOES_DE_DESENVOLVIMENTO = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+
+        @Suppress("DEPRECATION")
+
         fun getInstance(context: Context): VaivanDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -79,8 +83,11 @@ abstract class VaivanDatabase : RoomDatabase() {
                     VaivanDatabase::class.java,
                     "vaivan_cache.db"
                 )
-                    // Garante que o Room recrie as tabelas se a estrutura mudar
-                    .fallbackToDestructiveMigration()
+                    // Migrações reais (ver Migracoes.kt)
+                    .addMigrations(*Migracoes.TODAS)
+                    // Apenas as versões antigas de desenvolvimento (1 a 13), que não têm
+                    // histórico de esquema, podem ser recriadas. Da 14 em diante, só migração.
+                    .fallbackToDestructiveMigrationFrom(*VERSOES_DE_DESENVOLVIMENTO)
                     .build()
                 INSTANCE = instance
                 instance

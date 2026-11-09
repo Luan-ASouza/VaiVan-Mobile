@@ -8,14 +8,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.vaivan.data.models.Assinatura
+import com.example.vaivan.data.models.Pagamento
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
-import com.example.vaivan.data.models.Pagamento
 import java.util.Locale
-
 
 /** Funções de apoio compartilhadas pelas telas de assinatura. */
 object AssinaturaUi {
@@ -27,7 +26,6 @@ object AssinaturaUi {
 
     fun formatarData(milissegundos: Long): String =
         SimpleDateFormat("dd/MM/yyyy", localeBr).format(Date(milissegundos))
-
 
     fun formatarDataHora(milissegundos: Long): String =
         SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", localeBr).format(Date(milissegundos))
@@ -49,6 +47,7 @@ object AssinaturaUi {
             append("Documento de demonstração: pagamento simulado, sem valor fiscal.")
         }
     }
+
     /** Rótulo e cor do "selo" de status da assinatura. */
     fun rotuloDoEstado(estado: Estado, cancelamentoAgendado: Boolean): Pair<String, Int> =
         when (estado) {

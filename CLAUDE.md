@@ -109,4 +109,23 @@ Funções helper já definidas no topo do arquivo: `logado()`, `ehAdmin()`, `ass
 
 Pegadinha documentada em comentário no `build.gradle.kts`: o Kotlin compiler do projeto é 2.2.10 (lê metadata até 2.3.0) — qualquer lib nova com Kotlin stdlib mais novo que isso quebra a compilação (foi o caso do Places SDK, pinado em 5.3.0 por esse motivo). Verifique a versão do stdlib embutido antes de atualizar uma lib do Google.
 
-Room usa `fallbackToDestructiveMigration()` (sem `Migration` real) — ok em fase de desenvolvimento, mas é dívida técnica: antes de produção precisa de migrações reais, senão todo bump de versão do schema apaga o cache local de todo mundo.
+### Room (cache local) e migrações
+O banco exporta o esquema para `app/schemas/` (versionado no Git; a versão 14 é o ponto de partida). Toda mudança de estrutura exige: subir `version` em `VaivanDatabase`, criar a `Migration` em `data/local/Migracoes.kt`, listá-la em `Migracoes.TODAS` e versionar o novo JSON. Só as versões 1 a 13 (desenvolvimento, sem histórico) podem ser recriadas (`fallbackToDestructiveMigrationFrom`). Esquecer a migração faz o app falhar ao abrir o banco, de propósito.
+
+## Testes
+
+Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Android): regras de assinatura (`AssinaturaPolicyTest`, `AssinaturaBloqueiosTest`), `PlanoCatalogoTest`, `StatusDocumentoTest`, `ReciboTest`, `GeoUtilTest`, `HorariosDaRotaTest`. Regra de negócio nova vai em objeto Kotlin puro (sem Firebase/Android) para poder ser testada assim. Rodar: botão direito em `app/src/test/java` > Run, ou `./gradlew testDebugUnitTest`.
+
+## Cadastro de motorista, documentos e painel admin
+
+- O roteamento do motorista usa **um único campo**: `usuarios/{uid}.statusMotorista` no Firestore (`PENDENTE`, `EM_ANALISE`, `ATIVO`, `SUSPENSO`). O app só grava `PENDENTE`/`EM_ANALISE`; `ATIVO`/`SUSPENSO` só o administrador (regra `statusMotoristaPermitido()`). Não redirecione com base no Room, para não criar laços de tela.
+- Documentos (`documentos/{motoristaId}_{tipo}`): tipos `CNH` (frente e verso, ou PDF na CNH digital), `COMPROVANTE_RESIDENCIA` e `SELFIE`. O painel (`admin-web/public/painel.js`) usa os mesmos tipos; ao aprovar os três, grava `statusMotorista = ATIVO`. Ao rejeitar, grava o motivo (o app o exibe) e volta o motorista para `PENDENTE`.
+- Motorista já aprovado pode trocar um documento (menu "Meus documentos"): ele volta a `EM_ANALISE`, sem tirar o acesso do motorista.
+- O painel é publicado com `firebase deploy --only hosting` (a partir de `admin-web/`).
+
+## Planos e assinaturas dos motoristas
+
+- Regras de negócio em `domain/usecase/assinatura/AssinaturaPolicy` (Kotlin puro, testado): ciclo de 30 dias, carência de 3 dias, upgrade com cobrança proporcional, downgrade na renovação. As regras do Firestore (`assinaturaOperacional`) espelham essa política: se mudar uma, mude a outra.
+- Exigem assinatura em dia: criar rota, aceitar passageiro, iniciar viagem nova (retomar viagem em andamento não exige) e aparecer na busca do responsável.
+- **LIMITAÇÃO conhecida (ambiente acadêmico):** o pagamento é SIMULADO. O próprio app grava assinatura e cobranças. Num sistema real, um gateway (PIX/cartão) avisaria um servidor (webhook) e só o servidor alteraria o status. Declarar isso no artigo.
+- Excluir a conta do motorista encerra a assinatura (`CANCELADA`) e mantém o histórico de cobranças.
