@@ -135,17 +135,20 @@
 
                     <!-- MARCA -->
                     <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         app:boxStrokeColor="@color/orange"
-                        app:hintTextColor="@color/black"
+                        app:endIconTint="@color/orange"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp">
-                        <com.google.android.material.textfield.TextInputEditText
+                        <AutoCompleteTextView
                             android:id="@+id/edtMarca"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Marca (ex: Fiat, Mercedes-Benz)" />
+                            android:hint="Marca"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:cursorVisible="false" />
                     </com.google.android.material.textfield.TextInputLayout>
                     <TextView
                         android:id="@+id/txtErroMarca"
@@ -158,17 +161,20 @@
 
                     <!-- MODELO -->
                     <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         app:boxStrokeColor="@color/orange"
-                        app:hintTextColor="@color/black"
+                        app:endIconTint="@color/orange"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp">
-                        <com.google.android.material.textfield.TextInputEditText
+                        <AutoCompleteTextView
                             android:id="@+id/edtModelo"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Modelo (ex: Fiat Ducato)" />
+                            android:hint="Modelo"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:cursorVisible="false" />
                     </com.google.android.material.textfield.TextInputLayout>
                     <TextView
                         android:id="@+id/txtErroModelo"
@@ -249,18 +255,22 @@
 
                     <!-- COR -->
                     <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         app:boxStrokeColor="@color/orange"
-                        app:hintTextColor="@color/black"
+                        app:endIconTint="@color/orange"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:layout_marginBottom="4dp">
-                        <com.google.android.material.textfield.TextInputEditText
+                        <AutoCompleteTextView
                             android:id="@+id/edtCor"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Cor" />
+                            android:hint="Cor"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:cursorVisible="false"
+                            android:drawablePadding="10dp" />
                     </com.google.android.material.textfield.TextInputLayout>
                     <TextView
                         android:id="@+id/txtErroCor"
@@ -268,6 +278,25 @@
                         android:layout_height="wrap_content"
                         android:text="*Digite a cor do veículo"
                         android:textColor="@color/red"
+                        android:textSize="12sp" />
+
+                    <!-- FOTO DO VEÍCULO (buscada automaticamente ao fechar marca+modelo+ano) -->
+                    <ImageView
+                        android:id="@+id/imgFotoVeiculo"
+                        android:layout_width="match_parent"
+                        android:layout_height="160dp"
+                        android:layout_marginTop="16dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/bg_beige_round_20"
+                        android:src="@drawable/ic_truck"
+                        android:contentDescription="Foto do veículo" />
+                    <TextView
+                        android:id="@+id/txtStatusFoto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Escolha marca e modelo pra ver uma foto de exemplo"
+                        android:textColor="@color/light_gray"
                         android:textSize="12sp" />
 
                 </LinearLayout>

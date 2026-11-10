@@ -1,6 +1,7 @@
 package com.example.vaivan.ui.motorista.veiculos
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,7 +23,6 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.data.repository.VeiculoVinculadoARotaException
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import androidx.fragment.app.viewModels
 
@@ -135,16 +135,6 @@ class ListaVeiculosFragment : Fragment() {
                 false
             )
 
-            val linhaPrincipal =
-                itemView.findViewById<LinearLayout>(
-                    R.id.linhaPrincipalItem
-                )
-
-            val imgChevron =
-                itemView.findViewById<ImageView>(
-                    R.id.imgChevronItem
-                )
-
             val imgEditar =
                 itemView.findViewById<ImageView>(
                     R.id.imgEditarVeiculoItem
@@ -170,10 +160,6 @@ class ListaVeiculosFragment : Fragment() {
                     R.id.txtModeloVeiculoItem
                 )
 
-            val txtMarca =
-                itemView.findViewById<TextView>(
-                    R.id.txtMarcaVeiculoItem
-                )
 
             val txtCor =
                 itemView.findViewById<TextView>(
@@ -231,69 +217,29 @@ class ListaVeiculosFragment : Fragment() {
             // DETALHES
             // ==========================
 
-            txtMarca.text =
-                if (veiculo.marca.isNotBlank()) {
-                    "Marca: ${veiculo.marca}"
-                } else {
-                    "Marca: Não informada"
-                }
 
             txtCor.text =
                 if (veiculo.cor.isNotBlank()) {
-                    "Cor: ${veiculo.cor}"
+                    "${veiculo.cor}"
                 } else {
                     "Cor: Não informada"
                 }
 
             txtAno.text =
                 if (veiculo.anoFabricacao > 0) {
-                    "Ano de fabricação: ${veiculo.anoFabricacao}"
+                    "${veiculo.anoFabricacao}"
                 } else {
                     "Ano de fabricação: Não informado"
                 }
 
             txtCapacidade.text =
                 if (veiculo.capacidadePassageiros > 0) {
-                    "Capacidade: ${veiculo.capacidadePassageiros} passageiros"
+                    "${veiculo.capacidadePassageiros} Lugares"
                 } else {
                     "Capacidade: Não informada"
                 }
 
-            txtStatus.text =
-                if (veiculo.status.isNotBlank()) {
-                    "Status: ${veiculo.status}"
-                } else {
-                    "Status: Não informado"
-                }
-
-
-            // ==========================
-            // EXPANSÃO
-            // ==========================
-
-            containerDetalhes.visibility = View.GONE
-            imgChevron.rotation = 0f
-
-            linhaPrincipal.setOnClickListener {
-
-                val vaiExpandir =
-                    containerDetalhes.visibility != View.VISIBLE
-
-                containerDetalhes.visibility =
-                    if (vaiExpandir) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
-
-                imgChevron
-                    .animate()
-                    .rotation(
-                        if (vaiExpandir) 180f else 0f
-                    )
-                    .setDuration(150)
-                    .start()
-            }
+            aplicarStatusVeiculo(txtStatus, veiculo.status)
 
             imgEditar.setOnClickListener {
                 startActivity(
@@ -315,6 +261,46 @@ class ListaVeiculosFragment : Fragment() {
             containerConfirmados.addView(itemView)
         }
     }
+
+
+    private fun aplicarStatusVeiculo(
+        textView: TextView,
+        status: String
+    ) {
+        when (status.trim().uppercase().replace(" ", "_")) {
+
+            "APROVADO", "ATIVO" -> {
+                textView.text = "APROVADO"
+                textView.setBackgroundResource(R.drawable.bg_status_aprovado)
+                textView.setTextColor(Color.parseColor("#2E7D32"))
+            }
+
+            "PENDENTE" -> {
+                textView.text = "PENDENTE"
+                textView.setBackgroundResource(R.drawable.bg_status_pendente)
+                textView.setTextColor(Color.parseColor("#E65100"))
+            }
+
+            "EM_ANALISE" -> {
+                textView.text = "EM ANÁLISE"
+                textView.setBackgroundResource(R.drawable.bg_status_analise)
+                textView.setTextColor(Color.parseColor("#1565C0"))
+            }
+
+            "REJEITADO", "REPROVADO" -> {
+                textView.text = "REJEITADO"
+                textView.setBackgroundResource(R.drawable.bg_status_rejeitado)
+                textView.setTextColor(Color.parseColor("#C62828"))
+            }
+
+            else -> {
+                textView.text = "NÃO INFORMADO"
+                textView.setBackgroundResource(R.drawable.bg_status_pendente)
+                textView.setTextColor(Color.parseColor("#E65100"))
+            }
+        }
+    }
+
 
     private fun excluirVeiculo(veiculo: VeiculoEntity) {
         viewLifecycleOwner.lifecycleScope.launch {

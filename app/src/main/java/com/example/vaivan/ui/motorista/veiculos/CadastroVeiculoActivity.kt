@@ -1,18 +1,24 @@
 package com.example.vaivan.ui.motorista.veiculos
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
+import android.widget.Filter
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
@@ -56,10 +62,10 @@ class CadastroVeiculoActivity : AppCompatActivity() {
     private var veiculoCarregado: VeiculoEntity? = null
 
     private lateinit var edtPlaca: TextInputEditText
-    private lateinit var edtMarca: TextInputEditText
-    private lateinit var edtModelo: TextInputEditText
+    private lateinit var edtMarca: AutoCompleteTextView
+    private lateinit var edtModelo: AutoCompleteTextView
     private lateinit var edtAno: AutoCompleteTextView
-    private lateinit var edtCor: TextInputEditText
+    private lateinit var edtCor: AutoCompleteTextView
     private lateinit var edtCapacidade: TextInputEditText
 
     private lateinit var txtErroPlaca: TextView
@@ -68,6 +74,9 @@ class CadastroVeiculoActivity : AppCompatActivity() {
     private lateinit var txtErroAno: TextView
     private lateinit var txtErroCor: TextView
     private lateinit var txtErroCapacidade: TextView
+
+    private lateinit var imgFotoVeiculo: ImageView
+    private lateinit var txtStatusFoto: TextView
 
     private lateinit var btnSelecionarCrlv: Button
     private lateinit var btnSelecionarAutorizacao: Button
@@ -84,6 +93,18 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
     private var uriCrlv: Uri? = null
     private var uriAutorizacao: Uri? = null
+
+    private val adapterMarca by lazy { ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mutableListOf()) }
+    private val adapterModelo by lazy { ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mutableListOf()) }
+    private val adapterCor by lazy { AdapterCorVeiculo(this, CORES_VEICULO) }
+
+    /** Marca+modelo são uma lista fixa (ver [VeiculosEscolares]), sem API —
+     * guardado aqui pra saber qual foto de exemplo mostrar. */
+    private var veiculoEscolarSelecionado: VeiculoEscolar? = null
+
+    /** A cor é um dropdown fechado nas 6 opções de [CoresVeiculo] — não
+     * texto livre, por isso guardada aqui em vez de lida direto do campo. */
+    private var corSelecionada: CorVeiculo? = null
 
     private val pickerCrlv =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -121,7 +142,7 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
         configurarRepositories()
         configurarViews()
-        configurarSeletorAno()
+        configurarDropdownsVeiculo()
         configurarListeners()
         configurarErros()
 
@@ -162,6 +183,9 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         txtErroAno = findViewById(R.id.txtErroAno)
         txtErroCor = findViewById(R.id.txtErroCor)
         txtErroCapacidade = findViewById(R.id.txtErroCapacidade)
+
+        imgFotoVeiculo = findViewById(R.id.imgFotoVeiculo)
+        txtStatusFoto = findViewById(R.id.txtStatusFoto)
 
         btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv)
         btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao)
@@ -219,6 +243,53 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         }
     }
 
+    // ---------------------------------------------------------
+    // DROPDOWNS (MARCA -> MODELO, lista fixa local — ver VeiculosEscolares)
+    // ---------------------------------------------------------
+
+    private fun configurarDropdownsVeiculo() {
+
+        atualizarAdapter(adapterMarca, VEICULOS_ESCOLARES.map { it.marca })
+        edtMarca.setAdapter(adapterMarca)
+
+        edtModelo.setAdapter(adapterModelo)
+        edtModelo.isEnabled = false
+
+        edtCor.setAdapter(adapterCor)
+
+        edtMarca.setOnItemClickListener { _, _, posicao, _ ->
+            val marcaEscolhida = VEICULOS_ESCOLARES.getOrNull(posicao) ?: return@setOnItemClickListener
+
+            veiculoEscolarSelecionado = null
+            edtModelo.setText("", false)
+            atualizarFotoPreview(null)
+
+            // Hoje a lista é sempre 1 modelo por marca, mas continua um
+            // dropdown de verdade (não auto-preenchido) pra já suportar
+            // mais de um modelo por marca no futuro sem mudar a mecânica.
+            atualizarAdapter(adapterModelo, listOf(marcaEscolhida.modelo))
+            edtModelo.isEnabled = true
+        }
+
+        edtModelo.setOnItemClickListener { _, _, posicao, _ ->
+            val marcaTexto = obterTexto(edtMarca)
+            val modeloTexto = adapterModelo.getItem(posicao) ?: return@setOnItemClickListener
+
+            veiculoEscolarSelecionado = VEICULOS_ESCOLARES.firstOrNull {
+                it.marca == marcaTexto && it.modelo == modeloTexto
+            }
+            atualizarFotoPreview(veiculoEscolarSelecionado)
+        }
+
+        edtCor.setOnItemClickListener { _, _, posicao, _ ->
+            val cor = CORES_VEICULO.getOrNull(posicao) ?: return@setOnItemClickListener
+            corSelecionada = cor
+            aplicarBolinhaCor(cor)
+        }
+
+        configurarSeletorAno()
+    }
+
     private fun configurarSeletorAno() {
 
         val anoAtual = Calendar.getInstance()
@@ -227,17 +298,53 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         val anos = (anoAtual + 1 downTo ANO_MINIMO)
             .map { it.toString() }
 
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            anos
+        edtAno.setAdapter(
+            ArrayAdapter(this, android.R.layout.simple_list_item_1, anos)
         )
-
-        edtAno.setAdapter(adapter)
 
         edtAno.setOnClickListener {
             edtAno.showDropDown()
         }
+    }
+
+    /** Foto de exemplo do modelo escolhido — vem junto do app (ver
+     * [VeiculosEscolares]), não é buscada por request nenhuma. */
+    private fun atualizarFotoPreview(veiculo: VeiculoEscolar?) {
+        if (veiculo != null) {
+            imgFotoVeiculo.setImageResource(veiculo.foto)
+            txtStatusFoto.text = "Foto de exemplo do modelo"
+        } else {
+            imgFotoVeiculo.setImageResource(R.drawable.ic_truck)
+            txtStatusFoto.text = "Escolha marca e modelo pra ver uma foto de exemplo"
+        }
+    }
+
+    /** Mostra a bolinha de amostra da cor escolhida dentro do próprio campo
+     * (fechado), não só na lista do dropdown — [GradientDrawable] novo a
+     * cada chamada porque cada seleção precisa de uma cor diferente (não dá
+     * pra reaproveitar uma instância compartilhada). */
+    private fun aplicarBolinhaCor(cor: CorVeiculo?) {
+        if (cor == null) {
+            edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
+            return
+        }
+
+        val tamanhoPx = (18 * resources.displayMetrics.density).toInt()
+        val bolinha = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(cor.corAmostra)
+            setStroke((1 * resources.displayMetrics.density).toInt(), ContextCompat.getColor(this@CadastroVeiculoActivity, R.color.light_gray))
+            setSize(tamanhoPx, tamanhoPx)
+        }
+
+        edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(bolinha, null, null, null)
+    }
+
+    private fun atualizarAdapter(adapter: ArrayAdapter<String>, itens: List<String>) {
+        adapter.setNotifyOnChange(false)
+        adapter.clear()
+        adapter.addAll(itens)
+        adapter.notifyDataSetChanged()
     }
 
     // ---------------------------------------------------------
@@ -288,11 +395,28 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
     private fun preencherFormulario(veiculo: VeiculoEntity) {
         edtPlaca.setText(veiculo.placa)
-        edtMarca.setText(veiculo.marca)
-        edtModelo.setText(veiculo.modelo)
         edtAno.setText(veiculo.anoFabricacao.toString(), false)
-        edtCor.setText(veiculo.cor)
         edtCapacidade.setText(veiculo.capacidadePassageiros.toString())
+
+        edtMarca.setText(veiculo.marca, false)
+        val modelosDaMarca = VEICULOS_ESCOLARES
+            .filter { it.marca.equals(veiculo.marca, ignoreCase = true) }
+            .map { it.modelo }
+        atualizarAdapter(adapterModelo, modelosDaMarca)
+        edtModelo.isEnabled = modelosDaMarca.isNotEmpty()
+        edtModelo.setText(veiculo.modelo, false)
+
+        // Dado legado (de fora da lista fixa atual) não encontra
+        // correspondência aqui — o texto salvo continua exibido, só sem
+        // foto de exemplo até o motorista escolher de novo.
+        veiculoEscolarSelecionado = VEICULOS_ESCOLARES.firstOrNull {
+            it.marca.equals(veiculo.marca, ignoreCase = true) && it.modelo.equals(veiculo.modelo, ignoreCase = true)
+        }
+        atualizarFotoPreview(veiculoEscolarSelecionado)
+
+        corSelecionada = CORES_VEICULO.firstOrNull { it.nomeExibicao.equals(veiculo.cor, ignoreCase = true) }
+        edtCor.setText(corSelecionada?.nomeExibicao ?: veiculo.cor, false)
+        aplicarBolinhaCor(corSelecionada)
     }
 
     private fun nomeDoArquivo(uri: Uri): String {
@@ -335,7 +459,7 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         val marca = obterTexto(edtMarca)
         val modelo = obterTexto(edtModelo)
         val anoTexto = obterTexto(edtAno)
-        val cor = obterTexto(edtCor)
+        val cor = corSelecionada?.nomeExibicao.orEmpty()
         val capacidadeTexto = obterTexto(edtCapacidade)
 
         var valido = true
@@ -441,16 +565,16 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             anoFabricacao = ano,
             capacidadePassageiros = capacidade
         ) ?: VeiculoEntity(
-            "",
-            placa,
-            marca,
-            modelo,
-            cor,
-            ano,
-            capacidade,
-            STATUS_VEICULO,
-            motoristaId,
-            0L
+            id = "",
+            placa = placa,
+            marca = marca,
+            modelo = modelo,
+            cor = cor,
+            anoFabricacao = ano,
+            capacidadePassageiros = capacidade,
+            status = STATUS_VEICULO,
+            motoristaId = motoristaId,
+            lastUpdated = 0L
         )
 
         lifecycleScope.launch {
@@ -588,5 +712,48 @@ class CadastroVeiculoActivity : AppCompatActivity() {
     private fun restaurarBotao() {
         btnSalvar.isEnabled = true
         btnSalvar.text = if (veiculoCarregado != null) "Salvar alterações" else "Salvar e continuar"
+    }
+}
+
+/** Adapter do dropdown de Cor: cada linha mostra o nome em português + uma
+ * bolinha pintada com [CorVeiculo.corAmostra] (ver item_dropdown_cor.xml).
+ * `getFilter` sempre devolve a lista inteira — o campo é fechado
+ * (inputType=none/focusable=false, igual aos outros dropdowns dessa tela),
+ * então não há texto digitado pra filtrar por prefixo de verdade. */
+private class AdapterCorVeiculo(
+    context: Context,
+    private val itens: List<CorVeiculo>
+) : ArrayAdapter<CorVeiculo>(context, 0, itens) {
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.item_dropdown_cor, parent, false)
+
+        val item = itens[position]
+        view.findViewById<TextView>(R.id.txtNomeCor).text = item.nomeExibicao
+
+        val tamanhoPx = (20 * context.resources.displayMetrics.density).toInt()
+        val bolinha = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(item.corAmostra)
+            setStroke((1 * context.resources.displayMetrics.density).toInt(), ContextCompat.getColor(context, R.color.light_gray))
+            setSize(tamanhoPx, tamanhoPx)
+        }
+        view.findViewById<View>(R.id.viewBolinhaCor).background = bolinha
+
+        return view
+    }
+
+    override fun getItem(position: Int): CorVeiculo = itens[position]
+
+    override fun getFilter(): Filter = object : Filter() {
+        override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
+            values = itens
+            count = itens.size
+        }
+
+        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+            notifyDataSetChanged()
+        }
     }
 }

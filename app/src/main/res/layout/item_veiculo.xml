@@ -1,60 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
+    android:backgroundTint="@color/background_screen"
+    app:cardElevation="0dp"
+    app:cardMaxElevation="0dp">
 
-    app:cardBackgroundColor="@color/beige"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="vertical">
 
-        <!--
-            Linha principal.
-            Ao tocar, abre ou fecha os detalhes do veículo.
-        -->
-
-        <LinearLayout
-            android:id="@+id/linhaPrincipalItem"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <!-- Ícone do veículo -->
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/imgVeiculoItem"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:padding="8dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_veiculos"
-                app:shapeAppearanceOverlay="@style/CircleImage"
-                app:strokeColor="@color/dark_gray"
-                app:strokeWidth="2dp" />
-
-
-            <!-- Placa e modelo -->
+            android:layout_height="wrap_content">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="59dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:layout_gravity="top|end"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:layout_marginTop="5dp"
+                android:padding="4dp">
+
+                <!-- Editar / Excluir -->
+
+                <ImageView
+                    android:id="@+id/imgEditarVeiculoItem"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_circle"
+                    android:backgroundTint="@color/background_container"
+                    android:clipChildren="false"
+                    android:contentDescription="Editar veículo"
+                    android:elevation="4dp"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_editar"
+                    app:tint="@color/dark_gray" />
+
+                <ImageView
+                    android:id="@+id/imgExcluirVeiculoItem"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="end"
+                    android:background="@drawable/bg_circle"
+                    android:backgroundTint="@color/background_container"
+                    android:clipChildren="false"
+                    android:contentDescription="Excluir veículo"
+                    android:elevation="4dp"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_delete"
+                    app:tint="@color/status_danger" />
+
+            </LinearLayout>
+
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="4dp">
+
+                <!-- CAMADA 1: O Bloco Cinza Arredondado de Fundo -->
+                <!-- Mudei a margem para DP para ficar responsivo -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="126dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginEnd="100dp"
+                    android:elevation="4dp"
+
+                    android:background="@drawable/bg_item_round"
+                    android:backgroundTint="@color/background_container" />
+
+                <!-- CAMADA 2: A Silhueta Cinza (Sombra da Van) -->
+                <!-- Colocada logo atrás da van colorida, com um leve deslocamento (margins) -->
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="150dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:adjustViewBounds="true"
+                    android:elevation="4dp"
+                    android:src="@drawable/foto_mercedes_benz_sprinter_branco"
+                    app:tint="@color/background_container" />
+
+                <!-- CAMADA 3: A Van Colorida (Na frente de tudo) -->
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="130dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:elevation="4dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/foto_mercedes_benz_sprinter_branco" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/containerDetalhesItem"
+                android:layout_width="wrap_content"
+                android:layout_height="144dp"
+                android:layout_gravity="center_vertical|start"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:id="@+id/txtModeloVeiculoItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Modelo"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
 
                 <TextView
                     android:id="@+id/txtPlacaVeiculoItem"
@@ -62,56 +130,69 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:textColor="@color/dark_gray"
+                    android:text="Placa"
+                    android:textColor="@color/gray"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/txtModeloVeiculoItem"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="#707070" />
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtCorVeiculoItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="cor"
+                        android:textColor="@color/gray"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtAnoVeiculoItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="ano"
+                        android:textColor="@color/gray"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtCapacidadeVeiculoItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="capacidade"
+                    android:textColor="#707070"
+                    android:textSize="12sp" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/txtStatusVeiculoItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_status_pendente"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="5dp"
+                    android:text="PENDENTE"
+                    android:textColor="#E65100"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
 
-            <!-- Editar / Excluir -->
+        </FrameLayout>
 
-            <ImageView
-                android:id="@+id/imgEditarVeiculoItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Editar veículo"
-                android:padding="4dp"
-                android:src="@drawable/ic_edit"
-                app:tint="@color/dark_gray" />
-
-            <ImageView
-                android:id="@+id/imgExcluirVeiculoItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Excluir veículo"
-                android:padding="4dp"
-                android:src="@drawable/ic_delete"
-                app:tint="@color/status_danger" />
-
-            <!-- Seta -->
-
-            <ImageView
-                android:id="@+id/imgChevronItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="Ver mais detalhes"
-                android:padding="8dp"
-                android:src="@drawable/icon_dropdown"
-                app:tint="@color/light_gray" />
-
-        </LinearLayout>
+        <!--
+            Linha principal.
+            Ao tocar, abre ou fecha os detalhes do veículo.
+        -->
 
 
         <!--
@@ -119,56 +200,6 @@
             Fica escondido inicialmente.
         -->
 
-        <LinearLayout
-            android:id="@+id/containerDetalhesItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="62dp"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/txtMarcaVeiculoItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/dark_gray"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/txtCorVeiculoItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#707070"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/txtAnoVeiculoItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#707070"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/txtCapacidadeVeiculoItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#707070"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/txtStatusVeiculoItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/dark_gray"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
 
     </LinearLayout>
 
