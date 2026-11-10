@@ -2,6 +2,7 @@ package com.example.vaivan.ui.responsavel.rotas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vaivan.data.local.entities.EventoViagemEntity
 import com.example.vaivan.data.local.entities.LocalizacaoViagemEntity
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
@@ -65,6 +66,13 @@ class AcompanharViagemViewModel(
         .flatMapLatest { localizacaoViagemRepository.observarLocalizacao(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** Trilha de eventos da viagem (gancho pra notificação — ver
+     * AcompanharViagemActivity.atualizarNotificacoes). */
+    val eventos: StateFlow<List<EventoViagemEntity>> = _viagemId
+        .filterNotNull()
+        .flatMapLatest { viagemRepository.observarEventos(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         viewModelScope.launch {
             viagemRepository.consultarViagemAtivaParaRota(rotaId)?.let { viagemAtiva ->
@@ -76,7 +84,7 @@ class AcompanharViagemViewModel(
     }
 
     override fun onCleared() {
-        viagemRepository.pararSincronizacao()
+        _viagemId.value?.let { viagemRepository.pararSincronizacao(it) }
         localizacaoViagemRepository.pararSincronizacao()
         super.onCleared()
     }

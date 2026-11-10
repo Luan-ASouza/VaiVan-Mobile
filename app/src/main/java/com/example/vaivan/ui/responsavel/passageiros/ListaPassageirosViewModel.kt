@@ -52,4 +52,13 @@ class ListaPassageirosViewModel(
     suspend fun excluirPassageiro(id: String) {
         repository.excluirPassageiro(id)
     }
+
+    /** Pull-to-refresh: força uma releitura pontual — essa lista depende do
+     * listener global do SyncManager (iniciado uma vez no Application), que
+     * pode nunca ter sido iniciado se o app abriu antes do login. */
+    suspend fun atualizarPassageiros() {
+        if (uid != null) {
+            repository.sincronizarPassageirosDoResponsavelUmaVez(uid)
+        }
+    }
 }

@@ -1,0 +1,2462 @@
+diff --git a/admin-web/firestore.rules b/admin-web/firestore.rules
+index 4aacc9d..4abc835 100644
+--- a/admin-web/firestore.rules
++++ b/admin-web/firestore.rules
+@@ -258,6 +258,84 @@ service cloud.firestore {
+       allow delete: if false;
+     }
+ 
++    // ===================================================================
++    // CONTRATOS E MENSALIDADES (responsável → motorista)
++    // ===================================================================
++
++    // Contrato: id = id da solicitação aceita. Só o motorista cria e altera;
++    // as partes (motorista, responsável, passageiro) nunca mudam.
++    match /contratos/{contratoId} {
++      function ehParteDoContrato(d) {
++        return request.auth.uid == d.motoristaId || request.auth.uid == d.responsavelId;
++      }
++
++      // "get" também precisa funcionar quando o contrato ainda não existe
++      allow get: if logado() &&
++        (resource == null || ehParteDoContrato(resource.data) || ehAdmin());
++      allow list: if logado() && (ehParteDoContrato(resource.data) || ehAdmin());
++
++      allow create: if logado() &&
++        request.resource.data.motoristaId == request.auth.uid &&
++        request.resource.data.status == 'ATIVO' &&
++        exists(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)) &&
++        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status == 'ACEITA' &&
++        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.motoristaId == request.auth.uid &&
++        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.responsavelId == request.resource.data.responsavelId &&
++        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.passageiroId == request.resource.data.passageiroId;
++
++      allow update: if logado() &&
++        resource.data.motoristaId == request.auth.uid &&
++        request.resource.data.diff(resource.data).unchangedKeys()
++          .hasAll(['motoristaId', 'responsavelId', 'passageiroId', 'rotaId', 'inicioEm']);
++
++      allow delete: if false;
++    }
++
++    // Mensalidade: id = "<contratoId>_<AAAA-MM>". Qualquer uma das partes pode
++    // criar (quem abrir o app primeiro), mas sempre PENDENTE e com o valor do
++    // contrato. Valor, vencimento e partes nunca mudam depois.
++    match /mensalidades/{mensalidadeId} {
++      function contrato(id) {
++        return get(/databases/$(database)/documents/contratos/$(id)).data;
++      }
++      function ehParteDaMensalidade(d) {
++        return request.auth.uid == d.motoristaId || request.auth.uid == d.responsavelId;
++      }
++      function confereComContrato(d) {
++        return exists(/databases/$(database)/documents/contratos/$(d.contratoId)) &&
++          d.motoristaId == contrato(d.contratoId).motoristaId &&
++          d.responsavelId == contrato(d.contratoId).responsavelId &&
++          d.valorCentavos == contrato(d.contratoId).valorMensalCentavos;
++      }
++      function camposFixosMantidos() {
++        return request.resource.data.diff(resource.data).unchangedKeys()
++          .hasAll(['contratoId', 'motoristaId', 'responsavelId', 'competencia', 'valorCentavos', 'vencimento']);
++      }
++
++      allow get: if logado() &&
++        (resource == null || ehParteDaMensalidade(resource.data) || ehAdmin());
++      allow list: if logado() && (ehParteDaMensalidade(resource.data) || ehAdmin());
++
++      allow create: if logado() &&
++        ehParteDaMensalidade(request.resource.data) &&
++        mensalidadeId == request.resource.data.contratoId + '_' + request.resource.data.competencia &&
++        request.resource.data.status == 'PENDENTE' &&
++        confereComContrato(request.resource.data);
++
++      allow update: if logado() && camposFixosMantidos() && (
++        // Motorista: registra/desfaz recebimento e cancela (ao encerrar contrato).
++        request.auth.uid == resource.data.motoristaId ||
++        // Responsável: só paga pelo app (SIMULADO), de PENDENTE para PAGA.
++        (request.auth.uid == resource.data.responsavelId &&
++         resource.data.status == 'PENDENTE' &&
++         request.resource.data.status == 'PAGA' &&
++         request.resource.data.forma == 'PIX_APP' &&
++         request.resource.data.registradoPor == 'RESPONSAVEL')
++      );
++
++      allow delete: if false; // histórico financeiro não se apaga
++    }
++
+     // Catálogo de planos: todos leem, só o admin altera.
+     match /planos/{planoId} {
+       allow read: if logado();
+diff --git a/app/src/main/java/com/example/vaivan/data/local/Migracoes.kt b/app/src/main/java/com/example/vaivan/data/local/Migracoes.kt
+index 7dd2168..c8f6a83 100644
+--- a/app/src/main/java/com/example/vaivan/data/local/Migracoes.kt
++++ b/app/src/main/java/com/example/vaivan/data/local/Migracoes.kt
+@@ -47,5 +47,13 @@ object Migracoes {
+         }
+     }
+ 
+-    val TODAS: Array<Migration> = arrayOf(DE_14_PARA_15)
++    /** Rotas passam a ter o valor da mensalidade e o dia de vencimento. */
++    val DE_15_PARA_16 = object : Migration(15, 16) {
++        override fun migrate(db: SupportSQLiteDatabase) {
++            db.execSQL("ALTER TABLE `rotas` ADD COLUMN `valorMensalCentavos` INTEGER NOT NULL DEFAULT 0")
++            db.execSQL("ALTER TABLE `rotas` ADD COLUMN `diaVencimento` INTEGER NOT NULL DEFAULT 10")
++        }
++    }
++
++    val TODAS: Array<Migration> = arrayOf(DE_14_PARA_15, DE_15_PARA_16)
+ }
+\ No newline at end of file
+diff --git a/app/src/main/java/com/example/vaivan/data/local/VaivanDatabase.kt b/app/src/main/java/com/example/vaivan/data/local/VaivanDatabase.kt
+index 0384208..b24ccfe 100644
+--- a/app/src/main/java/com/example/vaivan/data/local/VaivanDatabase.kt
++++ b/app/src/main/java/com/example/vaivan/data/local/VaivanDatabase.kt
+@@ -51,7 +51,7 @@ import com.example.vaivan.data.local.entities.ViagemEntity
+         LocalizacaoViagemEntity::class,
+         AvisoAusenciaEntity::class
+     ],
+-    version = 15,
++    version = 16,
+     exportSchema = true
+ )
+ @TypeConverters(Converters::class)
+diff --git a/app/src/main/java/com/example/vaivan/data/local/entities/RotaEntity.kt b/app/src/main/java/com/example/vaivan/data/local/entities/RotaEntity.kt
+index 2b03115..2a5eb89 100644
+--- a/app/src/main/java/com/example/vaivan/data/local/entities/RotaEntity.kt
++++ b/app/src/main/java/com/example/vaivan/data/local/entities/RotaEntity.kt
+@@ -42,6 +42,10 @@ data class RotaEntity(
+     val capacidadeTotal: Int = 0,
+     val vagasOcupadas: Int = 0,
+ 
++    // Mensalidade cobrada por passageiro (copiada para o contrato no aceite)
++    val valorMensalCentavos: Long = 0L,
++    val diaVencimento: Int = 10, // 1 a 28
++
+     val distanciaMetros: Int = 0,
+     val duracaoSegundos: Int = 0,
+     val duracaoSemTrafegoSegundos: Int = 0,
+diff --git a/app/src/main/java/com/example/vaivan/data/models/Mensalidade.kt b/app/src/main/java/com/example/vaivan/data/models/Mensalidade.kt
+new file mode 100644
+index 0000000..8f060ad
+--- /dev/null
++++ b/app/src/main/java/com/example/vaivan/data/models/Mensalidade.kt
+@@ -0,0 +1,115 @@
++package com.example.vaivan.data.models
++
++/**
++ * Vínculo financeiro entre um responsável e um motorista, para UM passageiro numa rota.
++ *
++ * Nasce quando o motorista aceita a solicitação de inclusão, e o id do documento é o
++ * mesmo id da solicitação (um contrato por solicitação aceita, sem duplicar).
++ *
++ * O valor e o dia de vencimento são uma cópia (snapshot) do que a rota tinha no aceite:
++ * se o motorista mudar o preço da rota depois, os contratos já existentes não mudam
++ * sozinhos (ele pode reajustar contrato por contrato).
++ */
++data class Contrato(
++    val id: String = "",
++
++    val motoristaId: String = "",
++    val responsavelId: String = "",
++    val nomeResponsavel: String = "",
++
++    val passageiroId: String = "",
++    val nomePassageiro: String = "",
++
++    val rotaId: String = "",
++    val nomeRota: String = "",
++
++    val valorMensalCentavos: Long = 0L,
++    /** Dia do mês (1 a 28) em que a mensalidade vence. */
++    val diaVencimento: Int = 10,
++
++    /** Veja [StatusContrato]. */
++    val status: String = StatusContrato.ATIVO,
++    val inicioEm: Long = 0L,
++    val encerradoEm: Long = 0L,
++
++    val criadoEm: Long = 0L,
++    val atualizadoEm: Long = 0L
++)
++
++/**
++ * Uma mensalidade (cobrança de um mês) de um contrato.
++ *
++ * O id do documento é determinístico: "<contratoId>_<AAAA-MM>". Assim, se o motorista e o
++ * responsável abrirem o app ao mesmo tempo, os dois tentam criar o MESMO documento e
++ * nunca aparecem duas cobranças do mesmo mês.
++ *
++ * O status gravado é só PENDENTE / PAGA / CANCELADA. "A vencer", "atrasada" e
++ * "inadimplente" são calculados na hora pela [com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy],
++ * porque dependem da data de hoje.
++ */
++data class Mensalidade(
++    val id: String = "",
++    val contratoId: String = "",
++
++    val motoristaId: String = "",
++    val responsavelId: String = "",
++    val passageiroId: String = "",
++    val nomePassageiro: String = "",
++    val nomeRota: String = "",
++
++    /** Mês de referência no formato "AAAA-MM" (ex.: "2026-11"). */
++    val competencia: String = "",
++    val valorCentavos: Long = 0L,
++    /** Início do dia do vencimento, no fuso de São Paulo. */
++    val vencimento: Long = 0L,
++
++    /** Veja [StatusMensalidade]. */
++    val status: String = StatusMensalidade.PENDENTE,
++    val pagoEm: Long? = null,
++    /** Veja [FormaPagamentoMensalidade]. */
++    val forma: String = "",
++    /** Quem marcou como paga: "MOTORISTA" (recebeu por fora) ou "RESPONSAVEL" (pagou no app). */
++    val registradoPor: String = "",
++
++    val criadoEm: Long = 0L,
++    val atualizadoEm: Long = 0L
++)
++
++object StatusContrato {
++    const val ATIVO = "ATIVO"
++    const val ENCERRADO = "ENCERRADO"
++}
++
++object StatusMensalidade {
++    const val PENDENTE = "PENDENTE"
++    const val PAGA = "PAGA"
++    const val CANCELADA = "CANCELADA"
++}
++
++object RegistradoPor {
++    const val MOTORISTA = "MOTORISTA"
++    const val RESPONSAVEL = "RESPONSAVEL"
++}
++
++object FormaPagamentoMensalidade {
++    /** Pago pelo responsável dentro do app (simulado, como na assinatura). */
++    const val PIX_APP = "PIX_APP"
++
++    // Recebido pelo motorista fora do app e registrado manualmente por ele.
++    const val PIX = "PIX"
++    const val DINHEIRO = "DINHEIRO"
++    const val TRANSFERENCIA = "TRANSFERENCIA"
++    const val OUTRO = "OUTRO"
++
++    /** Opções que o motorista vê ao registrar um recebimento. */
++    val manuais: List<String> = listOf(PIX, DINHEIRO, TRANSFERENCIA, OUTRO)
++
++    fun rotulo(forma: String): String = when (forma) {
++        PIX_APP -> "PIX pelo app"
++        PIX -> "PIX"
++        DINHEIRO -> "Dinheiro"
++        TRANSFERENCIA -> "Transferência"
++        OUTRO -> "Outro"
++        else -> "-"
++    }
++}
+diff --git a/app/src/main/java/com/example/vaivan/data/repository/MensalidadeRepository.kt b/app/src/main/java/com/example/vaivan/data/repository/MensalidadeRepository.kt
+new file mode 100644
+index 0000000..012c71e
+--- /dev/null
++++ b/app/src/main/java/com/example/vaivan/data/repository/MensalidadeRepository.kt
+@@ -0,0 +1,356 @@
++package com.example.vaivan.data.repository
++
++import android.util.Log
++import com.example.vaivan.data.models.Contrato
++import com.example.vaivan.data.models.FormaPagamentoMensalidade
++import com.example.vaivan.data.models.Mensalidade
++import com.example.vaivan.data.models.RegistradoPor
++import com.example.vaivan.data.models.StatusContrato
++import com.example.vaivan.data.models.StatusMensalidade
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
++import com.google.firebase.firestore.DocumentSnapshot
++import com.google.firebase.firestore.FieldValue
++import com.google.firebase.firestore.FirebaseFirestore
++import com.google.firebase.firestore.FirebaseFirestoreException
++import kotlinx.coroutines.async
++import kotlinx.coroutines.awaitAll
++import kotlinx.coroutines.channels.awaitClose
++import kotlinx.coroutines.coroutineScope
++import kotlinx.coroutines.flow.Flow
++import kotlinx.coroutines.flow.callbackFlow
++import kotlinx.coroutines.tasks.await
++
++/**
++ * Contratos e mensalidades entre responsáveis e motoristas.
++ *
++ * Como o AssinaturaRepository, lê direto do Firestore (sem Room): é dado financeiro e
++ * precisa ser o do servidor. O cache offline do próprio SDK continua valendo.
++ *
++ * Não há servidor (Cloud Functions) gerando as cobranças todo mês. Por isso quem abre a
++ * tela (motorista ou responsável) cria as mensalidades que estiverem faltando. Isso é
++ * seguro porque o id de cada mensalidade é fixo ("<contrato>_<AAAA-MM>") e a criação é
++ * feita numa transação que nunca sobrescreve um documento que já existe.
++ *
++ * ATENÇÃO (ambiente acadêmico): o pagamento pelo app é SIMULADO, como na assinatura.
++ */
++class MensalidadeRepository(
++    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
++) {
++
++    private val colContratos = firestore.collection("contratos")
++    private val colMensalidades = firestore.collection("mensalidades")
++    private val colSolicitacoes = firestore.collection("solicitacoes_inclusao")
++    private val colRotas = firestore.collection("rotas")
++    private val colUsuarios = firestore.collection("usuarios")
++
++    // =========================================================
++    // OBSERVAÇÃO (tempo real)
++    // =========================================================
++
++    fun observarContratosDoMotorista(motoristaId: String) = observarContratos("motoristaId", motoristaId)
++
++    fun observarContratosDoResponsavel(responsavelId: String) = observarContratos("responsavelId", responsavelId)
++
++    fun observarMensalidadesDoMotorista(motoristaId: String) = observarMensalidades("motoristaId", motoristaId)
++
++    fun observarMensalidadesDoResponsavel(responsavelId: String) = observarMensalidades("responsavelId", responsavelId)
++
++    private fun observarContratos(campo: String, valor: String): Flow<List<Contrato>> =
++        callbackFlow<List<Contrato>> {
++            val registro = colContratos.whereEqualTo(campo, valor)
++                .addSnapshotListener { snapshot, error ->
++                    if (error != null || snapshot == null) {
++                        Log.e(TAG, "Erro ao observar contratos", error)
++                        return@addSnapshotListener
++                    }
++                    trySend(snapshot.documents.mapNotNull { doc ->
++                        doc.toObject(Contrato::class.java)?.copy(id = doc.id)
++                    })
++                }
++            awaitClose { registro.remove() }
++        }
++
++    private fun observarMensalidades(campo: String, valor: String): Flow<List<Mensalidade>> =
++        callbackFlow<List<Mensalidade>> {
++            val registro = colMensalidades.whereEqualTo(campo, valor)
++                .addSnapshotListener { snapshot, error ->
++                    if (error != null || snapshot == null) {
++                        Log.e(TAG, "Erro ao observar mensalidades", error)
++                        return@addSnapshotListener
++                    }
++                    trySend(snapshot.documents.mapNotNull { doc ->
++                        doc.toObject(Mensalidade::class.java)?.copy(id = doc.id)
++                    })
++                }
++            awaitClose { registro.remove() }
++        }
++
++    // =========================================================
++    // CONTRATOS
++    // =========================================================
++
++    /**
++     * Cria o contrato de uma solicitação recém-aceita (chamado pelo AceitarSolicitacaoUseCase).
++     * Não faz nada se a solicitação não estiver aceita ou se o contrato já existir.
++     */
++    suspend fun garantirContrato(solicitacaoId: String, inicioEm: Long) {
++        val solicitacao = colSolicitacoes.document(solicitacaoId).get().await()
++        if (!solicitacao.exists() || solicitacao.getString("status") != "ACEITA") return
++
++        val ref = colContratos.document(solicitacaoId)
++        if (ref.get().await().exists()) return
++
++        val rotaId = solicitacao.getString("rotaId").orEmpty()
++        if (rotaId.isBlank()) return
++        val rota = colRotas.document(rotaId).get().await()
++        val nomeResponsavel = nomeDoUsuario(solicitacao.getString("responsavelId").orEmpty())
++
++        ref.set(montarContrato(solicitacao, rota, nomeResponsavel, inicioEm)).await()
++    }
++
++    /**
++     * Cria contratos para passageiros que já tinham sido aceitos ANTES desta funcionalidade
++     * existir. Esses contratos começam hoje, para ninguém aparecer com meses de atraso
++     * retroativos. Devolve quantos contratos foram criados.
++     */
++    suspend fun sincronizarContratosDoMotorista(motoristaId: String): Int {
++        val aceitas = colSolicitacoes
++            .whereEqualTo("motoristaId", motoristaId)
++            .whereEqualTo("status", "ACEITA")
++            .get().await()
++            .documents
++
++        val existentes = colContratos
++            .whereEqualTo("motoristaId", motoristaId)
++            .get().await()
++            .documents.map { it.id }.toSet()
++
++        val faltando = aceitas.filter {
++            it.id !in existentes && !it.getString("rotaId").isNullOrBlank()
++        }
++        if (faltando.isEmpty()) return 0
++
++        val agora = System.currentTimeMillis()
++        val rotas = mutableMapOf<String, DocumentSnapshot>()
++        val nomes = mutableMapOf<String, String>()
++        val batch = firestore.batch()
++
++        faltando.forEach { solicitacao ->
++            val rotaId = solicitacao.getString("rotaId").orEmpty()
++            val responsavelId = solicitacao.getString("responsavelId").orEmpty()
++
++            val rota = rotas.getOrPut(rotaId) { colRotas.document(rotaId).get().await() }
++            val nome = nomes.getOrPut(responsavelId) { nomeDoUsuario(responsavelId) }
++
++            batch.set(colContratos.document(solicitacao.id), montarContrato(solicitacao, rota, nome, agora))
++        }
++        batch.commit().await()
++        return faltando.size
++    }
++
++    /**
++     * Muda valor e/ou dia de vencimento de um contrato. Vale para as mensalidades que
++     * ainda não foram geradas; as já geradas mantêm o valor com que foram criadas.
++     */
++    suspend fun reajustarContrato(contratoId: String, valorMensalCentavos: Long, diaVencimento: Int) {
++        require(valorMensalCentavos > 0) { "Informe um valor maior que zero." }
++        colContratos.document(contratoId).update(
++            mapOf(
++                "valorMensalCentavos" to valorMensalCentavos,
++                "diaVencimento" to MensalidadePolicy.diaValido(diaVencimento),
++                "atualizadoEm" to System.currentTimeMillis()
++            )
++        ).await()
++    }
++
++    /**
++     * Encerra o contrato (passageiro saiu da rota). Mensalidades em aberto que ainda não
++     * venceram são canceladas; as já vencidas continuam devidas.
++     */
++    suspend fun encerrarContrato(contrato: Contrato) {
++        val agora = System.currentTimeMillis()
++        val hoje = MensalidadePolicy.inicioDoDia(MensalidadePolicy.dia(agora))
++
++        val futuras = colMensalidades
++            .whereEqualTo("motoristaId", contrato.motoristaId)
++            .whereEqualTo("contratoId", contrato.id)
++            .get().await()
++            .documents
++            .filter {
++                it.getString("status") == StatusMensalidade.PENDENTE &&
++                    (it.getLong("vencimento") ?: 0L) > hoje
++            }
++
++        val batch = firestore.batch()
++        batch.update(
++            colContratos.document(contrato.id),
++            mapOf("status" to StatusContrato.ENCERRADO, "encerradoEm" to agora, "atualizadoEm" to agora)
++        )
++        futuras.forEach {
++            batch.update(it.reference, mapOf("status" to StatusMensalidade.CANCELADA, "atualizadoEm" to agora))
++        }
++        batch.commit().await()
++    }
++
++    // =========================================================
++    // GERAÇÃO DAS MENSALIDADES
++    // =========================================================
++
++    /**
++     * Cria as mensalidades que estão faltando para os contratos informados.
++     * [existentes] é o que a tela já tem em mãos (evita idas ao servidor à toa).
++     * Devolve quantas foram criadas.
++     */
++    suspend fun gerarMensalidadesFaltando(
++        contratos: List<Contrato>,
++        existentes: List<Mensalidade>
++    ): Int = coroutineScope {
++        val agora = System.currentTimeMillis()
++        val ids = existentes.map { it.id }.toSet()
++
++        // Sem valor definido não há o que cobrar: o motorista define o valor primeiro.
++        val novas = contratos.filter { it.valorMensalCentavos > 0 }.flatMap { contrato ->
++            MensalidadePolicy.competenciasFaltando(contrato, ids, agora).map { mes ->
++                Mensalidade(
++                    id = MensalidadePolicy.idMensalidade(contrato.id, mes),
++                    contratoId = contrato.id,
++                    motoristaId = contrato.motoristaId,
++                    responsavelId = contrato.responsavelId,
++                    passageiroId = contrato.passageiroId,
++                    nomePassageiro = contrato.nomePassageiro,
++                    nomeRota = contrato.nomeRota,
++                    competencia = mes.toString(),
++                    valorCentavos = contrato.valorMensalCentavos,
++                    vencimento = MensalidadePolicy.inicioDoDia(
++                        MensalidadePolicy.vencimentoDa(mes, contrato.diaVencimento)
++                    ),
++                    status = StatusMensalidade.PENDENTE,
++                    criadoEm = agora,
++                    atualizadoEm = agora
++                )
++            }
++        }
++
++        novas.map { mensalidade ->
++            async {
++                try {
++                    val ref = colMensalidades.document(mensalidade.id)
++                    firestore.runTransaction { t ->
++                        // Nunca sobrescreve: se a outra parte já criou (ou já pagou), deixa como está.
++                        if (!t.get(ref).exists()) t.set(ref, mensalidade)
++                        null
++                    }.await()
++                    true
++                } catch (e: Exception) {
++                    Log.w(TAG, "Não foi possível criar a mensalidade ${mensalidade.id}", e)
++                    false
++                }
++            }
++        }.awaitAll().count { it }
++    }
++
++    // =========================================================
++    // PAGAMENTOS
++    // =========================================================
++
++    /** O motorista recebeu por fora (PIX direto, dinheiro...) e registra no app. */
++    suspend fun registrarRecebimento(mensalidadeId: String, forma: String) {
++        require(forma in FormaPagamentoMensalidade.manuais) { "Forma de pagamento inválida." }
++        marcarComoPaga(mensalidadeId, forma, RegistradoPor.MOTORISTA)
++    }
++
++    /** O responsável paga pelo app (SIMULADO). */
++    suspend fun pagarPeloApp(mensalidadeId: String) {
++        marcarComoPaga(mensalidadeId, FormaPagamentoMensalidade.PIX_APP, RegistradoPor.RESPONSAVEL)
++    }
++
++    /** Desfaz um recebimento registrado por engano. Só vale para os registrados pelo motorista. */
++    suspend fun desfazerRecebimento(mensalidadeId: String) {
++        val ref = colMensalidades.document(mensalidadeId)
++        firestore.runTransaction { t ->
++            val atual = t.get(ref)
++            if (atual.getString("status") != StatusMensalidade.PAGA ||
++                atual.getString("registradoPor") != RegistradoPor.MOTORISTA
++            ) {
++                throw falha("Só é possível desfazer recebimentos registrados por você.")
++            }
++            t.update(
++                ref,
++                mapOf(
++                    "status" to StatusMensalidade.PENDENTE,
++                    "pagoEm" to FieldValue.delete(),
++                    "forma" to "",
++                    "registradoPor" to "",
++                    "atualizadoEm" to System.currentTimeMillis()
++                )
++            )
++            null
++        }.await()
++    }
++
++    private suspend fun marcarComoPaga(mensalidadeId: String, forma: String, registradoPor: String) {
++        val ref = colMensalidades.document(mensalidadeId)
++        val agora = System.currentTimeMillis()
++        firestore.runTransaction { t ->
++            if (t.get(ref).getString("status") != StatusMensalidade.PENDENTE) {
++                throw falha("Esta mensalidade não está mais em aberto.")
++            }
++            t.update(
++                ref,
++                mapOf(
++                    "status" to StatusMensalidade.PAGA,
++                    "pagoEm" to agora,
++                    "forma" to forma,
++                    "registradoPor" to registradoPor,
++                    "atualizadoEm" to agora
++                )
++            )
++            null
++        }.await()
++    }
++
++    // =========================================================
++    // AUXILIARES
++    // =========================================================
++
++    private fun montarContrato(
++        solicitacao: DocumentSnapshot,
++        rota: DocumentSnapshot,
++        nomeResponsavel: String,
++        inicioEm: Long
++    ): Contrato {
++        val agora = System.currentTimeMillis()
++        return Contrato(
++            id = solicitacao.id,
++            motoristaId = solicitacao.getString("motoristaId").orEmpty(),
++            responsavelId = solicitacao.getString("responsavelId").orEmpty(),
++            nomeResponsavel = nomeResponsavel,
++            passageiroId = solicitacao.getString("passageiroId").orEmpty(),
++            nomePassageiro = solicitacao.getString("nomePassageiro").orEmpty(),
++            rotaId = solicitacao.getString("rotaId").orEmpty(),
++            nomeRota = rota.getString("nome").orEmpty(),
++            valorMensalCentavos = rota.getLong("valorMensalCentavos") ?: 0L,
++            diaVencimento = MensalidadePolicy.diaValido(
++                (rota.getLong("diaVencimento") ?: MensalidadePolicy.DIA_VENCIMENTO_PADRAO.toLong()).toInt()
++            ),
++            status = StatusContrato.ATIVO,
++            inicioEm = inicioEm,
++            criadoEm = agora,
++            atualizadoEm = agora
++        )
++    }
++
++    private suspend fun nomeDoUsuario(uid: String): String =
++        if (uid.isBlank()) "" else try {
++            colUsuarios.document(uid).get().await().getString("nome").orEmpty()
++        } catch (e: Exception) {
++            ""
++        }
++
++    private fun falha(mensagem: String) =
++        FirebaseFirestoreException(mensagem, FirebaseFirestoreException.Code.FAILED_PRECONDITION)
++
++    companion object {
++        private const val TAG = "MensalidadeRepository"
++    }
++}
+diff --git a/app/src/main/java/com/example/vaivan/data/repository/RotaRepository.kt b/app/src/main/java/com/example/vaivan/data/repository/RotaRepository.kt
+index 58d9744..da769bf 100644
+--- a/app/src/main/java/com/example/vaivan/data/repository/RotaRepository.kt
++++ b/app/src/main/java/com/example/vaivan/data/repository/RotaRepository.kt
+@@ -209,7 +209,9 @@ class RotaRepository(
+         capacidadeTotal: Int,
+         escolaId: String = "",
+         escolaNome: String = "",
+-        bairrosAtendidos: List<String> = emptyList()
++        bairrosAtendidos: List<String> = emptyList(),
++        valorMensalCentavos: Long = 0L,
++        diaVencimento: Int = 10
+     ): RotaEntity = withContext(Dispatchers.IO) {
+ 
+         val documentReference = collectionRotas.document()
+@@ -271,6 +273,8 @@ class RotaRepository(
+             bairrosAtendidos = bairrosAtendidos,
+             capacidadeTotal = capacidadeTotal,
+             vagasOcupadas = 0,
++            valorMensalCentavos = valorMensalCentavos,
++            diaVencimento = diaVencimento,
+             distanciaMetros = resultado.distanciaMetros,
+             duracaoSegundos = resultado.duracaoSegundos,
+             duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
+@@ -308,7 +312,10 @@ class RotaRepository(
+         capacidadeTotal: Int,
+         escolaId: String = "",
+         escolaNome: String = "",
+-        bairrosAtendidos: List<String> = emptyList()
++        bairrosAtendidos: List<String> = emptyList(),
++        // null = mantém o que a rota já tem
++        valorMensalCentavos: Long? = null,
++        diaVencimento: Int? = null
+     ): RotaEntity = withContext(Dispatchers.IO) {
+ 
+         val atual = consultarRota(rotaId)
+@@ -374,6 +381,8 @@ class RotaRepository(
+                 escolaNome = escolaNome,
+                 bairrosAtendidos = bairrosAtendidos,
+                 capacidadeTotal = capacidadeTotal,
++                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
++                diaVencimento = diaVencimento ?: atual.diaVencimento,
+                 distanciaMetros = resultado.distanciaMetros,
+                 duracaoSegundos = resultado.duracaoSegundos,
+                 duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
+@@ -393,6 +402,8 @@ class RotaRepository(
+                 escolaNome = escolaNome,
+                 bairrosAtendidos = bairrosAtendidos,
+                 capacidadeTotal = capacidadeTotal,
++                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
++                diaVencimento = diaVencimento ?: atual.diaVencimento,
+                 lastUpdated = agora
+             )
+         }
+diff --git a/app/src/main/java/com/example/vaivan/domain/usecase/mensalidade/MensalidadePolicy.kt b/app/src/main/java/com/example/vaivan/domain/usecase/mensalidade/MensalidadePolicy.kt
+new file mode 100644
+index 0000000..f6a5c40
+--- /dev/null
++++ b/app/src/main/java/com/example/vaivan/domain/usecase/mensalidade/MensalidadePolicy.kt
+@@ -0,0 +1,264 @@
++package com.example.vaivan.domain.usecase.mensalidade
++
++import com.example.vaivan.data.models.Contrato
++import com.example.vaivan.data.models.Mensalidade
++import com.example.vaivan.data.models.StatusContrato
++import com.example.vaivan.data.models.StatusMensalidade
++import java.math.BigDecimal
++import java.math.RoundingMode
++import java.time.Instant
++import java.time.LocalDate
++import java.time.YearMonth
++import java.time.ZoneId
++import java.time.temporal.ChronoUnit
++
++/**
++ * Regras das mensalidades (responsável → motorista). Sem Android e sem Firestore,
++ * para poder ser testada (veja MensalidadePolicyTest), no mesmo espírito da AssinaturaPolicy.
++ *
++ * Datas são comparadas por DIA no fuso de São Paulo: quem vence dia 10 está em dia
++ * durante o dia 10 inteiro e só fica atrasado no dia 11.
++ */
++object MensalidadePolicy {
++
++    val FUSO: ZoneId = ZoneId.of("America/Sao_Paulo")
++
++    /** Dias de atraso tolerados antes de considerar o responsável inadimplente. */
++    const val DIAS_CARENCIA = 5
++
++    const val DIA_VENCIMENTO_PADRAO = 10
++
++    /** Proteção contra contratos com data inválida: nunca gera mais que isso de uma vez. */
++    private const val MAX_COMPETENCIAS = 24
++
++    enum class SituacaoMensalidade { PAGA, A_VENCER, VENCE_HOJE, ATRASADA, CANCELADA }
++
++    enum class SituacaoContrato { EM_DIA, ATRASADO, INADIMPLENTE, ENCERRADO }
++
++    data class Resumo(
++        val recebidoNoMesCentavos: Long,
++        val aReceberNoMesCentavos: Long,
++        val emAtrasoCentavos: Long,
++        val qtdEmDia: Int,
++        val qtdAtrasados: Int,
++        val qtdInadimplentes: Int
++    )
++
++    // =========================================================
++    // DATAS
++    // =========================================================
++
++    fun dia(milissegundos: Long): LocalDate =
++        Instant.ofEpochMilli(milissegundos).atZone(FUSO).toLocalDate()
++
++    fun inicioDoDia(data: LocalDate): Long =
++        data.atStartOfDay(FUSO).toInstant().toEpochMilli()
++
++    /** Limitado a 28 para existir em todos os meses (inclusive fevereiro). */
++    fun diaValido(dia: Int): Int = dia.coerceIn(1, 28)
++
++    fun vencimentoDa(competencia: YearMonth, diaVencimento: Int): LocalDate =
++        competencia.atDay(diaValido(diaVencimento))
++
++    fun idMensalidade(contratoId: String, competencia: YearMonth): String =
++        "${contratoId}_$competencia"
++
++    // =========================================================
++    // VALORES
++    // =========================================================
++
++    /**
++     * Converte o que o motorista digitou em centavos. Aceita "400", "400,00", "400,5",
++     * "1.200,00", "1200.50" e "R$ 400". Devolve null se não for um valor válido.
++     */
++    fun textoParaCentavos(texto: String): Long? {
++        var limpo = texto.replace("R$", "").replace(" ", "").trim()
++        if (limpo.isEmpty()) return null
++
++        limpo = when {
++            limpo.contains(',') -> limpo.replace(".", "").replace(',', '.')
++            Regex("^\\d+\\.\\d{1,2}$").matches(limpo) -> limpo // "1200.50": ponto decimal
++            else -> limpo.replace(".", "")                         // "1.200": milhar
++        }
++
++        val valor = limpo.toBigDecimalOrNull() ?: return null
++        if (valor.signum() < 0) return null
++        return valor.setScale(2, RoundingMode.HALF_UP).movePointRight(2).toLong()
++    }
++
++    /** 40000 -> "400,00" (para preencher o campo de edição). */
++    fun centavosParaTexto(centavos: Long): String =
++        BigDecimal(centavos).movePointLeft(2).setScale(2).toPlainString().replace('.', ',')
++
++    // =========================================================
++    // GERAÇÃO
++    // =========================================================
++
++    /**
++     * Primeira mensalidade: a primeira cujo vencimento cai no dia do início ou depois.
++     * Ex.: contrato começou dia 20/11 com vencimento dia 10 → primeira vence 10/12.
++     *      contrato começou dia 05/11 com vencimento dia 10 → primeira vence 10/11.
++     */
++    fun primeiraCompetencia(inicioEm: Long, diaVencimento: Int): YearMonth {
++        val inicio = dia(inicioEm)
++        val mes = YearMonth.from(inicio)
++        return if (!vencimentoDa(mes, diaVencimento).isBefore(inicio)) mes else mes.plusMonths(1)
++    }
++
++    /**
++     * Meses que precisam ter mensalidade criada: desde a primeira até a PRÓXIMA a vencer
++     * (inclusive), para o motorista e o responsável sempre enxergarem o próximo mês.
++     * Contrato encerrado não gera meses com vencimento depois do encerramento.
++     */
++    fun competenciasDevidas(contrato: Contrato, agora: Long): List<YearMonth> {
++        if (contrato.inicioEm <= 0L) return emptyList()
++
++        val hoje = dia(agora)
++        val limite: LocalDate? =
++            if (contrato.status == StatusContrato.ENCERRADO && contrato.encerradoEm > 0L) {
++                dia(contrato.encerradoEm)
++            } else {
++                null
++            }
++
++        val resultado = mutableListOf<YearMonth>()
++        var mes = primeiraCompetencia(contrato.inicioEm, contrato.diaVencimento)
++
++        while (resultado.size < MAX_COMPETENCIAS) {
++            val vencimento = vencimentoDa(mes, contrato.diaVencimento)
++            if (limite != null && vencimento.isAfter(limite)) break
++
++            resultado += mes
++            if (!vencimento.isBefore(hoje)) break // esta já é a próxima a vencer
++
++            mes = mes.plusMonths(1)
++        }
++        return resultado
++    }
++
++    /** Das competências devidas, as que ainda não têm documento. */
++    fun competenciasFaltando(
++        contrato: Contrato,
++        idsExistentes: Set<String>,
++        agora: Long
++    ): List<YearMonth> =
++        competenciasDevidas(contrato, agora)
++            .filter { idMensalidade(contrato.id, it) !in idsExistentes }
++
++    // =========================================================
++    // SITUAÇÃO
++    // =========================================================
++
++    fun diasDeAtraso(mensalidade: Mensalidade, agora: Long): Long {
++        if (mensalidade.status != StatusMensalidade.PENDENTE) return 0L
++        val dias = ChronoUnit.DAYS.between(dia(mensalidade.vencimento), dia(agora))
++        return dias.coerceAtLeast(0L)
++    }
++
++    fun situacao(mensalidade: Mensalidade, agora: Long): SituacaoMensalidade {
++        when (mensalidade.status) {
++            StatusMensalidade.PAGA -> return SituacaoMensalidade.PAGA
++            StatusMensalidade.CANCELADA -> return SituacaoMensalidade.CANCELADA
++        }
++        val vencimento = dia(mensalidade.vencimento)
++        val hoje = dia(agora)
++        return when {
++            hoje.isBefore(vencimento) -> SituacaoMensalidade.A_VENCER
++            hoje.isEqual(vencimento) -> SituacaoMensalidade.VENCE_HOJE
++            else -> SituacaoMensalidade.ATRASADA
++        }
++    }
++
++    /**
++     * Em dia: nada vencido.
++     * Atrasado: uma mensalidade vencida há até [DIAS_CARENCIA] dias.
++     * Inadimplente: atraso maior que a carência, ou duas ou mais mensalidades vencidas.
++     */
++    fun situacaoDoContrato(
++        contrato: Contrato,
++        mensalidadesDoContrato: List<Mensalidade>,
++        agora: Long
++    ): SituacaoContrato {
++        val vencidas = mensalidadesDoContrato.filter {
++            situacao(it, agora) == SituacaoMensalidade.ATRASADA
++        }
++
++        return when {
++            vencidas.isEmpty() ->
++                if (contrato.status == StatusContrato.ENCERRADO) SituacaoContrato.ENCERRADO
++                else SituacaoContrato.EM_DIA
++            vencidas.size >= 2 -> SituacaoContrato.INADIMPLENTE
++            vencidas.any { diasDeAtraso(it, agora) > DIAS_CARENCIA } -> SituacaoContrato.INADIMPLENTE
++            else -> SituacaoContrato.ATRASADO
++        }
++    }
++
++    /** A mensalidade em aberto mais antiga (a que deve ser paga primeiro), se houver. */
++    fun proximaEmAberto(mensalidadesDoContrato: List<Mensalidade>): Mensalidade? =
++        mensalidadesDoContrato
++            .filter { it.status == StatusMensalidade.PENDENTE }
++            .minByOrNull { it.vencimento }
++
++    /**
++     * Data da próxima cobrança: a mais antiga em aberto; se está tudo pago, o vencimento
++     * do mês seguinte ao último já gerado. Nulo para contrato encerrado e quitado.
++     */
++    fun proximoVencimento(
++        contrato: Contrato,
++        mensalidadesDoContrato: List<Mensalidade>,
++        agora: Long
++    ): Long? {
++        proximaEmAberto(mensalidadesDoContrato)?.let { return it.vencimento }
++        if (contrato.status == StatusContrato.ENCERRADO) return null
++
++        val ultimoMes = mensalidadesDoContrato
++            .mapNotNull { runCatching { YearMonth.parse(it.competencia) }.getOrNull() }
++            .maxOrNull()
++            ?: competenciasDevidas(contrato, agora).lastOrNull()
++            ?: return null
++
++        val proximo = if (mensalidadesDoContrato.isEmpty()) ultimoMes else ultimoMes.plusMonths(1)
++        return inicioDoDia(vencimentoDa(proximo, contrato.diaVencimento))
++    }
++
++    // =========================================================
++    // RESUMO (painel do motorista)
++    // =========================================================
++
++    fun resumo(
++        contratos: List<Contrato>,
++        mensalidades: List<Mensalidade>,
++        agora: Long
++    ): Resumo {
++        val mesAtual = YearMonth.from(dia(agora))
++        val porContrato = mensalidades.groupBy { it.contratoId }
++
++        val recebido = mensalidades
++            .filter { it.status == StatusMensalidade.PAGA && it.pagoEm != null }
++            .filter { YearMonth.from(dia(it.pagoEm!!)) == mesAtual }
++            .sumOf { it.valorCentavos }
++
++        val aReceber = mensalidades
++            .filter { it.status == StatusMensalidade.PENDENTE }
++            .filter { situacao(it, agora) != SituacaoMensalidade.ATRASADA }
++            .filter { YearMonth.from(dia(it.vencimento)) == mesAtual }
++            .sumOf { it.valorCentavos }
++
++        val emAtraso = mensalidades
++            .filter { situacao(it, agora) == SituacaoMensalidade.ATRASADA }
++            .sumOf { it.valorCentavos }
++
++        val situacoes = contratos.map {
++            situacaoDoContrato(it, porContrato[it.id].orEmpty(), agora)
++        }
++
++        return Resumo(
++            recebidoNoMesCentavos = recebido,
++            aReceberNoMesCentavos = aReceber,
++            emAtrasoCentavos = emAtraso,
++            qtdEmDia = situacoes.count { it == SituacaoContrato.EM_DIA },
++            qtdAtrasados = situacoes.count { it == SituacaoContrato.ATRASADO },
++            qtdInadimplentes = situacoes.count { it == SituacaoContrato.INADIMPLENTE }
++        )
++    }
++}
+diff --git a/app/src/main/java/com/example/vaivan/domain/usecase/solicitacao/AceitarSolicitacaoUseCase.kt b/app/src/main/java/com/example/vaivan/domain/usecase/solicitacao/AceitarSolicitacaoUseCase.kt
+index 49dacc0..c590ee5 100644
+--- a/app/src/main/java/com/example/vaivan/domain/usecase/solicitacao/AceitarSolicitacaoUseCase.kt
++++ b/app/src/main/java/com/example/vaivan/domain/usecase/solicitacao/AceitarSolicitacaoUseCase.kt
+@@ -1,7 +1,9 @@
+ package com.example.vaivan.domain.usecase.solicitacao
+ 
+ import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
++import android.util.Log
+ import com.example.vaivan.data.repository.AssinaturaRepository
++import com.example.vaivan.data.repository.MensalidadeRepository
+ import com.example.vaivan.data.repository.RotaRepository
+ import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+ import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
+@@ -14,13 +16,16 @@ import kotlinx.coroutines.withContext
+  *  2. recalcula a rota com o novo aluno (sem gravar nada ainda);
+  *  3. grava TUDO de uma vez, numa transação: rota, paradas e solicitação "ACEITA".
+  *     Se a solicitação já foi respondida, se não há mais vaga ou se a rota mudou no meio
+- *     do caminho, nada é gravado e o motorista recebe uma mensagem clara.
++ *     do caminho, nada é gravado e o motorista recebe uma mensagem clara;
++ *  4. guarda a cópia local;
++ *  5. cria o contrato de mensalidade (valor e vencimento copiados da rota).
+  */
+ class AceitarSolicitacaoUseCase(
+     private val solicitacaoInclusaoRepository: SolicitacaoInclusaoRepository,
+     private val recalcularRotaUseCase: RecalcularRotaUseCase,
+     private val rotaRepository: RotaRepository,
+-    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository()
++    private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(),
++    private val mensalidadeRepository: MensalidadeRepository = MensalidadeRepository()
+ ) {
+ 
+     suspend operator fun invoke(
+@@ -57,5 +62,13 @@ class AceitarSolicitacaoUseCase(
+ 
+         // 4. Cópia local da solicitação
+         solicitacaoInclusaoRepository.registrarAceitaLocalmente(solicitacao, respondidaEm)
++
++        // 5. Contrato de mensalidade. Se falhar (ex.: sem internet neste instante), o aceite
++        //    continua valendo: a tela de Pagamentos cria o contrato que estiver faltando.
++        try {
++            mensalidadeRepository.garantirContrato(solicitacao.id, inicioEm = respondidaEm)
++        } catch (e: Exception) {
++            Log.w("AceitarSolicitacao", "Contrato será criado depois pela tela de pagamentos", e)
++        }
+     }
+ }
+\ No newline at end of file
+diff --git a/app/src/main/java/com/example/vaivan/ui/comum/mensalidade/MensalidadeUi.kt b/app/src/main/java/com/example/vaivan/ui/comum/mensalidade/MensalidadeUi.kt
+new file mode 100644
+index 0000000..1365d24
+--- /dev/null
++++ b/app/src/main/java/com/example/vaivan/ui/comum/mensalidade/MensalidadeUi.kt
+@@ -0,0 +1,66 @@
++package com.example.vaivan.ui.comum.mensalidade
++
++import com.example.vaivan.R
++import com.example.vaivan.data.models.FormaPagamentoMensalidade
++import com.example.vaivan.data.models.Mensalidade
++import com.example.vaivan.data.models.RegistradoPor
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
++import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
++import java.time.YearMonth
++import java.time.format.DateTimeFormatter
++import java.util.Locale
++
++/** Textos e cores das mensalidades, usados pelas telas do motorista e do responsável. */
++object MensalidadeUi {
++
++    private val localeBr = Locale("pt", "BR")
++    private val formatoMes = DateTimeFormatter.ofPattern("MMMM/yyyy", localeBr)
++    private val formatoSoMes = DateTimeFormatter.ofPattern("MMMM", localeBr)
++
++    /** "2026-11" -> "Novembro/2026" */
++    fun nomeDoMes(competencia: String): String =
++        runCatching { YearMonth.parse(competencia).format(formatoMes).maiuscula() }
++            .getOrDefault(competencia)
++
++    /** Mês atual por extenso, minúsculo: "novembro". */
++    fun mesAtual(agora: Long): String =
++        YearMonth.from(MensalidadePolicy.dia(agora)).format(formatoSoMes)
++
++    fun rotuloDoContrato(situacao: SituacaoContrato): Pair<String, Int> = when (situacao) {
++        SituacaoContrato.EM_DIA -> "Em dia" to R.color.green
++        SituacaoContrato.ATRASADO -> "Atrasado" to R.color.orange
++        SituacaoContrato.INADIMPLENTE -> "Inadimplente" to R.color.red
++        SituacaoContrato.ENCERRADO -> "Encerrado" to R.color.medium_gray
++    }
++
++    fun rotuloDaMensalidade(mensalidade: Mensalidade, agora: Long): Pair<String, Int> =
++        when (MensalidadePolicy.situacao(mensalidade, agora)) {
++            SituacaoMensalidade.PAGA -> "Paga" to R.color.green
++            SituacaoMensalidade.A_VENCER -> "A vencer" to R.color.medium_gray
++            SituacaoMensalidade.VENCE_HOJE -> "Vence hoje" to R.color.orange
++            SituacaoMensalidade.ATRASADA -> {
++                val dias = MensalidadePolicy.diasDeAtraso(mensalidade, agora)
++                (if (dias == 1L) "1 dia de atraso" else "$dias dias de atraso") to R.color.red
++            }
++            SituacaoMensalidade.CANCELADA -> "Cancelada" to R.color.light_gray
++        }
++
++    /** Linha de detalhe de uma mensalidade no histórico. */
++    fun detalheDaMensalidade(mensalidade: Mensalidade, paraMotorista: Boolean): String {
++        val pagoEm = mensalidade.pagoEm
++        if (pagoEm != null) {
++            val quem = when {
++                mensalidade.registradoPor == RegistradoPor.MOTORISTA && paraMotorista -> " (registrado por você)"
++                mensalidade.registradoPor == RegistradoPor.MOTORISTA -> " (registrado pelo motorista)"
++                else -> ""
++            }
++            return "Pago em ${AssinaturaUi.formatarData(pagoEm)} · " +
++                FormaPagamentoMensalidade.rotulo(mensalidade.forma) + quem
++        }
++        return "Vence em ${AssinaturaUi.formatarData(mensalidade.vencimento)}"
++    }
++
++    private fun String.maiuscula() = replaceFirstChar { it.titlecase(localeBr) }
++}
+diff --git a/app/src/main/java/com/example/vaivan/ui/motorista/assinatura/PagamentosMotoristaActivity.kt b/app/src/main/java/com/example/vaivan/ui/motorista/assinatura/PagamentosMotoristaActivity.kt
+index b5df2c0..e841b37 100644
+--- a/app/src/main/java/com/example/vaivan/ui/motorista/assinatura/PagamentosMotoristaActivity.kt
++++ b/app/src/main/java/com/example/vaivan/ui/motorista/assinatura/PagamentosMotoristaActivity.kt
+@@ -1,27 +1,75 @@
+ package com.example.vaivan.ui.motorista.assinatura
+ 
+ import android.content.Intent
++import android.content.res.ColorStateList
+ import android.os.Bundle
++import android.text.InputType
++import android.util.Log
+ import android.view.View
+ import android.widget.Button
++import android.widget.EditText
+ import android.widget.ImageButton
++import android.widget.LinearLayout
++import android.widget.TextView
++import android.widget.Toast
++import androidx.appcompat.app.AlertDialog
+ import androidx.appcompat.app.AppCompatActivity
++import androidx.core.content.ContextCompat
+ import androidx.lifecycle.Lifecycle
+ import androidx.lifecycle.lifecycleScope
+ import androidx.lifecycle.repeatOnLifecycle
+ import com.example.vaivan.R
++import com.example.vaivan.data.models.Contrato
++import com.example.vaivan.data.models.FormaPagamentoMensalidade
++import com.example.vaivan.data.models.Mensalidade
++import com.example.vaivan.data.models.RegistradoPor
++import com.example.vaivan.data.models.StatusContrato
++import com.example.vaivan.data.models.StatusMensalidade
+ import com.example.vaivan.data.repository.AssinaturaRepository
++import com.example.vaivan.data.repository.MensalidadeRepository
+ import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
++import com.example.vaivan.ui.comum.mensalidade.MensalidadeUi
++import com.google.android.material.bottomsheet.BottomSheetDialog
++import com.google.android.material.button.MaterialButton
++import com.google.android.material.button.MaterialButtonToggleGroup
+ import com.google.firebase.auth.FirebaseAuth
++import kotlinx.coroutines.flow.combine
+ import kotlinx.coroutines.launch
+ 
+ /**
+- * Área de gestão de pagamentos do motorista (recebimentos e repasses, RF15).
+- * Só abre com a assinatura em dia; sem ela, mostra o bloqueio.
+- * O recebimento das mensalidades pelo aplicativo ainda não foi implementado.
++ * Gestão das mensalidades que os responsáveis pagam ao motorista (RF15).
++ *
++ * Mostra, por passageiro: valor, situação (em dia / atrasado / inadimplente), próxima
++ * cobrança e histórico. O motorista registra recebimentos feitos fora do app (PIX direto,
++ * dinheiro...) e pode reajustar o valor de cada contrato.
++ *
++ * Só abre com a assinatura do motorista em dia; sem ela, mostra o bloqueio.
+  */
+ class PagamentosMotoristaActivity : AppCompatActivity() {
+ 
++    private enum class Filtro { TODOS, EM_DIA, PENDENTES }
++
++    private val repository = MensalidadeRepository()
++
++    private var contratos: List<Contrato> = emptyList()
++    private var mensalidades: List<Mensalidade> = emptyList()
++    private var filtro = Filtro.TODOS
++    private var dadosCarregados = false
++    private var liberado = false
++    private var gerando = false
++
++    /** Histórico aberto no momento, para atualizar em tempo real. */
++    private var historicoAberto: Pair<String, View>? = null
++
++    private lateinit var progress: View
++    private lateinit var conteudo: View
++    private lateinit var bloqueio: View
++    private lateinit var containerContratos: LinearLayout
++    private lateinit var txtVazio: TextView
++
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         setContentView(R.layout.activity_pagamentos_motorista)
+@@ -41,19 +89,402 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
+             return
+         }
+ 
+-        val conteudo = findViewById<View>(R.id.conteudoPagamentos)
+-        val bloqueio = findViewById<View>(R.id.blocoBloqueado)
++        progress = findViewById(R.id.progressPagamentos)
++        conteudo = findViewById(R.id.conteudoPagamentos)
++        bloqueio = findViewById(R.id.blocoBloqueado)
++        containerContratos = findViewById(R.id.containerContratos)
++        txtVazio = findViewById(R.id.txtVazioPagamentos)
++
++        findViewById<MaterialButtonToggleGroup>(R.id.grupoFiltroPagamentos)
++            .addOnButtonCheckedListener { _, checkedId, isChecked ->
++                if (!isChecked) return@addOnButtonCheckedListener
++                filtro = when (checkedId) {
++                    R.id.btnFiltroEmDia -> Filtro.EM_DIA
++                    R.id.btnFiltroPendentes -> Filtro.PENDENTES
++                    else -> Filtro.TODOS
++                }
++                renderizar()
++            }
++
++        // Passageiros aceitos antes desta funcionalidade ainda não têm contrato.
++        lifecycleScope.launch {
++            try {
++                repository.sincronizarContratosDoMotorista(uid)
++            } catch (e: Exception) {
++                Log.w(TAG, "Não foi possível sincronizar contratos", e)
++            }
++        }
+ 
+         lifecycleScope.launch {
+             repeatOnLifecycle(Lifecycle.State.STARTED) {
+-                AssinaturaRepository().observarAssinatura(uid).collect { assinatura ->
+-                    val liberado = AssinaturaPolicy.podeVerPagamentos(
+-                        assinatura, System.currentTimeMillis()
+-                    )
+-                    conteudo.visibility = if (liberado) View.VISIBLE else View.GONE
+-                    bloqueio.visibility = if (liberado) View.GONE else View.VISIBLE
++
++                launch {
++                    AssinaturaRepository().observarAssinatura(uid).collect { assinatura ->
++                        liberado = AssinaturaPolicy.podeVerPagamentos(
++                            assinatura, System.currentTimeMillis()
++                        )
++                        atualizarVisibilidade()
++                    }
++                }
++
++                launch {
++                    combine(
++                        repository.observarContratosDoMotorista(uid),
++                        repository.observarMensalidadesDoMotorista(uid)
++                    ) { c, m -> c to m }.collect { (c, m) ->
++                        contratos = c
++                        mensalidades = m
++                        dadosCarregados = true
++                        atualizarVisibilidade()
++                        renderizar()
++                        gerarMensalidadesFaltando()
++                    }
++                }
++            }
++        }
++    }
++
++    private fun atualizarVisibilidade() {
++        bloqueio.visibility = if (!liberado) View.VISIBLE else View.GONE
++        conteudo.visibility = if (liberado && dadosCarregados) View.VISIBLE else View.GONE
++        progress.visibility = if (liberado && !dadosCarregados) View.VISIBLE else View.GONE
++    }
++
++    /** Cria as cobranças do mês que ainda não existem (idempotente). */
++    private fun gerarMensalidadesFaltando() {
++        if (gerando) return
++        gerando = true
++        val ativos = contratos
++        val existentes = mensalidades
++        lifecycleScope.launch {
++            try {
++                repository.gerarMensalidadesFaltando(ativos, existentes)
++            } catch (e: Exception) {
++                Log.w(TAG, "Falha ao gerar mensalidades", e)
++            } finally {
++                gerando = false
++            }
++        }
++    }
++
++    // =========================================================
++    // LISTA
++    // =========================================================
++
++    private fun renderizar() {
++        val agora = System.currentTimeMillis()
++        val porContrato = mensalidades.groupBy { it.contratoId }
++
++        // Encerrados só aparecem enquanto ainda devem alguma coisa.
++        val itens = contratos
++            .map { it to MensalidadePolicy.situacaoDoContrato(it, porContrato[it.id].orEmpty(), agora) }
++            .filter { (c, s) -> c.status == StatusContrato.ATIVO || s != SituacaoContrato.ENCERRADO }
++
++        // RESUMO
++        val resumo = MensalidadePolicy.resumo(itens.map { it.first }, mensalidades, agora)
++        findViewById<TextView>(R.id.txtLabelRecebido).text = "Recebido em ${MensalidadeUi.mesAtual(agora)}"
++        findViewById<TextView>(R.id.txtRecebidoMes).text = AssinaturaUi.formatarValor(resumo.recebidoNoMesCentavos)
++        findViewById<TextView>(R.id.txtAReceberMes).text = AssinaturaUi.formatarValor(resumo.aReceberNoMesCentavos)
++        findViewById<TextView>(R.id.txtEmAtraso).text = AssinaturaUi.formatarValor(resumo.emAtrasoCentavos)
++        findViewById<TextView>(R.id.txtContagens).text = listOf(
++            "${resumo.qtdEmDia} em dia",
++            "${resumo.qtdAtrasados} ${if (resumo.qtdAtrasados == 1) "atrasado" else "atrasados"}",
++            "${resumo.qtdInadimplentes} ${if (resumo.qtdInadimplentes == 1) "inadimplente" else "inadimplentes"}"
++        ).joinToString(" · ")
++
++        // FILTRO + ORDEM (quem deve aparece primeiro)
++        val visiveis = itens
++            .filter { (_, s) ->
++                when (filtro) {
++                    Filtro.TODOS -> true
++                    Filtro.EM_DIA -> s == SituacaoContrato.EM_DIA
++                    Filtro.PENDENTES -> s == SituacaoContrato.ATRASADO || s == SituacaoContrato.INADIMPLENTE
+                 }
+             }
++            .sortedWith(compareBy({ ordem(it.second) }, { it.first.nomePassageiro.lowercase() }))
++
++        containerContratos.removeAllViews()
++        visiveis.forEach { (contrato, situacao) ->
++            containerContratos.addView(
++                montarCard(contrato, situacao, porContrato[contrato.id].orEmpty(), agora)
++            )
++        }
++
++        txtVazio.visibility = if (visiveis.isEmpty()) View.VISIBLE else View.GONE
++        txtVazio.text = when {
++            itens.isEmpty() -> "Você ainda não tem passageiros. Quando aceitar uma solicitação, " +
++                "a mensalidade do passageiro aparece aqui."
++            filtro == Filtro.PENDENTES -> "Nenhum pagamento pendente. Tudo em dia!"
++            else -> "Nenhum passageiro neste filtro."
++        }
++
++        // Histórico aberto acompanha as mudanças em tempo real
++        historicoAberto?.let { (contratoId, view) ->
++            contratos.firstOrNull { it.id == contratoId }?.let { preencherHistorico(view, it) }
++        }
++    }
++
++    private fun ordem(s: SituacaoContrato) = when (s) {
++        SituacaoContrato.INADIMPLENTE -> 0
++        SituacaoContrato.ATRASADO -> 1
++        SituacaoContrato.EM_DIA -> 2
++        SituacaoContrato.ENCERRADO -> 3
++    }
++
++    private fun montarCard(
++        contrato: Contrato,
++        situacao: SituacaoContrato,
++        doContrato: List<Mensalidade>,
++        agora: Long
++    ): View {
++        val card = layoutInflater.inflate(R.layout.item_contrato_mensalidade, containerContratos, false)
++
++        card.findViewById<TextView>(R.id.txtNomePassageiroContrato).text =
++            contrato.nomePassageiro.ifBlank { "Passageiro" }
++
++        card.findViewById<TextView>(R.id.txtResponsavelContrato).text = listOf(
++            contrato.nomeResponsavel.takeIf { it.isNotBlank() }?.let { "Responsável: $it" },
++            contrato.nomeRota.takeIf { it.isNotBlank() }
++        ).filterNotNull().joinToString(" · ")
++
++        val badge = card.findViewById<TextView>(R.id.txtSituacaoContrato)
++        val txtValor = card.findViewById<TextView>(R.id.txtValorContrato)
++        val txtDetalhe = card.findViewById<TextView>(R.id.txtDetalheContrato)
++        val btnAcao = card.findViewById<MaterialButton>(R.id.btnAcaoContrato)
++
++        card.findViewById<View>(R.id.btnHistoricoContrato).setOnClickListener { abrirHistorico(contrato) }
++
++        // Rota criada antes do campo de preço: o motorista precisa definir o valor.
++        if (contrato.valorMensalCentavos <= 0) {
++            pintarBadge(badge, "Sem valor", R.color.medium_gray)
++            txtValor.text = "Valor da mensalidade não definido"
++            txtDetalhe.text = "Defina o valor para começar a acompanhar os pagamentos."
++            btnAcao.text = "Definir valor"
++            btnAcao.setOnClickListener { abrirReajuste(contrato) }
++            return card
++        }
++
++        val (rotulo, cor) = MensalidadeUi.rotuloDoContrato(situacao)
++        pintarBadge(badge, rotulo, cor)
++
++        txtValor.text = "${AssinaturaUi.formatarValor(contrato.valorMensalCentavos)} / mês · " +
++            "vence dia ${contrato.diaVencimento}"
++
++        val emAberto = MensalidadePolicy.proximaEmAberto(doContrato)
++        txtDetalhe.setTextColor(ContextCompat.getColor(this, R.color.gray))
++
++        if (emAberto == null) {
++            val proximo = MensalidadePolicy.proximoVencimento(contrato, doContrato, agora)
++            txtDetalhe.text = if (proximo != null) {
++                "Tudo pago · próxima cobrança em ${AssinaturaUi.formatarData(proximo)}"
++            } else {
++                "Tudo pago"
++            }
++            btnAcao.visibility = View.GONE
++            return card
++        }
++
++        val mes = MensalidadeUi.nomeDoMes(emAberto.competencia)
++        val vencidas = doContrato.count { MensalidadePolicy.situacao(it, agora) == SituacaoMensalidade.ATRASADA }
++
++        txtDetalhe.text = when (MensalidadePolicy.situacao(emAberto, agora)) {
++            SituacaoMensalidade.ATRASADA -> {
++                val dias = MensalidadePolicy.diasDeAtraso(emAberto, agora)
++                val extra = if (vencidas > 1) " (${vencidas} meses em aberto)" else ""
++                txtDetalhe.setTextColor(ContextCompat.getColor(this, R.color.red))
++                "$mes em atraso há $dias ${if (dias == 1L) "dia" else "dias"}$extra"
++            }
++            SituacaoMensalidade.VENCE_HOJE -> "$mes vence hoje"
++            else -> "Próxima cobrança: ${AssinaturaUi.formatarData(emAberto.vencimento)} ($mes)"
+         }
++
++        btnAcao.text = "Registrar recebimento"
++        btnAcao.setOnClickListener { confirmarRecebimento(emAberto) }
++        return card
++    }
++
++    private fun pintarBadge(badge: TextView, texto: String, cor: Int) {
++        badge.text = texto
++        badge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, cor))
++    }
++
++    // =========================================================
++    // AÇÕES
++    // =========================================================
++
++    private fun confirmarRecebimento(mensalidade: Mensalidade) {
++        val formas = FormaPagamentoMensalidade.manuais
++        var escolhida = 0
++
++        AlertDialog.Builder(this)
++            .setTitle("Recebimento de ${MensalidadeUi.nomeDoMes(mensalidade.competencia)}")
++            .setSingleChoiceItems(
++                formas.map { FormaPagamentoMensalidade.rotulo(it) }.toTypedArray(), 0
++            ) { _, qual -> escolhida = qual }
++            .setPositiveButton("Confirmar ${AssinaturaUi.formatarValor(mensalidade.valorCentavos)}") { _, _ ->
++                executar("Recebimento registrado.") {
++                    repository.registrarRecebimento(mensalidade.id, formas[escolhida])
++                }
++            }
++            .setNegativeButton("Cancelar", null)
++            .show()
++    }
++
++    private fun confirmarDesfazer(mensalidade: Mensalidade) {
++        AlertDialog.Builder(this)
++            .setTitle("Desfazer recebimento?")
++            .setMessage(
++                "${MensalidadeUi.nomeDoMes(mensalidade.competencia)} voltará a ficar em aberto. " +
++                    "Use isso apenas se o recebimento foi registrado por engano."
++            )
++            .setPositiveButton("Desfazer") { _, _ ->
++                executar("Recebimento desfeito.") { repository.desfazerRecebimento(mensalidade.id) }
++            }
++            .setNegativeButton("Cancelar", null)
++            .show()
++    }
++
++    private fun abrirReajuste(contrato: Contrato) {
++        val densidade = resources.displayMetrics.density
++        val layout = LinearLayout(this).apply {
++            orientation = LinearLayout.VERTICAL
++            val p = (20 * densidade).toInt()
++            setPadding(p, (8 * densidade).toInt(), p, 0)
++        }
++        val edtValor = EditText(this).apply {
++            hint = "Valor mensal (ex: 400,00)"
++            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
++            if (contrato.valorMensalCentavos > 0) {
++                setText(MensalidadePolicy.centavosParaTexto(contrato.valorMensalCentavos))
++            }
++        }
++        val edtDia = EditText(this).apply {
++            hint = "Dia do vencimento (1 a 28)"
++            inputType = InputType.TYPE_CLASS_NUMBER
++            setText(contrato.diaVencimento.toString())
++        }
++        layout.addView(edtValor)
++        layout.addView(edtDia)
++
++        AlertDialog.Builder(this)
++            .setTitle(contrato.nomePassageiro.ifBlank { "Mensalidade" })
++            .setMessage("A mudança vale a partir da próxima mensalidade gerada. As já geradas não mudam.")
++            .setView(layout)
++            .setPositiveButton("Salvar") { _, _ ->
++                val valor = MensalidadePolicy.textoParaCentavos(edtValor.text.toString())
++                val dia = edtDia.text.toString().trim().toIntOrNull()
++                when {
++                    valor == null || valor <= 0 ->
++                        Toast.makeText(this, "Informe um valor válido.", Toast.LENGTH_SHORT).show()
++                    dia == null || dia !in 1..28 ->
++                        Toast.makeText(this, "O dia deve ser entre 1 e 28.", Toast.LENGTH_SHORT).show()
++                    else -> executar("Mensalidade atualizada.") {
++                        repository.reajustarContrato(contrato.id, valor, dia)
++                    }
++                }
++            }
++            .setNegativeButton("Cancelar", null)
++            .show()
++    }
++
++    private fun executar(sucesso: String, acao: suspend () -> Unit) {
++        lifecycleScope.launch {
++            try {
++                acao()
++                Toast.makeText(this@PagamentosMotoristaActivity, sucesso, Toast.LENGTH_SHORT).show()
++            } catch (e: Exception) {
++                Log.e(TAG, "Falha na operação", e)
++                Toast.makeText(
++                    this@PagamentosMotoristaActivity,
++                    e.message ?: "Não foi possível concluir. Tente novamente.",
++                    Toast.LENGTH_LONG
++                ).show()
++            }
++        }
++    }
++
++    // =========================================================
++    // HISTÓRICO
++    // =========================================================
++
++    private fun abrirHistorico(contrato: Contrato) {
++        val view = layoutInflater.inflate(R.layout.bottom_sheet_historico_mensalidades, null)
++        val dialog = BottomSheetDialog(this)
++        dialog.setContentView(view)
++
++        view.findViewById<View>(R.id.btnReajustarContrato).setOnClickListener {
++            abrirReajuste(contratos.firstOrNull { it.id == contrato.id } ?: contrato)
++        }
++
++        historicoAberto = contrato.id to view
++        dialog.setOnDismissListener { historicoAberto = null }
++
++        preencherHistorico(view, contrato)
++        dialog.show()
++    }
++
++    private fun preencherHistorico(view: View, contrato: Contrato) {
++        val agora = System.currentTimeMillis()
++
++        view.findViewById<TextView>(R.id.txtTituloHistorico).text =
++            contrato.nomePassageiro.ifBlank { "Passageiro" }
++        view.findViewById<TextView>(R.id.txtSubtituloHistorico).text =
++            if (contrato.valorMensalCentavos > 0) {
++                "${AssinaturaUi.formatarValor(contrato.valorMensalCentavos)} / mês · vence dia ${contrato.diaVencimento}"
++            } else {
++                "Valor da mensalidade não definido"
++            }
++
++        val container = view.findViewById<LinearLayout>(R.id.containerHistorico)
++        container.removeAllViews()
++
++        val lista = mensalidades
++            .filter { it.contratoId == contrato.id }
++            .sortedByDescending { it.competencia }
++
++        if (lista.isEmpty()) {
++            container.addView(TextView(this).apply {
++                text = "Nenhuma mensalidade gerada ainda."
++                setTextColor(ContextCompat.getColor(context, R.color.medium_gray))
++            })
++            return
++        }
++
++        lista.forEach { m ->
++            val linha = layoutInflater.inflate(R.layout.item_mensalidade_historico, container, false)
++
++            linha.findViewById<TextView>(R.id.txtMesHistorico).text = MensalidadeUi.nomeDoMes(m.competencia)
++
++            val (rotulo, cor) = MensalidadeUi.rotuloDaMensalidade(m, agora)
++            linha.findViewById<TextView>(R.id.txtStatusHistorico).apply {
++                text = rotulo
++                setTextColor(ContextCompat.getColor(context, cor))
++            }
++
++            linha.findViewById<TextView>(R.id.txtDetalheHistorico).text =
++                "${AssinaturaUi.formatarValor(m.valorCentavos)} · " +
++                    MensalidadeUi.detalheDaMensalidade(m, paraMotorista = true)
++
++            val acao = linha.findViewById<TextView>(R.id.btnAcaoHistorico)
++            when {
++                m.status == StatusMensalidade.PENDENTE -> {
++                    acao.visibility = View.VISIBLE
++                    acao.text = "Registrar recebimento"
++                    acao.setOnClickListener { confirmarRecebimento(m) }
++                }
++                m.status == StatusMensalidade.PAGA && m.registradoPor == RegistradoPor.MOTORISTA -> {
++                    acao.visibility = View.VISIBLE
++                    acao.text = "Desfazer recebimento"
++                    acao.setOnClickListener { confirmarDesfazer(m) }
++                }
++                else -> acao.visibility = View.GONE
++            }
++
++            container.addView(linha)
++        }
++    }
++
++    companion object {
++        private const val TAG = "PagamentosMotorista"
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/app/src/main/java/com/example/vaivan/ui/motorista/rotas/CriarRotaActivity.kt b/app/src/main/java/com/example/vaivan/ui/motorista/rotas/CriarRotaActivity.kt
+index 51aa2d6..8bf87ad 100644
+--- a/app/src/main/java/com/example/vaivan/ui/motorista/rotas/CriarRotaActivity.kt
++++ b/app/src/main/java/com/example/vaivan/ui/motorista/rotas/CriarRotaActivity.kt
+@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
+ import androidx.core.content.ContextCompat
+ import androidx.lifecycle.lifecycleScope
+ import com.example.vaivan.R
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
+ import com.example.vaivan.core.base.BaseActivity
+ import com.example.vaivan.core.util.TextoUtil
+ import com.example.vaivan.data.local.VaivanDatabase
+@@ -38,6 +39,8 @@ class CriarRotaActivity : BaseActivity() {
+ 
+     private lateinit var edtNomeRota: EditText
+     private lateinit var edtCapacidade: EditText
++    private lateinit var edtValorMensal: EditText
++    private lateinit var edtDiaVencimento: EditText
+     private lateinit var txtDestinoAtual: TextView
+     private lateinit var btnCriarRota: Button
+ 
+@@ -92,6 +95,8 @@ class CriarRotaActivity : BaseActivity() {
+ 
+         edtNomeRota = findViewById(R.id.edtNomeRota)
+         edtCapacidade = findViewById(R.id.edtCapacidade)
++        edtValorMensal = findViewById(R.id.edtValorMensal)
++        edtDiaVencimento = findViewById(R.id.edtDiaVencimento)
+         txtDestinoAtual = findViewById(R.id.txtDestinoAtual)
+         txtOrigemAtual = findViewById(R.id.txtOrigemAtual)
+         containerPonto = findViewById(R.id.containerPonto)
+@@ -189,6 +194,10 @@ class CriarRotaActivity : BaseActivity() {
+     private fun preencherFormulario(rota: com.example.vaivan.data.local.entities.RotaEntity) {
+         edtNomeRota.setText(rota.nome)
+         edtCapacidade.setText(rota.capacidadeTotal.toString())
++        if (rota.valorMensalCentavos > 0) {
++            edtValorMensal.setText(MensalidadePolicy.centavosParaTexto(rota.valorMensalCentavos))
++        }
++        edtDiaVencimento.setText(rota.diaVencimento.toString())
+ 
+         tipoTrajetoSelecionado = rota.tipoTrajeto
+         atualizarCoresTipoTrajeto()
+@@ -505,6 +514,18 @@ class CriarRotaActivity : BaseActivity() {
+             return
+         }
+ 
++        val valorMensal = MensalidadePolicy.textoParaCentavos(edtValorMensal.text?.toString().orEmpty())
++        if (valorMensal == null || valorMensal <= 0) {
++            Toast.makeText(this, "Informe o valor da mensalidade (ex: 400,00).", Toast.LENGTH_SHORT).show()
++            return
++        }
++
++        val diaVencimento = edtDiaVencimento.text?.toString()?.trim()?.toIntOrNull()
++        if (diaVencimento == null || diaVencimento !in 1..28) {
++            Toast.makeText(this, "O dia de vencimento deve ser entre 1 e 28.", Toast.LENGTH_SHORT).show()
++            return
++        }
++
+         btnCriarRota.isEnabled = false
+ 
+         val idExistente = rotaId
+@@ -530,7 +551,9 @@ class CriarRotaActivity : BaseActivity() {
+                         capacidadeTotal = capacidade,
+                         escolaId = escola.id,
+                         escolaNome = escola.nome,
+-                        bairrosAtendidos = bairrosAtendidos.keys.toList()
++                        bairrosAtendidos = bairrosAtendidos.keys.toList(),
++                        valorMensalCentavos = valorMensal,
++                        diaVencimento = diaVencimento
+                     )
+ 
+                     Toast.makeText(this@CriarRotaActivity, "Rota atualizada!", Toast.LENGTH_SHORT).show()
+@@ -559,7 +582,9 @@ class CriarRotaActivity : BaseActivity() {
+                         capacidadeTotal = capacidade,
+                         escolaId = escola.id,
+                         escolaNome = escola.nome,
+-                        bairrosAtendidos = bairrosAtendidos.keys.toList()
++                        bairrosAtendidos = bairrosAtendidos.keys.toList(),
++                        valorMensalCentavos = valorMensal,
++                        diaVencimento = diaVencimento
+                     )
+                     Toast.makeText(this@CriarRotaActivity, "Rota criada!", Toast.LENGTH_SHORT).show()
+                     startActivity(
+diff --git a/app/src/main/java/com/example/vaivan/ui/responsavel/rotas/ResultadosRotasActivity.kt b/app/src/main/java/com/example/vaivan/ui/responsavel/rotas/ResultadosRotasActivity.kt
+index e08e8fd..ac58a88 100644
+--- a/app/src/main/java/com/example/vaivan/ui/responsavel/rotas/ResultadosRotasActivity.kt
++++ b/app/src/main/java/com/example/vaivan/ui/responsavel/rotas/ResultadosRotasActivity.kt
+@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
+ import androidx.lifecycle.lifecycleScope
+ import com.bumptech.glide.Glide
+ import com.example.vaivan.R
++import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
+ import com.example.vaivan.core.base.BaseActivity
+ import com.example.vaivan.data.local.VaivanDatabase
+ import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+@@ -268,6 +269,10 @@ class ResultadosRotasActivity : BaseActivity() {
+         card.findViewById<TextView>(R.id.txtDistanciaEmbarqueResultado).text =
+             formatarDistancia(item.distanciaEmbarqueMetros)
+ 
++        card.findViewById<TextView>(R.id.txtValorResultado).text =
++            if (rota.valorMensalCentavos > 0) AssinaturaUi.formatarValor(rota.valorMensalCentavos)
++            else "A combinar"
++
+         card.findViewById<TextView>(R.id.txtEscolaResultado).text =
+             "Escola: ${rota.escolaNome.ifBlank { rota.destinoNome }}"
+ 
+diff --git a/app/src/main/res/drawable/bg_badge_situacao.xml b/app/src/main/res/drawable/bg_badge_situacao.xml
+new file mode 100644
+index 0000000..2e8618a
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_badge_situacao.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Etiqueta de situação (Em dia / Atrasado / Inadimplente). A cor vem do código, via backgroundTint. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <solid android:color="@color/white" />
++    <corners android:radius="50dp" />
++</shape>
+diff --git a/app/src/main/res/layout/activity_criar_rota.xml b/app/src/main/res/layout/activity_criar_rota.xml
+index 835b6ab..b8f9ce2 100644
+--- a/app/src/main/res/layout/activity_criar_rota.xml
++++ b/app/src/main/res/layout/activity_criar_rota.xml
+@@ -496,7 +496,7 @@
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+                 android:layout_marginTop="6dp"
+-                android:layout_marginBottom="24dp"
++                android:layout_marginBottom="20dp"
+                 android:background="@drawable/bg_input_white"
+                 app:boxBackgroundMode="none"
+                 app:hintEnabled="false">
+@@ -515,6 +515,92 @@
+                     android:textSize="14sp" />
+             </com.google.android.material.textfield.TextInputLayout>
+ 
++            <!-- MENSALIDADE -->
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_marginBottom="24dp"
++                android:orientation="horizontal">
++
++                <LinearLayout
++                    android:layout_width="0dp"
++                    android:layout_height="wrap_content"
++                    android:layout_marginEnd="8dp"
++                    android:layout_weight="1.4"
++                    android:orientation="vertical">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Mensalidade (R$)"
++                        android:textColor="@color/dark_gray"
++                        android:textSize="16sp"
++                        android:textStyle="bold" />
++
++                    <com.google.android.material.textfield.TextInputLayout
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="6dp"
++                        android:background="@drawable/bg_input_white"
++                        app:boxBackgroundMode="none"
++                        app:hintEnabled="false">
++
++                        <com.google.android.material.textfield.TextInputEditText
++                            android:id="@+id/edtValorMensal"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:digits="0123456789,."
++                            android:hint="Ex: 400,00"
++                            android:inputType="numberDecimal"
++                            android:minHeight="48dp"
++                            android:paddingHorizontal="12dp"
++                            android:paddingVertical="12dp"
++                            android:textColor="@color/dark_gray"
++                            android:textColorHint="@color/light_gray"
++                            android:textSize="14sp" />
++                    </com.google.android.material.textfield.TextInputLayout>
++                </LinearLayout>
++
++                <LinearLayout
++                    android:layout_width="0dp"
++                    android:layout_height="wrap_content"
++                    android:layout_weight="1"
++                    android:orientation="vertical">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Vence dia"
++                        android:textColor="@color/dark_gray"
++                        android:textSize="16sp"
++                        android:textStyle="bold" />
++
++                    <com.google.android.material.textfield.TextInputLayout
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="6dp"
++                        android:background="@drawable/bg_input_white"
++                        app:boxBackgroundMode="none"
++                        app:hintEnabled="false">
++
++                        <com.google.android.material.textfield.TextInputEditText
++                            android:id="@+id/edtDiaVencimento"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:hint="1 a 28"
++                            android:inputType="number"
++                            android:maxLength="2"
++                            android:minHeight="48dp"
++                            android:paddingHorizontal="12dp"
++                            android:paddingVertical="12dp"
++                            android:text="10"
++                            android:textColor="@color/dark_gray"
++                            android:textColorHint="@color/light_gray"
++                            android:textSize="14sp" />
++                    </com.google.android.material.textfield.TextInputLayout>
++                </LinearLayout>
++            </LinearLayout>
++
+             <!-- BOTÃO -->
+             <com.google.android.material.button.MaterialButton
+                 android:id="@+id/btnCriarRota"
+diff --git a/app/src/main/res/layout/activity_pagamentos_motorista.xml b/app/src/main/res/layout/activity_pagamentos_motorista.xml
+index fb06e5f..036c3fa 100644
+--- a/app/src/main/res/layout/activity_pagamentos_motorista.xml
++++ b/app/src/main/res/layout/activity_pagamentos_motorista.xml
+@@ -1,6 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
+     android:id="@+id/rootPagamentos"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+@@ -57,6 +58,14 @@
+                 android:orientation="vertical"
+                 android:padding="20dp">
+ 
++                <ProgressBar
++                    android:id="@+id/progressPagamentos"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:layout_gravity="center_horizontal"
++                    android:layout_marginVertical="24dp"
++                    android:indeterminateTint="@color/dark_gray" />
++
+                 <!-- CONTEÚDO (somente com assinatura em dia) -->
+                 <LinearLayout
+                     android:id="@+id/conteudoPagamentos"
+@@ -65,43 +74,165 @@
+                     android:orientation="vertical"
+                     android:visibility="gone">
+ 
+-                    <TextView
++                    <!-- RESUMO DO MÊS -->
++                    <LinearLayout
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+                         android:background="@drawable/bg_withe_round_10"
+-                        android:padding="16dp"
+-                        android:text="Total recebido: R$ 0,00"
+-                        android:textColor="@color/dark_gray"
+-                        android:textSize="16sp"
+-                        android:textStyle="bold" />
++                        android:orientation="vertical"
++                        android:padding="16dp">
+ 
+-                    <TextView
++                        <TextView
++                            android:id="@+id/txtLabelRecebido"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:textColor="@color/medium_gray"
++                            android:textSize="13sp"
++                            tools:text="Recebido em novembro" />
++
++                        <TextView
++                            android:id="@+id/txtRecebidoMes"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:textColor="@color/dark_gray"
++                            android:textSize="26sp"
++                            android:textStyle="bold"
++                            tools:text="R$ 3.200,00" />
++
++                        <LinearLayout
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:layout_marginTop="12dp"
++                            android:orientation="horizontal">
++
++                            <LinearLayout
++                                android:layout_width="0dp"
++                                android:layout_height="wrap_content"
++                                android:layout_weight="1"
++                                android:orientation="vertical">
++
++                                <TextView
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:text="A receber no mês"
++                                    android:textColor="@color/medium_gray"
++                                    android:textSize="12sp" />
++
++                                <TextView
++                                    android:id="@+id/txtAReceberMes"
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:textColor="@color/dark_gray"
++                                    android:textSize="16sp"
++                                    android:textStyle="bold"
++                                    tools:text="R$ 800,00" />
++                            </LinearLayout>
++
++                            <LinearLayout
++                                android:layout_width="0dp"
++                                android:layout_height="wrap_content"
++                                android:layout_weight="1"
++                                android:orientation="vertical">
++
++                                <TextView
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:text="Em atraso"
++                                    android:textColor="@color/medium_gray"
++                                    android:textSize="12sp" />
++
++                                <TextView
++                                    android:id="@+id/txtEmAtraso"
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:textColor="@color/red"
++                                    android:textSize="16sp"
++                                    android:textStyle="bold"
++                                    tools:text="R$ 400,00" />
++                            </LinearLayout>
++                        </LinearLayout>
++
++                        <TextView
++                            android:id="@+id/txtContagens"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:layout_marginTop="12dp"
++                            android:textColor="@color/medium_gray"
++                            android:textSize="13sp"
++                            tools:text="8 em dia · 1 atrasado · 1 inadimplente" />
++                    </LinearLayout>
++
++                    <!-- FILTRO -->
++                    <com.google.android.material.button.MaterialButtonToggleGroup
++                        android:id="@+id/grupoFiltroPagamentos"
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+-                        android:layout_marginTop="10dp"
+-                        android:background="@drawable/bg_withe_round_10"
+-                        android:padding="16dp"
+-                        android:text="A receber: R$ 0,00"
+-                        android:textColor="@color/dark_gray"
+-                        android:textSize="16sp"
+-                        android:textStyle="bold" />
++                        android:layout_marginTop="18dp"
++                        app:checkedButton="@id/btnFiltroTodos"
++                        app:selectionRequired="true"
++                        app:singleSelection="true">
++
++                        <com.google.android.material.button.MaterialButton
++                            android:id="@+id/btnFiltroTodos"
++                            android:layout_width="0dp"
++                            android:layout_height="44dp"
++                            android:layout_weight="1"
++                            android:text="Todos"
++                            android:textAllCaps="false"
++                            android:textColor="@color/button_toggle_text"
++                            android:textSize="13sp"
++                            android:textStyle="bold"
++                            app:backgroundTint="@color/button_toggle_background" />
++
++                        <com.google.android.material.button.MaterialButton
++                            android:id="@+id/btnFiltroEmDia"
++                            android:layout_width="0dp"
++                            android:layout_height="44dp"
++                            android:layout_weight="1"
++                            android:text="Em dia"
++                            android:textAllCaps="false"
++                            android:textColor="@color/button_toggle_text"
++                            android:textSize="13sp"
++                            android:textStyle="bold"
++                            app:backgroundTint="@color/button_toggle_background" />
++
++                        <com.google.android.material.button.MaterialButton
++                            android:id="@+id/btnFiltroPendentes"
++                            android:layout_width="0dp"
++                            android:layout_height="44dp"
++                            android:layout_weight="1"
++                            android:text="Pendentes"
++                            android:textAllCaps="false"
++                            android:textColor="@color/button_toggle_text"
++                            android:textSize="13sp"
++                            android:textStyle="bold"
++                            app:backgroundTint="@color/button_toggle_background" />
++                    </com.google.android.material.button.MaterialButtonToggleGroup>
+ 
+                     <TextView
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+-                        android:layout_marginTop="18dp"
+-                        android:text="Repasses recentes"
++                        android:layout_marginTop="14dp"
++                        android:text="Passageiros"
+                         android:textColor="@color/dark_gray"
+                         android:textSize="16sp"
+                         android:textStyle="bold" />
+ 
++                    <LinearLayout
++                        android:id="@+id/containerContratos"
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:orientation="vertical" />
++
+                     <TextView
++                        android:id="@+id/txtVazioPagamentos"
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+-                        android:layout_marginTop="6dp"
+-                        android:text="Nenhum repasse registrado. O recebimento das mensalidades dos responsáveis pelo aplicativo será habilitado em uma próxima versão."
++                        android:layout_marginTop="8dp"
+                         android:textColor="@color/medium_gray"
+-                        android:textSize="14sp" />
++                        android:textSize="14sp"
++                        android:visibility="gone"
++                        tools:text="Nenhum passageiro por aqui." />
+                 </LinearLayout>
+ 
+                 <!-- BLOQUEIO (assinatura sem condição de operar) -->
+@@ -144,4 +275,4 @@
+             </LinearLayout>
+         </LinearLayout>
+     </ScrollView>
+-</LinearLayout>
+\ No newline at end of file
++</LinearLayout>
+diff --git a/app/src/main/res/layout/bottom_sheet_historico_mensalidades.xml b/app/src/main/res/layout/bottom_sheet_historico_mensalidades.xml
+new file mode 100644
+index 0000000..9b68183
+--- /dev/null
++++ b/app/src/main/res/layout/bottom_sheet_historico_mensalidades.xml
+@@ -0,0 +1,60 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Histórico de mensalidades de um passageiro (motorista). -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:background="@drawable/bg_bottomsheet_white"
++    android:orientation="vertical"
++    android:padding="24dp">
++
++    <View
++        android:layout_width="80dp"
++        android:layout_height="7dp"
++        android:layout_gravity="center_horizontal"
++        android:layout_marginBottom="16dp"
++        android:background="@drawable/bg_white_rounded"
++        android:backgroundTint="#dbdce0" />
++
++    <TextView
++        android:id="@+id/txtTituloHistorico"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:textColor="@color/dark_gray"
++        android:textSize="20sp"
++        android:textStyle="bold"
++        tools:text="Maria Souza" />
++
++    <TextView
++        android:id="@+id/txtSubtituloHistorico"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="2dp"
++        android:textColor="@color/medium_gray"
++        android:textSize="13sp"
++        tools:text="R$ 400,00 / mês · vence dia 10" />
++
++    <androidx.core.widget.NestedScrollView
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="12dp">
++
++        <LinearLayout
++            android:id="@+id/containerHistorico"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:orientation="vertical" />
++    </androidx.core.widget.NestedScrollView>
++
++    <com.google.android.material.button.MaterialButton
++        android:id="@+id/btnReajustarContrato"
++        style="@style/Widget.Material3.Button.OutlinedButton"
++        android:layout_width="match_parent"
++        android:layout_height="48dp"
++        android:layout_marginTop="16dp"
++        android:text="Alterar valor ou vencimento"
++        android:textAllCaps="false"
++        android:textColor="@color/dark_gray"
++        app:strokeColor="@color/dark_gray" />
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_contrato_mensalidade.xml b/app/src/main/res/layout/item_contrato_mensalidade.xml
+new file mode 100644
+index 0000000..c84f830
+--- /dev/null
++++ b/app/src/main/res/layout/item_contrato_mensalidade.xml
+@@ -0,0 +1,104 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Um passageiro na tela de Pagamentos do motorista. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:layout_marginTop="10dp"
++    android:background="@drawable/bg_withe_round_10"
++    android:orientation="vertical"
++    android:padding="16dp">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:gravity="center_vertical"
++        android:orientation="horizontal">
++
++        <TextView
++            android:id="@+id/txtNomePassageiroContrato"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:ellipsize="end"
++            android:maxLines="1"
++            android:textColor="@color/dark_gray"
++            android:textSize="16sp"
++            android:textStyle="bold"
++            tools:text="Maria Souza" />
++
++        <TextView
++            android:id="@+id/txtSituacaoContrato"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_marginStart="8dp"
++            android:background="@drawable/bg_badge_situacao"
++            android:paddingHorizontal="10dp"
++            android:paddingVertical="4dp"
++            android:textColor="@color/white"
++            android:textSize="12sp"
++            android:textStyle="bold"
++            tools:backgroundTint="@color/green"
++            tools:text="Em dia" />
++    </LinearLayout>
++
++    <TextView
++        android:id="@+id/txtResponsavelContrato"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="4dp"
++        android:textColor="@color/medium_gray"
++        android:textSize="13sp"
++        tools:text="Responsável: Ana Souza · La Salle - Manhã" />
++
++    <TextView
++        android:id="@+id/txtValorContrato"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="8dp"
++        android:textColor="@color/dark_gray"
++        android:textSize="14sp"
++        android:textStyle="bold"
++        tools:text="R$ 400,00 / mês · vence dia 10" />
++
++    <TextView
++        android:id="@+id/txtDetalheContrato"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="2dp"
++        android:textColor="@color/gray"
++        android:textSize="13sp"
++        tools:text="Próxima cobrança: 10/12/2026" />
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="12dp"
++        android:orientation="horizontal">
++
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/btnAcaoContrato"
++            android:layout_width="0dp"
++            android:layout_height="44dp"
++            android:layout_marginEnd="8dp"
++            android:layout_weight="1"
++            android:text="Registrar recebimento"
++            android:textAllCaps="false"
++            android:textColor="@color/white"
++            android:textSize="13sp"
++            android:textStyle="bold"
++            app:backgroundTint="@color/dark_gray" />
++
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/btnHistoricoContrato"
++            style="@style/Widget.Material3.Button.OutlinedButton"
++            android:layout_width="wrap_content"
++            android:layout_height="44dp"
++            android:text="Histórico"
++            android:textAllCaps="false"
++            android:textColor="@color/dark_gray"
++            android:textSize="13sp"
++            app:strokeColor="@color/dark_gray" />
++    </LinearLayout>
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_mensalidade_historico.xml b/app/src/main/res/layout/item_mensalidade_historico.xml
+new file mode 100644
+index 0000000..9268a68
+--- /dev/null
++++ b/app/src/main/res/layout/item_mensalidade_historico.xml
+@@ -0,0 +1,64 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Uma mensalidade no histórico. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:orientation="vertical"
++    android:paddingVertical="10dp">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:gravity="center_vertical"
++        android:orientation="horizontal">
++
++        <TextView
++            android:id="@+id/txtMesHistorico"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:textColor="@color/dark_gray"
++            android:textSize="15sp"
++            android:textStyle="bold"
++            tools:text="Novembro/2026" />
++
++        <TextView
++            android:id="@+id/txtStatusHistorico"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:textSize="13sp"
++            android:textStyle="bold"
++            tools:text="Paga"
++            tools:textColor="@color/green" />
++    </LinearLayout>
++
++    <TextView
++        android:id="@+id/txtDetalheHistorico"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="2dp"
++        android:textColor="@color/medium_gray"
++        android:textSize="13sp"
++        tools:text="R$ 400,00 · Pago em 08/11/2026 · Dinheiro" />
++
++    <TextView
++        android:id="@+id/btnAcaoHistorico"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="4dp"
++        android:background="?attr/selectableItemBackground"
++        android:paddingVertical="4dp"
++        android:textColor="@color/light_blue"
++        android:textSize="13sp"
++        android:textStyle="bold"
++        android:visibility="gone"
++        tools:text="Desfazer recebimento"
++        tools:visibility="visible" />
++
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:layout_marginTop="10dp"
++        android:background="#EFEBE4" />
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_resultado_van.xml b/app/src/main/res/layout/item_resultado_van.xml
+index 234adbe..8aa001c 100644
+--- a/app/src/main/res/layout/item_resultado_van.xml
++++ b/app/src/main/res/layout/item_resultado_van.xml
+@@ -170,6 +170,30 @@
+                 android:textSize="16sp"
+                 android:textStyle="bold" />
+         </LinearLayout>
++
++        <LinearLayout
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:orientation="vertical">
++
++            <TextView
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:text="Mensalidade"
++                android:textColor="@color/light_gray"
++                android:textSize="12sp"
++                tools:ignore="HardcodedText" />
++
++            <TextView
++                android:id="@+id/txtValorResultado"
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="2dp"
++                android:textColor="@color/dark_gray"
++                android:textSize="16sp"
++                android:textStyle="bold" />
++        </LinearLayout>
+     </LinearLayout>
+ 
+     <TextView
+diff --git a/app/src/test/java/com/example/vaivan/MensalidadePolicyTest.kt b/app/src/test/java/com/example/vaivan/MensalidadePolicyTest.kt
+new file mode 100644
+index 0000000..f015cd0
+--- /dev/null
++++ b/app/src/test/java/com/example/vaivan/MensalidadePolicyTest.kt
+@@ -0,0 +1,173 @@
++package com.example.vaivan
++
++import com.example.vaivan.data.models.Contrato
++import com.example.vaivan.data.models.Mensalidade
++import com.example.vaivan.data.models.StatusContrato
++import com.example.vaivan.data.models.StatusMensalidade
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy as P
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
++import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertNull
++import org.junit.Test
++import java.time.LocalDate
++import java.time.LocalDateTime
++import java.time.YearMonth
++
++/** Regras das mensalidades: geração dos meses, atraso, inadimplência e resumo. */
++class MensalidadePolicyTest {
++
++    private fun em(ano: Int, mes: Int, dia: Int, hora: Int = 12): Long =
++        LocalDateTime.of(ano, mes, dia, hora, 0).atZone(P.FUSO).toInstant().toEpochMilli()
++
++    private fun venc(ano: Int, mes: Int, dia: Int): Long = P.inicioDoDia(LocalDate.of(ano, mes, dia))
++
++    private val contrato = Contrato(
++        id = "c1", motoristaId = "m", responsavelId = "r",
++        valorMensalCentavos = 40_000, diaVencimento = 10,
++        status = StatusContrato.ATIVO, inicioEm = em(2026, 11, 5)
++    )
++
++    private fun mensalidade(competencia: String, vencimento: Long, status: String = StatusMensalidade.PENDENTE, pagoEm: Long? = null) =
++        Mensalidade(
++            id = "c1_$competencia", contratoId = "c1", competencia = competencia,
++            valorCentavos = 40_000, vencimento = vencimento, status = status, pagoEm = pagoEm
++        )
++
++    @Test
++    fun primeira_mensalidade_e_a_primeira_que_vence_depois_do_inicio() {
++        assertEquals(YearMonth.of(2026, 11), P.primeiraCompetencia(em(2026, 11, 5), 10))
++        assertEquals(YearMonth.of(2026, 11), P.primeiraCompetencia(em(2026, 11, 10), 10))
++        assertEquals(YearMonth.of(2026, 12), P.primeiraCompetencia(em(2026, 11, 11), 10))
++    }
++
++    @Test
++    fun dia_de_vencimento_e_limitado_a_28() {
++        assertEquals(LocalDate.of(2027, 2, 28), P.vencimentoDa(YearMonth.of(2027, 2), 31))
++        assertEquals(LocalDate.of(2027, 1, 1), P.vencimentoDa(YearMonth.of(2027, 1), 0))
++    }
++
++    @Test
++    fun gera_ate_a_proxima_a_vencer() {
++        // Hoje 09/11: só novembro (vence dia 10, ainda não passou).
++        assertEquals(listOf(YearMonth.of(2026, 11)), P.competenciasDevidas(contrato, em(2026, 11, 9)))
++        // Hoje 10/11: ainda só novembro (vence hoje).
++        assertEquals(listOf(YearMonth.of(2026, 11)), P.competenciasDevidas(contrato, em(2026, 11, 10)))
++        // Hoje 11/11: novembro venceu, então dezembro já aparece como próxima.
++        assertEquals(
++            listOf(YearMonth.of(2026, 11), YearMonth.of(2026, 12)),
++            P.competenciasDevidas(contrato, em(2026, 11, 11))
++        )
++        // Hoje 15/02/2027: nov, dez, jan, fev e mar.
++        assertEquals(5, P.competenciasDevidas(contrato, em(2027, 2, 15)).size)
++    }
++
++    @Test
++    fun contrato_encerrado_nao_gera_meses_depois_do_encerramento() {
++        val encerrado = contrato.copy(status = StatusContrato.ENCERRADO, encerradoEm = em(2026, 12, 20))
++        assertEquals(
++            listOf(YearMonth.of(2026, 11), YearMonth.of(2026, 12)),
++            P.competenciasDevidas(encerrado, em(2027, 3, 1))
++        )
++    }
++
++    @Test
++    fun contrato_sem_data_de_inicio_nao_gera_nada() {
++        assertEquals(emptyList<YearMonth>(), P.competenciasDevidas(contrato.copy(inicioEm = 0), em(2026, 11, 9)))
++    }
++
++    @Test
++    fun so_cria_os_meses_que_faltam() {
++        val faltando = P.competenciasFaltando(contrato, setOf("c1_2026-11"), em(2026, 11, 11))
++        assertEquals(listOf(YearMonth.of(2026, 12)), faltando)
++    }
++
++    @Test
++    fun situacao_da_mensalidade_por_dia() {
++        val m = mensalidade("2026-11", venc(2026, 11, 10))
++        assertEquals(SituacaoMensalidade.A_VENCER, P.situacao(m, em(2026, 11, 9, 23)))
++        assertEquals(SituacaoMensalidade.VENCE_HOJE, P.situacao(m, em(2026, 11, 10, 0)))
++        assertEquals(SituacaoMensalidade.VENCE_HOJE, P.situacao(m, em(2026, 11, 10, 23)))
++        assertEquals(SituacaoMensalidade.ATRASADA, P.situacao(m, em(2026, 11, 11, 0)))
++        assertEquals(SituacaoMensalidade.PAGA, P.situacao(m.copy(status = StatusMensalidade.PAGA), em(2027, 1, 1)))
++        assertEquals(3L, P.diasDeAtraso(m, em(2026, 11, 13)))
++        assertEquals(0L, P.diasDeAtraso(m.copy(status = StatusMensalidade.PAGA), em(2026, 11, 13)))
++    }
++
++    @Test
++    fun situacao_do_contrato() {
++        val nov = mensalidade("2026-11", venc(2026, 11, 10))
++        val dez = mensalidade("2026-12", venc(2026, 12, 10))
++
++        assertEquals(SituacaoContrato.EM_DIA, P.situacaoDoContrato(contrato, listOf(nov), em(2026, 11, 10)))
++        assertEquals(SituacaoContrato.ATRASADO, P.situacaoDoContrato(contrato, listOf(nov), em(2026, 11, 15)))   // 5 dias
++        assertEquals(SituacaoContrato.INADIMPLENTE, P.situacaoDoContrato(contrato, listOf(nov), em(2026, 11, 16))) // 6 dias
++        assertEquals(
++            SituacaoContrato.EM_DIA,
++            P.situacaoDoContrato(contrato, listOf(nov.copy(status = StatusMensalidade.PAGA), dez), em(2026, 11, 20))
++        )
++        // Duas vencidas = inadimplente mesmo dentro da carência da segunda
++        val novPaga = nov.copy(status = StatusMensalidade.PAGA)
++        val jan = mensalidade("2027-01", venc(2027, 1, 10))
++        assertEquals(SituacaoContrato.INADIMPLENTE, P.situacaoDoContrato(contrato, listOf(novPaga, dez, jan), em(2027, 1, 11)))
++
++        val encerrado = contrato.copy(status = StatusContrato.ENCERRADO)
++        assertEquals(SituacaoContrato.ENCERRADO, P.situacaoDoContrato(encerrado, listOf(novPaga), em(2026, 12, 1)))
++        assertEquals(SituacaoContrato.INADIMPLENTE, P.situacaoDoContrato(encerrado, listOf(nov), em(2026, 12, 1)))
++    }
++
++    @Test
++    fun proximo_vencimento() {
++        val nov = mensalidade("2026-11", venc(2026, 11, 10))
++        assertEquals(venc(2026, 11, 10), P.proximoVencimento(contrato, listOf(nov), em(2026, 11, 9)))
++
++        // Tudo pago: o mês seguinte ao último gerado
++        val novPaga = nov.copy(status = StatusMensalidade.PAGA)
++        assertEquals(venc(2026, 12, 10), P.proximoVencimento(contrato, listOf(novPaga), em(2026, 11, 9)))
++
++        // Ainda sem mensalidades geradas: a primeira devida
++        assertEquals(venc(2026, 11, 10), P.proximoVencimento(contrato, emptyList(), em(2026, 11, 9)))
++
++        val encerrado = contrato.copy(status = StatusContrato.ENCERRADO)
++        assertNull(P.proximoVencimento(encerrado, listOf(novPaga), em(2026, 11, 9)))
++    }
++
++    @Test
++    fun resumo_do_mes() {
++        val c2 = contrato.copy(id = "c2")
++        val c3 = contrato.copy(id = "c3")
++        val agora = em(2026, 11, 20)
++
++        val mensalidades = listOf(
++            mensalidade("2026-11", venc(2026, 11, 10), StatusMensalidade.PAGA, pagoEm = em(2026, 11, 8)), // recebido
++            mensalidade("2026-12", venc(2026, 12, 10)),                                                      // dezembro: não entra
++            mensalidade("2026-11", venc(2026, 11, 10)).copy(id = "c2_2026-11", contratoId = "c2"),           // 10 dias de atraso
++            mensalidade("2026-11", venc(2026, 11, 25)).copy(id = "c3_2026-11", contratoId = "c3")            // a receber este mês
++        )
++
++        val r = P.resumo(listOf(contrato, c2, c3), mensalidades, agora)
++        assertEquals(40_000L, r.recebidoNoMesCentavos)
++        assertEquals(40_000L, r.aReceberNoMesCentavos)
++        assertEquals(40_000L, r.emAtrasoCentavos)
++        assertEquals(2, r.qtdEmDia)
++        assertEquals(0, r.qtdAtrasados)
++        assertEquals(1, r.qtdInadimplentes)
++    }
++
++    @Test
++    fun conversao_do_valor_digitado() {
++        assertEquals(40_000L, P.textoParaCentavos("400"))
++        assertEquals(40_000L, P.textoParaCentavos("400,00"))
++        assertEquals(40_050L, P.textoParaCentavos("400,5"))
++        assertEquals(120_000L, P.textoParaCentavos("1.200,00"))
++        assertEquals(120_050L, P.textoParaCentavos("1200.50"))
++        assertEquals(120_000L, P.textoParaCentavos("1.200"))
++        assertEquals(40_000L, P.textoParaCentavos("R$ 400"))
++        assertNull(P.textoParaCentavos(""))
++        assertNull(P.textoParaCentavos("abc"))
++        assertNull(P.textoParaCentavos("-10"))
++        assertEquals("400,00", P.centavosParaTexto(40_000))
++        assertEquals("1200,50", P.centavosParaTexto(120_050))
++        assertEquals("0,05", P.centavosParaTexto(5))
++    }
++}

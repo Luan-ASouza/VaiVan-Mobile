@@ -11,22 +11,19 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
+import com.example.vaivan.data.remote.CepClient
+import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 
 class EnderecoFragment :
     Fragment(R.layout.fragment_cadastro_endereco) {
 
     private val viewModel: CadastroViewModel by activityViewModels()
+    private val cepClient = CepClient()
+    private val rascunhoRepository by lazy { CadastroRascunhoRepository(requireContext()) }
 
     private lateinit var edtCEP: TextInputEditText
     private lateinit var edtCidade: TextInputEditText
@@ -56,9 +53,35 @@ class EnderecoFragment :
             savedInstanceState
         )
 
+        configurarEtapaCadastro(atual = 6)
         inicializarViews(view)
+        preencherCamposSalvos()
         configurarCep()
         configurarBotao()
+    }
+
+    /** Reabrindo essa etapa (voltou ou retomou um rascunho) — repõe o que já
+     * tinha sido digitado/buscado antes. Chamado ANTES de [configurarCep]
+     * de propósito: não precisa disparar uma busca de CEP de novo pra algo
+     * que já foi resolvido. */
+    private fun preencherCamposSalvos() {
+
+        val usuario = viewModel.cadastro.usuario
+
+        edtCEP.setText(usuario.cep)
+        edtCidade.setText(usuario.cidade)
+        edtEstado.setText(usuario.estado)
+        edtRua.setText(usuario.rua)
+        edtBairro.setText(usuario.bairro)
+        edtNumero.setText(usuario.numero)
+        edtComplemento.setText(usuario.complemento)
+
+        val cepJaResolvido = usuario.cidade.isNotBlank() || usuario.estado.isNotBlank() ||
+            usuario.rua.isNotBlank() || usuario.bairro.isNotBlank()
+
+        if (cepJaResolvido) {
+            configurarCamposEditaveis(editavel = false)
+        }
     }
 
     private fun inicializarViews(
@@ -174,147 +197,53 @@ class EnderecoFragment :
         cep: String
     ) {
 
-        viewLifecycleOwner.lifecycleScope.launch(
-            Dispatchers.IO
-        ) {
-
-            var conexao: HttpURLConnection? = null
+        viewLifecycleOwner.lifecycleScope.launch {
 
             try {
 
-                val url =
-                    URL(
-                        "https://viacep.com.br/ws/$cep/json/"
-                    )
+                val endereco =
+                    cepClient.buscarEndereco(cep)
 
-                conexao =
-                    url.openConnection()
-                            as HttpURLConnection
-
-                conexao.requestMethod =
-                    "GET"
-
-                conexao.connectTimeout =
-                    5000
-
-                conexao.readTimeout =
-                    5000
-
-                val reader =
-                    BufferedReader(
-                        InputStreamReader(
-                            conexao.inputStream
-                        )
-                    )
-
-                val resultado =
-                    StringBuilder()
-
-                var linha: String?
-
-                while (
-                    reader.readLine()
-                        .also { linha = it } != null
-                ) {
-
-                    resultado.append(linha)
-                }
-
-                reader.close()
-
-                val json =
-                    JSONObject(
-                        resultado.toString()
-                    )
-
-                if (
-                    json.optBoolean(
-                        "erro",
-                        false
-                    )
-                ) {
-
-                    withContext(
-                        Dispatchers.Main
-                    ) {
-
-                        mostrarErroEndereco(
-                            "*CEP não encontrado"
-                        )
-
-                        configurarCamposEditaveis(
-                            editavel = true
-                        )
-                    }
-
-                    return@launch
-                }
-
-                val cidade =
-                    json.optString(
-                        "localidade",
-                        ""
-                    )
-
-                val estado =
-                    json.optString(
-                        "uf",
-                        ""
-                    )
-
-                val rua =
-                    json.optString(
-                        "logradouro",
-                        ""
-                    )
-
-                val bairro =
-                    json.optString(
-                        "bairro",
-                        ""
-                    )
-
-                withContext(
-                    Dispatchers.Main
-                ) {
-
-                    edtCidade.setText(cidade)
-                    edtEstado.setText(estado)
-                    edtRua.setText(rua)
-                    edtBairro.setText(bairro)
-
-                    txtErroEndereco.visibility =
-                        View.GONE
-
-                    layoutCEP.setBackgroundResource(
-                        R.drawable.bg_input_white
-                    )
-
-                    configurarCamposEditaveis(
-                        editavel = false
-                    )
-                }
-
-            } catch (
-                e: Exception
-            ) {
-
-                withContext(
-                    Dispatchers.Main
-                ) {
+                if (endereco == null) {
 
                     mostrarErroEndereco(
-                        "*Erro ao buscar CEP"
+                        "*CEP não encontrado"
                     )
 
                     configurarCamposEditaveis(
                         editavel = true
                     )
+
+                    return@launch
                 }
 
-            } finally {
+                edtCidade.setText(endereco.cidade)
+                edtEstado.setText(endereco.estado)
+                edtRua.setText(endereco.rua)
+                edtBairro.setText(endereco.bairro)
 
-                conexao?.disconnect()
+                txtErroEndereco.visibility =
+                    View.GONE
+
+                layoutCEP.setBackgroundResource(
+                    R.drawable.bg_input_white
+                )
+
+                configurarCamposEditaveis(
+                    editavel = false
+                )
+
+            } catch (
+                e: Exception
+            ) {
+
+                mostrarErroEndereco(
+                    "*Erro ao buscar CEP"
+                )
+
+                configurarCamposEditaveis(
+                    editavel = true
+                )
             }
         }
     }
@@ -475,8 +404,10 @@ class EnderecoFragment :
             complemento = complemento
         )
 
+        rascunhoRepository.salvar(viewModel.cadastro, CadastroActivity.ETAPA_CONSENTIMENTO)
+
         (requireActivity() as CadastroActivity)
-            .abrirConfirmacao()
+            .abrirConsentimento()
     }
 
     private fun obterTexto(

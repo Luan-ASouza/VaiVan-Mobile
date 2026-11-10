@@ -42,6 +42,10 @@ data class RotaEntity(
     val capacidadeTotal: Int = 0,
     val vagasOcupadas: Int = 0,
 
+    // Mensalidade cobrada por passageiro (copiada para o contrato no aceite)
+    val valorMensalCentavos: Long = 0L,
+    val diaVencimento: Int = 10, // 1 a 28
+
     val distanciaMetros: Int = 0,
     val duracaoSegundos: Int = 0,
     val duracaoSemTrafegoSegundos: Int = 0,

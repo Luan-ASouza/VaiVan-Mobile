@@ -24,6 +24,8 @@
             android:paddingHorizontal="20dp"
             android:paddingVertical="32dp">
 
+            <include layout="@layout/stepper_cadastro" />
+
             <!-- TÍTULO -->
 
             <TextView
@@ -31,7 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="Confirmar cadastro"
+                android:text="Quase lá"
                 android:textColor="@color/dark_gray"
                 android:textSize="20sp"
                 android:textStyle="bold"/>
@@ -288,17 +290,72 @@
                 android:textStyle="bold"/>
 
 
-            <!-- AVISO -->
+            <!-- CONSENTIMENTOS -->
 
-            <TextView
-                android:id="@+id/txtAviso"
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="16dp"
+                android:background="#EFEBE4"/>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="Ao confirmar, sua conta será criada com estes dados."
-                android:textColor="@color/light_gray"
-                android:textSize="11sp"/>
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
+                <CheckBox
+                    android:id="@+id/checkTermos"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"/>
+
+                <TextView
+                    android:id="@+id/txtTermos"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Li e aceito os Termos de Uso"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtErroTermos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="*É preciso aceitar os Termos de Uso"
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/checkComunicacoes"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Quero receber novidades e comunicados por e-mail"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
 
             <!-- ERRO -->
 
@@ -322,7 +379,7 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="24dp"
                 android:background="@drawable/btn_gray_filled"
-                android:text="Confirmar cadastro"
+                android:text="Criar conta"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"

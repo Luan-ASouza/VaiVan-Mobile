@@ -105,6 +105,15 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- STATUS DA VIAGEM/PASSAGEIRO DE HOJE (preenchido em código — ver
+         ListaRotasFragment.atualizarStatusViagemCard) -->
+    <LinearLayout
+        android:id="@+id/containerStatusViagemCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical" />
+
     <!-- PAINEL BRANCO: DIAS E PERCURSO -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -278,5 +287,12 @@
         app:strokeColor="@color/dark_gray"
         app:strokeWidth="1dp"
         tools:ignore="HardcodedText" />
+
+    <!-- AVISO DE AUSÊNCIA (preenchido em código — ver ListaRotasFragment.preencherRota) -->
+    <LinearLayout
+        android:id="@+id/containerAvisoAusenciaCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
 </LinearLayout>

@@ -6,4 +6,5 @@
     <string name="necessidade_especial_padrao">Possui necessidade especial</string>
     <string name="observacoes_descricao">Observações: %1$s</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="texto_termos_uso">O VaiVan é um projeto acadêmico, desenvolvido para fins de estudo e demonstração — não é um produto comercial em operação.\n\nAo criar uma conta, você concorda que os dados pessoais informados aqui (nome, CPF, endereço, contato) são usados apenas para o funcionamento do app dentro deste contexto acadêmico, e não são compartilhados com terceiros nem usados para qualquer finalidade comercial.\n\nComo é um ambiente de testes, os dados podem ser apagados ou reiniciados a qualquer momento, sem aviso prévio, durante o desenvolvimento do projeto.\n\nEste texto é um modelo simplificado e não substitui uma Política de Privacidade real — um app em produção precisaria de termos revisados por um profissional, em conformidade com a LGPD.</string>
 </resources>

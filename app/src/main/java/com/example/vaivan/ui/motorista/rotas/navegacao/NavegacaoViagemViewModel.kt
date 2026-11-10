@@ -91,7 +91,7 @@ class NavegacaoViagemViewModel(
     }
 
     override fun onCleared() {
-        viagemRepository.pararSincronizacao()
+        viagemRepository.pararSincronizacao(viagemId)
         super.onCleared()
     }
 
@@ -112,6 +112,19 @@ class NavegacaoViagemViewModel(
 
     fun ocultarPainel() {
         _ordemPainelAtivo.value = null
+    }
+
+    /** Registra o evento de chegada (gancho pra notificação do responsável —
+     * ver AcompanharViagemActivity.atualizarNotificacoes) exatamente no
+     * mesmo trigger que abre o painel de confirmar embarque/desembarque
+     * pro motorista — só pras paradas do grupo que ainda estiverem
+     * pendentes (uma já resolvida, ex. falta avisada, não gera evento). */
+    fun registrarChegadaParaOrdem(ordem: Int) = viewModelScope.launch {
+        paradas.value
+            .filter { it.ordem == ordem &&
+                (it.status == ViagemRepository.PARADA_AGUARDANDO ||
+                    it.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE) }
+            .forEach { viagemRepository.registrarChegada(it.viagemId, it.id) }
     }
 
     fun confirmarEmbarque(parada: ParadaViagemEntity) = viewModelScope.launch {

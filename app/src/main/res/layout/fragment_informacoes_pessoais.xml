@@ -24,6 +24,8 @@
             android:background="@drawable/bg_white"
             android:padding="20dp">
 
+            <include layout="@layout/stepper_cadastro" />
+
             <!-- TÍTULO -->
 
             <TextView
@@ -44,7 +46,7 @@
                 android:id="@+id/txtLabelNome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nome Completo"
+                android:text="Nome"
                 android:textColor="@color/dark_gray"
                 android:textSize="16sp"
                 android:textStyle="bold"/>
@@ -59,11 +61,11 @@
                 app:hintEnabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtNomeCompleto"
+                    android:id="@+id/edtNome"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:minHeight="48dp"
-                    android:hint="Digite seu nome completo"
+                    android:hint="Digite seu nome"
                     android:inputType="textPersonName"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="12dp"
@@ -74,6 +76,52 @@
 
             <TextView
                 android:id="@+id/txtErroNome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="8dp"
+                android:text="*Campo obrigatório"
+                android:textColor="#F40707"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
+            <!-- SOBRENOME -->
+
+            <TextView
+                android:id="@+id/txtLabelSobrenome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sobrenome"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutSobrenome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input_white"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtSobrenome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:hint="Digite seu sobrenome"
+                    android:inputType="textPersonName"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/dark_gray"
+                    android:textColorHint="@color/light_gray"
+                    android:textSize="14sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/txtErroSobrenome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -126,118 +174,6 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginStart="8dp"
                 android:text="*Digite um CPF válido."
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- DATA DE NASCIMENTO -->
-
-            <TextView
-                android:id="@+id/txtLabelDataNascimento"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Data de nascimento"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <LinearLayout
-                android:id="@+id/containerDataNascimento"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
-
-                <!-- DIA -->
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/txtLabelDia"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Dia"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-
-                    <Spinner
-                        android:id="@+id/spinnerDia"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white"
-                        android:paddingHorizontal="10dp"/>
-                </LinearLayout>
-
-                <!-- MÊS -->
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/txtLabelMes"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Mês"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-
-                    <Spinner
-                        android:id="@+id/spinnerMes"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white"
-                        android:paddingHorizontal="10dp"/>
-                </LinearLayout>
-
-                <!-- ANO -->
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/txtLabelAno"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ano"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-
-                    <Spinner
-                        android:id="@+id/spinnerAno"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_white"
-                        android:paddingHorizontal="10dp"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/txtErroIdade"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Obrigatório ser maior de 18 anos"
                 android:textColor="#F40707"
                 android:textSize="10sp"
                 android:textStyle="bold"/>

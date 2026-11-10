@@ -76,7 +76,7 @@ class AdicionarLocalActivity : BaseActivity() {
 
         inicializarViews()
 
-        aplicarGapsDeSistema(aplicarBase = false)
+        aplicarGapsDeSistema()
 
         configurarMapaPreview(savedInstanceState)
 

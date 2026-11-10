@@ -5,16 +5,19 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.vaivan.R
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.ui.motorista.entrada.EntradaMotoristaActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.VerificarProgressoDocumentos
 import com.example.vaivan.ui.responsavel.HomeResponsavelActivity
 
-class EscolhaTipoPerfilActivity : AppCompatActivity() {
+class EscolhaTipoPerfilActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_perfil)
+
+        aplicarGapsDeSistema()
 
         val btnMotorista = findViewById<Button>(R.id.btnMotorista)
         val btnResponsavel = findViewById<Button>(R.id.btnResponsavel)

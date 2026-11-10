@@ -54,9 +54,13 @@
         </activity> <!-- ==================== AUTENTICAÇÃO ==================== -->
         <activity
             android:name=".ui.inicio.LoginActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.inicio.EscolhaTipoPerfilActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.inicio.TermosUsoActivity"
             android:exported="false" /> <!-- ==================== CADASTRO ==================== -->
         <activity
             android:name=".ui.inicio.cadastro.CadastroActivity"
@@ -122,7 +126,12 @@
             android:exported="false" />
         <activity
             android:name=".ui.responsavel.rotas.AcompanharViagemActivity"
-            android:exported="false" /> <!-- ==================== COMUM ==================== -->
+            android:exported="false" />
+        <activity
+            android:name=".ui.responsavel.mensalidades.MensalidadesResponsavelActivity"
+            android:exported="false" />
+
+        <!-- ==================== COMUM ==================== -->
         <activity
             android:name=".ui.comum.chat.ChatActivity"
             android:exported="false"

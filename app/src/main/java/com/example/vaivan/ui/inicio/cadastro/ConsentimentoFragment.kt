@@ -3,6 +3,7 @@ package com.example.vaivan.ui.inicio.cadastro
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -11,14 +12,18 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.UsuarioEntity
-import com.example.vaivan.data.repository.FirebaseAuthRepository
+import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
+import com.example.vaivan.ui.inicio.TermosUsoActivity
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import com.example.vaivan.data.local.dao.UsuarioDao
 
-class ConfirmacaoCadastroFragment :
+/** Etapa 5 — consentimentos e finalização. A conta no Firebase Auth já
+ * existe nesse ponto (criada na etapa 2) — aqui só se grava o perfil
+ * completo no Firestore/Room. */
+class ConsentimentoFragment :
     Fragment(R.layout.fragment_confirmacao_cadastro) {
 
     private val viewModel: CadastroViewModel by activityViewModels()
@@ -39,8 +44,12 @@ class ConfirmacaoCadastroFragment :
     private lateinit var txtComplemento: TextView
     private lateinit var txtLabelComplemento: TextView
 
+    private lateinit var checkTermos: CheckBox
+    private lateinit var txtTermos: TextView
+    private lateinit var txtErroTermos: TextView
+    private lateinit var checkComunicacoes: CheckBox
+
     private lateinit var repository: UsuarioRepository
-    private lateinit var authRepository: FirebaseAuthRepository
 
     override fun onViewCreated(
         view: View,
@@ -51,10 +60,15 @@ class ConfirmacaoCadastroFragment :
             savedInstanceState
         )
 
+        configurarEtapaCadastro(atual = 7)
         configurarViews(view)
         configurarRepositories()
         preencherDados()
         configurarBotao()
+
+        txtTermos.setOnClickListener {
+            startActivity(Intent(requireContext(), TermosUsoActivity::class.java))
+        }
     }
 
     private fun configurarViews(
@@ -99,6 +113,18 @@ class ConfirmacaoCadastroFragment :
 
         btnConfirmar =
             view.findViewById(R.id.btnConfirmar)
+
+        checkTermos =
+            view.findViewById(R.id.checkTermos)
+
+        txtTermos =
+            view.findViewById(R.id.txtTermos)
+
+        txtErroTermos =
+            view.findViewById(R.id.txtErroTermos)
+
+        checkComunicacoes =
+            view.findViewById(R.id.checkComunicacoes)
     }
 
     private fun configurarRepositories() {
@@ -109,9 +135,6 @@ class ConfirmacaoCadastroFragment :
                     .getInstance(requireContext())
                     .usuarioDao()
             )
-
-        authRepository =
-            FirebaseAuthRepository()
     }
 
     private fun preencherDados() {
@@ -119,8 +142,13 @@ class ConfirmacaoCadastroFragment :
         val usuario =
             viewModel.cadastro.usuario
 
+        val nomeCompleto =
+            listOf(usuario.nome, usuario.sobrenome)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+
         txtNome.text =
-            usuario.nome.ifBlank {
+            nomeCompleto.ifBlank {
                 "Não informado"
             }
 
@@ -244,8 +272,20 @@ class ConfirmacaoCadastroFragment :
 
     private fun confirmarCadastro() {
 
-        val cadastro =
-            viewModel.cadastro
+        if (!checkTermos.isChecked) {
+            txtErroTermos.visibility = View.VISIBLE
+            return
+        }
+
+        txtErroTermos.visibility = View.GONE
+
+        val uid =
+            FirebaseAuth.getInstance().currentUser?.uid
+
+        if (uid == null) {
+            mostrarErro("*Sessão expirada. Volte e entre novamente.")
+            return
+        }
 
         btnConfirmar.isEnabled =
             false
@@ -253,25 +293,12 @@ class ConfirmacaoCadastroFragment :
         txtErro.visibility =
             View.GONE
 
-        authRepository.cadastrar(
-            email = cadastro.usuario.email,
-            senha = cadastro.senha,
-
-            onSuccess = { uid ->
-                salvarUsuario(uid)
-            },
-
-            onError = { erro ->
-
-                btnConfirmar.isEnabled =
-                    true
-
-                mostrarErro(
-                    erro.message
-                        ?: "*Erro ao criar a conta."
-                )
-            }
+        viewModel.definirConsentimento(
+            aceitouTermos = true,
+            aceitaComunicacoes = checkComunicacoes.isChecked
         )
+
+        salvarUsuario(uid)
     }
 
     private fun salvarUsuario(
@@ -287,6 +314,9 @@ class ConfirmacaoCadastroFragment :
 
                 nome =
                     cadastro.usuario.nome,
+
+                sobrenome =
+                    cadastro.usuario.sobrenome,
 
                 cpf =
                     cadastro.usuario.cpf,
@@ -326,6 +356,12 @@ class ConfirmacaoCadastroFragment :
                 emailConfirmado =
                     cadastro.usuario.emailConfirmado,
 
+                aceitouTermos =
+                    cadastro.usuario.aceitouTermos,
+
+                aceitaComunicacoes =
+                    cadastro.usuario.aceitaComunicacoes,
+
                 lastUpdated =
                     System.currentTimeMillis()
             )
@@ -337,6 +373,8 @@ class ConfirmacaoCadastroFragment :
                 repository.salvarUsuario(
                     usuario
                 )
+
+                CadastroRascunhoRepository(requireContext()).limpar()
 
                 Toast.makeText(
                     requireContext(),

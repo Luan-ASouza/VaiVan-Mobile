@@ -25,13 +25,18 @@ class ListaRotasViewModel(
     fun carregarRotas(
         responsavelId: String
     ) {
-
         viewModelScope.launch {
-
-            _rotas.value =
-                buscarRotasDoResponsavelUseCase(
-                    responsavelId
-                )
+            atualizarRotas(responsavelId)
         }
+    }
+
+    /** Mesma busca de [carregarRotas], mas como suspend direto — quem chama
+     * (pull-to-refresh) precisa saber exatamente quando terminou, e não pode
+     * depender de o StateFlow emitir: se o resultado for igual ao que já
+     * estava em `_rotas`, o StateFlow não notifica os coletores (suprime
+     * valores consecutivos iguais), e um "parar de girar" que dependesse
+     * dessa emissão nunca dispararia. */
+    suspend fun atualizarRotas(responsavelId: String) {
+        _rotas.value = buscarRotasDoResponsavelUseCase(responsavelId)
     }
 }

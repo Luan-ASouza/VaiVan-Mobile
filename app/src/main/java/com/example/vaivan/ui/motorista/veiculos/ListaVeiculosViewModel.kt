@@ -33,4 +33,12 @@ class ListaVeiculosViewModel(
     suspend fun excluirVeiculo(id: String) {
         repository.excluirVeiculo(id)
     }
+
+    /** Pull-to-refresh: força uma releitura pontual, sem depender só do
+     * listener contínuo (que pode não estar ativo nesse momento). */
+    suspend fun atualizarVeiculos() {
+        if (motoristaId.isNotBlank()) {
+            repository.sincronizarVeiculosDoMotoristaUmaVez(motoristaId)
+        }
+    }
 }

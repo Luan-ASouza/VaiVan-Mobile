@@ -10,6 +10,7 @@ data class UsuarioEntity(
     val id: String = "",
 
     val nome: String = "",
+    val sobrenome: String = "",
     val cpf: String = "",
     val email: String = "",
     val telefone: String = "",
@@ -25,6 +26,8 @@ data class UsuarioEntity(
 
     val status: String = "",
     val emailConfirmado: Boolean = false,
+    val aceitouTermos: Boolean = false,
+    val aceitaComunicacoes: Boolean = false,
     val fotoUrl: String? = null,
     val lastUpdated: Long = 0L
 )

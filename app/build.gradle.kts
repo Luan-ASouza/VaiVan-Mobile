@@ -106,6 +106,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.3.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation(libs.material)
     implementation(libs.androidx.activity)

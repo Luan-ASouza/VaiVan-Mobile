@@ -150,6 +150,13 @@ class PassageiroRepository(
         }
     }
 
+    /** Sincronização pontual (pull-to-refresh) — mesma ideia de
+     * RotaRepository.sincronizarRotasDoMotoristaUmaVez: não depende do
+     * listener global (SyncManager) estar ativo nesse momento. */
+    suspend fun sincronizarPassageirosDoResponsavelUmaVez(responsavelId: String) {
+        passageiroDao.upsertAll(consultarPassageirosDoResponsavel(responsavelId))
+    }
+
 
     // =========================================================
     // SINCRONIZAÇÃO
@@ -293,24 +300,26 @@ class PassageiroRepository(
     // FOTO
     // =========================================================
 
-    /** Envia a nova foto pro Storage e atualiza o fotoUrl do passageiro. */
-    suspend fun atualizarFoto(responsavelId: String, passageiroId: String, uri: Uri): String {
+    /** Envia a nova foto pro Storage e atualiza o fotoUrl do passageiro. Recebe
+     * a entity já carregada em memória (quem chama já acabou de salvá-la) —
+     * evita reler do Firestore só pra reaplicar o mesmo dado. */
+    suspend fun atualizarFoto(passageiro: PassageiroEntity, uri: Uri): String {
         val url = arquivoRepository.enviar(
             uri,
-            arquivoRepository.caminhoFotoPassageiro(responsavelId, passageiroId)
+            arquivoRepository.caminhoFotoPassageiro(passageiro.responsavelId ?: "", passageiro.id)
         )
-        val atual = consultarPassageiro(passageiroId) ?: return url
-        salvarPassageiro(atual.copy(fotoUrl = url))
+        salvarPassageiro(passageiro.copy(fotoUrl = url))
         return url
     }
 
     /** Remove a foto do Storage e limpa o fotoUrl do passageiro. */
-    suspend fun removerFoto(responsavelId: String, passageiroId: String) {
-        val atual = consultarPassageiro(passageiroId) ?: return
-        if (atual.fotoUrl == null) return
+    suspend fun removerFoto(passageiro: PassageiroEntity) {
+        if (passageiro.fotoUrl == null) return
 
-        arquivoRepository.excluir(arquivoRepository.caminhoFotoPassageiro(responsavelId, passageiroId))
-        salvarPassageiro(atual.copy(fotoUrl = null))
+        arquivoRepository.excluir(
+            arquivoRepository.caminhoFotoPassageiro(passageiro.responsavelId ?: "", passageiro.id)
+        )
+        salvarPassageiro(passageiro.copy(fotoUrl = null))
     }
 
     // =========================================================
@@ -331,17 +340,51 @@ class PassageiroRepository(
             .get()
             .await()
 
+        // A regra de solicitacoes_inclusao só permite leitura quando
+        // responsavelId/motoristaId == uid atual — pra uma QUERY (não um get
+        // de documento único), o Firestore só valida isso se o campo também
+        // estiver nos filtros da própria query (não dá pra confiar só nos
+        // dados que ela retornaria). Sem o whereEqualTo abaixo, a query
+        // inteira é negada (PERMISSION_DENIED) mesmo quando os documentos
+        // pertencem ao usuário.
         val solicitacoesPendentes = collectionSolicitacoes
             .whereEqualTo("passageiroId", id)
             .whereEqualTo("status", "PENDENTE")
+            .whereEqualTo(
+                "responsavelId",
+                com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            )
             .get()
             .await()
+
+        Log.d(
+            "PASSAGEIRO_EXCLUSAO",
+            "passageiro.responsavelId=${passageiro?.responsavelId} | " +
+                "uidAtual=${com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid} | " +
+                "paradas=${paradas.documents.map { it.id }} | " +
+                "solicitacoesPendentes=${solicitacoesPendentes.documents.map { it.id to it.getString("responsavelId") }}"
+        )
 
         val batch = firestore.batch()
         paradas.documents.forEach { batch.delete(it.reference) }
         solicitacoesPendentes.documents.forEach { batch.delete(it.reference) }
         batch.delete(collection.document(id))
-        batch.commit().await()
+
+        try {
+            batch.commit().await()
+        } catch (erro: Exception) {
+            Log.e("PASSAGEIRO_EXCLUSAO", "Falha ao commitar batch de exclusão", erro)
+            // Mensagem enriquecida pra aparecer direto no Toast de erro da UI
+            // (ListaPassageirosFragment.excluirPassageiro) — sem precisar de
+            // Logcat/Android Studio pra diagnosticar em campo.
+            throw Exception(
+                "uidAtual=${com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid} " +
+                    "responsavelIdDoPassageiro=${passageiro?.responsavelId} " +
+                    "qtdParadas=${paradas.documents.size} " +
+                    "qtdSolicitacoesPendentes=${solicitacoesPendentes.documents.size} — ${erro.message}",
+                erro
+            )
+        }
 
         paradaRotaDao?.deleteByPassageiro(id)
         solicitacaoInclusaoDao?.deletePendentesPorPassageiro(id)

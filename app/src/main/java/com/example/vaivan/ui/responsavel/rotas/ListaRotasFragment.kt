@@ -13,33 +13,63 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.google.android.material.imageview.ShapeableImageView
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.example.vaivan.data.local.entities.ViagemEntity
+import com.example.vaivan.core.util.configurarBlocoAvisoAusencia
 import com.example.vaivan.data.models.RotasDoResponsavel
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
+import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.domain.StatusPassageiro
+import com.example.vaivan.domain.statusDoPassageiro
+import com.example.vaivan.domain.usecase.ausencia.RegistrarAvisoAusenciaUseCase
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.domain.usecase.rota.BuscarRotasDoResponsavelUseCase
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.ui.comum.chat.ChatActivity
+import com.example.vaivan.ui.motorista.rotas.VisualizarRotaActivity
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class ListaRotasFragment : Fragment() {
 
     private lateinit var containerRotas: LinearLayout
 
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+
     private var ultimasRotas: List<RotasDoResponsavel> = emptyList()
     private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
     private var listenerSolicitacoes: ListenerRegistration? = null
+    private var listenerAvisosAusencia: ListenerRegistration? = null
+
+    /** Status de viagem/passageiro dos cards (ver atualizarStatusViagemCard):
+     * limpos e refeitos a cada renderizar(), já que esta tela reconstrói
+     * todos os cards do zero a cada emissão. */
+    private val listenersStatusViagem = mutableListOf<ListenerRegistration>()
+    private val viagemIdsSincronizados = mutableSetOf<String>()
+
+    private val viagemRepository: ViagemRepository by lazy {
+        val db = VaivanDatabase.getInstance(requireContext())
+        ViagemRepository(db.viagemDao(), db.paradaViagemDao(), db.eventoViagemDao())
+    }
 
     private val solicitacaoRepository: SolicitacaoInclusaoRepository by lazy {
         SolicitacaoInclusaoRepository(
@@ -50,6 +80,14 @@ class ListaRotasFragment : Fragment() {
 
     private val passageiroRepository: PassageiroRepository by lazy {
         PassageiroRepository(VaivanDatabase.getInstance(requireContext()).passageiroDao())
+    }
+
+    private val avisoAusenciaRepository: AvisoAusenciaRepository by lazy {
+        AvisoAusenciaRepository(VaivanDatabase.getInstance(requireContext()).avisoAusenciaDao())
+    }
+
+    private val registrarAvisoAusenciaUseCase: RegistrarAvisoAusenciaUseCase by lazy {
+        RegistrarAvisoAusenciaUseCase(avisoAusenciaRepository, viagemRepository)
     }
 
     private val viewModel: ListaRotasViewModel by viewModels {
@@ -86,6 +124,8 @@ class ListaRotasFragment : Fragment() {
         )
 
         containerRotas = view.findViewById(R.id.containerListaRotas)
+        swipeRefresh = view.findViewById(R.id.swipeRefreshListaRotas)
+        swipeRefresh.setOnRefreshListener { atualizarTudo() }
 
         return view
     }
@@ -100,6 +140,7 @@ class ListaRotasFragment : Fragment() {
         // Agora ele fica dentro de cada card (ver preencherRota).
 
         iniciarSolicitacoes()
+        iniciarAvisosAusencia()
         observarRotas()
         carregarRotas()
     }
@@ -107,7 +148,42 @@ class ListaRotasFragment : Fragment() {
     override fun onDestroyView() {
         listenerSolicitacoes?.remove()
         listenerSolicitacoes = null
+        listenerAvisosAusencia?.remove()
+        listenerAvisosAusencia = null
+        pararStatusViagemDosCards()
         super.onDestroyView()
+    }
+
+    /** Desliga os listeners/sincronizações de status abertos pelos cards
+     * atuais — chamado antes de reconstruir tudo em renderizar() e de novo
+     * em onDestroyView(), já que esta tela recria os cards do zero a cada
+     * emissão (ver renderizar()). */
+    private fun pararStatusViagemDosCards() {
+        listenersStatusViagem.forEach { it.remove() }
+        listenersStatusViagem.clear()
+        viagemIdsSincronizados.forEach { viagemRepository.pararSincronizacao(it) }
+        viagemIdsSincronizados.clear()
+    }
+
+    /** Pull-to-refresh: força uma releitura da lista de rotas (consulta direta
+     * no Firestore, não confia no cache) — solicitações e avisos de ausência
+     * já chegam em tempo real pelos listeners, não precisam de ação aqui.
+     * Desliga o spinner direto ao terminar (try/finally), sem depender da
+     * emissão do StateFlow — ver comentário em ListaRotasViewModel.atualizarRotas. */
+    private fun atualizarTudo() {
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid
+        if (responsavelId == null) {
+            swipeRefresh.isRefreshing = false
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                viewModel.atualizarRotas(responsavelId)
+            } finally {
+                swipeRefresh.isRefreshing = false
+            }
+        }
     }
 
     // ---------------------------------------------------------
@@ -138,6 +214,17 @@ class ListaRotasFragment : Fragment() {
                     }
             }
         }
+    }
+
+    /** Mantém o Room deste celular atualizado com o que acontece no aviso
+     * depois de criado (motorista consumindo ao iniciar viagem, ou o próprio
+     * responsável cancelando em outro dispositivo) — sem isso, o Room só
+     * reflete o estado do momento em que o aviso foi salvo, nunca mais. */
+    private fun iniciarAvisosAusencia() {
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        listenerAvisosAusencia = avisoAusenciaRepository
+            .iniciarSincronizacaoDoResponsavel(responsavelId)
     }
 
     private fun rotuloStatus(status: String): String =
@@ -245,6 +332,7 @@ class ListaRotasFragment : Fragment() {
     /** Desenha, nesta ordem: seção Solicitações e seção Suas viagens. */
     private fun renderizar() {
 
+        pararStatusViagemDosCards()
         containerRotas.removeAllViews()
 
         // Só as que ainda aguardam resposta. As aprovadas já viram cards em
@@ -317,25 +405,40 @@ class ListaRotasFragment : Fragment() {
         val rota = item.rota
         val motorista = item.motorista
         val veiculo = item.veiculo
-        val nomeAluno = item.parada?.nomePassageiro.orEmpty()
+        // Nome denormalizado em ParadaRotaEntity no momento em que o
+        // passageiro entrou na rota — só um fallback pra não mostrar em
+        // branco enquanto a busca abaixo não volta; se o nome foi editado
+        // depois, essa cópia fica desatualizada (ver passageiroRepository
+        // .consultarPassageiro abaixo, que traz o nome atual de verdade).
+        val nomeAlunoDenormalizado = item.parada?.nomePassageiro.orEmpty()
 
         // Aluno
         val txtInicialAluno = view.findViewById<TextView>(R.id.txtInicialAlunoCard)
         val imgFotoAluno = view.findViewById<ShapeableImageView>(R.id.imgFotoAlunoCard)
+        val txtNomeAluno = view.findViewById<TextView>(R.id.txtNomeAlunoCard)
 
         txtInicialAluno.text =
-            nomeAluno.firstOrNull()?.uppercase() ?: "?"
+            nomeAlunoDenormalizado.firstOrNull()?.uppercase() ?: "?"
 
-        view.findViewById<TextView>(R.id.txtNomeAlunoCard).text =
-            nomeAluno.ifBlank { "Aluno não informado" }
+        txtNomeAluno.text =
+            nomeAlunoDenormalizado.ifBlank { "Aluno não informado" }
 
         val passageiroId = item.parada?.passageiroId
+        var nomeAluno = nomeAlunoDenormalizado
+
         if (passageiroId != null) {
             viewLifecycleOwner.lifecycleScope.launch {
                 val passageiro = try {
                     passageiroRepository.consultarPassageiro(passageiroId)
                 } catch (e: Exception) {
                     null
+                }
+
+                val nomeAtual = passageiro?.nome?.ifBlank { null }
+                if (nomeAtual != null) {
+                    nomeAluno = nomeAtual
+                    txtInicialAluno.text = nomeAtual.firstOrNull()?.uppercase() ?: "?"
+                    txtNomeAluno.text = nomeAtual
                 }
 
                 if (!passageiro?.fotoUrl.isNullOrBlank()) {
@@ -395,14 +498,34 @@ class ListaRotasFragment : Fragment() {
 
         // TODO: txtProximaCobrancaCard (depende da regra de cobrança mensal)
 
-        // Ações dentro do card (os botões são opcionais: se ainda não
-        // existirem no XML, o código simplesmente os ignora)
-        view.findViewById<View>(R.id.btnAcompanharViagemCard)?.setOnClickListener {
-            abrirAcompanharViagem(item)
+        val containerStatusViagem = view.findViewById<ViewGroup>(R.id.containerStatusViagemCard)
+        val btnAcompanhar = view.findViewById<MaterialButton>(R.id.btnAcompanharViagemCard)
+        if (passageiroId != null && containerStatusViagem != null && btnAcompanhar != null) {
+            configurarStatusViagemCard(containerStatusViagem, btnAcompanhar, item, passageiroId)
         }
 
+        // Ações dentro do card (os botões são opcionais: se ainda não
+        // existirem no XML, o código simplesmente os ignora)
         view.findViewById<View>(R.id.btnEnviarMensagemCard)?.setOnClickListener {
             abrirChatComMotorista(item)
+        }
+
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid
+        val containerAviso = view.findViewById<ViewGroup>(R.id.containerAvisoAusenciaCard)
+        if (passageiroId != null && responsavelId != null && containerAviso != null) {
+            configurarBlocoAvisoAusencia(
+                container = containerAviso,
+                lifecycleOwner = viewLifecycleOwner,
+                repository = avisoAusenciaRepository,
+                registrarAvisoUseCase = registrarAvisoAusenciaUseCase,
+                viagemRepository = viagemRepository,
+                rotaId = rota.id,
+                passageiroId = passageiroId,
+                nomePassageiro = nomeAluno,
+                responsavelId = responsavelId,
+                motoristaId = rota.motoristaId,
+                rotaIdaEVolta = rota.tipoTrajeto == "IDA_E_VOLTA"
+            )
         }
     }
 
@@ -417,6 +540,9 @@ class ListaRotasFragment : Fragment() {
                 putExtra(AcompanharViagemActivity.EXTRA_ROTA_NOME, item.rota.nome)
                 putExtra(AcompanharViagemActivity.EXTRA_MOTORISTA_NOME, item.motorista?.nome)
                 putExtra(AcompanharViagemActivity.EXTRA_VEICULO_PLACA, item.veiculo?.placa)
+                putExtra(AcompanharViagemActivity.EXTRA_MOTORISTA_FOTO_URL, item.motorista?.fotoUrl)
+                putExtra(AcompanharViagemActivity.EXTRA_MOTORISTA_ID, item.rota.motoristaId)
+                putExtra(AcompanharViagemActivity.EXTRA_ROTA_IDA_E_VOLTA, item.rota.tipoTrajeto == "IDA_E_VOLTA")
             }
         )
     }
@@ -473,6 +599,141 @@ class ListaRotasFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // STATUS DA VIAGEM/PASSAGEIRO DE HOJE (um por direção da rota)
+    // ---------------------------------------------------------
+
+    /** Um TextView por direção que a rota tiver, mostrando se a viagem de
+     * hoje ainda não começou, está em andamento (com o status do próprio
+     * filho: aguardando/na van/desceu), ou já foi finalizada — atualizado ao
+     * vivo via [ViagemRepository.iniciarSincronizacaoDoDia]. O mesmo estado
+     * decide o botão único do card: "Acompanhar viagem" (ao vivo) enquanto
+     * alguma direção estiver em andamento, "Ver trajeto" (só o percurso
+     * planejado, sem navegação) no resto do tempo. */
+    private fun configurarStatusViagemCard(
+        container: ViewGroup,
+        btnAcompanhar: MaterialButton,
+        item: RotasDoResponsavel,
+        passageiroId: String
+    ) {
+        val rota = item.rota
+        container.removeAllViews()
+
+        val direcoes = when (rota.tipoTrajeto) {
+            "IDA" -> listOf(ViagemRepository.DIRECAO_IDA)
+            "VOLTA" -> listOf(ViagemRepository.DIRECAO_VOLTA)
+            "IDA_E_VOLTA" -> listOf(ViagemRepository.DIRECAO_IDA, ViagemRepository.DIRECAO_VOLTA)
+            else -> emptyList()
+        }
+
+        val mostrarPrefixo = direcoes.size > 1
+        val ativoPorDirecao = BooleanArray(direcoes.size)
+
+        fun atualizarBotaoAcompanhar() {
+            if (ativoPorDirecao.any { it }) {
+                btnAcompanhar.text = "Acompanhar viagem"
+                btnAcompanhar.setIconResource(R.drawable.ic_mylocation)
+                btnAcompanhar.setOnClickListener { abrirAcompanharViagem(item) }
+            } else {
+                btnAcompanhar.text = "Ver trajeto"
+                btnAcompanhar.setIconResource(R.drawable.ic_rotas)
+                btnAcompanhar.setOnClickListener { abrirVerTrajeto(rota.id) }
+            }
+        }
+
+        atualizarBotaoAcompanhar()
+
+        direcoes.forEachIndexed { index, direcao ->
+            val txtStatus = criarTextoStatusViagem(container.context)
+            container.addView(txtStatus)
+
+            listenersStatusViagem.add(viagemRepository.iniciarSincronizacaoDoDia(rota.id, direcao))
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    statusViagemDoDiaFlow(rota.id, passageiroId, direcao).collect { (viagem, statusPassageiro) ->
+                        ativoPorDirecao[index] = viagem != null &&
+                            (viagem.status == ViagemRepository.STATUS_EM_ANDAMENTO || viagem.status == ViagemRepository.STATUS_PAUSADA)
+                        atualizarBotaoAcompanhar()
+
+                        val (texto, cor) = rotuloEcorStatusViagem(viagem, statusPassageiro)
+                        txtStatus.text = if (mostrarPrefixo) {
+                            val prefixo = if (direcao == ViagemRepository.DIRECAO_IDA) "Ida" else "Volta"
+                            "$prefixo: $texto"
+                        } else {
+                            texto
+                        }
+                        txtStatus.setTextColor(ContextCompat.getColor(requireContext(), cor))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun abrirVerTrajeto(rotaId: String) {
+        startActivity(
+            Intent(requireContext(), VisualizarRotaActivity::class.java)
+                .putExtra(VisualizarRotaActivity.EXTRA_ROTA_ID, rotaId)
+        )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun statusViagemDoDiaFlow(
+        rotaId: String,
+        passageiroId: String,
+        direcao: String
+    ): Flow<Pair<ViagemEntity?, StatusPassageiro?>> =
+        viagemRepository.observarUltimaViagemDeHoje(rotaId, direcao)
+            .flatMapLatest { viagem ->
+                val emAndamento = viagem != null &&
+                    (viagem.status == ViagemRepository.STATUS_EM_ANDAMENTO || viagem.status == ViagemRepository.STATUS_PAUSADA)
+
+                if (viagem != null && emAndamento) {
+                    viagemRepository.iniciarSincronizacao(viagem.id)
+                    viagemIdsSincronizados.add(viagem.id)
+
+                    viagemRepository.observarParadas(viagem.id).map { paradas ->
+                        val embarque = paradas.firstOrNull {
+                            it.passageiroId == passageiroId && it.tipo == ViagemRepository.TIPO_EMBARQUE
+                        }
+                        val desembarque = paradas.firstOrNull {
+                            it.passageiroId == passageiroId && it.tipo == ViagemRepository.TIPO_DESEMBARQUE
+                        }
+                        val status = if (embarque != null && desembarque != null) {
+                            statusDoPassageiro(embarque, desembarque)
+                        } else {
+                            null
+                        }
+                        viagem to status
+                    }
+                } else {
+                    flowOf(viagem to null)
+                }
+            }
+
+    private fun rotuloEcorStatusViagem(
+        viagem: ViagemEntity?,
+        statusPassageiro: StatusPassageiro?
+    ): Pair<String, Int> = when {
+        viagem == null || viagem.status == ViagemRepository.STATUS_CANCELADA ->
+            "Ainda não iniciada hoje" to R.color.light_gray
+
+        viagem.status == ViagemRepository.STATUS_FINALIZADA ->
+            "Finalizada hoje" to R.color.status_success
+
+        else ->
+            (statusPassageiro?.texto ?: "Em andamento") to (statusPassageiro?.cor ?: R.color.status_success)
+    }
+
+    private fun criarTextoStatusViagem(context: android.content.Context): TextView {
+        val dp = context.resources.displayMetrics.density
+        return TextView(context).apply {
+            textSize = 12f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, (2 * dp).toInt(), 0, (2 * dp).toInt())
         }
     }
 

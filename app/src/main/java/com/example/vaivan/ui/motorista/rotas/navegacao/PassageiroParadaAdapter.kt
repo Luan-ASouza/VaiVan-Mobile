@@ -5,10 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.repository.ViagemRepository
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.imageview.ShapeableImageView
 
 /**
  * Lista de passageiros de uma mesma parada, dentro do painel de embarque/
@@ -41,6 +43,7 @@ class PassageiroParadaAdapter(
 
     inner class ParadaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
+        private val foto = itemView.findViewById<ShapeableImageView>(R.id.fotoProgressoPassageiro)
         private val nome = itemView.findViewById<TextView>(R.id.nomePassageiroItemParada)
         private val status = itemView.findViewById<TextView>(R.id.statusPassageiroItemParada)
         private val btnConfirmar = itemView.findViewById<MaterialButton>(R.id.btnConfirmarAcaoItemParada)
@@ -49,10 +52,17 @@ class PassageiroParadaAdapter(
         fun bind(parada: ParadaViagemEntity) {
             nome.text = parada.nomePassageiro
 
+            Glide.with(foto)
+                .load(parada.fotoPassageiroUrl)
+                .placeholder(R.drawable.ic_perfil)
+                .error(R.drawable.ic_perfil)
+                .circleCrop()
+                .into(foto)
+
             val resolvido = parada.status != ViagemRepository.PARADA_AGUARDANDO &&
                 parada.status != ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
 
-            status.text = textoStatus(parada.status)
+            status.text = textoStatus(parada)
             btnConfirmar.isEnabled = !resolvido
             btnNao.isEnabled = !resolvido
 
@@ -71,11 +81,18 @@ class PassageiroParadaAdapter(
             }
         }
 
-        private fun textoStatus(valor: String): String = when (valor) {
-            ViagemRepository.PARADA_EMBARCADO -> "Embarcado"
-            ViagemRepository.PARADA_NAO_EMBARCOU -> "Não embarcou"
-            ViagemRepository.PARADA_DESEMBARCADO -> "Desembarcado"
-            else -> "Aguardando"
+        private fun textoStatus(parada: ParadaViagemEntity): String {
+            val falta = parada.motivoAusencia != null &&
+                (parada.status == ViagemRepository.PARADA_NAO_EMBARCOU ||
+                    parada.status == ViagemRepository.PARADA_DESEMBARCADO)
+            if (falta) return "Falta Avisada"
+
+            return when (parada.status) {
+                ViagemRepository.PARADA_EMBARCADO -> "Embarcado"
+                ViagemRepository.PARADA_NAO_EMBARCOU -> "Não embarcou"
+                ViagemRepository.PARADA_DESEMBARCADO -> "Desembarcado"
+                else -> "Aguardando"
+            }
         }
     }
 }

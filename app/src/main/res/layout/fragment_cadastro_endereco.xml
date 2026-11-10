@@ -35,6 +35,8 @@
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="40dp">
 
+                <include layout="@layout/stepper_cadastro" />
+
                 <!-- TÍTULO -->
 
                 <TextView

@@ -3,15 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activityLogin"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/opening"
     tools:context=".ui.inicio.LoginActivity">
 
-    <!-- Conteúdo principal -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="742dp">
+        android:layout_height="match_parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCadastrar"
@@ -19,31 +20,14 @@
             android:layout_height="55dp"
             android:layout_marginStart="35dp"
             android:layout_marginEnd="35dp"
-            android:layout_marginBottom="80dp"
+            android:layout_marginBottom="120dp"
             android:background="@drawable/bg_hollow_darkgray"
             android:text="Cadastrar nova conta"
             android:textAllCaps="false"
             android:textColor="@color/dark_gray"
-            android:textFontWeight="600"
             android:textStyle="bold"
             app:backgroundTint="@null"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/btnTestarChat"
-            android:layout_width="0dp"
-            android:layout_height="45dp"
-            android:layout_marginStart="35dp"
-            android:layout_marginEnd="35dp"
-            android:layout_marginBottom="8dp"
-            android:backgroundTint="#888888"
-            android:text="[TESTE] Abrir Chat"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            app:layout_constraintBottom_toTopOf="@id/btnEntrar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -57,7 +41,7 @@
             android:backgroundTint="@color/dark_gray"
             android:text="Entrar"
             android:textAllCaps="false"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@id/btnCadastrar"
             app:layout_constraintEnd_toEndOf="parent"
@@ -65,7 +49,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Bottom Sheet -->
+    <!-- BOTTOM SHEET -->
     <LinearLayout
         android:id="@+id/bottomSheet"
         android:layout_width="match_parent"
@@ -78,14 +62,16 @@
         app:behavior_peekHeight="0dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
+        <!-- INDICADOR -->
         <View
             android:layout_width="80dp"
             android:layout_height="7dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="20dp"
             android:background="@drawable/bg_white_rounded"
-            android:backgroundTint="#dbdce0" />
+            android:backgroundTint="#DBDCE0" />
 
+        <!-- TÍTULO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -96,11 +82,13 @@
             android:textSize="24sp"
             android:textStyle="bold" />
 
+        <!-- EMAIL -->
         <TextView
             android:id="@+id/txtLabelEmail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
+            android:labelFor="@id/edtEmail"
             android:text="Email"
             android:textColor="@color/dark_gray"
             android:textSize="20sp"
@@ -115,15 +103,19 @@
             android:hint="Email"
             android:inputType="textEmailAddress"
             android:autofillHints="emailAddress"
+            android:imeOptions="actionNext"
             android:paddingHorizontal="16dp"
+            android:singleLine="true"
             android:textColor="@color/dark_gray"
             android:textColorHint="@color/light_gray" />
 
+        <!-- SENHA -->
         <TextView
             android:id="@+id/txtLabelSenha"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
+            android:labelFor="@id/edtSenha"
             android:text="Senha"
             android:textColor="@color/dark_gray"
             android:textSize="20sp"
@@ -138,23 +130,26 @@
             android:hint="Senha"
             android:inputType="textPassword"
             android:autofillHints="password"
+            android:imeOptions="actionDone"
             android:paddingHorizontal="16dp"
+            android:singleLine="true"
             android:textColor="@color/dark_gray"
             android:textColorHint="@color/light_gray" />
 
-        <!-- Esqueci senha -->
+        <!-- RECUPERAR SENHA -->
         <TextView
             android:id="@+id/txtEsqueci"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Esqueci minha senha"
-            android:textStyle="bold"
-            android:textColor="@color/dark_gray"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="8dp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:text="Esqueci minha senha"
+            android:textColor="@color/dark_gray"
+            android:textStyle="bold" />
 
+        <!-- BOTÃO LOGIN -->
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
@@ -162,7 +157,7 @@
             android:backgroundTint="@color/orange"
             android:text="Entrar"
             android:textAllCaps="false"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textStyle="bold" />
 
     </LinearLayout>

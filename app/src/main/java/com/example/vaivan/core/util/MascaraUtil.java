@@ -12,7 +12,7 @@ public class MascaraUtil {
         return new TextWatcher() {
 
             boolean isUpdating;
-            String old = "";
+            String ultimosDigitos = "";
 
             @Override
             public void beforeTextChanged(CharSequence s,
@@ -27,46 +27,36 @@ public class MascaraUtil {
                                       int before,
                                       int count) {
 
-                String str = s.toString()
-                        .replaceAll("[^\\d]", "");
-
-                String mask = "";
-
                 if (isUpdating) {
-
-                    old = str;
                     isUpdating = false;
-
                     return;
                 }
 
-                int i = 0;
+                String digitos = s.toString()
+                        .replaceAll("[^\\d]", "");
 
-                for (char m : mascara.toCharArray()) {
+                // "before > count" é o apagar (removeu mais do que inseriu). Se mesmo
+                // assim a quantidade de dígitos não mudou, o que foi apagado foi só um
+                // separador (".", "-", " ") que a própria máscara tinha inserido -- sem
+                // isso, o backspace nessa posição parece não fazer nada (a máscara
+                // recoloca o separador do mesmo jeito) e o cursor pula pro fim. Apaga
+                // também o último dígito, pra cada backspace remover sempre algo de
+                // verdade.
+                boolean apagando = before > count;
 
-                    if (m != '#') {
+                if (apagando &&
+                        digitos.length() > 0 &&
+                        digitos.length() == ultimosDigitos.length()) {
 
-                        mask += m;
-
-                        continue;
-                    }
-
-                    try {
-
-                        mask += str.charAt(i);
-
-                    } catch (Exception e) {
-
-                        break;
-                    }
-
-                    i++;
+                    digitos = digitos.substring(0, digitos.length() - 1);
                 }
 
+                String mask = montarMascara(mascara, digitos);
+
+                ultimosDigitos = digitos;
                 isUpdating = true;
 
                 editText.setText(mask);
-
                 editText.setSelection(mask.length());
             }
 
@@ -74,5 +64,28 @@ public class MascaraUtil {
             public void afterTextChanged(Editable s) {
             }
         };
+    }
+
+    private static String montarMascara(String mascara, String digitos) {
+
+        StringBuilder mask = new StringBuilder();
+        int i = 0;
+
+        for (char m : mascara.toCharArray()) {
+
+            if (m != '#') {
+                mask.append(m);
+                continue;
+            }
+
+            if (i >= digitos.length()) {
+                break;
+            }
+
+            mask.append(digitos.charAt(i));
+            i++;
+        }
+
+        return mask.toString();
     }
 }

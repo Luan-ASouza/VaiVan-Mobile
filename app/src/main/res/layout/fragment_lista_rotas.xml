@@ -8,55 +8,62 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <ScrollView
-        android:id="@+id/rhywfkatnl96"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshListaRotas"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#FFFFFF"
-        android:fillViewport="true"
-        android:clipChildren="false"
-        android:clipToPadding="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:id="@+id/containerRotas"
+        <ScrollView
+            android:id="@+id/rhywfkatnl96"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="16dp"
-            android:paddingBottom="90dp"
+            android:layout_height="match_parent"
+            android:background="@color/background_screen"
+            android:fillViewport="true"
             android:clipChildren="false"
             android:clipToPadding="false">
 
-            <!-- SEUS TRANSPORTES -->
-
-            <TextView
-                android:id="@+id/r81pvr3oowbo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="10dp"
-                android:text="Seus Transportes"
-                android:textColor="@color/dark_gray"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <!-- LISTA DE TRANSPORTES -->
-
             <LinearLayout
-                android:id="@+id/containerListaRotas"
+                android:id="@+id/containerRotas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
                 android:orientation="vertical"
+                android:paddingTop="16dp"
+                android:paddingBottom="90dp"
                 android:clipChildren="false"
-                android:clipToPadding="false" />
+                android:clipToPadding="false">
 
-        </LinearLayout>
+                <!-- SEUS TRANSPORTES -->
 
-    </ScrollView>
+                <TextView
+                    android:id="@+id/r81pvr3oowbo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="10dp"
+                    android:text="Seus Transportes"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <!-- LISTA DE TRANSPORTES -->
+
+                <LinearLayout
+                    android:id="@+id/containerListaRotas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:orientation="vertical"
+                    android:clipChildren="false"
+                    android:clipToPadding="false" />
+
+            </LinearLayout>
+
+        </ScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

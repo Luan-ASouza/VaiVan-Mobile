@@ -21,4 +21,10 @@ interface ViagemDao {
 
     @Query("SELECT * FROM viagens WHERE motoristaId = :motoristaId AND status IN ('EM_ANDAMENTO', 'PAUSADA') LIMIT 1")
     fun getViagemAtivaDoMotorista(motoristaId: String): Flow<ViagemEntity?>
+
+    @Query(
+        "SELECT * FROM viagens WHERE rotaId = :rotaId AND direcao = :direcao " +
+            "AND iniciadaEm >= :inicioDoDia ORDER BY iniciadaEm DESC LIMIT 1"
+    )
+    fun getUltimaViagemDoDia(rotaId: String, direcao: String, inicioDoDia: Long): Flow<ViagemEntity?>
 }
