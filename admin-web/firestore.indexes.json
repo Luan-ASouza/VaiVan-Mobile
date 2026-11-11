@@ -13,9 +13,10 @@
       "collectionGroup": "viagens",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "responsaveisAutorizados", "arrayConfig": "CONTAINS" },
         { "fieldPath": "direcao", "order": "ASCENDING" },
         { "fieldPath": "rotaId", "order": "ASCENDING" },
-        { "fieldPath": "iniciadaEm", "order": "ASCENDING" }
+        { "fieldPath": "iniciadaEm", "order": "DESCENDING" }
       ]
     }
   ],

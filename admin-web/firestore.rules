@@ -122,7 +122,11 @@ service cloud.firestore {
     // de "viagens", pra não depender de getAfter() numa escrita de alta
     // frequência.
     match /localizacoes/{viagemId} {
+      // "resource == null": o responsável abre o acompanhamento antes de o
+      // motorista mandar a primeira posição — sem isso a leitura de um
+      // documento que ainda não existe é recusada e o mapa fica vazio.
       allow read: if logado() && (
+        resource == null ||
         request.auth.uid == resource.data.motoristaId ||
         request.auth.uid in resource.data.responsaveisAutorizados ||
         ehAdmin()
@@ -384,6 +388,19 @@ service cloud.firestore {
 
       allow create, update: if logado() &&
         request.auth.uid == getAfter(/databases/$(database)/documents/viagens/$(request.resource.data.viagemId)).data.motoristaId;
+
+      // Responsável marca falta com a viagem já em andamento
+      // (ViagemRepository.aplicarAusenciaNaParadaAtiva): só na parada do
+      // próprio filho, só a partir de um status pendente, e só pra
+      // NAO_EMBARCOU (embarque) / DESEMBARCADO (desembarque). Nada além de
+      // status, motivo e lastUpdated pode mudar.
+      allow update: if logado() &&
+        resource.data.responsavelId == request.auth.uid &&
+        resource.data.status in ['AGUARDANDO', 'AGUARDANDO_DESEMBARQUE'] &&
+        ((resource.data.tipo == 'EMBARQUE' && request.resource.data.status == 'NAO_EMBARCOU') ||
+         (resource.data.tipo == 'DESEMBARQUE' && request.resource.data.status == 'DESEMBARCADO')) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'motivoAusencia', 'lastUpdated']);
 
       allow delete: if false;
     }

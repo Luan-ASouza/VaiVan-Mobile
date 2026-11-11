@@ -41,7 +41,15 @@ class FirestoreLocalizacaoViagemRemoteSource(
 
     override fun observar(viagemId: String): Flow<LocalizacaoViagemEntity?> = callbackFlow {
         val registro = colecao.document(viagemId).addSnapshotListener { snapshot, erro ->
-            if (erro != null || snapshot == null || !snapshot.exists()) {
+            // Depois de um erro o Firestore já desligou este listener: fecha o
+            // Flow com o erro pra quem coleta poder se reinscrever (ex.: o
+            // documento ainda não existia porque o motorista não mandou a
+            // primeira posição, e a regra recusou a leitura).
+            if (erro != null) {
+                close(erro)
+                return@addSnapshotListener
+            }
+            if (snapshot == null || !snapshot.exists()) {
                 trySend(null)
                 return@addSnapshotListener
             }

@@ -1,9 +1,11 @@
 package com.example.vaivan.core.util
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
@@ -15,6 +17,9 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
+
+private const val TAG_AVISO_AUSENCIA = "AvisoAusenciaUi"
 
 /**
  * Preenche o bloco "Marcar falta" (bloco_aviso_ausencia.xml) dentro de
@@ -55,21 +60,41 @@ fun configurarBlocoAvisoAusencia(
 
     fun salvarAviso(tipo: String, pendenteIda: Boolean, pendenteVolta: Boolean, onSalvo: () -> Unit) {
         lifecycleOwner.lifecycleScope.launch {
-            registrarAvisoUseCase(
-                AvisoAusenciaEntity(
-                    rotaId = rotaId,
-                    passageiroId = passageiroId,
-                    nomePassageiro = nomePassageiro,
-                    responsavelId = responsavelId,
-                    motoristaId = motoristaId,
-                    tipo = tipo,
-                    pendenteIda = pendenteIda,
-                    pendenteVolta = pendenteVolta
-                ),
-                rotaIdaEVolta
-            )
+            try {
+                registrarAvisoUseCase(
+                    AvisoAusenciaEntity(
+                        rotaId = rotaId,
+                        passageiroId = passageiroId,
+                        nomePassageiro = nomePassageiro,
+                        responsavelId = responsavelId,
+                        motoristaId = motoristaId,
+                        tipo = tipo,
+                        pendenteIda = pendenteIda,
+                        pendenteVolta = pendenteVolta
+                    ),
+                    rotaIdaEVolta
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG_AVISO_AUSENCIA, "Falha ao salvar aviso de ausência", e)
+                Toast.makeText(context, "Não foi possível salvar o aviso. Tente novamente.", Toast.LENGTH_LONG).show()
+            }
             onSalvo()
         }
+    }
+
+    /** Falha na consulta (rede, permissão) não pode derrubar a tela: na dúvida
+     * a opção fica liberada — se a viagem já estiver em andamento, o
+     * RegistrarAvisoAusenciaUseCase só não consegue aplicar e o aviso fica
+     * pendente pro motorista. */
+    suspend fun aindaDaParaAvisar(direcao: String): Boolean = try {
+        viagemRepository.aindaDaParaAvisarFaltaHoje(rotaId, passageiroId, direcao, responsavelId)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w(TAG_AVISO_AUSENCIA, "Falha ao consultar viagem de hoje ($direcao)", e)
+        true
     }
 
     fun atualizarEstado() {
@@ -133,8 +158,8 @@ fun configurarBlocoAvisoAusencia(
                 return@launch
             }
 
-            val idaLivre = viagemRepository.aindaDaParaAvisarFaltaHoje(rotaId, passageiroId, ViagemRepository.DIRECAO_IDA)
-            val voltaLivre = viagemRepository.aindaDaParaAvisarFaltaHoje(rotaId, passageiroId, ViagemRepository.DIRECAO_VOLTA)
+            val idaLivre = aindaDaParaAvisar(ViagemRepository.DIRECAO_IDA)
+            val voltaLivre = aindaDaParaAvisar(ViagemRepository.DIRECAO_VOLTA)
 
             if (!idaLivre && !voltaLivre) {
                 containerBotoes.visibility = View.GONE
@@ -167,8 +192,8 @@ fun configurarBlocoAvisoAusencia(
         }
 
         lifecycleOwner.lifecycleScope.launch {
-            val idaLivre = viagemRepository.aindaDaParaAvisarFaltaHoje(rotaId, passageiroId, ViagemRepository.DIRECAO_IDA)
-            val voltaLivre = viagemRepository.aindaDaParaAvisarFaltaHoje(rotaId, passageiroId, ViagemRepository.DIRECAO_VOLTA)
+            val idaLivre = aindaDaParaAvisar(ViagemRepository.DIRECAO_IDA)
+            val voltaLivre = aindaDaParaAvisar(ViagemRepository.DIRECAO_VOLTA)
 
             if (!idaLivre && !voltaLivre) {
                 // Estado mudou entre a última atualizarEstado() e o clique —

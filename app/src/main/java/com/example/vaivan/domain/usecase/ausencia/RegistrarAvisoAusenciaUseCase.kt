@@ -1,8 +1,10 @@
 package com.example.vaivan.domain.usecase.ausencia
 
+import android.util.Log
 import com.example.vaivan.data.local.entities.AvisoAusenciaEntity
 import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.ViagemRepository
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Salva o aviso de ausência e, se já existir uma viagem em andamento/pausada
@@ -36,15 +38,32 @@ class RegistrarAvisoAusenciaUseCase(
     ) {
         if (!pendente) return
 
-        val viagem = viagemRepository.consultarViagemAtivaParaRotaEDirecao(aviso.rotaId, direcao)
-            ?: return
+        // O aviso em si já foi salvo: se aplicar na viagem em andamento falhar
+        // (rede, permissão), ele continua pendente e o motorista ainda o vê —
+        // não pode derrubar o app nem desfazer o aviso.
+        try {
+            val viagem = viagemRepository.consultarViagemAtivaParaRotaEDirecao(
+                aviso.rotaId,
+                direcao,
+                aviso.responsavelId
+            ) ?: return
 
-        viagemRepository.aplicarAusenciaNaParadaAtiva(
-            viagemId = viagem.id,
-            passageiroId = aviso.passageiroId,
-            motivo = "Aviso do responsável (viagem em andamento)"
-        )
+            viagemRepository.aplicarAusenciaNaParadaAtiva(
+                viagemId = viagem.id,
+                passageiroId = aviso.passageiroId,
+                responsavelId = aviso.responsavelId,
+                motivo = ViagemRepository.MOTIVO_AVISO_EM_ANDAMENTO
+            )
 
-        avisoAusenciaRepository.marcarConsumido(aviso, direcao)
+            avisoAusenciaRepository.marcarConsumido(aviso, direcao)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Não foi possível aplicar o aviso na viagem em andamento ($direcao)", e)
+        }
+    }
+
+    private companion object {
+        const val TAG = "RegistrarAvisoAusencia"
     }
 }

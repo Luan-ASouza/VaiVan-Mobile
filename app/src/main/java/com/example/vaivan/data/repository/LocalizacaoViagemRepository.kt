@@ -3,12 +3,18 @@ package com.example.vaivan.data.repository
 import com.example.vaivan.data.local.dao.LocalizacaoViagemDao
 import com.example.vaivan.data.local.entities.LocalizacaoViagemEntity
 import com.example.vaivan.data.remote.localizacao.LocalizacaoViagemRemoteSource
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
+
+private const val TAG = "LocalizacaoViagemRepo"
+private const val INTERVALO_NOVA_TENTATIVA_MS = 5_000L
 
 /**
  * Porta de entrada para a posição ao vivo do motorista numa viagem. Segue o
@@ -29,7 +35,13 @@ class LocalizacaoViagemRepository(
     fun iniciarSincronizacao(viagemId: String) {
         pararSincronizacao()
         job = scope.launch {
-            remoteSource.observar(viagemId).collect { localizacao ->
+            remoteSource.observar(viagemId)
+                .retryWhen { causa, _ ->
+                    Log.w(TAG, "Falha ao observar localização da viagem $viagemId; tentando de novo", causa)
+                    delay(INTERVALO_NOVA_TENTATIVA_MS)
+                    true
+                }
+                .collect { localizacao ->
                 if (localizacao != null) dao.upsert(localizacao)
             }
         }

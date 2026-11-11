@@ -35,6 +35,7 @@ import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.domain.usecase.rota.CalcularOrdemVoltaUseCase
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
@@ -145,7 +146,8 @@ class RotaDetalheActivity : BaseActivity() {
                     rotaRepository = rotaRepository,
                     passageiroRepository = PassageiroRepository(db.passageiroDao()),
                     viagemRepository = viagemRepository,
-                    avisoAusenciaRepository = avisoAusenciaRepository
+                    avisoAusenciaRepository = avisoAusenciaRepository,
+                    calcularOrdemVolta = CalcularOrdemVoltaUseCase(routesClient)
                 )
 
                 RotaDetalheViewModel(

@@ -53,7 +53,12 @@ class NavegacaoViagemViewModel(
 
     val paradasDoPainel: StateFlow<List<ParadaViagemEntity>> =
         combine(paradas, ordemPainelAtivo) { todas, ordem ->
-            if (ordem == null) emptyList() else todas.filter { it.ordem == ordem }
+            if (ordem == null) {
+                emptyList()
+            } else {
+                // Falta avisada não entra no card: não há o que confirmar.
+                todas.filter { it.ordem == ordem && !ViagemRepository.ehFaltaAvisada(it) }
+            }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

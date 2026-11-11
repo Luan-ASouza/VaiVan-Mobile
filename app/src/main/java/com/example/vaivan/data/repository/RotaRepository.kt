@@ -645,6 +645,41 @@ class RotaRepository(
         paradaRotaDao.upsertAll(paradas)
     }
 
+    /**
+     * Grava a ordem da volta calculada fora do aceite (rota antiga, ou que
+     * mudou desde o último cálculo). Só grava se a rota não tiver sido
+     * recalculada nesse meio-tempo (calculadoEm igual ao lido) — senão um
+     * aceite concorrente já gravou uma ordem mais nova.
+     */
+    suspend fun salvarOrdemVolta(
+        rota: RotaEntity,
+        paradas: List<ParadaRotaEntity>
+    ) = withContext(Dispatchers.IO) {
+        val rotaRef = collectionRotas.document(rota.id)
+
+        val gravou = firestore.runTransaction { transaction ->
+            val calculadoEmServidor = transaction.get(rotaRef).getLong("calculadoEm") ?: 0L
+            if (calculadoEmServidor != rota.calculadoEm) return@runTransaction false
+
+            transaction.update(rotaRef, "voltaCalculadaEm", rota.calculadoEm)
+            paradas.forEach { parada ->
+                transaction.update(
+                    collectionParadas.document(parada.id),
+                    mapOf(
+                        "ordemVolta" to parada.ordemVolta,
+                        "horarioEstimadoVoltaMinutos" to parada.horarioEstimadoVoltaMinutos
+                    )
+                )
+            }
+            true
+        }.await()
+
+        if (gravou) {
+            paradaRotaDao.upsertAll(paradas)
+            rotaDao.upsert(rota.copy(voltaCalculadaEm = rota.calculadoEm))
+        }
+    }
+
     fun novoIdParada(): String {
         return collectionParadas.document().id
     }

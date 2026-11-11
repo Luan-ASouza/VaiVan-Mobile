@@ -91,10 +91,13 @@ class AdicionarPassageiroActivity : BaseActivity() {
 
     private val repository by lazy {
 
+        val db = VaivanDatabase.getInstance(this)
+        // DAOs de paradas/solicitações: ao renomear o passageiro, as cópias
+        // do nome no cache local também são atualizadas na hora.
         PassageiroRepository(
-            VaivanDatabase
-                .getInstance(this)
-                .passageiroDao()
+            passageiroDao = db.passageiroDao(),
+            paradaRotaDao = db.paradaRotaDao(),
+            solicitacaoInclusaoDao = db.solicitacaoInclusaoDao()
         )
     }
 

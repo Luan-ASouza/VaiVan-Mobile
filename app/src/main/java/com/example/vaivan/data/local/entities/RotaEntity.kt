@@ -53,5 +53,9 @@ data class RotaEntity(
 
     val status: String = "ATIVA", // ATIVA | ARQUIVADA
     val calculadoEm: Long = 0L,
+    // Valor de calculadoEm quando a ordem da volta (ParadaRotaEntity.ordemVolta)
+    // foi calculada. Diferente de calculadoEm = a rota mudou depois e a volta
+    // precisa ser recalculada. 0 = nunca calculada.
+    val voltaCalculadaEm: Long = 0L,
     val lastUpdated: Long = 0L
 )

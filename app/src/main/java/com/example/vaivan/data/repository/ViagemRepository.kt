@@ -8,6 +8,7 @@ import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
+import android.util.Log
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -44,6 +45,8 @@ class ViagemRepository(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
+        private const val TAG = "ViagemRepository"
+
         const val DIRECAO_IDA = "IDA"
         const val DIRECAO_VOLTA = "VOLTA"
 
@@ -60,6 +63,18 @@ class ViagemRepository(
         const val PARADA_NAO_EMBARCOU = "NAO_EMBARCOU"
         const val PARADA_AGUARDANDO_DESEMBARQUE = "AGUARDANDO_DESEMBARQUE"
         const val PARADA_DESEMBARCADO = "DESEMBARCADO"
+
+        // Motivos gravados quando a parada foi resolvida por aviso do
+        // responsável (não pelo motorista no ponto) — ver [ehFaltaAvisada].
+        const val MOTIVO_AVISO_PREVIO = "Aviso prévio do responsável"
+        const val MOTIVO_AVISO_EM_ANDAMENTO = "Aviso do responsável (viagem em andamento)"
+
+        /** Parada que já nasceu (ou virou) resolvida por falta avisada: o
+         * motorista não tem nada a confirmar nela, então não deve aparecer
+         * no card de chegada (ex.: embarque na escola, na volta). */
+        fun ehFaltaAvisada(parada: ParadaViagemEntity): Boolean =
+            parada.motivoAusencia == MOTIVO_AVISO_PREVIO ||
+                parada.motivoAusencia == MOTIVO_AVISO_EM_ANDAMENTO
     }
 
     // =========================================================
@@ -90,9 +105,16 @@ class ViagemRepository(
 
     /** Mesma ideia de [consultarViagemAtivaDoMotorista], só que pelo lado do
      * responsável: ele não tem o motoristaId em mãos, mas sabe o rotaId da
-     * viagem que quer acompanhar. */
-    suspend fun consultarViagemAtivaParaRota(rotaId: String): ViagemEntity? {
+     * viagem que quer acompanhar.
+     *
+     * Toda consulta de viagens feita pelo responsável PRECISA filtrar por
+     * `responsaveisAutorizados array-contains responsavelId`: a regra de
+     * leitura de `viagens` só libera o responsável por esse campo, e o
+     * Firestore recusa (PERMISSION_DENIED) qualquer consulta que não prove,
+     * pelos próprios filtros, que só devolve documentos permitidos. */
+    suspend fun consultarViagemAtivaParaRota(rotaId: String, responsavelId: String): ViagemEntity? {
         val snapshot = collectionViagens
+            .whereArrayContains("responsaveisAutorizados", responsavelId)
             .whereEqualTo("rotaId", rotaId)
             .whereIn("status", listOf(STATUS_EM_ANDAMENTO, STATUS_PAUSADA))
             .limit(1)
@@ -107,8 +129,13 @@ class ViagemRepository(
     /** Mesma ideia de [consultarViagemAtivaParaRota], mais específica por
      * direção — usada quando um aviso de ausência precisa ser aplicado numa
      * viagem que já está em andamento (ver RegistrarAvisoAusenciaUseCase). */
-    suspend fun consultarViagemAtivaParaRotaEDirecao(rotaId: String, direcao: String): ViagemEntity? {
+    suspend fun consultarViagemAtivaParaRotaEDirecao(
+        rotaId: String,
+        direcao: String,
+        responsavelId: String
+    ): ViagemEntity? {
         val snapshot = collectionViagens
+            .whereArrayContains("responsaveisAutorizados", responsavelId)
             .whereEqualTo("rotaId", rotaId)
             .whereEqualTo("direcao", direcao)
             .whereIn("status", listOf(STATUS_EM_ANDAMENTO, STATUS_PAUSADA))
@@ -136,10 +163,18 @@ class ViagemRepository(
      * fazia NavegacaoViagemActivity.avancarSeAlvoAtualResolvido liberar o
      * SDK pro próximo destino antes da chegada física — o ponto final
      * "desaparecia" da navegação em andamento. */
-    suspend fun aplicarAusenciaNaParadaAtiva(viagemId: String, passageiroId: String, motivo: String) {
+    suspend fun aplicarAusenciaNaParadaAtiva(
+        viagemId: String,
+        passageiroId: String,
+        responsavelId: String,
+        motivo: String
+    ) {
         val agora = System.currentTimeMillis()
 
+        // Filtro por responsavelId: a regra de leitura de paradas_viagem só
+        // libera o responsável pelas paradas dos próprios filhos.
         val paradasDoPassageiro = collectionParadas
+            .whereEqualTo("responsavelId", responsavelId)
             .whereEqualTo("viagemId", viagemId)
             .whereEqualTo("passageiroId", passageiroId)
             .get()
@@ -171,11 +206,17 @@ class ViagemRepository(
      * hoje, então o aviso só fica pendente pra próxima viagem dessa direção
      * (pode ser já amanhã). Usado pela UI pra desabilitar a opção
      * correspondente antes mesmo de o responsável tentar marcar. */
-    suspend fun aindaDaParaAvisarFaltaHoje(rotaId: String, passageiroId: String, direcao: String): Boolean {
-        val viagemHoje = consultarUltimaViagemDeHoje(rotaId, direcao) ?: return true
+    suspend fun aindaDaParaAvisarFaltaHoje(
+        rotaId: String,
+        passageiroId: String,
+        direcao: String,
+        responsavelId: String
+    ): Boolean {
+        val viagemHoje = consultarUltimaViagemDeHoje(rotaId, direcao, responsavelId) ?: return true
         if (viagemHoje.status != STATUS_EM_ANDAMENTO && viagemHoje.status != STATUS_PAUSADA) return true
 
         val embarque = collectionParadas
+            .whereEqualTo("responsavelId", responsavelId)
             .whereEqualTo("viagemId", viagemHoje.id)
             .whereEqualTo("passageiroId", passageiroId)
             .whereEqualTo("tipo", TIPO_EMBARQUE)
@@ -192,8 +233,11 @@ class ViagemRepository(
     /** Última viagem de hoje pra essa rota+direção (qualquer status) — usada
      * pra decidir se ainda dá pra avisar falta, e como base pro sincronizador
      * ao vivo [iniciarSincronizacaoDoDia]/[observarUltimaViagemDeHoje]. */
-    suspend fun consultarUltimaViagemDeHoje(rotaId: String, direcao: String): ViagemEntity? {
+    suspend fun consultarUltimaViagemDeHoje(rotaId: String, direcao: String, responsavelId: String): ViagemEntity? {
+        // Usa o índice composto (responsaveisAutorizados, direcao, rotaId,
+        // iniciadaEm DESC) declarado em admin-web/firestore.indexes.json.
         val snapshot = collectionViagens
+            .whereArrayContains("responsaveisAutorizados", responsavelId)
             .whereEqualTo("rotaId", rotaId)
             .whereEqualTo("direcao", direcao)
             .whereGreaterThanOrEqualTo("iniciadaEm", inicioDoDiaEmMillis())
@@ -226,7 +270,11 @@ class ViagemRepository(
     // responsável, e agora também cada card ativo da lista de rotas)
     // =========================================================
 
-    fun iniciarSincronizacao(viagemId: String) {
+    /** [responsavelId] != null quando quem sincroniza é o responsável: aí as
+     * paradas vêm filtradas pelas dos próprios filhos (é o que a regra de
+     * `paradas_viagem` libera pra ele — sem o filtro, a consulta inteira é
+     * recusada). O motorista passa null e recebe todas. */
+    fun iniciarSincronizacao(viagemId: String, responsavelId: String? = null) {
         if (listenersPorViagem.containsKey(viagemId)) return
 
         val listenerViagem = collectionViagens.document(viagemId)
@@ -238,9 +286,17 @@ class ViagemRepository(
                 }
             }
 
-        val listenerParadas = collectionParadas
-            .whereEqualTo("viagemId", viagemId)
+        val consultaParadas = if (responsavelId != null) {
+            collectionParadas
+                .whereEqualTo("responsavelId", responsavelId)
+                .whereEqualTo("viagemId", viagemId)
+        } else {
+            collectionParadas.whereEqualTo("viagemId", viagemId)
+        }
+
+        val listenerParadas = consultaParadas
             .addSnapshotListener { snapshot, erro ->
+                if (erro != null) Log.w(TAG, "Falha ao sincronizar paradas da viagem $viagemId", erro)
                 if (erro != null || snapshot == null) return@addSnapshotListener
 
                 val paradas = snapshot.documents.mapNotNull { documento ->
@@ -282,12 +338,17 @@ class ViagemRepository(
      * saber o id de antemão — base pra [observarUltimaViagemDeHoje], usado
      * pela lista de rotas do responsável. Mesmo padrão de
      * AvisoAusenciaRepository.mirrorarMudancas. */
-    fun iniciarSincronizacaoDoDia(rotaId: String, direcao: String): ListenerRegistration =
+    fun iniciarSincronizacaoDoDia(rotaId: String, direcao: String, responsavelId: String): ListenerRegistration =
         collectionViagens
+            .whereArrayContains("responsaveisAutorizados", responsavelId)
             .whereEqualTo("rotaId", rotaId)
             .whereEqualTo("direcao", direcao)
             .whereGreaterThanOrEqualTo("iniciadaEm", inicioDoDiaEmMillis())
+            // DESC só pra reaproveitar o mesmo índice de consultarUltimaViagemDeHoje
+            // (a ordem não importa aqui: tudo vai pro Room).
+            .orderBy("iniciadaEm", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, erro ->
+                if (erro != null) Log.w(TAG, "Falha ao sincronizar viagens do dia da rota $rotaId ($direcao)", erro)
                 if (erro != null || snapshot == null) return@addSnapshotListener
 
                 scope.launch {
@@ -335,7 +396,7 @@ class ViagemRepository(
     }
 
     private fun motivoAusenciaOu(passageiroId: String, passageirosAusentes: Set<String>): String? =
-        if (passageiroId in passageirosAusentes) "Aviso prévio do responsável" else null
+        if (passageiroId in passageirosAusentes) MOTIVO_AVISO_PREVIO else null
 
     suspend fun iniciarViagem(
         rota: RotaEntity,

@@ -16,6 +16,9 @@ interface SolicitacaoInclusaoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<SolicitacaoInclusaoEntity>)
 
+    @Query("UPDATE solicitacoes_inclusao SET nomePassageiro = :nome WHERE passageiroId = :passageiroId")
+    suspend fun atualizarNomePassageiro(passageiroId: String, nome: String)
+
     @Query("DELETE FROM solicitacoes_inclusao WHERE id = :id")
     suspend fun deleteById(id: String)
 

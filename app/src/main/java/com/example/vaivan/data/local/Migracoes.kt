@@ -117,10 +117,38 @@ object Migracoes {
     }
 
     /**
+     * 16 → 17
+     *
+     * Ordem da volta guardada na rota (rotas IDA_E_VOLTA): calculada uma vez
+     * no aceite do passageiro, em vez de a cada volta iniciada.
+     */
+    val DE_16_PARA_17 = object : Migration(16, 17) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            db.execSQL(
+                "ALTER TABLE `paradas_rota` " +
+                        "ADD COLUMN `ordemVolta` INTEGER NOT NULL DEFAULT -1"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `paradas_rota` " +
+                        "ADD COLUMN `horarioEstimadoVoltaMinutos` INTEGER NOT NULL DEFAULT 0"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `rotas` " +
+                        "ADD COLUMN `voltaCalculadaEm` INTEGER NOT NULL DEFAULT 0"
+            )
+        }
+    }
+
+    /**
      * Todas as migrações registradas.
      */
     val TODAS: Array<Migration> = arrayOf(
         DE_14_PARA_15,
-        DE_15_PARA_16
+        DE_15_PARA_16,
+        DE_16_PARA_17
     )
 }
