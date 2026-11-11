@@ -9,6 +9,8 @@ import com.example.vaivan.data.local.dao.RotaDao
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.local.entities.comTabela
+import com.example.vaivan.domain.usecase.preco.TabelaPreco
 import com.example.vaivan.data.models.RotaCompativel
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
@@ -210,7 +212,7 @@ class RotaRepository(
         escolaId: String = "",
         escolaNome: String = "",
         bairrosAtendidos: List<String> = emptyList(),
-        valorMensalCentavos: Long = 0L,
+        tabelaPreco: TabelaPreco? = null,
         diaVencimento: Int = 10
     ): RotaEntity = withContext(Dispatchers.IO) {
 
@@ -273,7 +275,6 @@ class RotaRepository(
             bairrosAtendidos = bairrosAtendidos,
             capacidadeTotal = capacidadeTotal,
             vagasOcupadas = 0,
-            valorMensalCentavos = valorMensalCentavos,
             diaVencimento = diaVencimento,
             distanciaMetros = resultado.distanciaMetros,
             duracaoSegundos = resultado.duracaoSegundos,
@@ -282,7 +283,7 @@ class RotaRepository(
             status = "ATIVA",
             calculadoEm = agora,
             lastUpdated = agora
-        )
+        ).comTabela(tabelaPreco)
 
         documentReference.set(rota).await()   // Firestore = fonte da verdade
         rotaDao.upsert(rota)                  // Room = cache local
@@ -314,7 +315,7 @@ class RotaRepository(
         escolaNome: String = "",
         bairrosAtendidos: List<String> = emptyList(),
         // null = mantém o que a rota já tem
-        valorMensalCentavos: Long? = null,
+        tabelaPreco: TabelaPreco? = null,
         diaVencimento: Int? = null
     ): RotaEntity = withContext(Dispatchers.IO) {
 
@@ -381,7 +382,6 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
-                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
                 diaVencimento = diaVencimento ?: atual.diaVencimento,
                 distanciaMetros = resultado.distanciaMetros,
                 duracaoSegundos = resultado.duracaoSegundos,
@@ -402,16 +402,17 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
-                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
                 diaVencimento = diaVencimento ?: atual.diaVencimento,
                 lastUpdated = agora
             )
         }
 
-        collectionRotas.document(rotaId).set(rotaAtualizada).await()
-        rotaDao.upsert(rotaAtualizada)
+        val rotaFinal = rotaAtualizada.comTabela(tabelaPreco)
 
-        rotaAtualizada
+        collectionRotas.document(rotaId).set(rotaFinal).await()
+        rotaDao.upsert(rotaFinal)
+
+        rotaFinal
     }
 
     // =========================================================

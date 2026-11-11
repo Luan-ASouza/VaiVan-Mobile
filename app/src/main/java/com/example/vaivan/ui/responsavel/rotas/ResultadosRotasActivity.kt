@@ -13,6 +13,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.data.repository.TabelaPrecoRepository
+import com.example.vaivan.data.models.TabelaPrecoMotorista
+import com.example.vaivan.domain.usecase.preco.PrecoPolicy
+import com.example.vaivan.domain.usecase.preco.Orcamento
+import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.core.util.GeoUtil
 import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
@@ -81,6 +87,10 @@ class ResultadosRotasActivity : BaseActivity() {
     private var nomePassageiro = ""
     private var localId: String? = null
     private var modalidade: String = "IDA"
+
+    // Tabela de preços de cada motorista que apareceu na busca (chave = motoristaId)
+    private var tabelasPorMotorista: Map<String, TabelaPrecoMotorista> = emptyMap()
+    private val tabelaPrecoRepository = TabelaPrecoRepository()
 
     private val firestore by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
@@ -203,6 +213,11 @@ class ResultadosRotasActivity : BaseActivity() {
                     }
                 }
 
+                // Uma leitura por motorista (não por rota) antes de montar os cards
+                tabelasPorMotorista = tabelaPrecoRepository.buscarVarias(
+                    resultadosFiltrados.map { it.rota.motoristaId }.toSet()
+                )
+
                 renderizar(resultadosFiltrados)
 
             } catch (e: Exception) {
@@ -270,8 +285,7 @@ class ResultadosRotasActivity : BaseActivity() {
             formatarDistancia(item.distanciaEmbarqueMetros)
 
         card.findViewById<TextView>(R.id.txtValorResultado).text =
-            if (rota.valorMensalCentavos > 0) AssinaturaUi.formatarValor(rota.valorMensalCentavos)
-            else "A combinar"
+            orcamentoPara(rota)?.let { AssinaturaUi.formatarValor(it.valorCentavos) } ?: "A combinar"
 
         card.findViewById<TextView>(R.id.txtEscolaResultado).text =
             "Escola: ${rota.escolaNome.ifBlank { rota.destinoNome }}"
@@ -362,6 +376,10 @@ class ResultadosRotasActivity : BaseActivity() {
         view.findViewById<TextView>(R.id.txtSolicitacaoResumo).text =
             "${rota.nome}\n${rotuloSentido(rota.tipoTrajeto)} · ${traduzirTurno(rota.turno)}"
 
+        view.findViewById<TextView>(R.id.txtSolicitacaoValor).text =
+            orcamentoPara(rota)?.let { detalharOrcamento(it) }
+                ?: "Valor a combinar com o motorista."
+
         val edtMensagem = view.findViewById<EditText>(R.id.edtMensagemMotorista)
 
         view.findViewById<View>(R.id.btnSolicitacaoCancelar).setOnClickListener {
@@ -381,6 +399,50 @@ class ResultadosRotasActivity : BaseActivity() {
         sheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         sheet.show()
+    }
+
+    // ---------------------------------------------------------
+    // PREÇO (tabela do motorista + escolhas da pesquisa)
+    // ---------------------------------------------------------
+
+    private fun diasDaRota(rota: RotaEntity): Set<String> =
+        rota.diasSemana.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
+
+    /** Dias pedidos na pesquisa que a rota atende (ou todos os da rota, se não pediu nenhum). */
+    private fun diasContratados(rota: RotaEntity): List<String> {
+        val daRota = diasDaRota(rota)
+        val emComum = if (dias.isEmpty()) daRota else dias.intersect(daRota)
+        return emComum.sortedBy { ORDEM_DIAS.indexOf(it) }
+    }
+
+    /** Distância em linha reta entre a casa e a escola (0 se faltar coordenada). */
+    private fun distanciaCasaEscola(): Double =
+        if (embarqueLat.isNaN() || embarqueLng.isNaN() || destinoLat.isNaN() || destinoLng.isNaN()) 0.0
+        else GeoUtil.distanciaMetros(embarqueLat, embarqueLng, destinoLat, destinoLng)
+
+    /** Preço deste passageiro nesta rota, ou null se o motorista não preencheu a tabela. */
+    private fun orcamentoPara(rota: RotaEntity): Orcamento? {
+        val tabela = tabelasPorMotorista[rota.motoristaId]?.paraCalculo() ?: return null
+        return PrecoPolicy.calcular(
+            tabela = tabela,
+            modalidade = PrecoPolicy.modalidadeEfetiva(modalidade, rota.tipoTrajeto),
+            dias = PrecoPolicy.diasCobrados(dias, diasDaRota(rota)),
+            distanciaMetros = distanciaCasaEscola()
+        )
+    }
+
+    /** Ex.: "R$ 189,00 por mês / Só ida · 3 dias por semana · 8 km / R$ 270,00 + 3 km extras (R$ 45,00) × 60%" */
+    private fun detalharOrcamento(o: Orcamento): String {
+        val valor = AssinaturaUi::formatarValor
+        val dia = if (o.dias == 1) "1 dia" else "${o.dias} dias"
+
+        var conta = valor(o.valorDiasCentavos)
+        if (o.kmExtras > 0) conta += " + ${o.kmExtras} km extras (${valor(o.valorDistanciaCentavos)})"
+        if (o.percentual < 100) conta += " × ${o.percentual}%"
+
+        return "${valor(o.valorCentavos)} por mês\n" +
+                "${PrecoPolicy.rotuloModalidade(o.modalidade)} · $dia por semana · ${o.distanciaKm} km\n" +
+                conta
     }
 
     private fun enviarSolicitacao(
@@ -415,7 +477,11 @@ class ResultadosRotasActivity : BaseActivity() {
             latitudeEmbarque = latitudeLocal,
             longitudeEmbarque = longitudeLocal,
             horarioDesejado = horarioDesejado,
-            mensagem = mensagem.take(300)
+            mensagem = mensagem.take(300),
+            modalidade = PrecoPolicy.modalidadeEfetiva(modalidade, rota.tipoTrajeto),
+            diasSemana = diasContratados(rota).joinToString(","),
+            distanciaMetros = distanciaCasaEscola().toInt(),
+            valorMensalCentavos = orcamentoPara(rota)?.valorCentavos ?: 0L
         )
 
         botao.isEnabled = false

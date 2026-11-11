@@ -46,6 +46,7 @@ import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.ui.motorista.assinatura.PagamentosMotoristaActivity
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
+import com.example.vaivan.ui.motorista.precos.TabelaPrecoActivity
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
@@ -220,6 +221,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
         btnPagamentos.setOnClickListener {
             drawerLayout.closeDrawers()
             startActivity(Intent(this, PagamentosMotoristaActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnDrawerTabelaPrecos).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, TabelaPrecoActivity::class.java))
         }
 
         if (uid == null) return

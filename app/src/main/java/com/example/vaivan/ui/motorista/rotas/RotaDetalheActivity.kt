@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.domain.usecase.preco.PrecoPolicy
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
@@ -709,6 +710,18 @@ class RotaDetalheActivity : BaseActivity() {
                 .text =
                 "Horário desejado: " +
                         solicitacao.horarioDesejado
+
+            // Valor que o responsável viu ao pedir a vaga
+            itemView.findViewById<TextView>(R.id.txtValorSolicitacao).text =
+                if (solicitacao.valorMensalCentavos > 0) {
+                    val qtdDias = solicitacao.diasSemana.split(",").count { it.isNotBlank() }
+                    "${AssinaturaUi.formatarValor(solicitacao.valorMensalCentavos)} / mês · " +
+                        "${PrecoPolicy.rotuloModalidade(solicitacao.modalidade)} · " +
+                        "$qtdDias ${if (qtdDias == 1) "dia" else "dias"} · " +
+                        "${PrecoPolicy.distanciaKm(solicitacao.distanciaMetros.toDouble())} km"
+                } else {
+                    "Valor a combinar"
+                }
 
             // Mensagem do responsável (o bloco só aparece se ele escreveu algo)
             val mensagem = solicitacao.mensagem.trim()

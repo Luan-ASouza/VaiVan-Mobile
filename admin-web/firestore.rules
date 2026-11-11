@@ -217,7 +217,10 @@ service cloud.firestore {
         (resource.data.motoristaId == request.auth.uid ||
          resource.data.responsavelId == request.auth.uid) &&
         (request.resource.data.status != 'ACEITA' ||
-         assinaturaOperacional(resource.data.motoristaId));
+         assinaturaOperacional(resource.data.motoristaId)) &&
+        // O valor calculado na solicitação não pode ser alterado depois
+        request.resource.data.get('valorMensalCentavos', 0) ==
+          resource.data.get('valorMensalCentavos', 0);
 
       // PassageiroRepository.excluirPassageiro apaga, no mesmo batch do
       // passageiro, qualquer solicitação PENDENTE dele — sem essa regra o
@@ -339,6 +342,17 @@ service cloud.firestore {
 
       allow delete: if false; // histórico financeiro não se apaga
     }
+
+        // Tabela de preços do motorista (id = uid do motorista).
+        // Todos os logados leem (o responsável calcula o preço na busca);
+        // só o próprio motorista grava a dele.
+        match /tabelas_preco/{motoristaId} {
+          allow read: if logado();
+          allow create, update: if logado() &&
+            request.auth.uid == motoristaId &&
+            request.resource.data.motoristaId == motoristaId;
+          allow delete: if false;
+        }
 
     // Catálogo de planos: todos leem, só o admin altera.
     match /planos/{planoId} {
