@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.VeiculoEntity
@@ -31,6 +32,8 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
@@ -586,12 +589,14 @@ class CadastroVeiculoActivity : AppCompatActivity() {
                         veiculoParaSalvar
                     )
 
-                uriCrlv?.let {
-                    enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_CRLV, "crlv", it)
-                }
-
-                uriAutorizacao?.let {
-                    enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_AUTORIZACAO, "autorizacao", it)
+                // Os dois documentos sobem em paralelo (independentes entre si)
+                coroutineScope {
+                    uriCrlv?.let {
+                        launch { enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_CRLV, "crlv", it) }
+                    }
+                    uriAutorizacao?.let {
+                        launch { enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_AUTORIZACAO, "autorizacao", it) }
+                    }
                 }
 
                 finalizarCadastro(veiculoIdSalvo, editando)
@@ -662,7 +667,15 @@ class CadastroVeiculoActivity : AppCompatActivity() {
                         "$veiculoId/${prefixoArquivo}_${System.currentTimeMillis()}"
             )
 
-        referencia.putFile(uri).await()
+        // Foto de documento sobe comprimida (PDF vai como está).
+        val ehImagem = contentResolver.getType(uri)?.startsWith("image/") == true
+        if (ehImagem) {
+            val comprimida = ImagemUtil.comprimir(this, uri, ImagemUtil.DOCUMENTO)
+            val metadata = StorageMetadata.Builder().setContentType("image/jpeg").build()
+            referencia.putFile(comprimida, metadata).await()
+        } else {
+            referencia.putFile(uri).await()
+        }
         val url = referencia.downloadUrl.await().toString()
 
         val data = SimpleDateFormat(

@@ -59,16 +59,13 @@ class ArquivoRepository(
 
     suspend fun enviar(
         uri: Uri,
-        caminhoStorage: String
+        caminhoStorage: String,
+        contentType: String? = null
     ): String {
 
-        val referencia = storage
-            .reference
-            .child(caminhoStorage)
+        iniciarUpload(uri, caminhoStorage, contentType).await()
 
-        referencia.putFile(uri).await()
-
-        return referencia.downloadUrl.await().toString()
+        return referencia(caminhoStorage).downloadUrl.await().toString()
     }
 
     suspend fun enviarEGuardarLocalmente(

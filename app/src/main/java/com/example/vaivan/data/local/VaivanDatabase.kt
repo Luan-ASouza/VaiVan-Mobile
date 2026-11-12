@@ -15,6 +15,7 @@ import com.example.vaivan.data.local.dao.ParadaViagemDao
 import com.example.vaivan.data.local.dao.PassageiroDao
 import com.example.vaivan.data.local.dao.PontoEmbarqueDao
 import com.example.vaivan.data.local.dao.RotaDao
+import com.example.vaivan.data.local.dao.RotaViagemDao
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.dao.UsuarioDao
 import com.example.vaivan.data.local.dao.VeiculoDao
@@ -29,6 +30,7 @@ import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.local.entities.PontoEmbarqueEntity
 import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.local.entities.RotaViagemEntity
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.local.entities.UsuarioEntity
 import com.example.vaivan.data.local.entities.VeiculoEntity
@@ -49,9 +51,10 @@ import com.example.vaivan.data.local.entities.ViagemEntity
         ParadaViagemEntity::class,
         EventoViagemEntity::class,
         LocalizacaoViagemEntity::class,
-        AvisoAusenciaEntity::class
+        AvisoAusenciaEntity::class,
+        RotaViagemEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -71,6 +74,7 @@ abstract class VaivanDatabase : RoomDatabase() {
     abstract fun eventoViagemDao(): EventoViagemDao
     abstract fun localizacaoViagemDao(): LocalizacaoViagemDao
     abstract fun avisoAusenciaDao(): AvisoAusenciaDao
+    abstract fun rotaViagemDao(): RotaViagemDao
 
     companion object {
         @Volatile

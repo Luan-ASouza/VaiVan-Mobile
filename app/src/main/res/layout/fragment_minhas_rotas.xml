@@ -49,6 +49,63 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="HardcodedText" />
 
+            <!-- VIAGEM EM ANDAMENTO (some quando não há viagem ativa) -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViagemAndamento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/beige_cream"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:id="@+id/txtTituloViagemAndamento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Viagem em andamento"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/txtDetalheViagemAndamento"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp"
+                        tools:text="Rota Manhã · Ida" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRetomarViagem"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Retomar viagem"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/color_primary"
+                        app:cornerRadius="16dp"
+                        app:icon="@drawable/ic_van"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/white"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- LISTA DE ROTAS -->
 
             <LinearLayout

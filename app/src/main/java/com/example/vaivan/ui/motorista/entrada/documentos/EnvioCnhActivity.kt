@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.ui.comum.recorte.RecortarImagem
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
@@ -73,12 +74,7 @@ class EnvioCnhActivity : AppCompatActivity() {
 
             if (slot != null && uri != null) {
                 if (sucesso) {
-                    prepararArquivo(
-                        slot = slot,
-                        uri = uri,
-                        mimeType = "image/jpeg",
-                        nome = "CNH_${slot}_${System.currentTimeMillis()}.jpg"
-                    )
+                    recortar(slot, uri)
                 } else {
                     File(uri.path ?: "").delete()
                     txtStatusGeral.text = "Captura cancelada."
@@ -89,29 +85,41 @@ class EnvioCnhActivity : AppCompatActivity() {
             slotCamera = null
         }
 
+    // Foto (câmera ou galeria) passa pelo recorte antes do upload; o
+    // resultado já vem comprimido em JPEG (ImagemUtil.DOCUMENTO).
+    private var slotRecorte: String? = null
+
+    private val recorte =
+        registerForActivityResult(RecortarImagem()) { uri ->
+            val slot = slotRecorte
+            slotRecorte = null
+
+            if (slot != null && uri != null) {
+                prepararArquivo(
+                    slot = slot,
+                    uri = uri,
+                    mimeType = "image/jpeg",
+                    nome = "CNH_${slot}_${System.currentTimeMillis()}.jpg"
+                )
+            } else {
+                txtStatusGeral.text = "Envio cancelado."
+            }
+        }
+
     private val seletorImagemFrente =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let {
-                prepararArquivo(
-                    "FRENTE_FISICA",
-                    it,
-                    contentType(it),
-                    nomeArquivo(it)
-                )
-            }
+            uri?.let { recortar("FRENTE_FISICA", it) }
         }
 
     private val seletorImagemVerso =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let {
-                prepararArquivo(
-                    "VERSO_FISICA",
-                    it,
-                    contentType(it),
-                    nomeArquivo(it)
-                )
-            }
+            uri?.let { recortar("VERSO_FISICA", it) }
         }
+
+    private fun recortar(slot: String, uri: Uri) {
+        slotRecorte = slot
+        recorte.launch(RecortarImagem.Pedido.documento(uri))
+    }
 
     private val seletorPdfOuImagem =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->

@@ -69,8 +69,12 @@ service cloud.firestore {
     // DOCUMENTOS (motorista e veículo)
     // ===================================================================
     match /documentos/{documentoId} {
+      // "resource == null": o cadastro de veículo consulta o documento pelo
+      // id determinístico antes do primeiro envio (pra apagar o arquivo
+      // antigo) — sem isso o get de um documento inexistente era recusado e
+      // o envio falhava.
       allow read: if logado() &&
-        (resource.data.motoristaId == request.auth.uid || ehAdmin());
+        (resource == null || resource.data.motoristaId == request.auth.uid || ehAdmin());
 
       // O motorista só envia documentos dele e sempre "em análise".
       allow create: if logado() &&
@@ -133,6 +137,25 @@ service cloud.firestore {
       );
 
       allow write: if logado() && request.auth.uid == request.resource.data.motoristaId;
+    }
+
+    // ROTA AO VIVO — a rota que o Navigation SDK do motorista está seguindo
+    // de fato (rotas_viagem/{viagemId}, sempre sobrescrito), espelhada pro
+    // responsável. Separada de "localizacoes" porque só muda no recálculo
+    // (não a cada 5 s). Mesmos campos denormalizados e mesma leitura; na
+    // escrita, além de ser o motorista do documento novo, um documento já
+    // existente só pode ser sobrescrito pelo mesmo motorista.
+    match /rotas_viagem/{viagemId} {
+      allow read: if logado() && (
+        resource == null ||
+        request.auth.uid == resource.data.motoristaId ||
+        request.auth.uid in resource.data.responsaveisAutorizados ||
+        ehAdmin()
+      );
+
+      allow write: if logado()
+                   && request.auth.uid == request.resource.data.motoristaId
+                   && (resource == null || resource.data.motoristaId == request.auth.uid);
     }
 
     // CHAT
@@ -217,7 +240,10 @@ service cloud.firestore {
         (resource.data.motoristaId == request.auth.uid ||
          resource.data.responsavelId == request.auth.uid) &&
         (request.resource.data.status != 'ACEITA' ||
-         assinaturaOperacional(resource.data.motoristaId));
+         assinaturaOperacional(resource.data.motoristaId)) &&
+        // O valor calculado na solicitação não pode ser alterado depois
+        request.resource.data.get('valorMensalCentavos', 0) ==
+          resource.data.get('valorMensalCentavos', 0);
 
       // PassageiroRepository.excluirPassageiro apaga, no mesmo batch do
       // passageiro, qualquer solicitação PENDENTE dele — sem essa regra o
@@ -338,6 +364,17 @@ service cloud.firestore {
       );
 
       allow delete: if false; // histórico financeiro não se apaga
+    }
+
+    // Tabela de preços do motorista (id = uid do motorista).
+    // Todos os logados leem (o responsável calcula o preço na busca);
+    // só o próprio motorista grava a dele.
+    match /tabelas_preco/{motoristaId} {
+      allow read: if logado();
+      allow create, update: if logado() &&
+        request.auth.uid == motoristaId &&
+        request.resource.data.motoristaId == motoristaId;
+      allow delete: if false;
     }
 
     // Catálogo de planos: todos leem, só o admin altera.

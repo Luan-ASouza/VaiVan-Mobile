@@ -25,6 +25,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
@@ -208,7 +209,18 @@ class CapturaSelfieActivity : AppCompatActivity() {
         btnUsarFoto.isEnabled = false
         txtStatusSelfie.visibility = View.GONE
 
-        val uri = Uri.fromFile(arquivo)
+        lifecycleScope.launch {
+            // Foto da câmera chega com vários MB; comprimida sobe bem mais rápido.
+            val uri = ImagemUtil.comprimir(
+                this@CapturaSelfieActivity,
+                Uri.fromFile(arquivo),
+                ImagemUtil.DOCUMENTO
+            )
+            enviarSelfie(userId, uri)
+        }
+    }
+
+    private fun enviarSelfie(userId: String, uri: Uri) {
         val upload = documentoRepository.iniciarUploadSelfie(userId, uri, "image/jpeg")
 
         upload.tarefa.continueWithTask { resultado ->

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.vaivan.data.local.entities.EventoViagemEntity
 import com.example.vaivan.data.local.entities.LocalizacaoViagemEntity
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
+import com.example.vaivan.data.local.entities.RotaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
 import com.example.vaivan.data.repository.LocalizacaoViagemRepository
 import com.example.vaivan.data.repository.ViagemRepository
@@ -67,6 +68,14 @@ class AcompanharViagemViewModel(
     val localizacaoMotorista: StateFlow<LocalizacaoViagemEntity?> = _viagemId
         .filterNotNull()
         .flatMapLatest { localizacaoViagemRepository.observarLocalizacao(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Rota que o motorista está seguindo de fato (espelhada do Navigation
+     * SDK). Null até ele publicar a primeira — a tela usa a rota do cadastro
+     * enquanto isso. */
+    val rotaAtual: StateFlow<RotaViagemEntity?> = _viagemId
+        .filterNotNull()
+        .flatMapLatest { localizacaoViagemRepository.observarRota(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** Trilha de eventos da viagem (gancho pra notificação — ver

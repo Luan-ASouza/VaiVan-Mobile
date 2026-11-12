@@ -16,5 +16,9 @@ data class LocalizacaoViagemEntity(
     @PrimaryKey val viagemId: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val atualizadoEm: Long = 0L
+    val atualizadoEm: Long = 0L,
+    // ETA ao vivo por parada, calculado pelo Navigation SDK do motorista e
+    // codificado como "ordem=epochMs;ordem=epochMs" (ver core.util.EtaParadasUtil).
+    // Vazio = o motorista ainda não publicou (o responsável cai no ETA estático).
+    val etasParadas: String = ""
 )

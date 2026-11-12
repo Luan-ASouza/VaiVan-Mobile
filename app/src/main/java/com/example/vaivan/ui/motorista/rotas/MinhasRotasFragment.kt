@@ -22,6 +22,9 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.RotaRepository
+import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.data.local.entities.ViagemEntity
+import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
 import com.example.vaivan.data.repository.AssinaturaBloqueadaException
@@ -36,6 +39,10 @@ class MinhasRotasFragment : Fragment() {
     private lateinit var txtSemRotas: TextView
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
+
+    private lateinit var cardViagemAndamento: View
+
+    private lateinit var txtDetalheViagemAndamento: TextView
 
     private val rotaRepository: RotaRepository by lazy {
 
@@ -63,7 +70,10 @@ class MinhasRotasFragment : Fragment() {
                     paradaRotaDao = db.paradaRotaDao(),
                     routesClient = GoogleRoutesClient(requireContext())
                 )
-                MinhasRotasViewModel(repository)
+                MinhasRotasViewModel(
+                    repository,
+                    ViagemRepository(db.viagemDao(), db.paradaViagemDao(), db.eventoViagemDao())
+                )
             }
         }
     }
@@ -146,7 +156,40 @@ class MinhasRotasFragment : Fragment() {
             }
 
 
+        cardViagemAndamento = view.findViewById(R.id.cardViagemAndamento)
+        txtDetalheViagemAndamento = view.findViewById(R.id.txtDetalheViagemAndamento)
+
         observarRotas()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Volta da navegação sem finalizar, ou o app foi reaberto: confere no
+        // Firestore se ainda há viagem ativa pra mostrar o "Retomar viagem".
+        viewModel.atualizarViagemAtiva()
+    }
+
+    /** Card no topo da lista quando há viagem em andamento/pausada — leva
+     * direto pra navegação daquela viagem (retomar não exige assinatura em
+     * dia, só iniciar uma nova). */
+    private fun renderizarViagemAtiva(viagem: ViagemEntity?, rotas: List<RotaEntity>) {
+        if (viagem == null) {
+            cardViagemAndamento.visibility = View.GONE
+            return
+        }
+
+        val nomeRota = rotas.firstOrNull { it.id == viagem.rotaId }?.nome ?: "Rota"
+        val direcao = if (viagem.direcao == ViagemRepository.DIRECAO_VOLTA) "Volta" else "Ida"
+        val pausada = if (viagem.status == ViagemRepository.STATUS_PAUSADA) " · pausada" else ""
+        txtDetalheViagemAndamento.text = "$nomeRota · $direcao$pausada"
+
+        cardViagemAndamento.visibility = View.VISIBLE
+        cardViagemAndamento.findViewById<View>(R.id.btnRetomarViagem).setOnClickListener {
+            startActivity(
+                Intent(requireContext(), NavegacaoViagemActivity::class.java)
+                    .putExtra(NavegacaoViagemActivity.EXTRA_VIAGEM_ID, viagem.id)
+            )
+        }
     }
 
 
@@ -161,14 +204,25 @@ class MinhasRotasFragment : Fragment() {
                         Lifecycle.State.STARTED
                     ) {
 
-                        viewModel
-                            .rotas
-                            .collect { rotas ->
+                        launch {
+                            viewModel
+                                .rotas
+                                .collect { rotas ->
 
-                                renderizar(
-                                    rotas
-                                )
-                            }
+                                    renderizar(
+                                        rotas
+                                    )
+                                    renderizarViagemAtiva(viewModel.viagemAtiva.value, rotas)
+                                }
+                        }
+
+                        launch {
+                            viewModel
+                                .viagemAtiva
+                                .collect { viagem ->
+                                    renderizarViagemAtiva(viagem, viewModel.rotas.value)
+                                }
+                        }
                     }
             }
     }

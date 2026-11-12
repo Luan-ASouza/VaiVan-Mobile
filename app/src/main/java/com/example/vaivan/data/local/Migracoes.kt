@@ -144,11 +144,38 @@ object Migracoes {
     }
 
     /**
+     * 17 → 18
+     *
+     * Rastreio ao vivo espelhando o Navigation SDK: a rota que o motorista
+     * está seguindo de fato (rotas_viagem, uma linha por viagem) e o ETA ao
+     * vivo por parada junto da posição (localizacoes_viagem.etasParadas).
+     */
+    val DE_17_PARA_18 = object : Migration(17, 18) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            db.execSQL(
+                "ALTER TABLE `localizacoes_viagem` " +
+                        "ADD COLUMN `etasParadas` TEXT NOT NULL DEFAULT ''"
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `rotas_viagem` (" +
+                        "`viagemId` TEXT NOT NULL, " +
+                        "`polylineEncoded` TEXT NOT NULL, " +
+                        "`atualizadoEm` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`viagemId`))"
+            )
+        }
+    }
+
+    /**
      * Todas as migrações registradas.
      */
     val TODAS: Array<Migration> = arrayOf(
         DE_14_PARA_15,
         DE_15_PARA_16,
-        DE_16_PARA_17
+        DE_16_PARA_17,
+        DE_17_PARA_18
     )
 }
