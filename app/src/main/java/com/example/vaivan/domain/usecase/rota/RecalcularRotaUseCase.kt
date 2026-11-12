@@ -14,7 +14,8 @@ import kotlinx.coroutines.withContext
  */
 class RecalcularRotaUseCase(
     private val rotaRepository: RotaRepository,
-    private val routesClient: GoogleRoutesClient
+    private val routesClient: GoogleRoutesClient,
+    private val calcularOrdemVolta: CalcularOrdemVoltaUseCase = CalcularOrdemVoltaUseCase(routesClient)
 ) {
 
     /**
@@ -199,9 +200,20 @@ class RecalcularRotaUseCase(
             )
         }
 
+        // 11. Rota ida e volta: calcula e guarda também a ordem da volta, pra
+        //     não precisar calcular a cada volta iniciada. Se falhar, o aceite
+        //     segue; a volta fica "não calculada" e é calculada (e gravada) no
+        //     início da primeira volta (ver IniciarViagemUseCase).
+        val ordemVolta =
+            if (rotaAtual.tipoTrajeto == "IDA_E_VOLTA") calcularOrdemVolta(rotaAtualizada, paradasEntities)
+            else null
+
+        val paradasFinais = ordemVolta ?: paradasEntities
+        val rotaFinal = rotaAtualizada.copy(voltaCalculadaEm = if (ordemVolta != null) agora else 0L)
+
         Resultado(
-            rota = rotaAtualizada,
-            paradas = paradasEntities,
+            rota = rotaFinal,
+            paradas = paradasFinais,
             baseCalculadoEm = rotaAtual.calculadoEm
         )
     }

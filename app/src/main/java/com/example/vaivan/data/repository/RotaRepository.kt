@@ -9,6 +9,8 @@ import com.example.vaivan.data.local.dao.RotaDao
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
 import com.example.vaivan.data.local.entities.RotaEntity
+import com.example.vaivan.data.local.entities.comTabela
+import com.example.vaivan.domain.usecase.preco.TabelaPreco
 import com.example.vaivan.data.models.RotaCompativel
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
@@ -210,7 +212,7 @@ class RotaRepository(
         escolaId: String = "",
         escolaNome: String = "",
         bairrosAtendidos: List<String> = emptyList(),
-        valorMensalCentavos: Long = 0L,
+        tabelaPreco: TabelaPreco? = null,
         diaVencimento: Int = 10
     ): RotaEntity = withContext(Dispatchers.IO) {
 
@@ -273,7 +275,6 @@ class RotaRepository(
             bairrosAtendidos = bairrosAtendidos,
             capacidadeTotal = capacidadeTotal,
             vagasOcupadas = 0,
-            valorMensalCentavos = valorMensalCentavos,
             diaVencimento = diaVencimento,
             distanciaMetros = resultado.distanciaMetros,
             duracaoSegundos = resultado.duracaoSegundos,
@@ -282,7 +283,7 @@ class RotaRepository(
             status = "ATIVA",
             calculadoEm = agora,
             lastUpdated = agora
-        )
+        ).comTabela(tabelaPreco)
 
         documentReference.set(rota).await()   // Firestore = fonte da verdade
         rotaDao.upsert(rota)                  // Room = cache local
@@ -314,7 +315,7 @@ class RotaRepository(
         escolaNome: String = "",
         bairrosAtendidos: List<String> = emptyList(),
         // null = mantém o que a rota já tem
-        valorMensalCentavos: Long? = null,
+        tabelaPreco: TabelaPreco? = null,
         diaVencimento: Int? = null
     ): RotaEntity = withContext(Dispatchers.IO) {
 
@@ -381,7 +382,6 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
-                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
                 diaVencimento = diaVencimento ?: atual.diaVencimento,
                 distanciaMetros = resultado.distanciaMetros,
                 duracaoSegundos = resultado.duracaoSegundos,
@@ -402,16 +402,17 @@ class RotaRepository(
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
                 capacidadeTotal = capacidadeTotal,
-                valorMensalCentavos = valorMensalCentavos ?: atual.valorMensalCentavos,
                 diaVencimento = diaVencimento ?: atual.diaVencimento,
                 lastUpdated = agora
             )
         }
 
-        collectionRotas.document(rotaId).set(rotaAtualizada).await()
-        rotaDao.upsert(rotaAtualizada)
+        val rotaFinal = rotaAtualizada.comTabela(tabelaPreco)
 
-        rotaAtualizada
+        collectionRotas.document(rotaId).set(rotaFinal).await()
+        rotaDao.upsert(rotaFinal)
+
+        rotaFinal
     }
 
     // =========================================================
@@ -643,6 +644,41 @@ class RotaRepository(
 
         paradaRotaDao.deleteByRota(rotaId)
         paradaRotaDao.upsertAll(paradas)
+    }
+
+    /**
+     * Grava a ordem da volta calculada fora do aceite (rota antiga, ou que
+     * mudou desde o último cálculo). Só grava se a rota não tiver sido
+     * recalculada nesse meio-tempo (calculadoEm igual ao lido) — senão um
+     * aceite concorrente já gravou uma ordem mais nova.
+     */
+    suspend fun salvarOrdemVolta(
+        rota: RotaEntity,
+        paradas: List<ParadaRotaEntity>
+    ) = withContext(Dispatchers.IO) {
+        val rotaRef = collectionRotas.document(rota.id)
+
+        val gravou = firestore.runTransaction { transaction ->
+            val calculadoEmServidor = transaction.get(rotaRef).getLong("calculadoEm") ?: 0L
+            if (calculadoEmServidor != rota.calculadoEm) return@runTransaction false
+
+            transaction.update(rotaRef, "voltaCalculadaEm", rota.calculadoEm)
+            paradas.forEach { parada ->
+                transaction.update(
+                    collectionParadas.document(parada.id),
+                    mapOf(
+                        "ordemVolta" to parada.ordemVolta,
+                        "horarioEstimadoVoltaMinutos" to parada.horarioEstimadoVoltaMinutos
+                    )
+                )
+            }
+            true
+        }.await()
+
+        if (gravou) {
+            paradaRotaDao.upsertAll(paradas)
+            rotaDao.upsert(rota.copy(voltaCalculadaEm = rota.calculadoEm))
+        }
     }
 
     fun novoIdParada(): String {

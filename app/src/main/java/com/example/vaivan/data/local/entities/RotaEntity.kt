@@ -3,6 +3,7 @@ package com.example.vaivan.data.local.entities
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.vaivan.domain.usecase.preco.TabelaPreco
 
 @Entity(
     tableName = "rotas",
@@ -46,6 +47,16 @@ data class RotaEntity(
     val valorMensalCentavos: Long = 0L,
     val diaVencimento: Int = 10, // 1 a 28
 
+    // Tabela de preços: valores de IDA E VOLTA por quantidade de dias na semana
+    val preco1DiaCentavos: Long = 0L,
+    val preco2DiasCentavos: Long = 0L,
+    val preco3DiasCentavos: Long = 0L,
+    val preco4DiasCentavos: Long = 0L,
+    val preco5DiasCentavos: Long = 0L,
+    val percentualUmTrecho: Int = 60,     // só ida ou só volta = 60% do valor
+    val kmIncluidos: Int = 5,             // distância casa → escola já incluída
+    val valorKmExtraCentavos: Long = 0L,  // por km acima do incluído
+
     val distanciaMetros: Int = 0,
     val duracaoSegundos: Int = 0,
     val duracaoSemTrafegoSegundos: Int = 0,
@@ -53,5 +64,34 @@ data class RotaEntity(
 
     val status: String = "ATIVA", // ATIVA | ARQUIVADA
     val calculadoEm: Long = 0L,
+    // Valor de calculadoEm quando a ordem da volta (ParadaRotaEntity.ordemVolta)
+    // foi calculada. Diferente de calculadoEm = a rota mudou depois e a volta
+    // precisa ser recalculada. 0 = nunca calculada.
+    val voltaCalculadaEm: Long = 0L,
     val lastUpdated: Long = 0L
 )
+
+/** A tabela de preços desta rota, ou null se o motorista ainda não preencheu. */
+fun RotaEntity.tabelaPreco(): TabelaPreco? =
+    TabelaPreco(
+        precoPorDiasCentavos = listOf(
+            preco1DiaCentavos, preco2DiasCentavos, preco3DiasCentavos,
+            preco4DiasCentavos, preco5DiasCentavos
+        ),
+        percentualUmTrecho = percentualUmTrecho,
+        kmIncluidos = kmIncluidos,
+        valorKmExtraCentavos = valorKmExtraCentavos
+    ).takeIf { it.completa }
+
+/** Cópia da rota com a tabela aplicada (null = mantém a que já tinha). */
+fun RotaEntity.comTabela(tabela: TabelaPreco?): RotaEntity =
+    if (tabela == null) this else copy(
+        preco1DiaCentavos = tabela.precoPorDiasCentavos[0],
+        preco2DiasCentavos = tabela.precoPorDiasCentavos[1],
+        preco3DiasCentavos = tabela.precoPorDiasCentavos[2],
+        preco4DiasCentavos = tabela.precoPorDiasCentavos[3],
+        preco5DiasCentavos = tabela.precoPorDiasCentavos[4],
+        percentualUmTrecho = tabela.percentualUmTrecho,
+        kmIncluidos = tabela.kmIncluidos,
+        valorKmExtraCentavos = tabela.valorKmExtraCentavos
+    )

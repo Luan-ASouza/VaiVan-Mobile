@@ -58,6 +58,16 @@
             android:textColor="#707070"
             android:textSize="12sp" />
 
+        <!-- Valor calculado pela tabela de preços -->
+        <TextView
+            android:id="@+id/txtValorSolicitacao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/dark_gray"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
         <!-- NOVO: mensagem do responsável (só aparece se ele escreveu algo) -->
         <LinearLayout
             android:id="@+id/containerMensagemSolicitacao"

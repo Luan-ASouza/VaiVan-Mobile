@@ -24,10 +24,12 @@
         android:theme="@style/Theme.VaiVan"
         tools:targetApi="31">
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.DocumentosMotoristaActivity"
             android:exported="false" />
 
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.AnaliseDocumentosActivity"
             android:exported="false" />
 
@@ -44,6 +46,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAC4LdrVL7j8NPbG1Sfyfeb0qWE9rNs9Qs" /> <!-- ==================== INICIALIZAÇÃO ==================== -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.inicio.SplashActivity"
             android:exported="true">
             <intent-filter>
@@ -53,99 +56,136 @@
             </intent-filter>
         </activity> <!-- ==================== AUTENTICAÇÃO ==================== -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.inicio.LoginActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.inicio.EscolhaTipoPerfilActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.inicio.TermosUsoActivity"
             android:exported="false" /> <!-- ==================== CADASTRO ==================== -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.inicio.cadastro.CadastroActivity"
             android:exported="false" /> <!-- Planos e assinatura -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.assinatura.AssinaturaActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.assinatura.PagamentosMotoristaActivity"
             android:exported="false" /> <!-- ==================== MOTORISTA ==================== -->
-        <!-- Entrada -->
+
         <activity
+            android:name=".ui.motorista.precos.TabelaPrecoActivity"
+            android:exported="false" />
+
+        <!-- Entrada -->
+
+
+        <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.EntradaMotoristaActivity"
             android:exported="false" /> <!-- Home -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.HomeMotoristaActivity"
             android:exported="false" /> <!-- Veículos -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
             android:exported="false" /> <!-- Cadastro / Documentos -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.CapturaSelfieActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.EnvioCnhActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.EnvioComprovanteResidenciaActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity"
             android:exported="false" /> <!-- Rotas -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.rotas.CriarRotaActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.rotas.RotaDetalheActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.rotas.RotaCalculadaActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.rotas.VisualizarRotaActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.motorista.rotas.navegacao.NavegacaoViagemActivity"
             android:exported="false" /> <!-- ==================== RESPONSÁVEL ==================== -->
         <!-- Home -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.HomeResponsavelActivity"
             android:exported="false" /> <!-- Passageiros -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.passageiros.AdicionarLocalActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.passageiros.SelecaoLocalizacaoActivity"
             android:exported="false" /> <!-- Rotas -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.rotas.PesquisarRotasActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.rotas.AcompanharViagemActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.mensalidades.MensalidadesResponsavelActivity"
             android:exported="false" />
 
         <!-- ==================== COMUM ==================== -->
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.comum.chat.ChatActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.comum.perfil.EditarPerfilActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.responsavel.rotas.ResultadosRotasActivity"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.admin.ImportarEscolasActivity"
             android:exported="true" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".ui.escolas.SelecionarEscolaActivity"
             android:exported="false" />
 

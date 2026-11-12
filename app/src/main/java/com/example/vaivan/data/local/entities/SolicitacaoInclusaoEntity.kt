@@ -29,6 +29,12 @@ data class SolicitacaoInclusaoEntity(
     // NOVO: pedido ou observação do responsável para o motorista (opcional, até 300 caracteres)
     val mensagem: String = "",
 
+    // Preço calculado na hora da solicitação (fica congelado depois)
+    val modalidade: String = "",          // IDA | VOLTA | IDA_E_VOLTA
+    val diasSemana: String = "",          // dias contratados, ex: "TER,QUI"
+    val distanciaMetros: Int = 0,         // casa → escola, em linha reta
+    val valorMensalCentavos: Long = 0L,   // 0 = sem tabela (a combinar)
+
     val status: String = "PENDENTE", // PENDENTE | ACEITA | RECUSADA
 
     val criadoEm: Long = 0L,

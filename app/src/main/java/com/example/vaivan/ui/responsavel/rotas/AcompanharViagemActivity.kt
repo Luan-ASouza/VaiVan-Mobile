@@ -181,6 +181,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                 AcompanharViagemViewModel(
                     rotaId,
                     passageiroId,
+                    FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
                     viagemRepository,
                     LocalizacaoViagemRepository(
                         db.localizacaoViagemDao(),

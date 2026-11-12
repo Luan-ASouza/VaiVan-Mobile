@@ -284,9 +284,48 @@ class PassageiroRepository(
                     System.currentTimeMillis()
             )
 
-        documentReference
-            .set(passageiroSalvo)
-            .await()
+        // paradas_rota e solicitacoes_inclusao guardam uma cópia do nome
+        // (denormalizada pra tela da rota, cálculo de rota e viagem não
+        // precisarem buscar o passageiro). Se o nome mudou, as cópias são
+        // atualizadas no mesmo batch do passageiro. Viagens e mensalidades já
+        // geradas ficam com o nome antigo de propósito: são histórico.
+        val nomeAnterior =
+            if (passageiro.id.isBlank()) null
+            else consultarPassageiro(passageiro.id)?.nome
+
+        val nomeMudou = nomeAnterior != null && nomeAnterior != passageiroSalvo.nome
+
+        if (nomeMudou) {
+            val paradas = collectionParadasRota
+                .whereEqualTo("passageiroId", passageiroSalvo.id)
+                .get()
+                .await()
+
+            // Query filtrada por responsavelId: a regra de solicitacoes_inclusao
+            // só libera a leitura se o filtro estiver na própria query.
+            val solicitacoes = collectionSolicitacoes
+                .whereEqualTo("passageiroId", passageiroSalvo.id)
+                .whereEqualTo("responsavelId", passageiroSalvo.responsavelId.orEmpty())
+                .get()
+                .await()
+
+            val batch = firestore.batch()
+            batch.set(documentReference, passageiroSalvo)
+            paradas.documents.forEach {
+                batch.update(it.reference, "nomePassageiro", passageiroSalvo.nome)
+            }
+            solicitacoes.documents.forEach {
+                batch.update(it.reference, "nomePassageiro", passageiroSalvo.nome)
+            }
+            batch.commit().await()
+
+            paradaRotaDao?.atualizarNomePassageiro(passageiroSalvo.id, passageiroSalvo.nome)
+            solicitacaoInclusaoDao?.atualizarNomePassageiro(passageiroSalvo.id, passageiroSalvo.nome)
+        } else {
+            documentReference
+                .set(passageiroSalvo)
+                .await()
+        }
 
         passageiroDao.upsert(
             passageiroSalvo

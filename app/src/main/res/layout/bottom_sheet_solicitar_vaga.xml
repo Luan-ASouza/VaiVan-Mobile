@@ -45,6 +45,18 @@
         android:textColor="@color/light_gray"
         android:textSize="13sp" />
 
+    <!-- Valor que o responsável vai pagar, com o detalhamento do cálculo -->
+    <TextView
+        android:id="@+id/txtSolicitacaoValor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_beige_round_20"
+        android:lineSpacingExtra="2dp"
+        android:padding="14dp"
+        android:textColor="@color/dark_gray"
+        android:textSize="13sp" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

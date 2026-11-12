@@ -1,0 +1,24 @@
+{
+  "name": "vaivan-reset-firebase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ferramenta de uso manual: apaga TODOS os usuarios do Firebase Auth e zera Firestore + Storage do projeto vaivanvaicontigo.",
+  "main": "index.js",
+  "bin": {
+    "reset-firebase": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "build": "pkg . --targets node18-win-x64 --output dist/reset-firebase.exe"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": [],
+    "scripts": "index.js"
+  }
+}

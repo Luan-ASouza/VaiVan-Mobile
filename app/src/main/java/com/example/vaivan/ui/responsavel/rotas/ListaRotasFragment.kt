@@ -622,6 +622,8 @@ class ListaRotasFragment : Fragment() {
         val rota = item.rota
         container.removeAllViews()
 
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
         val direcoes = when (rota.tipoTrajeto) {
             "IDA" -> listOf(ViagemRepository.DIRECAO_IDA)
             "VOLTA" -> listOf(ViagemRepository.DIRECAO_VOLTA)
@@ -650,11 +652,11 @@ class ListaRotasFragment : Fragment() {
             val txtStatus = criarTextoStatusViagem(container.context)
             container.addView(txtStatus)
 
-            listenersStatusViagem.add(viagemRepository.iniciarSincronizacaoDoDia(rota.id, direcao))
+            listenersStatusViagem.add(viagemRepository.iniciarSincronizacaoDoDia(rota.id, direcao, responsavelId))
 
             viewLifecycleOwner.lifecycleScope.launch {
                 viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    statusViagemDoDiaFlow(rota.id, passageiroId, direcao).collect { (viagem, statusPassageiro) ->
+                    statusViagemDoDiaFlow(rota.id, passageiroId, responsavelId, direcao).collect { (viagem, statusPassageiro) ->
                         ativoPorDirecao[index] = viagem != null &&
                             (viagem.status == ViagemRepository.STATUS_EM_ANDAMENTO || viagem.status == ViagemRepository.STATUS_PAUSADA)
                         atualizarBotaoAcompanhar()
@@ -684,6 +686,7 @@ class ListaRotasFragment : Fragment() {
     private fun statusViagemDoDiaFlow(
         rotaId: String,
         passageiroId: String,
+        responsavelId: String,
         direcao: String
     ): Flow<Pair<ViagemEntity?, StatusPassageiro?>> =
         viagemRepository.observarUltimaViagemDeHoje(rotaId, direcao)
@@ -692,7 +695,7 @@ class ListaRotasFragment : Fragment() {
                     (viagem.status == ViagemRepository.STATUS_EM_ANDAMENTO || viagem.status == ViagemRepository.STATUS_PAUSADA)
 
                 if (viagem != null && emAndamento) {
-                    viagemRepository.iniciarSincronizacao(viagem.id)
+                    viagemRepository.iniciarSincronizacao(viagem.id, responsavelId)
                     viagemIdsSincronizados.add(viagem.id)
 
                     viagemRepository.observarParadas(viagem.id).map { paradas ->

@@ -122,7 +122,11 @@ service cloud.firestore {
     // de "viagens", pra não depender de getAfter() numa escrita de alta
     // frequência.
     match /localizacoes/{viagemId} {
+      // "resource == null": o responsável abre o acompanhamento antes de o
+      // motorista mandar a primeira posição — sem isso a leitura de um
+      // documento que ainda não existe é recusada e o mapa fica vazio.
       allow read: if logado() && (
+        resource == null ||
         request.auth.uid == resource.data.motoristaId ||
         request.auth.uid in resource.data.responsaveisAutorizados ||
         ehAdmin()
@@ -213,7 +217,10 @@ service cloud.firestore {
         (resource.data.motoristaId == request.auth.uid ||
          resource.data.responsavelId == request.auth.uid) &&
         (request.resource.data.status != 'ACEITA' ||
-         assinaturaOperacional(resource.data.motoristaId));
+         assinaturaOperacional(resource.data.motoristaId)) &&
+        // O valor calculado na solicitação não pode ser alterado depois
+        request.resource.data.get('valorMensalCentavos', 0) ==
+          resource.data.get('valorMensalCentavos', 0);
 
       // PassageiroRepository.excluirPassageiro apaga, no mesmo batch do
       // passageiro, qualquer solicitação PENDENTE dele — sem essa regra o
@@ -336,6 +343,17 @@ service cloud.firestore {
       allow delete: if false; // histórico financeiro não se apaga
     }
 
+        // Tabela de preços do motorista (id = uid do motorista).
+        // Todos os logados leem (o responsável calcula o preço na busca);
+        // só o próprio motorista grava a dele.
+        match /tabelas_preco/{motoristaId} {
+          allow read: if logado();
+          allow create, update: if logado() &&
+            request.auth.uid == motoristaId &&
+            request.resource.data.motoristaId == motoristaId;
+          allow delete: if false;
+        }
+
     // Catálogo de planos: todos leem, só o admin altera.
     match /planos/{planoId} {
       allow read: if logado();
@@ -384,6 +402,19 @@ service cloud.firestore {
 
       allow create, update: if logado() &&
         request.auth.uid == getAfter(/databases/$(database)/documents/viagens/$(request.resource.data.viagemId)).data.motoristaId;
+
+      // Responsável marca falta com a viagem já em andamento
+      // (ViagemRepository.aplicarAusenciaNaParadaAtiva): só na parada do
+      // próprio filho, só a partir de um status pendente, e só pra
+      // NAO_EMBARCOU (embarque) / DESEMBARCADO (desembarque). Nada além de
+      // status, motivo e lastUpdated pode mudar.
+      allow update: if logado() &&
+        resource.data.responsavelId == request.auth.uid &&
+        resource.data.status in ['AGUARDANDO', 'AGUARDANDO_DESEMBARQUE'] &&
+        ((resource.data.tipo == 'EMBARQUE' && request.resource.data.status == 'NAO_EMBARCOU') ||
+         (resource.data.tipo == 'DESEMBARQUE' && request.resource.data.status == 'DESEMBARCADO')) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'motivoAusencia', 'lastUpdated']);
 
       allow delete: if false;
     }

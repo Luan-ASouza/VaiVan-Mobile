@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.TextoUtil
 import com.example.vaivan.data.local.VaivanDatabase
@@ -39,8 +38,6 @@ class CriarRotaActivity : BaseActivity() {
 
     private lateinit var edtNomeRota: EditText
     private lateinit var edtCapacidade: EditText
-    private lateinit var edtValorMensal: EditText
-    private lateinit var edtDiaVencimento: EditText
     private lateinit var txtDestinoAtual: TextView
     private lateinit var btnCriarRota: Button
 
@@ -95,8 +92,6 @@ class CriarRotaActivity : BaseActivity() {
 
         edtNomeRota = findViewById(R.id.edtNomeRota)
         edtCapacidade = findViewById(R.id.edtCapacidade)
-        edtValorMensal = findViewById(R.id.edtValorMensal)
-        edtDiaVencimento = findViewById(R.id.edtDiaVencimento)
         txtDestinoAtual = findViewById(R.id.txtDestinoAtual)
         txtOrigemAtual = findViewById(R.id.txtOrigemAtual)
         containerPonto = findViewById(R.id.containerPonto)
@@ -194,10 +189,6 @@ class CriarRotaActivity : BaseActivity() {
     private fun preencherFormulario(rota: com.example.vaivan.data.local.entities.RotaEntity) {
         edtNomeRota.setText(rota.nome)
         edtCapacidade.setText(rota.capacidadeTotal.toString())
-        if (rota.valorMensalCentavos > 0) {
-            edtValorMensal.setText(MensalidadePolicy.centavosParaTexto(rota.valorMensalCentavos))
-        }
-        edtDiaVencimento.setText(rota.diaVencimento.toString())
 
         tipoTrajetoSelecionado = rota.tipoTrajeto
         atualizarCoresTipoTrajeto()
@@ -514,17 +505,6 @@ class CriarRotaActivity : BaseActivity() {
             return
         }
 
-        val valorMensal = MensalidadePolicy.textoParaCentavos(edtValorMensal.text?.toString().orEmpty())
-        if (valorMensal == null || valorMensal <= 0) {
-            Toast.makeText(this, "Informe o valor da mensalidade (ex: 400,00).", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val diaVencimento = edtDiaVencimento.text?.toString()?.trim()?.toIntOrNull()
-        if (diaVencimento == null || diaVencimento !in 1..28) {
-            Toast.makeText(this, "O dia de vencimento deve ser entre 1 e 28.", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         btnCriarRota.isEnabled = false
 
@@ -551,9 +531,7 @@ class CriarRotaActivity : BaseActivity() {
                         capacidadeTotal = capacidade,
                         escolaId = escola.id,
                         escolaNome = escola.nome,
-                        bairrosAtendidos = bairrosAtendidos.keys.toList(),
-                        valorMensalCentavos = valorMensal,
-                        diaVencimento = diaVencimento
+                        bairrosAtendidos = bairrosAtendidos.keys.toList()
                     )
 
                     Toast.makeText(this@CriarRotaActivity, "Rota atualizada!", Toast.LENGTH_SHORT).show()
@@ -582,9 +560,7 @@ class CriarRotaActivity : BaseActivity() {
                         capacidadeTotal = capacidade,
                         escolaId = escola.id,
                         escolaNome = escola.nome,
-                        bairrosAtendidos = bairrosAtendidos.keys.toList(),
-                        valorMensalCentavos = valorMensal,
-                        diaVencimento = diaVencimento
+                        bairrosAtendidos = bairrosAtendidos.keys.toList()
                     )
                     Toast.makeText(this@CriarRotaActivity, "Rota criada!", Toast.LENGTH_SHORT).show()
                     startActivity(

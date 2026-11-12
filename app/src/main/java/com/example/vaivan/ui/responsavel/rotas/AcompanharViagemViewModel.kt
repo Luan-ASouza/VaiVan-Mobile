@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.responsavel.rotas
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vaivan.data.local.entities.EventoViagemEntity
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Estado da tela "Acompanhar Viagem" do responsável: localiza a viagem ativa
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 class AcompanharViagemViewModel(
     private val rotaId: String,
     private val passageiroId: String,
+    private val responsavelId: String,
     private val viagemRepository: ViagemRepository,
     private val localizacaoViagemRepository: LocalizacaoViagemRepository
 ) : ViewModel() {
@@ -75,10 +78,19 @@ class AcompanharViagemViewModel(
 
     init {
         viewModelScope.launch {
-            viagemRepository.consultarViagemAtivaParaRota(rotaId)?.let { viagemAtiva ->
-                viagemRepository.iniciarSincronizacao(viagemAtiva.id)
-                localizacaoViagemRepository.iniciarSincronizacao(viagemAtiva.id)
-                _viagemId.value = viagemAtiva.id
+            val viagemAtiva = try {
+                viagemRepository.consultarViagemAtivaParaRota(rotaId, responsavelId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("AcompanharViagemVM", "Falha ao buscar a viagem ativa da rota $rotaId", e)
+                null
+            }
+
+            viagemAtiva?.let {
+                viagemRepository.iniciarSincronizacao(it.id, responsavelId)
+                localizacaoViagemRepository.iniciarSincronizacao(it.id)
+                _viagemId.value = it.id
             }
         }
     }

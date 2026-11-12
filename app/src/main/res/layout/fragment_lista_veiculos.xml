@@ -95,6 +95,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_beige_round_20"
+                android:backgroundTint="@color/background_container"
                 android:clickable="true"
                 android:elevation="4dp"
                 android:focusable="true"
@@ -120,11 +121,11 @@
 
                 <ImageView
                     android:id="@+id/imgPlusVeiculo"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
                     android:contentDescription="Adicionar veículo"
                     android:scaleType="fitXY"
-                    android:src="@drawable/ic_plus" />
+                    android:src="@drawable/ic_adicionar" />
 
             </LinearLayout>
 

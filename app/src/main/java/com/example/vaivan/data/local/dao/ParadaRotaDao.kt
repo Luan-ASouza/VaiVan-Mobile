@@ -19,6 +19,9 @@ interface ParadaRotaDao {
     @Query("DELETE FROM paradas_rota WHERE passageiroId = :passageiroId")
     suspend fun deleteByPassageiro(passageiroId: String)
 
+    @Query("UPDATE paradas_rota SET nomePassageiro = :nome WHERE passageiroId = :passageiroId")
+    suspend fun atualizarNomePassageiro(passageiroId: String, nome: String)
+
     @Query("SELECT * FROM paradas_rota WHERE rotaId = :rotaId ORDER BY ordem ASC")
     fun getByRota(rotaId: String): Flow<List<ParadaRotaEntity>>
 }

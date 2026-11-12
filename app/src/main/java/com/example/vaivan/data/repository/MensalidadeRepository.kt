@@ -42,6 +42,7 @@ class MensalidadeRepository(
     private val colSolicitacoes = firestore.collection("solicitacoes_inclusao")
     private val colRotas = firestore.collection("rotas")
     private val colUsuarios = firestore.collection("usuarios")
+    private val colTabelas = firestore.collection("tabelas_preco")
 
     // =========================================================
     // OBSERVAÇÃO (tempo real)
@@ -105,7 +106,9 @@ class MensalidadeRepository(
         val rota = colRotas.document(rotaId).get().await()
         val nomeResponsavel = nomeDoUsuario(solicitacao.getString("responsavelId").orEmpty())
 
-        ref.set(montarContrato(solicitacao, rota, nomeResponsavel, inicioEm)).await()
+        val diaTabela = diaVencimentoDoMotorista(solicitacao.getString("motoristaId").orEmpty())
+
+        ref.set(montarContrato(solicitacao, rota, nomeResponsavel, inicioEm, diaTabela)).await()
     }
 
     /**
@@ -134,6 +137,7 @@ class MensalidadeRepository(
         val rotas = mutableMapOf<String, DocumentSnapshot>()
         val nomes = mutableMapOf<String, String>()
         val batch = firestore.batch()
+        val diaTabela = diaVencimentoDoMotorista(motoristaId)
 
         faltando.forEach { solicitacao ->
             val rotaId = solicitacao.getString("rotaId").orEmpty()
@@ -142,7 +146,7 @@ class MensalidadeRepository(
             val rota = rotas.getOrPut(rotaId) { colRotas.document(rotaId).get().await() }
             val nome = nomes.getOrPut(responsavelId) { nomeDoUsuario(responsavelId) }
 
-            batch.set(colContratos.document(solicitacao.id), montarContrato(solicitacao, rota, nome, agora))
+            batch.set(colContratos.document(solicitacao.id), montarContrato(solicitacao, rota, nome, agora, diaTabela))
         }
         batch.commit().await()
         return faltando.size
@@ -178,7 +182,7 @@ class MensalidadeRepository(
             .documents
             .filter {
                 it.getString("status") == StatusMensalidade.PENDENTE &&
-                    (it.getLong("vencimento") ?: 0L) > hoje
+                        (it.getLong("vencimento") ?: 0L) > hoje
             }
 
         val batch = firestore.batch()
@@ -317,7 +321,8 @@ class MensalidadeRepository(
         solicitacao: DocumentSnapshot,
         rota: DocumentSnapshot,
         nomeResponsavel: String,
-        inicioEm: Long
+        inicioEm: Long,
+        diaVencimentoTabela: Long?
     ): Contrato {
         val agora = System.currentTimeMillis()
         return Contrato(
@@ -329,9 +334,14 @@ class MensalidadeRepository(
             nomePassageiro = solicitacao.getString("nomePassageiro").orEmpty(),
             rotaId = solicitacao.getString("rotaId").orEmpty(),
             nomeRota = rota.getString("nome").orEmpty(),
-            valorMensalCentavos = rota.getLong("valorMensalCentavos") ?: 0L,
+            // Valor calculado pela tabela na solicitação; rotas antigas usam o valor único.
+            valorMensalCentavos = solicitacao.getLong("valorMensalCentavos")?.takeIf { it > 0 }
+                ?: rota.getLong("valorMensalCentavos")
+                ?: 0L,
             diaVencimento = MensalidadePolicy.diaValido(
-                (rota.getLong("diaVencimento") ?: MensalidadePolicy.DIA_VENCIMENTO_PADRAO.toLong()).toInt()
+                (diaVencimentoTabela
+                    ?: rota.getLong("diaVencimento")
+                    ?: MensalidadePolicy.DIA_VENCIMENTO_PADRAO.toLong()).toInt()
             ),
             status = StatusContrato.ATIVO,
             inicioEm = inicioEm,
@@ -339,6 +349,14 @@ class MensalidadeRepository(
             atualizadoEm = agora
         )
     }
+
+    /** Dia de vencimento definido na Tabela de preços do motorista (null se não tiver). */
+    private suspend fun diaVencimentoDoMotorista(motoristaId: String): Long? =
+        if (motoristaId.isBlank()) null else try {
+            colTabelas.document(motoristaId).get().await().getLong("diaVencimento")
+        } catch (e: Exception) {
+            null
+        }
 
     private suspend fun nomeDoUsuario(uid: String): String =
         if (uid.isBlank()) "" else try {

@@ -117,10 +117,97 @@ object Migracoes {
     }
 
     /**
+     * 16 → 17
+     *
+     * Ordem da volta guardada na rota (rotas IDA_E_VOLTA): calculada uma vez
+     * no aceite do passageiro, em vez de a cada volta iniciada.
+     */
+    val DE_16_PARA_17 = object : Migration(16, 17) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            db.execSQL(
+                "ALTER TABLE `paradas_rota` " +
+                        "ADD COLUMN `ordemVolta` INTEGER NOT NULL DEFAULT -1"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `paradas_rota` " +
+                        "ADD COLUMN `horarioEstimadoVoltaMinutos` INTEGER NOT NULL DEFAULT 0"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `rotas` " +
+                        "ADD COLUMN `voltaCalculadaEm` INTEGER NOT NULL DEFAULT 0"
+            )
+        }
+    }
+
+    /**
+     * 17 → 18
+     *
+     * Tabela de preços na rota (por dias na semana, modalidade e distância)
+     * e preço calculado guardado na solicitação.
+     */
+    val DE_17_PARA_18 = object : Migration(17, 18) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            // ROTAS
+            listOf(
+                "preco1DiaCentavos",
+                "preco2DiasCentavos",
+                "preco3DiasCentavos",
+                "preco4DiasCentavos",
+                "preco5DiasCentavos",
+                "valorKmExtraCentavos"
+            ).forEach { coluna ->
+                db.execSQL(
+                    "ALTER TABLE `rotas` " +
+                            "ADD COLUMN `$coluna` INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+
+            db.execSQL(
+                "ALTER TABLE `rotas` " +
+                        "ADD COLUMN `percentualUmTrecho` INTEGER NOT NULL DEFAULT 60"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `rotas` " +
+                        "ADD COLUMN `kmIncluidos` INTEGER NOT NULL DEFAULT 5"
+            )
+
+            // SOLICITAÇÕES
+            db.execSQL(
+                "ALTER TABLE `solicitacoes_inclusao` " +
+                        "ADD COLUMN `modalidade` TEXT NOT NULL DEFAULT ''"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `solicitacoes_inclusao` " +
+                        "ADD COLUMN `diasSemana` TEXT NOT NULL DEFAULT ''"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `solicitacoes_inclusao` " +
+                        "ADD COLUMN `distanciaMetros` INTEGER NOT NULL DEFAULT 0"
+            )
+
+            db.execSQL(
+                "ALTER TABLE `solicitacoes_inclusao` " +
+                        "ADD COLUMN `valorMensalCentavos` INTEGER NOT NULL DEFAULT 0"
+            )
+        }
+    }
+
+    /**
      * Todas as migrações registradas.
      */
     val TODAS: Array<Migration> = arrayOf(
         DE_14_PARA_15,
-        DE_15_PARA_16
+        DE_15_PARA_16,
+        DE_16_PARA_17,
+        DE_17_PARA_18
     )
 }
