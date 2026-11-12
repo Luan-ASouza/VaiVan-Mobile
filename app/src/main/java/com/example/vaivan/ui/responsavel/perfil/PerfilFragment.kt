@@ -35,6 +35,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.core.notificacao.TokenDispositivo
 
 class PerfilFragment : Fragment() {
 
@@ -190,6 +191,8 @@ class PerfilFragment : Fragment() {
                 /*
                  * Desconecta do Firebase.
                  */
+                TokenDispositivo.removerDesteDispositivo()
+
                 FirebaseAuth
                     .getInstance()
                     .signOut()
