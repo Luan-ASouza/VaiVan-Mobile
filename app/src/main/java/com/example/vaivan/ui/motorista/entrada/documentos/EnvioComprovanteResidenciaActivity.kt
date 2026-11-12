@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.ui.comum.recorte.RecortarImagem
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
@@ -52,7 +53,7 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) { sucesso ->
         val uri = fotoPendente
         if (sucesso && uri != null) {
-            prepararArquivo(uri, "image/jpeg", "comprovante_${System.currentTimeMillis()}.jpg")
+            recorte.launch(RecortarImagem.Pedido.documento(uri))
         } else {
             arquivoCameraPendente?.delete()
             txtStatus.text = "Captura cancelada."
@@ -61,8 +62,18 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         arquivoCameraPendente = null
     }
 
+    // Foto (câmera ou galeria) passa pelo recorte antes do upload; o
+    // resultado já vem comprimido em JPEG (ImagemUtil.DOCUMENTO).
+    private val recorte = registerForActivityResult(RecortarImagem()) { uri ->
+        if (uri != null) {
+            prepararArquivo(uri, "image/jpeg", "comprovante_${System.currentTimeMillis()}.jpg")
+        } else {
+            txtStatus.text = "Envio cancelado."
+        }
+    }
+
     private val galeria = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { prepararArquivo(it, contentType(it), nomeDoArquivo(it)) }
+        uri?.let { recorte.launch(RecortarImagem.Pedido.documento(it)) }
     }
 
     private val seletorPdf = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->

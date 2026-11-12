@@ -86,8 +86,8 @@ class HomeMotoristaActivity : AppCompatActivity() {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.observarPorId(uid).collect { usuario ->
                         if (usuario != null) {
-                            txtNomeDoUsuario.text = usuario.nome
-                            drawerTxtNomeDoUsuario.text = usuario.nome
+                            txtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
+                            drawerTxtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
 
                             Glide.with(imgAvatarHeader)
                                 .load(usuario.fotoUrl)

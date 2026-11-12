@@ -195,7 +195,7 @@ class UsuarioRepository(
     /** Envia a nova foto pro Storage e atualiza o fotoUrl do usuário
      * (Firestore + Room, via salvarUsuario). */
     suspend fun atualizarFoto(uid: String, uri: Uri): String {
-        val url = arquivoRepository.enviar(uri, arquivoRepository.caminhoFotoUsuario(uid))
+        val url = arquivoRepository.enviar(uri, arquivoRepository.caminhoFotoUsuario(uid), "image/jpeg")
         val atual = consultarUsuario(uid) ?: UsuarioEntity(id = uid)
         salvarUsuario(atual.copy(fotoUrl = url))
         return url

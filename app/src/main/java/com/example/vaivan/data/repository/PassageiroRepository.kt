@@ -345,7 +345,8 @@ class PassageiroRepository(
     suspend fun atualizarFoto(passageiro: PassageiroEntity, uri: Uri): String {
         val url = arquivoRepository.enviar(
             uri,
-            arquivoRepository.caminhoFotoPassageiro(passageiro.responsavelId ?: "", passageiro.id)
+            arquivoRepository.caminhoFotoPassageiro(passageiro.responsavelId ?: "", passageiro.id),
+            "image/jpeg"
         )
         salvarPassageiro(passageiro.copy(fotoUrl = url))
         return url

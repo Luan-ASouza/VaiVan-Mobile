@@ -89,10 +89,18 @@ class AvisoAusenciaRepository(
 
     /** Lido direto do Firestore (não confia no cache) no momento de iniciar
      * uma viagem — mesmo motivo de IniciarViagemUseCase já usar
-     * consultarRota/consultarPassageiro. */
-    suspend fun consultarAvisosAtivos(rotaId: String): List<AvisoAusenciaEntity> =
+     * consultarRota/consultarPassageiro.
+     *
+     * O filtro por motoristaId é obrigatório: a regra de leitura de
+     * avisos_ausencia só libera o dono (responsavelId/motoristaId), e o
+     * Firestore recusa (PERMISSION_DENIED) uma consulta só por rotaId, que
+     * não prova isso — era o que travava o início da viagem. */
+    suspend fun consultarAvisosAtivos(rotaId: String, motoristaId: String): List<AvisoAusenciaEntity> =
         withContext(Dispatchers.IO) {
-            collection.whereEqualTo("rotaId", rotaId).get().await().documents.mapNotNull { documento ->
+            collection
+                .whereEqualTo("motoristaId", motoristaId)
+                .whereEqualTo("rotaId", rotaId)
+                .get().await().documents.mapNotNull { documento ->
                 documento.toObject(AvisoAusenciaEntity::class.java)?.copy(id = documento.id)
             }
         }

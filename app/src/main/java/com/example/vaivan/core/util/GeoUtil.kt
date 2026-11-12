@@ -31,7 +31,7 @@ object GeoUtil {
     }
 
     /** Distância de um ponto P até um segmento de reta A-B. */
-    private fun distanciaPontoSegmentoMetros(
+    fun distanciaPontoSegmentoMetros(
         pLat: Double, pLng: Double,
         aLat: Double, aLng: Double,
         bLat: Double, bLng: Double

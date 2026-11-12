@@ -2,6 +2,7 @@ package com.example.vaivan.ui.motorista.rotas.navegacao
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -25,8 +26,6 @@ import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
-import com.example.vaivan.data.remote.localizacao.FirestoreLocalizacaoViagemRemoteSource
-import com.example.vaivan.data.repository.LocalizacaoViagemRepository
 import com.example.vaivan.data.repository.ViagemRepository
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.libraries.navigation.ArrivalEvent
@@ -42,7 +41,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -52,8 +50,10 @@ import java.util.Locale
  * A Activity só cuida de interface e do ciclo de vida do SDK de navegação
  * (que precisa de uma View real, não pode morar no ViewModel). Todo o estado
  * da viagem/paradas e o acesso ao Firebase ficam no [NavegacaoViagemViewModel]
- * e no [ViagemRepository] — não escreve a posição do GPS em lugar nenhum,
- * isso é tarefa do serviço de rastreamento (Etapa 3).
+ * e no [ViagemRepository] — não escreve a posição do GPS em lugar nenhum:
+ * isso é tarefa do [RastreioViagemService], que a tela só liga (depois de
+ * startGuidance) e desliga (ao finalizar), e que continua publicando com o
+ * app minimizado ou com esta tela fechada.
  */
 class NavegacaoViagemActivity : BaseActivity() {
 
@@ -67,14 +67,6 @@ class NavegacaoViagemActivity : BaseActivity() {
     }
 
     private lateinit var viagemId: String
-
-    private val localizacaoViagemRepository: LocalizacaoViagemRepository by lazy {
-        val database = VaivanDatabase.getInstance(this)
-        LocalizacaoViagemRepository(
-            database.localizacaoViagemDao(),
-            FirestoreLocalizacaoViagemRemoteSource()
-        )
-    }
 
     private val viewModel: NavegacaoViagemViewModel by viewModels {
         viewModelFactory {
@@ -148,6 +140,12 @@ class NavegacaoViagemActivity : BaseActivity() {
      * inserção, ou seja, a ordem crescente em que os waypoints foram
      * mandados pro SDK em setDestinations. */
     private var indiceProximoWaypoint = 0
+
+    /** Sem a permissão de notificação (Android 13+) o rastreio em segundo
+     * plano funciona igual — só a notificação fixa fica escondida. Por isso
+     * não bloqueia nada se for negada. */
+    private val solicitarPermissaoNotificacao =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     private val solicitarPermissaoLocalizacao =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedida ->
@@ -270,11 +268,23 @@ class NavegacaoViagemActivity : BaseActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
+    private fun pedirPermissaoNotificacaoSePreciso() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) return
+        solicitarPermissaoNotificacao.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
     // =========================================================
     // NAVIGATION SDK
     // =========================================================
 
     private fun inicializarNavegador() {
+        // Só depois da de localização: duas janelas de permissão ao mesmo
+        // tempo fazem o Android descartar uma delas.
+        pedirPermissaoNotificacaoSePreciso()
+
         NavigationApi.getNavigator(this, object : NavigationApi.NavigatorListener {
             override fun onNavigatorReady(nav: Navigator) {
                 Log.d(TAG_DEBUG, "onNavigatorReady: Navigator pronto.")
@@ -383,6 +393,9 @@ class NavegacaoViagemActivity : BaseActivity() {
             if (status == Navigator.RouteStatus.OK) {
                 Log.d(TAG_DEBUG, "setDestinations: OK, chamando startGuidance().")
                 navegador.startGuidance()
+                // Rastreio pro responsável (posição, ETA e rota real), que
+                // segue rodando com o app minimizado ou esta tela fechada.
+                RastreioViagemService.iniciar(this, viagemId)
             } else {
                 Log.w(TAG_DEBUG, "setDestinations: FALHOU com status=$status")
                 Toast.makeText(
@@ -484,38 +497,6 @@ class NavegacaoViagemActivity : BaseActivity() {
                         atualizarCardChegada(viewModel.paradasDoPainel.value)
                     }
                 }
-                launch {
-                    publicarLocalizacaoPeriodicamente()
-                }
-            }
-        }
-    }
-
-    // =========================================================
-    // LOCALIZAÇÃO AO VIVO (pro responsável acompanhar no mapa)
-    // =========================================================
-
-    /** Publica a posição que o próprio Navigator está usando pra guiar —
-     * [Navigator.getTraveledRoute] vem do RoadSnappedLocationProvider, então
-     * reflete tanto o GPS real quanto a simulação de debug
-     * (`simulator.simulateLocationsAlongExistingRoute`), ao contrário do
-     * FusedLocationProviderClient, que só lê a localização real do sistema
-     * e por isso fica parado durante uma simulação. */
-    private suspend fun publicarLocalizacaoPeriodicamente() {
-        while (true) {
-            delay(5_000L)
-
-            val posicao = navigator?.getTraveledRoute()?.lastOrNull()
-            val viagem = viewModel.viagem.value
-
-            if (posicao != null && viagem != null) {
-                localizacaoViagemRepository.publicarLocalizacao(
-                    viagemId = viagemId,
-                    motoristaId = viagem.motoristaId,
-                    responsaveisAutorizados = viagem.responsaveisAutorizados,
-                    latitude = posicao.latitude,
-                    longitude = posicao.longitude
-                )
             }
         }
     }
@@ -651,6 +632,7 @@ class NavegacaoViagemActivity : BaseActivity() {
             .setNegativeButton("Cancelar", null)
             .setPositiveButton("Finalizar") { _, _ ->
                 viewModel.finalizarViagem()
+                RastreioViagemService.parar(this)
                 finish()
             }
             .show()

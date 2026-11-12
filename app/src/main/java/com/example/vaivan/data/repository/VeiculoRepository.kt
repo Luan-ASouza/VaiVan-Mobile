@@ -3,6 +3,7 @@ package com.example.vaivan.data.repository
 import com.example.vaivan.data.local.dao.DocumentoDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
@@ -307,7 +308,15 @@ class VeiculoRepository(
             throw VeiculoVinculadoARotaException()
         }
 
+        // O filtro por motoristaId é obrigatório: a regra de leitura de
+        // "documentos" só libera o dono, e o Firestore recusa
+        // (PERMISSION_DENIED) uma consulta só por veiculoId — era o que
+        // impedia a exclusão do veículo.
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid
+            ?: throw IllegalStateException("Usuário não autenticado.")
+
         val documentos = collectionDocumentos
+            .whereEqualTo("motoristaId", motoristaId)
             .whereEqualTo("veiculoId", id)
             .get()
             .await()

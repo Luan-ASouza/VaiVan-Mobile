@@ -64,7 +64,7 @@ class IniciarViagemUseCase(
         // nunca entram nos waypoints da navegação. Cada aviso aplicado é
         // consumido (ver AvisoAusenciaRepository.marcarConsumido) depois que
         // a viagem é criada com sucesso.
-        val avisosAtivos = avisoAusenciaRepository.consultarAvisosAtivos(rotaId)
+        val avisosAtivos = avisoAusenciaRepository.consultarAvisosAtivos(rotaId, motoristaId)
         val avisosAplicados = avisosAtivos.filter { aviso ->
             if (direcao == ViagemRepository.DIRECAO_IDA) aviso.pendenteIda else aviso.pendenteVolta
         }

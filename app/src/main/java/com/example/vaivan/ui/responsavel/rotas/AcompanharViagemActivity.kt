@@ -21,7 +21,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.core.util.EtaParadasUtil
 import com.example.vaivan.core.util.PolylineUtil
+import com.example.vaivan.core.util.ProgressoRotaUtil
+import com.example.vaivan.data.local.entities.RotaViagemEntity
 import com.example.vaivan.core.util.configurarBlocoAvisoAusencia
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.EventoViagemEntity
@@ -115,8 +118,23 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     private var marcadorMotorista: Marker? = null
     private var marcadorEmbarqueFilho: Marker? = null
     private var polylineRestante: Polyline? = null
-    private var indiceProgressoRota = 0
     private var animacaoMarcador: ValueAnimator? = null
+
+    /** Rota desenhada agora: a publicada pelo motorista (espelho do
+     * Navigation SDK) assim que existir, senão a do cadastro. */
+    private var pontosRota: List<LatLng> = emptyList()
+    private var trajetoRota: List<Pair<Double, Double>> = emptyList()
+
+    /** atualizadoEm da última rota publicada aplicada (0 = rota do cadastro). */
+    private var versaoRotaDesenhada = 0L
+
+    /** Segmento de [pontosRota] onde a van está — só anda pra frente, e volta
+     * a 0 quando chega uma rota nova. */
+    private var indiceProgressoRota = 0
+
+    /** Segmento da posição anterior da van, ou null se ela estava fora da rota
+     * — decide se o marcador anima seguindo as ruas ou em linha reta. */
+    private var indiceNaRotaDaUltimaPosicao: Int? = null
 
     /** Controla o texto "A caminho da escola" — ver [atualizarStatusGeral]. */
     private var aCaminhoDaEscola = false
@@ -165,10 +183,10 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
 
     private var listenerAvisosAusencia: ListenerRegistration? = null
 
-    /** Rota pré-cadastrada (não é a rota recalculada pela navegação — evita
-     * uma chamada nova à Routes API; o polyline já foi calculado uma vez no
-     * cadastro da rota e fica guardado em RotaEntity.polylineEncoded). */
-    private val pontosRotaPredeterminada: List<LatLng> by lazy {
+    /** Rota do cadastro (RotaEntity.polylineEncoded) — só o fallback enquanto
+     * o motorista não publica a rota real da navegação ([aplicarRotaPublicada]).
+     * Nenhum dos dois caminhos chama a Routes API neste aparelho. */
+    private val pontosRotaCadastro: List<LatLng> by lazy {
         val encoded = intent.getStringExtra(EXTRA_ROTA_POLYLINE).orEmpty()
         if (encoded.isBlank()) emptyList() else PolylineUtil.decode(encoded)
     }
@@ -185,6 +203,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                     viagemRepository,
                     LocalizacaoViagemRepository(
                         db.localizacaoViagemDao(),
+                        db.rotaViagemDao(),
                         FirestoreLocalizacaoViagemRemoteSource()
                     )
                 )
@@ -282,51 +301,71 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             }
         }
 
-        desenharRotaPredeterminada()
+        // Se a rota publicada chegou antes do mapa, ela já está em pontosRota.
+        if (pontosRota.isEmpty()) definirPontosRota(pontosRotaCadastro)
+        redesenharPolyline(pontosRota)
         desenharMarcadoresDestinoSePossivel(viewModel.paradasDoFilho.value)
         atualizarOutrasParadas(viewModel.todasParadas.value)
     }
 
-    /** Fallback sem custo: a rota já cadastrada (não a recalculada pela
-     * navegação) — vai sendo "comida" por trás conforme a van avança, igual
-     * Uber/99. */
-    private fun desenharRotaPredeterminada() {
-        if (pontosRotaPredeterminada.isEmpty()) return
+    private fun definirPontosRota(pontos: List<LatLng>) {
+        pontosRota = pontos
+        trajetoRota = pontos.map { it.latitude to it.longitude }
+        indiceProgressoRota = 0
+        indiceNaRotaDaUltimaPosicao = null
+    }
 
+    /** Troca a linha pela rota que o motorista publicou (o que o Navigation
+     * SDK está seguindo de fato) — chega no início da viagem e de novo a cada
+     * desvio/recálculo ou parada concluída, então o desenho nunca fica preso
+     * a uma rota que a van já abandonou. */
+    private fun aplicarRotaPublicada(rota: RotaViagemEntity?) {
+        if (rota == null || rota.atualizadoEm <= versaoRotaDesenhada) return
+        val pontos = PolylineUtil.decode(rota.polylineEncoded)
+        if (pontos.size < 2) return
+
+        versaoRotaDesenhada = rota.atualizadoEm
+        definirPontosRota(pontos)
+
+        if (!::mMap.isInitialized) return // onMapReady desenha
+        redesenharPolyline(pontos)
+        marcadorMotorista?.position?.let { posicao ->
+            indiceNaRotaDaUltimaPosicao = atualizarProgressoRota(posicao)
+        }
+    }
+
+    private fun redesenharPolyline(pontos: List<LatLng>) {
+        if (pontos.isEmpty()) return
+        val existente = polylineRestante
+        if (existente != null) {
+            existente.points = pontos
+            return
+        }
         polylineRestante = mMap.addPolyline(
             PolylineOptions()
-                .addAll(pontosRotaPredeterminada)
+                .addAll(pontos)
                 .width(18f)
                 .color(ContextCompat.getColor(this, R.color.color_primary))
                 .geodesic(false)
         )
     }
 
-    /** Corta o trecho já percorrido: acha o ponto da rota pré-determinada
-     * mais próximo da posição atual e redesenha a polyline só a partir dali.
-     * Nunca volta pra trás (ruído de GPS não "devolve" caminho já comido). */
-    private fun atualizarProgressoRota(posicaoAtual: LatLng) {
-        if (pontosRotaPredeterminada.isEmpty()) return
+    /** Corta o trecho já percorrido ("rastro que desaparece", igual Uber/99).
+     * Procura a van só numa janela à frente do progresso atual e só recorta se
+     * ela estiver de fato em cima da linha ([ProgressoRotaUtil]) — fora dela
+     * (desvio), não mexe em nada e espera a rota nova que o motorista publica
+     * no recálculo. Retorna o segmento onde a van está, ou null se fora da rota. */
+    private fun atualizarProgressoRota(posicaoAtual: LatLng): Int? {
+        if (pontosRota.size < 2) return null
 
-        var melhorIndice = indiceProgressoRota
-        var melhorDistancia = Double.MAX_VALUE
+        val indice = ProgressoRotaUtil.localizarNaRota(
+            trajetoRota, indiceProgressoRota, posicaoAtual.latitude, posicaoAtual.longitude
+        ) ?: return null
 
-        for (i in indiceProgressoRota until pontosRotaPredeterminada.size) {
-            val ponto = pontosRotaPredeterminada[i]
-            val dLat = ponto.latitude - posicaoAtual.latitude
-            val dLng = ponto.longitude - posicaoAtual.longitude
-            val distancia = dLat * dLat + dLng * dLng
-            if (distancia < melhorDistancia) {
-                melhorDistancia = distancia
-                melhorIndice = i
-            }
-        }
-
-        if (melhorIndice <= indiceProgressoRota) return
-        indiceProgressoRota = melhorIndice
-
+        indiceProgressoRota = indice
         polylineRestante?.points =
-            pontosRotaPredeterminada.subList(indiceProgressoRota, pontosRotaPredeterminada.size)
+            listOf(posicaoAtual) + pontosRota.subList(indice + 1, pontosRota.size)
+        return indice
     }
 
     private fun observarEstado() {
@@ -354,7 +393,15 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                     viewModel.statusAtual.collect { atualizarStatusAluno(it) }
                 }
                 launch {
-                    viewModel.localizacaoMotorista.collect { atualizarMarcadorMotorista(it) }
+                    viewModel.localizacaoMotorista.collect { localizacao ->
+                        atualizarMarcadorMotorista(localizacao)
+                        // ETA ao vivo vem junto da posição — reaplica a cada 5 s.
+                        atualizarEta(viewModel.paradasDoFilho.value)
+                        atualizarDesembarqueFinal(viewModel.todasParadas.value)
+                    }
+                }
+                launch {
+                    viewModel.rotaAtual.collect { aplicarRotaPublicada(it) }
                 }
                 launch {
                     viewModel.eventos.collect { atualizarNotificacoes(it) }
@@ -452,10 +499,9 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             .into(fotoAluno)
     }
 
-    /** Estimativa simples e sem custo novo: usa o minuto estimado que já foi
-     * calculado uma vez quando a viagem começou (ViagemRepository.iniciarViagem
-     * grava horarioEstimadoMinutos em cada parada) — não é recalculada com
-     * trânsito ao vivo, é só uma referência. */
+    /** ETA sem custo novo: o ao vivo do Navigation SDK do motorista quando
+     * publicado, senão o minuto estimado gravado no início da viagem — ver
+     * [calcularEta]. */
     private fun atualizarEta(paradas: List<ParadaViagemEntity>) {
         val pendente = paradaPendente(paradas)
         txtEta.text = calcularEta(pendente)?.let { "Chegada estimada: $it" }
@@ -481,10 +527,16 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         val viagem = viewModel.viagem.value
         if (parada == null || viagem == null || viagem.iniciadaEm <= 0L) return null
 
-        val etaMillis = viagem.iniciadaEm + parada.horarioEstimadoMinutos * 60_000L
+        // Preferência: ETA ao vivo (com trânsito) que o Navigation SDK do
+        // motorista publica junto da posição. Sem ele, cai na estimativa fixa
+        // gravada no início da viagem.
+        val etaAoVivo = viewModel.localizacaoMotorista.value
+            ?.etasParadas
+            ?.let { EtaParadasUtil.decodificar(it)[parada.ordem] }
+
+        val etaMillis = etaAoVivo ?: (viagem.iniciadaEm + parada.horarioEstimadoMinutos * 60_000L)
         val formato = SimpleDateFormat("HH:mm", Locale("pt", "BR"))
         return formato.format(etaMillis)
-        txtEta.visibility = View.VISIBLE
     }
 
     // =========================================================
@@ -753,7 +805,9 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         if (!::mMap.isInitialized || localizacao == null) return
 
         val novaPosicao = LatLng(localizacao.latitude, localizacao.longitude)
-        atualizarProgressoRota(novaPosicao)
+        val indiceAnterior = indiceNaRotaDaUltimaPosicao
+        val indiceNovo = atualizarProgressoRota(novaPosicao)
+        indiceNaRotaDaUltimaPosicao = indiceNovo
 
         val marcadorExistente = marcadorMotorista
         if (marcadorExistente == null) {
@@ -776,17 +830,39 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             return
         }
 
+        // Em cima da rota nas duas posições: anima seguindo as ruas (pelos
+        // pontos da polyline entre uma e outra) em vez de cortar o quarteirão.
+        // Fora da rota (desvio ainda sem rota nova): linha reta, como antes.
+        val caminho: List<Pair<Double, Double>> =
+            if (indiceAnterior != null && indiceNovo != null && indiceNovo >= indiceAnterior) {
+                buildList {
+                    add(posicaoAnterior.latitude to posicaoAnterior.longitude)
+                    addAll(trajetoRota.subList(indiceAnterior + 1, indiceNovo + 1))
+                    add(novaPosicao.latitude to novaPosicao.longitude)
+                }
+            } else {
+                listOf(
+                    posicaoAnterior.latitude to posicaoAnterior.longitude,
+                    novaPosicao.latitude to novaPosicao.longitude
+                )
+            }
+
         marcadorExistente.rotation = calcularBearing(posicaoAnterior, novaPosicao)
 
         animacaoMarcador?.cancel()
         animacaoMarcador = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = duracaoAnimacaoMs
             addUpdateListener { animador ->
-                val fracao = animador.animatedValue as Float
-                marcadorExistente.position = LatLng(
-                    posicaoAnterior.latitude + (novaPosicao.latitude - posicaoAnterior.latitude) * fracao,
-                    posicaoAnterior.longitude + (novaPosicao.longitude - posicaoAnterior.longitude) * fracao
-                )
+                val fracao = (animador.animatedValue as Float).toDouble()
+                val (lat, lng) = ProgressoRotaUtil.pontoNaFracao(caminho, fracao)
+                val posicao = LatLng(lat, lng)
+
+                // Gira junto com a curva da rua
+                val (latFrente, lngFrente) = ProgressoRotaUtil.pontoNaFracao(caminho, fracao + 0.02)
+                if (latFrente != lat || lngFrente != lng) {
+                    marcadorExistente.rotation = calcularBearing(posicao, LatLng(latFrente, lngFrente))
+                }
+                marcadorExistente.position = posicao
             }
             start()
         }
@@ -810,7 +886,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
      * uma imagem de alta resolução (1254×1254px); sem isso, o tamanho
      * "intrínseco" do drawable (escalado pela densidade da tela) faz o
      * marcador aparecer enorme. */
-    private val tamanhoIconeVanDp = 42
+    private val tamanhoIconeVanDp = 50
 
     private fun criarIconeVan(cor: Int): BitmapDescriptor {
         val drawable = ContextCompat.getDrawable(this, R.drawable.van_branco_visto_de_cima)

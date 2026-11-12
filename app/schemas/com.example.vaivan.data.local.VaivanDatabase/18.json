@@ -1503,6 +1503,12 @@
             "columnName": "atualizadoEm",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "etasParadas",
+            "columnName": "etasParadas",
+            "affinity": "TEXT",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1627,6 +1633,36 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_avisos_ausencia_motoristaId` ON `${TABLE_NAME}` (`motoristaId`)"
           }
         ]
+      },
+      {
+        "tableName": "rotas_viagem",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`viagemId` TEXT NOT NULL, `polylineEncoded` TEXT NOT NULL, `atualizadoEm` INTEGER NOT NULL, PRIMARY KEY(`viagemId`))",
+        "fields": [
+          {
+            "fieldPath": "viagemId",
+            "columnName": "viagemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "polylineEncoded",
+            "columnName": "polylineEncoded",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "atualizadoEm",
+            "columnName": "atualizadoEm",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "viagemId"
+          ]
+        }
       }
     ],
     "setupQueries": [

@@ -32,6 +32,8 @@
     <color name="background_screen">@color/white_solitude</color>
     <color name="background_card">@color/background_card_base</color>
     <color name="background_container">@color/white</color>
+    <!-- Telas de mídia em tela cheia (recorte de foto) -->
+    <color name="background_midia">@color/black</color>
 
     <!-- Classe: Typography (Textos) -->
     <color name="text_primary">@color/dark_gray</color>

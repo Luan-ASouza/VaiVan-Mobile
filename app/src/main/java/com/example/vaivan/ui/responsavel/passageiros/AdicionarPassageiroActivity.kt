@@ -12,7 +12,6 @@ import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
-import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.core.util.SeletorDeFotoHelper
 import com.example.vaivan.data.local.VaivanDatabase
@@ -592,8 +591,8 @@ class AdicionarPassageiroActivity : BaseActivity() {
                 val passageiroSalvo = passageiroParaSalvar.copy(id = idSalvo)
 
                 if (novaFotoUri != null) {
-                    val fotoComprimida = ImagemUtil.comprimirImagem(this@AdicionarPassageiroActivity, novaFotoUri!!)
-                    repository.atualizarFoto(passageiroSalvo, fotoComprimida)
+                    // Já vem recortada e comprimida do SeletorDeFotoHelper
+                    repository.atualizarFoto(passageiroSalvo, novaFotoUri!!)
                 } else if (fotoRemovida) {
                     repository.removerFoto(passageiroSalvo)
                 }

@@ -198,6 +198,19 @@ object Migracoes {
                 "ALTER TABLE `solicitacoes_inclusao` " +
                         "ADD COLUMN `valorMensalCentavos` INTEGER NOT NULL DEFAULT 0"
             )
+
+            db.execSQL(
+                "ALTER TABLE `localizacoes_viagem` " +
+                        "ADD COLUMN `etasParadas` TEXT NOT NULL DEFAULT ''"
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `rotas_viagem` (" +
+                        "`viagemId` TEXT NOT NULL, " +
+                        "`polylineEncoded` TEXT NOT NULL, " +
+                        "`atualizadoEm` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`viagemId`))"
+            )
         }
     }
 
