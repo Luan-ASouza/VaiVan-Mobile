@@ -35,6 +35,16 @@ class VaiVanMessagingService : FirebaseMessagingService() {
 
         val dados = mensagem.data
 
+        // Viagem encerrada: só some com o cartão fixo, sem notificação nova.
+        if (dados["acao"] == "encerrar") {
+            dados["grupo"]?.let { NotificadorVaiVan.encerrar(this, it) }
+            return
+        }
+
+        // Quem está com a conversa aberta já vê a mensagem na tela.
+        val chatId = dados["chatId"]
+        if (chatId != null && chatId == chatAberto) return
+
         // Aceita também o "envio de teste" do Console (que traz title/body em notification).
         val titulo = dados["titulo"] ?: mensagem.notification?.title ?: return
         val texto = dados["texto"] ?: mensagem.notification?.body ?: ""
@@ -49,7 +59,11 @@ class VaiVanMessagingService : FirebaseMessagingService() {
         )
     }
 
-    private companion object {
-        const val TAG = "VaiVanMessaging"
+    companion object {
+        private const val TAG = "VaiVanMessaging"
+
+        /** Conversa visível agora (definida pela tela do chat em onResume/onPause). */
+        @Volatile
+        var chatAberto: String? = null
     }
 }

@@ -37,7 +37,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.core.notificacao.DestinoNotificacao
 import com.example.vaivan.core.notificacao.PermissaoNotificacao
+
 class HomeResponsavelActivity : BaseActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
@@ -165,7 +167,12 @@ class HomeResponsavelActivity : BaseActivity() {
         // --------------------------------------------------
 
         if (savedInstanceState == null) {
-            abrirFragment(ListaPassageirosFragment())
+            // Toque numa notificação pode pedir uma aba específica.
+            when (intent.getStringExtra(DestinoNotificacao.EXTRA_ABA)) {
+                DestinoNotificacao.ABA_ROTAS -> bottomNavigation.selecionar(NavigationItem.ROTAS)
+                DestinoNotificacao.ABA_CHAT -> bottomNavigation.selecionar(NavigationItem.ASSINATURAS)
+                else -> abrirFragment(ListaPassageirosFragment())
+            }
         }
     }
 

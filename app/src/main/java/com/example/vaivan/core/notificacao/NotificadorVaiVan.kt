@@ -60,6 +60,11 @@ object NotificadorVaiVan {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Cartão fixo (status do aluno na viagem): cada push novo do mesmo
+        // grupo substitui o anterior, e ele só sai com o aviso final.
+        val fixa = dados["fixa"] == "true"
+        val silenciosa = dados["silenciosa"] == "true"
+
         val laranja = ContextCompat.getColor(context, R.color.orange)
 
         // Versão exibida na tela bloqueada: sem nome de aluno, endereço ou mensagem.
@@ -76,7 +81,9 @@ object NotificadorVaiVan {
             .setContentTitle(titulo)
             .setContentText(texto)
             .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
-            .setAutoCancel(true)
+            .setAutoCancel(!fixa)
+            .setOngoing(fixa)
+            .setOnlyAlertOnce(silenciosa)
             .setContentIntent(aoTocar)
             .setCategory(categoriaDoSistema(canal))
             .setPriority(prioridade(canal))
@@ -84,10 +91,19 @@ object NotificadorVaiVan {
             .setPublicVersion(versaoPublica)
             .setWhen(System.currentTimeMillis())
 
+        if (fixa) construtor.setSubText("Viagem em andamento")
+
         iconeGrande(context)?.let { construtor.setLargeIcon(it) }
 
-        NotificationManagerCompat.from(context).notify(etiqueta, 1, construtor.build())
+        NotificationManagerCompat.from(context).notify(etiqueta, ID_NOTIFICACAO, construtor.build())
     }
+
+    /** Remove a notificação de um grupo (ex.: cartão fixo de uma viagem já encerrada). */
+    fun encerrar(context: Context, grupo: String) {
+        NotificationManagerCompat.from(context).cancel(grupo, ID_NOTIFICACAO)
+    }
+
+    private const val ID_NOTIFICACAO = 1
 
     private fun categoriaDoSistema(canal: String): String = when (canal) {
         CanaisNotificacao.MENSAGENS -> NotificationCompat.CATEGORY_MESSAGE

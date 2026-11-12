@@ -19,6 +19,7 @@ import com.example.vaivan.R
 import com.example.vaivan.core.util.EtaParadasUtil
 import com.example.vaivan.core.util.PolylineUtil
 import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.local.entities.ParadaViagemEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
 import com.example.vaivan.data.remote.localizacao.FirestoreLocalizacaoViagemRemoteSource
 import com.example.vaivan.data.repository.LocalizacaoViagemRepository
@@ -58,6 +59,7 @@ class RastreioViagemService : Service() {
         private const val CANAL_ID = "rastreio_viagem"
         private const val NOTIFICACAO_ID = 4201
         private const val INTERVALO_PUBLICACAO_MS = 5_000L
+        private const val ANTECEDENCIA_APROXIMACAO_MS = 5 * 60_000L
 
         /** Debounce: o SDK pode disparar várias trocas de rota em sequência
          * (ex.: setDestinations + recálculo logo em seguida). */
@@ -101,6 +103,12 @@ class RastreioViagemService : Service() {
      * NavegacaoViagemActivity usa ao montar os waypoints), pra saber de qual
      * parada é cada ETA que o SDK devolve. */
     private var ordemPorTitulo: Map<String, Int> = emptyMap()
+
+    private var paradasAtuais: List<ParadaViagemEntity> = emptyList()
+
+    /** Paradas que já geraram o evento APROXIMACAO nesta viagem (a Cloud
+     * Function também ignora repetidos, caso o serviço reinicie). */
+    private val aproximacoesAvisadas = mutableSetOf<String>()
 
     private var navigator: Navigator? = null
     private var routeChangedListener: Navigator.RouteChangedListener? = null
@@ -222,6 +230,7 @@ class RastreioViagemService : Service() {
             }
             launch {
                 viagemRepository.observarParadas(viagemId).collect { paradas ->
+                    paradasAtuais = paradas
                     ordemPorTitulo = paradas
                         .groupBy { it.ordem }
                         .map { (ordem, grupo) ->
@@ -298,6 +307,8 @@ class RastreioViagemService : Service() {
         viagemIdAtual = null
         viagem = null
         ultimaPosicao = null
+        paradasAtuais = emptyList()
+        aproximacoesAvisadas.clear()
     }
 
     // =========================================================
@@ -322,6 +333,8 @@ class RastreioViagemService : Service() {
             longitude = ultimoPonto.longitude
         }
 
+        val etas = calcularEtasPorOrdem(nav)
+
         try {
             localizacaoRepository.publicarLocalizacao(
                 viagemId = viagemId,
@@ -329,13 +342,41 @@ class RastreioViagemService : Service() {
                 responsaveisAutorizados = viagemAtual.responsaveisAutorizados,
                 latitude = latitude,
                 longitude = longitude,
-                etasParadas = EtaParadasUtil.codificar(calcularEtasPorOrdem(nav))
+                etasParadas = EtaParadasUtil.codificar(etas)
             )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // Uma escrita perdida não derruba nada; a próxima sai em 5 s.
             Log.w(TAG, "Falha ao publicar localização", e)
+        }
+
+        registrarAproximacoes(etas)
+    }
+
+    /** Grava o evento APROXIMACAO (vira o push "a van está chegando" pro
+     * responsável) quando faltam [ANTECEDENCIA_APROXIMACAO_MS] para uma
+     * parada pendente na casa de um aluno — uma vez por parada. */
+    private suspend fun registrarAproximacoes(etas: Map<Int, Long>) {
+        val agora = System.currentTimeMillis()
+        val proximas = paradasAtuais.filter { parada ->
+            val eta = etas[parada.ordem] ?: return@filter false
+            parada.localId != ViagemRepository.LOCAL_ESCOLA &&
+                parada.id !in aproximacoesAvisadas &&
+                (parada.status == ViagemRepository.PARADA_AGUARDANDO ||
+                    parada.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE) &&
+                eta - agora <= ANTECEDENCIA_APROXIMACAO_MS
+        }
+
+        proximas.forEach { parada ->
+            try {
+                viagemRepository.registrarAproximacao(parada.viagemId, parada.id)
+                aproximacoesAvisadas.add(parada.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Falha ao registrar aproximação da parada ${parada.id}", e)
+            }
         }
     }
 

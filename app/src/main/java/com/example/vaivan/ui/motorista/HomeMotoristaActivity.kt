@@ -23,6 +23,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
+import com.example.vaivan.core.notificacao.DestinoNotificacao
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
 import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -51,6 +53,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationControllerMotorista
     private lateinit var viewModel: UsuarioViewModel
+    private val permissaoNotificacao = PermissaoNotificacao(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,8 +132,15 @@ class HomeMotoristaActivity : AppCompatActivity() {
         applySystemBarGaps(findViewById(android.R.id.content))
 
         if (savedInstanceState == null) {
-            abrirFragment(ListaVeiculosFragment())
+            // Toque numa notificação pode pedir uma aba específica.
+            when (intent.getStringExtra(DestinoNotificacao.EXTRA_ABA)) {
+                DestinoNotificacao.ABA_ROTAS -> bottomNavigation.selecionar(NavigationItem.ROTAS)
+                DestinoNotificacao.ABA_CHAT -> bottomNavigation.selecionar(NavigationItem.CHAT)
+                else -> abrirFragment(ListaVeiculosFragment())
+            }
         }
+
+        permissaoNotificacao.solicitarSeNecessario()
 
     }
 

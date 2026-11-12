@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.motorista.HomeMotoristaActivity
@@ -27,10 +28,14 @@ class AnaliseDocumentosActivity : BaseActivity() {
 
     private var observador: ListenerRegistration? = null
 
+    // O motorista fica aguardando aqui: o push avisa quando o painel aprovar/recusar.
+    private val permissaoNotificacao = PermissaoNotificacao(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_analise_documentos)
+        permissaoNotificacao.solicitarSeNecessario()
 
         findViewById<View>(R.id.btnSair).setOnClickListener {
             sair()

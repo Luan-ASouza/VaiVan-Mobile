@@ -123,6 +123,16 @@ Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Andro
 - Motorista já aprovado pode trocar um documento (menu "Meus documentos"): ele volta a `EM_ANALISE`, sem tirar o acesso do motorista.
 - O painel é publicado com `firebase deploy --only hosting` (a partir de `admin-web/`).
 
+## Notificações push
+
+- Fluxo: o app/painel grava algo no Firestore → uma Cloud Function (`admin-web/functions/index.js`, JS puro, região `southamerica-east1`) observa e envia FCM **só de dados** → `VaiVanMessagingService` → `NotificadorVaiVan` desenha. Nunca envie push direto do app.
+- Gatilhos: `eventos_viagem` (INICIO, APROXIMACAO, CHEGADA, EMBARQUE, DESEMBARQUE, NAO_EMBARCOU, FINALIZADA), `documentos` (recusa), `usuarios.statusMotorista` (ATIVO/SUSPENSO), `solicitacoes_inclusao` (nova e resposta) e `chats/{id}/mensagens`. Momento novo de notificação = gravar um evento/documento e tratar na Function, não chamar FCM do app.
+- Formato da mensagem (documentado em `functions/enviar.js`): `titulo`, `texto`, `categoria` (= canal de `CanaisNotificacao`), `grupo` (mesma etiqueta substitui), `fixa`, `silenciosa`, `acao` (`exibir`/`encerrar`), `destino` + `perfil` (para onde o toque leva — `DestinoNotificacao`, a partir da `SplashActivity`).
+- Cartão fixo do responsável: grupo `viagem_{viagemId}_{passageiroId}`, atualizado a cada evento e substituído pelo aviso final (desembarque / não embarcou). Aluno com falta (parada de embarque `NAO_EMBARCOU`) não recebe nada da viagem.
+- `APROXIMACAO` é gravado pelo `RastreioViagemService` do motorista quando a ETA ao vivo de uma parada na casa do aluno fica ≤ 5 min. CHEGADA/APROXIMACAO são deduplicados em `notificacoes_enviadas` (só o servidor acessa).
+- Tokens em `dispositivos/{uid}/tokens/{token}` (`TokenDispositivo`).
+- Deploy (manual, a partir de `admin-web/`): `firebase deploy --only functions,firestore:rules`. Custo: FCM é grátis; as Functions ficam dentro da cota gratuita do Blaze — manter o alerta de orçamento no Google Cloud.
+
 ## Planos e assinaturas dos motoristas
 
 - Regras de negócio em `domain/usecase/assinatura/AssinaturaPolicy` (Kotlin puro, testado): ciclo de 30 dias, carência de 3 dias, upgrade com cobrança proporcional, downgrade na renovação. As regras do Firestore (`assinaturaOperacional`) espelham essa política: se mudar uma, mude a outra.

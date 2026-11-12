@@ -1,0 +1,18 @@
+{
+  "name": "vaivan-functions",
+  "description": "Cloud Functions do VaiVan: envio das notificações push (FCM)",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  }
+}

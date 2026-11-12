@@ -9,11 +9,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.core.notificacao.NotificadorVaiVan
+import com.example.vaivan.core.notificacao.VaiVanMessagingService
 import com.example.vaivan.core.util.WindowInsetsUtil.aplicarInsets
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -174,6 +177,9 @@ class ChatActivity : AppCompatActivity() {
                         )
 
                 chatId = id
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    VaiVanMessagingService.chatAberto = id
+                }
 
                 listenerMensagens =
                     ChatRepository.escutarMensagens(
@@ -304,6 +310,21 @@ class ChatActivity : AppCompatActivity() {
                 }, 250)
             }
         }
+    }
+
+    // --------------------------------------------------
+    // PUSH: sem notificação da conversa que está na tela
+    // --------------------------------------------------
+
+    override fun onResume() {
+        super.onResume()
+        chatId?.let { VaiVanMessagingService.chatAberto = it }
+        chatId?.let { NotificadorVaiVan.encerrar(this, "chat_$it") }
+    }
+
+    override fun onPause() {
+        VaiVanMessagingService.chatAberto = null
+        super.onPause()
     }
 
     // --------------------------------------------------

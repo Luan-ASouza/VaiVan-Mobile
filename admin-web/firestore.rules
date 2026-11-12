@@ -59,6 +59,22 @@ service cloud.firestore {
       }
     }
 
+    // ===================================================================
+    // NOTIFICAÇÕES PUSH
+    // ===================================================================
+
+    // Tokens FCM do aparelho (TokenDispositivo): só o próprio usuário grava
+    // e apaga. As Cloud Functions leem via Admin SDK (ignora as regras).
+    match /dispositivos/{uid}/tokens/{token} {
+      allow read, write: if logado() && request.auth.uid == uid;
+    }
+
+    // Controle interno das Cloud Functions para não enviar o mesmo aviso
+    // duas vezes (ex.: CHEGADA gravada pelo motorista e pelo responsável).
+    match /notificacoes_enviadas/{id} {
+      allow read, write: if false;
+    }
+
     // ESCOLAS
     match /escolas/{escolaId} {
       allow read: if request.auth != null;

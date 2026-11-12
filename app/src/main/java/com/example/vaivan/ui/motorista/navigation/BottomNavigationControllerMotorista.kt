@@ -28,7 +28,16 @@ class BottomNavigationControllerMotorista(
         updateSelectedBackground()
     }
 
+    private var onItemSelected: ((NavigationItem) -> Unit)? = null
+
+    /** Seleciona a aba por código (ex.: toque numa notificação). */
+    fun selecionar(item: NavigationItem) {
+        selectItem(item)
+        onItemSelected?.invoke(item)
+    }
+
     fun setOnItemSelected(listener: (NavigationItem) -> Unit) {
+        onItemSelected = listener
 
         veiculos.setOnClickListener {
             selectItem(NavigationItem.VEICULOS)

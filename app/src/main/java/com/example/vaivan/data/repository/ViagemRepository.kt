@@ -53,6 +53,9 @@ class ViagemRepository(
         const val TIPO_EMBARQUE = "EMBARQUE"
         const val TIPO_DESEMBARQUE = "DESEMBARQUE"
 
+        /** localId da parada da escola (as demais são a casa de um aluno). */
+        const val LOCAL_ESCOLA = "escola"
+
         const val STATUS_EM_ANDAMENTO = "EM_ANDAMENTO"
         const val STATUS_PAUSADA = "PAUSADA"
         const val STATUS_FINALIZADA = "FINALIZADA"
@@ -455,7 +458,7 @@ class ViagemRepository(
                 nomePassageiro = paradaRota.nomePassageiro,
                 fotoPassageiroUrl = fotoPorPassageiro[paradaRota.passageiroId],
                 responsavelId = responsavelPorPassageiro[paradaRota.passageiroId].orEmpty(),
-                localId = "escola",
+                localId = LOCAL_ESCOLA,
                 nomeLocal = rota.escolaNome.ifBlank { rota.destinoNome },
                 endereco = rota.destinoEndereco,
                 latitude = rota.destinoLatitude,
@@ -614,6 +617,13 @@ class ViagemRepository(
      * van entra no raio do ponto do filho — ver AcompanharViagemActivity. */
     suspend fun registrarChegada(viagemId: String, paradaViagemId: String) {
         registrarEvento(viagemId, paradaViagemId, "CHEGADA")
+    }
+
+    /** Chamado pelo RastreioViagemService quando a ETA ao vivo da parada
+     * fica em poucos minutos; a Cloud Function transforma em push
+     * "a van está chegando" pro responsável. */
+    suspend fun registrarAproximacao(viagemId: String, paradaViagemId: String) {
+        registrarEvento(viagemId, paradaViagemId, "APROXIMACAO")
     }
 
     private suspend fun registrarEvento(viagemId: String, paradaViagemId: String?, tipo: String) {

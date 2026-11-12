@@ -6,8 +6,9 @@ import androidx.room.PrimaryKey
 
 /**
  * Trilha de eventos de negócio de uma viagem (não é posição de GPS). Alimenta
- * o histórico exibido ao responsável e, na Etapa 5, as notificações push —
- * cada evento é notificado uma única vez, evitando repetição.
+ * o histórico exibido ao responsável e as notificações push (a Cloud
+ * Function notificarEventoViagem, em admin-web/functions, observa esta
+ * coleção) — cada evento é notificado uma única vez, evitando repetição.
  */
 @Entity(
     tableName = "eventos_viagem",

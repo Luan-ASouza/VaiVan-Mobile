@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.vaivan.core.notificacao.DestinoNotificacao
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -36,9 +37,16 @@ class SplashActivity : AppCompatActivity() {
                 true // sem internet/erro de leitura: não trava o usuário no login por engano
             }
 
-            val destino = if (perfilCompleto) EscolhaTipoPerfilActivity::class.java else LoginActivity::class.java
+            // Veio do toque numa notificação: abre direto a tela correspondente.
+            val pilhaDaNotificacao =
+                if (perfilCompleto) DestinoNotificacao.pilhaDeTelas(this@SplashActivity, intent) else null
 
-            startActivity(Intent(this@SplashActivity, destino))
+            if (pilhaDaNotificacao != null) {
+                startActivities(pilhaDaNotificacao)
+            } else {
+                val destino = if (perfilCompleto) EscolhaTipoPerfilActivity::class.java else LoginActivity::class.java
+                startActivity(Intent(this@SplashActivity, destino))
+            }
             finish()
         }
     }
