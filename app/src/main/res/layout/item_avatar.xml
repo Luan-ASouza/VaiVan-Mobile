@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Um avatar na grade da EscolherAvatarActivity. O fundo recebe
+     bg_avatar_selecionado quando é o escolhido. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dp">
+
+    <FrameLayout
+        android:id="@+id/molduraAvatar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp">
+
+        <com.example.vaivan.ui.comum.avatar.QuadradoImageView
+            android:id="@+id/imgAvatarItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
+</FrameLayout>

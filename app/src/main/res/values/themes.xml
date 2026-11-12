@@ -10,6 +10,10 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
 
+        <!-- Cor padrão dos avatares fora do seletor (cores originais do SVG). -->
+        <item name="avatarCor">@color/avatar_padrao</item>
+        <item name="avatarCorClara">@color/avatar_padrao_claro</item>
+
     </style>
 
     <!-- Tema principal -->
@@ -18,6 +22,48 @@
     <style name="CircleImage">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- Cores dos avatares: o seletor aplica um destes overlays
+         (ContextThemeWrapper) e o mesmo drawable avatar_* se repinta. -->
+    <style name="ThemeOverlay.VaiVan.Avatar" parent="">
+        <item name="avatarCor">@color/avatar_padrao</item>
+        <item name="avatarCorClara">@color/avatar_padrao_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Rosa">
+        <item name="avatarCor">@color/avatar_rosa</item>
+        <item name="avatarCorClara">@color/avatar_rosa_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Pessego">
+        <item name="avatarCor">@color/avatar_pessego</item>
+        <item name="avatarCorClara">@color/avatar_pessego_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Amarelo">
+        <item name="avatarCor">@color/avatar_amarelo</item>
+        <item name="avatarCorClara">@color/avatar_amarelo_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Verde">
+        <item name="avatarCor">@color/avatar_verde</item>
+        <item name="avatarCorClara">@color/avatar_verde_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Azul">
+        <item name="avatarCor">@color/avatar_azul</item>
+        <item name="avatarCorClara">@color/avatar_azul_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Lilas">
+        <item name="avatarCor">@color/avatar_lilas</item>
+        <item name="avatarCorClara">@color/avatar_lilas_claro</item>
+    </style>
+
+    <style name="ThemeOverlay.VaiVan.Avatar.Magenta">
+        <item name="avatarCor">@color/avatar_magenta</item>
+        <item name="avatarCorClara">@color/avatar_magenta_claro</item>
     </style>
 
 </resources>

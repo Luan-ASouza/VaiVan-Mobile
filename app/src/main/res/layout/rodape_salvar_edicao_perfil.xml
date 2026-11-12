@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rodapé com o botão "Salvar" das telas de edição do perfil (fica acima do
+     teclado: o container pai recebe o inset do IME via WindowInsetsUtil). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="24dp"
+    android:paddingVertical="16dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSalvarEdicaoPerfil"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_button_orange"
+        android:minHeight="52dp"
+        android:text="Salvar"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null" />
+
+    <ProgressBar
+        android:id="@+id/progressEdicaoPerfil"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:elevation="8dp"
+        android:visibility="gone" />
+
+</FrameLayout>

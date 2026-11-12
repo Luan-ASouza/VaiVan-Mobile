@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cores dos avatares (drawable/avatar_*.xml). Valores vêm do tema
+         (ThemeOverlay.VaiVan.Avatar.* em themes.xml). -->
+    <attr name="avatarCor" format="color" />
+    <attr name="avatarCorClara" format="color" />
+</resources>

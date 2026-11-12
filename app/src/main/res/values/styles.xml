@@ -27,5 +27,58 @@
         <item name="rippleColor">#22000000</item>
     </style>
 
+    <!-- Linha separadora entre os campos de um card do perfil (fragment_perfil). -->
+    <style name="DivisorCampoPerfil">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">20dp</item>
+        <item name="android:layout_marginEnd">20dp</item>
+        <item name="android:background">@color/background_screen</item>
+    </style>
+
+    <!-- Rótulo + campo das telas de edição do perfil com vários campos (endereço). -->
+    <style name="RotuloEdicaoPerfil">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Mensagem de erro abaixo de um campo (começa escondida). -->
+    <style name="ErroEdicaoPerfil">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:textColor">@color/status_danger</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="CaixaEdicaoPerfil">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:background">@drawable/bg_input_white</item>
+        <item name="boxBackgroundMode">none</item>
+        <item name="hintEnabled">false</item>
+    </style>
+
+    <style name="TextoEdicaoPerfil">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorHint">@color/text_tertiary</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 
 </resources>

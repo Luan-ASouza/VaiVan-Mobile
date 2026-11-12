@@ -55,4 +55,33 @@
     <color name="border_light">@color/light_gray</color>
     <color name="divider">@color/light_gray</color>
 
+    <!-- Classe: Avatares (drawable/avatar_*.xml)
+         Os vetores pintam com ?attr/avatarCor (traço/roupa/cabelo) e
+         ?attr/avatarCorClara (fundo). Cada par abaixo vira um
+         ThemeOverlay.VaiVan.Avatar.* em themes.xml; o seletor de cor só troca
+         o overlay. Tom claro = cor misturada 60% com branco. -->
+    <color name="avatar_padrao">#333333</color>
+    <color name="avatar_padrao_claro">#F2F2F2</color>
+
+    <color name="avatar_rosa">#F09EA7</color>
+    <color name="avatar_rosa_claro">#F9D8DC</color>
+
+    <color name="avatar_pessego">#F6CA94</color>
+    <color name="avatar_pessego_claro">#FBEAD4</color>
+
+    <color name="avatar_amarelo">#FAFABE</color>
+    <color name="avatar_amarelo_claro">#FDFDE5</color>
+
+    <color name="avatar_verde">#C1EBC0</color>
+    <color name="avatar_verde_claro">#E6F7E6</color>
+
+    <color name="avatar_azul">#C7CAFF</color>
+    <color name="avatar_azul_claro">#E9EAFF</color>
+
+    <color name="avatar_lilas">#CDABEB</color>
+    <color name="avatar_lilas_claro">#EBDDF7</color>
+
+    <color name="avatar_magenta">#F6C2F3</color>
+    <color name="avatar_magenta_claro">#FBE7FA</color>
+
 </resources>

@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.responsavel.passageiros
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageButton
@@ -8,8 +9,13 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.local.entities.LocalEntity
+import com.example.vaivan.data.repository.LocalRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.MapsInitializer
@@ -19,16 +25,45 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
+/**
+ * Criação de um local salvo — ou edição/exclusão, quando aberta com
+ * [intentEdicao] (a partir da tela Locais salvos).
+ */
 class AdicionarLocalActivity : BaseActivity() {
+
+    companion object {
+        private const val EXTRA_LOCAL_ID = "local_id"
+        private const val EXTRA_NOME = "local_nome"
+        private const val EXTRA_ENDERECO = "local_endereco"
+        private const val EXTRA_LATITUDE = "local_latitude"
+        private const val EXTRA_LONGITUDE = "local_longitude"
+        private const val EXTRA_PLACE_ID = "local_place_id"
+
+        fun intentEdicao(context: Context, local: LocalEntity): Intent =
+            Intent(context, AdicionarLocalActivity::class.java)
+                .putExtra(EXTRA_LOCAL_ID, local.id)
+                .putExtra(EXTRA_NOME, local.nome)
+                .putExtra(EXTRA_ENDERECO, local.endereco)
+                .putExtra(EXTRA_LATITUDE, local.latitude)
+                .putExtra(EXTRA_LONGITUDE, local.longitude)
+                .putExtra(EXTRA_PLACE_ID, local.placeId)
+    }
+
+    private val localRepository by lazy {
+        LocalRepository(VaivanDatabase.getInstance(this).localDao())
+    }
+
+    /** Preenchido no modo edição; vazio = criando um local novo. */
+    private var localId: String = ""
 
     // ---------------------------------------------------------
     // VIEWS
     // ---------------------------------------------------------
 
     private lateinit var edtNome: TextInputEditText
+    private lateinit var btnExcluir: TextView
 
     private lateinit var btnSalvar: MaterialButton
     private lateinit var btnVoltar: ImageButton
@@ -41,9 +76,6 @@ class AdicionarLocalActivity : BaseActivity() {
     // ---------------------------------------------------------
     // FIREBASE
     // ---------------------------------------------------------
-
-    private val firestore =
-        FirebaseFirestore.getInstance()
 
     private val auth =
         FirebaseAuth.getInstance()
@@ -75,6 +107,8 @@ class AdicionarLocalActivity : BaseActivity() {
         )
 
         inicializarViews()
+
+        carregarModoEdicao()
 
         aplicarGapsDeSistema()
 
@@ -114,6 +148,63 @@ class AdicionarLocalActivity : BaseActivity() {
 
         // Inicialmente o preview do mapa pode ficar oculto.
         mapPreview.isVisible = false
+
+        btnExcluir =
+            findViewById(R.id.btnExcluirLocal)
+    }
+
+    // ---------------------------------------------------------
+    // MODO EDIÇÃO
+    // ---------------------------------------------------------
+
+    private fun carregarModoEdicao() {
+
+        localId = intent.getStringExtra(EXTRA_LOCAL_ID).orEmpty()
+        if (localId.isBlank()) return
+
+        findViewById<TextView>(R.id.txtTitulo).text = "Editar local"
+        btnSalvar.text = "Salvar alterações"
+        btnExcluir.isVisible = true
+
+        edtNome.setText(intent.getStringExtra(EXTRA_NOME).orEmpty())
+
+        latitude = intent.getDoubleExtra(EXTRA_LATITUDE, Double.NaN).takeUnless { it.isNaN() }
+        longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, Double.NaN).takeUnless { it.isNaN() }
+        placeId = intent.getStringExtra(EXTRA_PLACE_ID)
+
+        val endereco = intent.getStringExtra(EXTRA_ENDERECO).orEmpty()
+        txtEnderecoSelecionado.text = endereco
+        txtEnderecoSelecionado.isVisible = endereco.isNotBlank()
+        // O mapa mostra o ponto assim que ficar pronto (configurarMapaPreview).
+    }
+
+    private fun confirmarExclusao() {
+
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Excluir local?",
+            mensagem = "\"${edtNome.text?.toString()?.trim().orEmpty()}\" será removido dos seus locais salvos."
+        ) {
+            btnExcluir.isEnabled = false
+
+            lifecycleScope.launch {
+                try {
+                    localRepository.excluirLocal(localId)
+
+                    Toast.makeText(this@AdicionarLocalActivity, "Local excluído.", Toast.LENGTH_SHORT).show()
+                    setResult(RESULT_OK)
+                    finish()
+
+                } catch (e: Exception) {
+                    btnExcluir.isEnabled = true
+                    Toast.makeText(
+                        this@AdicionarLocalActivity,
+                        "Não foi possível excluir: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     // ---------------------------------------------------------
@@ -326,6 +417,11 @@ class AdicionarLocalActivity : BaseActivity() {
 
             salvarLocal()
         }
+
+        btnExcluir.setOnClickListener {
+
+            confirmarExclusao()
+        }
     }
 
     // ---------------------------------------------------------
@@ -427,7 +523,7 @@ class AdicionarLocalActivity : BaseActivity() {
     }
 
     // ---------------------------------------------------------
-    // FIREBASE
+    // SALVAR (Firestore + Room via LocalRepository)
     // ---------------------------------------------------------
 
     private fun salvarNoFirebase(
@@ -441,68 +537,45 @@ class AdicionarLocalActivity : BaseActivity() {
         val uid = auth.currentUser?.uid
 
         if (uid == null) {
-
-            Toast.makeText(
-                this,
-                "Usuário não autenticado.",
-                Toast.LENGTH_SHORT
-            ).show()
-
+            Toast.makeText(this, "Usuário não autenticado.", Toast.LENGTH_SHORT).show()
             return
         }
 
         btnSalvar.isEnabled = false
 
-        val local = hashMapOf(
-            "nome" to nome,
-            "endereco" to endereco,
-            "latitude" to latitude,
-            "longitude" to longitude,
-            "placeId" to placeId,
-            "criadoEm" to FieldValue.serverTimestamp(),
-            "responsavelId" to uid
+        val local = LocalEntity(
+            id = localId,
+            nome = nome,
+            endereco = endereco,
+            latitude = latitude,
+            longitude = longitude,
+            placeId = placeId,
+            responsavelId = uid
         )
 
-        android.util.Log.d(
-            "FIRESTORE_LOCAIS",
-            "Tentando salvar local para UID: $uid"
-        )
-
-        firestore
-            .collection("locais")
-            .add(local)
-            .addOnSuccessListener { documentReference ->
-
-                android.util.Log.d(
-                    "FIRESTORE_LOCAIS",
-                    "LOCAL SALVO: ${documentReference.id}"
-                )
+        lifecycleScope.launch {
+            try {
+                localRepository.salvarLocal(local)
 
                 Toast.makeText(
-                    this,
-                    "Local salvo com sucesso!",
+                    this@AdicionarLocalActivity,
+                    if (localId.isBlank()) "Local salvo com sucesso!" else "Local atualizado!",
                     Toast.LENGTH_SHORT
                 ).show()
 
                 setResult(RESULT_OK)
                 finish()
-            }
-            .addOnFailureListener { e ->
 
-                android.util.Log.e(
-                    "FIRESTORE_LOCAIS",
-                    "ERRO AO SALVAR LOCAL",
-                    e
-                )
-
+            } catch (e: Exception) {
                 btnSalvar.isEnabled = true
 
                 Toast.makeText(
-                    this,
-                    "${e.javaClass.simpleName}: ${e.message}",
+                    this@AdicionarLocalActivity,
+                    "Não foi possível salvar o local: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
     }
 
     // ---------------------------------------------------------

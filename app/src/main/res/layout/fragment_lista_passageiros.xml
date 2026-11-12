@@ -108,7 +108,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:contentDescription="Adicionar passageiro"
-                        android:src="@drawable/ic_plus" />
+                        android:src="@drawable/ic_adicionar" />
 
                 </LinearLayout>
 

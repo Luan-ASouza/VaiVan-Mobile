@@ -215,12 +215,41 @@ object Migracoes {
     }
 
     /**
+     * 18 -> 19: cache dos locais salvos (tela "Locais salvos"), que antes só
+     * existiam no Firestore.
+     */
+    val DE_18_PARA_19 = object : Migration(18, 19) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `locais` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`nome` TEXT NOT NULL, " +
+                        "`endereco` TEXT NOT NULL, " +
+                        "`latitude` REAL NOT NULL, " +
+                        "`longitude` REAL NOT NULL, " +
+                        "`placeId` TEXT, " +
+                        "`responsavelId` TEXT NOT NULL, " +
+                        "`lastUpdated` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+            )
+
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_locais_responsavelId` " +
+                        "ON `locais` (`responsavelId`)"
+            )
+        }
+    }
+
+    /**
      * Todas as migrações registradas.
      */
     val TODAS: Array<Migration> = arrayOf(
         DE_14_PARA_15,
         DE_15_PARA_16,
         DE_16_PARA_17,
-        DE_17_PARA_18
+        DE_17_PARA_18,
+        DE_18_PARA_19
     )
 }

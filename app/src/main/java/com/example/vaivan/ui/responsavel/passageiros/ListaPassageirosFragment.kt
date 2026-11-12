@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
+import com.example.vaivan.ui.responsavel.passageiros.perfil.PerfilPassageiroActivity
 import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.core.util.DataUtil
 import com.example.vaivan.data.local.VaivanDatabase
@@ -157,8 +158,8 @@ class ListaPassageirosFragment : Fragment() {
 
         Glide.with(imgFoto)
             .load(passageiro.fotoUrl)
-            .placeholder(R.drawable.filho1)
-            .error(R.drawable.filho1)
+            .placeholder(R.drawable.avatar_01)
+            .error(R.drawable.avatar_01)
             .circleCrop()
             .into(imgFoto)
 
@@ -212,12 +213,9 @@ class ListaPassageirosFragment : Fragment() {
             abrirPesquisaRotas(passageiro)
         }
 
-        // Editar
+        // Editar: abre o perfil do passageiro (cada campo tem sua tela)
         imgEditar.setOnClickListener {
-            startActivity(
-                Intent(requireContext(), AdicionarPassageiroActivity::class.java)
-                    .putExtra(AdicionarPassageiroActivity.EXTRA_PASSAGEIRO_ID, passageiro.id)
-            )
+            startActivity(PerfilPassageiroActivity.intent(requireContext(), passageiro.id))
         }
 
         // Excluir

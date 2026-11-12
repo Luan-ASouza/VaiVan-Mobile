@@ -3,5 +3,9 @@
     <style name="Base.Theme.VaiVan" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+        <!-- Cor padrão dos avatares (ver values/themes.xml). -->
+        <item name="avatarCor">@color/avatar_padrao</item>
+        <item name="avatarCorClara">@color/avatar_padrao_claro</item>
     </style>
 </resources>

@@ -19,7 +19,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
-import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
+import com.example.vaivan.ui.comum.perfil.AlterarSenhaActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.UsuarioRepository
@@ -177,7 +178,7 @@ class HomeResponsavelActivity : BaseActivity() {
     }
 
     /**
-     * Itens do menu lateral: Meu perfil, Passageiros, Meus transportes e Trocar senha.
+     * Itens do menu lateral
      */
     private fun configurarMenuLateral(drawerLayout: DrawerLayout) {
 
@@ -191,14 +192,14 @@ class HomeResponsavelActivity : BaseActivity() {
             abrirFragment(ListaPassageirosFragment())
         }
 
+        findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, LocaisSalvosActivity::class.java))
+        }
+
         findViewById<View>(R.id.btnDrawerTransportes).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaRotasFragment())
-        }
-
-        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
-            drawerLayout.closeDrawers()
-            TrocaSenhaHelper.mostrar(this)
         }
     }
 

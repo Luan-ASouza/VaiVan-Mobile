@@ -28,7 +28,7 @@
                 android:layout_height="36dp"
                 android:layout_marginEnd="10dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/filho1"
+                android:src="@drawable/avatar_01"
                 app:shapeAppearanceOverlay="@style/CircleImage" />
 
             <TextView

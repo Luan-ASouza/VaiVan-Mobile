@@ -128,7 +128,7 @@
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_location"
+                android:src="@drawable/ic_passageiros"
                 app:tint="@color/dark_gray" />
 
             <TextView
@@ -136,6 +136,37 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:text="Passageiros"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+
+        <!-- Locais salvos -->
+        <LinearLayout
+            android:id="@+id/btnDrawerLocais"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_local_salvo"
+                app:tint="@color/dark_gray" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="Locais salvos"
                 android:textColor="@color/dark_gray"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -159,7 +190,7 @@
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_veiculos"
+                android:src="@drawable/ic_van"
                 app:tint="@color/dark_gray" />
 
             <TextView
@@ -202,36 +233,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-
-        <!-- Trocar senha -->
-        <LinearLayout
-            android:id="@+id/btnDrawerSenha"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="14dp">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_cadeado"
-                app:tint="@color/dark_gray" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:text="Trocar senha"
-                android:textColor="@color/dark_gray"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
 
     </LinearLayout>
 

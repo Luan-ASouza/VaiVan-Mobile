@@ -71,7 +71,7 @@
                         android:layout_marginEnd="12dp"
                         android:padding="2dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/filho1"
+                        android:src="@drawable/avatar_01"
                         app:shapeAppearanceOverlay="@style/CircleImage"
                         app:strokeColor="@color/dark_gray"
                         app:strokeWidth="2dp" />

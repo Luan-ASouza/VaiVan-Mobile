@@ -689,8 +689,8 @@ class RotaDetalheActivity : BaseActivity() {
 
                 Glide.with(imgFotoAluno)
                     .load(passageiro?.fotoUrl)
-                    .placeholder(R.drawable.filho1)
-                    .error(R.drawable.filho1)
+                    .placeholder(R.drawable.avatar_01)
+                    .error(R.drawable.avatar_01)
                     .circleCrop()
                     .into(imgFotoAluno)
             }

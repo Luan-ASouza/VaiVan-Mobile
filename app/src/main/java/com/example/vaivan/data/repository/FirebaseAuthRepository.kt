@@ -1,6 +1,9 @@
 package com.example.vaivan.data.repository
 
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthRepository {
 
@@ -88,6 +91,25 @@ class FirebaseAuthRepository {
             .addOnFailureListener { exception ->
                 onError(exception)
             }
+    }
+
+    /**
+     * Troca a senha do usuário logado. Reautentica com a senha atual antes
+     * (o Firebase exige login recente pra `updatePassword`).
+     * Erros do Firebase são propagados (ex.: FirebaseAuthInvalidCredentialsException
+     * = senha atual errada).
+     */
+    suspend fun alterarSenha(
+        senhaAtual: String,
+        novaSenha: String
+    ) {
+        val usuario = auth.currentUser
+            ?: throw FirebaseAuthInvalidUserException("sem-sessao", "Sessão expirada.")
+        val email = usuario.email
+            ?: throw FirebaseAuthInvalidUserException("sem-email", "Conta sem e-mail.")
+
+        usuario.reauthenticate(EmailAuthProvider.getCredential(email, senhaAtual)).await()
+        usuario.updatePassword(novaSenha).await()
     }
 
     fun usuarioAtual() =

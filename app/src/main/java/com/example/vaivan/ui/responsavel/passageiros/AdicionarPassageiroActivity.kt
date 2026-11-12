@@ -1,620 +1,273 @@
 package com.example.vaivan.ui.responsavel.passageiros
 
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
+import android.widget.ImageButton
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
-import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.core.util.DataUtil
 import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.core.util.SeletorDeFotoHelper
-import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.core.util.WindowInsetsUtil
 import com.example.vaivan.data.local.entities.PassageiroEntity
-import com.example.vaivan.data.repository.PassageiroRepository
-import com.example.vaivan.core.util.DataUtil
+import com.example.vaivan.ui.comum.avatar.EscolherAvatar
+import com.example.vaivan.ui.responsavel.passageiros.perfil.EditarPassageiroViewModel
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.imageview.ShapeableImageView
+import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
+/**
+ * Cadastro de um passageiro novo, no mesmo visual das telas de edição do
+ * perfil. A edição de um passageiro existente fica no perfil dele
+ * (ui/responsavel/passageiros/perfil), uma tela por campo.
+ */
 class AdicionarPassageiroActivity : BaseActivity() {
 
     companion object {
-        const val EXTRA_PASSAGEIRO_ID = "extra_passageiro_id"
+        /** A partir dessa idade o passageiro cria a própria conta. */
+        private const val IDADE_MAXIMA = 18
     }
 
-    // ---------------------------------------------------------
-    // VIEWS
-    // ---------------------------------------------------------
+    private val viewModel: AdicionarPassageiroViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                AdicionarPassageiroViewModel(
+                    EditarPassageiroViewModel.criarRepository(this@AdicionarPassageiroActivity)
+                )
+            }
+        }
+    }
 
-    private lateinit var edtNome: EditText
-    private lateinit var edtNascimento: EditText
-
-    private lateinit var layoutNecessidades:
-            TextInputLayout
-
-    private lateinit var edtNecessidades: EditText
-    private lateinit var edtObservacoes: EditText
-
-    private lateinit var btnSim: Button
-    private lateinit var btnNao: Button
-    private lateinit var btnSalvar: Button
-
-    private lateinit var txtTitulo: TextView
-    private lateinit var imgFoto: ShapeableImageView
-    private lateinit var btnTrocarFoto: TextView
-    private lateinit var btnRemoverFoto: TextView
-
-    // ---------------------------------------------------------
-    // MODO EDIÇÃO
-    // ---------------------------------------------------------
-
-    private var passageiroId: String? = null
-    private var passageiroCarregado: PassageiroEntity? = null
-
-    // ---------------------------------------------------------
-    // FOTO
-    // ---------------------------------------------------------
-
-    // Precisa ser criado em onCreate (antes da Activity chegar em STARTED) —
-    // ver SeletorDeFotoHelper.
+    // Os dois precisam ser registrados em onCreate (antes de STARTED).
     private lateinit var seletorDeFoto: SeletorDeFotoHelper
-
-    private var fotoUrlAtual: String? = null
-    private var novaFotoUri: Uri? = null
-    private var fotoRemovida = false
-
-    // ---------------------------------------------------------
-    // NECESSIDADES ESPECIAIS
-    // ---------------------------------------------------------
-
-    private var temNecessidadeEspecial = false
-
-    // ---------------------------------------------------------
-    // FIREBASE
-    // ---------------------------------------------------------
-
-    private val auth =
-        FirebaseAuth.getInstance()
-
-    // ---------------------------------------------------------
-    // REPOSITORY
-    // ---------------------------------------------------------
-
-    private val repository by lazy {
-
-        val db = VaivanDatabase.getInstance(this)
-        // DAOs de paradas/solicitações: ao renomear o passageiro, as cópias
-        // do nome no cache local também são atualizadas na hora.
-        PassageiroRepository(
-            passageiroDao = db.passageiroDao(),
-            paradaRotaDao = db.paradaRotaDao(),
-            solicitacaoInclusaoDao = db.solicitacaoInclusaoDao()
-        )
+    private val escolherAvatar = registerForActivityResult(EscolherAvatar()) { uri ->
+        if (uri != null) definirFoto(uri)
     }
 
-    // ---------------------------------------------------------
-    // ON CREATE
-    // ---------------------------------------------------------
+    /** Foto (galeria ou avatar) escolhida; sobe depois de salvar o passageiro. */
+    private var foto: Uri? = null
+    private var temNecessidade = false
 
-    override fun onCreate(
-        savedInstanceState: Bundle?
-    ) {
+    private lateinit var imgFoto: ShapeableImageView
+    private lateinit var txtSeloFoto: TextView
 
-        super.onCreate(
-            savedInstanceState
-        )
+    private lateinit var layoutNome: TextInputLayout
+    private lateinit var edtNome: TextInputEditText
+    private lateinit var txtErroNome: TextView
 
-        setContentView(
-            R.layout.activity_adicionar_passageiro
-        )
+    private lateinit var layoutNascimento: TextInputLayout
+    private lateinit var edtNascimento: TextInputEditText
+    private lateinit var txtErroNascimento: TextView
 
-        passageiroId = intent.getStringExtra(EXTRA_PASSAGEIRO_ID)
+    private lateinit var btnSim: MaterialButton
+    private lateinit var btnNao: MaterialButton
+    private lateinit var containerDescricao: View
+    private lateinit var edtDescricao: TextInputEditText
+    private lateinit var edtObservacoes: TextInputEditText
 
-        seletorDeFoto = SeletorDeFotoHelper(this) { uri -> onFotoEscolhida(uri) }
+    private lateinit var txtErroGeral: TextView
+    private lateinit var btnSalvar: MaterialButton
+    private lateinit var progress: ProgressBar
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_adicionar_passageiro)
+        aplicarGapsDeSistema(aplicarBase = false)
+        WindowInsetsUtil.aplicarInsets(findViewById(R.id.conteudoEdicaoPerfil), aplicarTopo = false)
+
+        seletorDeFoto = SeletorDeFotoHelper(this) { uri -> definirFoto(uri) }
 
         inicializarViews()
 
-        configurarDataNascimento()
+        findViewById<ImageButton>(R.id.btnVoltarEdicaoPerfil).setOnClickListener { finish() }
+        findViewById<View>(R.id.btnFotoNovoPassageiro).setOnClickListener { escolherOrigemDaFoto() }
 
-        configurarToggleNecessidades()
+        edtNascimento.addTextChangedListener(MascaraUtil.inserir("##/##/####", edtNascimento))
+        edtNome.doAfterTextChanged { mostrarErro(layoutNome, txtErroNome, null) }
+        edtNascimento.doAfterTextChanged { mostrarErro(layoutNascimento, txtErroNascimento, null) }
 
-        configurarBotoes()
+        btnSim.setOnClickListener { selecionarNecessidade(true) }
+        btnNao.setOnClickListener { selecionarNecessidade(false) }
+        selecionarNecessidade(false)
 
-        if (passageiroId != null) {
-            txtTitulo.text = "Editar Passageiro"
-            carregarPassageiroParaEdicao(passageiroId!!)
+        btnSalvar.text = "Cadastrar passageiro"
+        btnSalvar.setOnClickListener { validarESalvar() }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.estado.collect { renderizar(it) }
+            }
         }
-
-        aplicarGapsDeSistema()
     }
-
-    // ---------------------------------------------------------
-    // VIEWS
-    // ---------------------------------------------------------
 
     private fun inicializarViews() {
+        imgFoto = findViewById(R.id.imgFotoNovoPassageiro)
+        txtSeloFoto = findViewById(R.id.txtSeloFotoNovoPassageiro)
 
-        val btnVoltar =
-            findViewById<ImageView>(
-                R.id.btnVoltar
-            )
+        layoutNome = findViewById(R.id.layoutNomeNovoPassageiro)
+        edtNome = findViewById(R.id.edtNomeNovoPassageiro)
+        txtErroNome = findViewById(R.id.txtErroNomeNovoPassageiro)
 
-        btnSalvar =
-            findViewById(
-                R.id.btnSalvar
-            )
+        layoutNascimento = findViewById(R.id.layoutNascimentoNovoPassageiro)
+        edtNascimento = findViewById(R.id.edtNascimentoNovoPassageiro)
+        txtErroNascimento = findViewById(R.id.txtErroNascimentoNovoPassageiro)
 
-        edtNome =
-            findViewById(
-                R.id.edtNomePassageiro
-            )
+        btnSim = findViewById(R.id.btnNecessidadeSim)
+        btnNao = findViewById(R.id.btnNecessidadeNao)
+        containerDescricao = findViewById(R.id.containerDescricaoNecessidade)
+        edtDescricao = findViewById(R.id.edtDescricaoNecessidade)
+        edtObservacoes = findViewById(R.id.edtObservacoesNovoPassageiro)
 
-        edtNascimento =
-            findViewById(
-                R.id.edtNascimento
-            )
-
-        edtNecessidades =
-            findViewById(
-                R.id.edtNecessidades
-            )
-
-        layoutNecessidades =
-            findViewById(
-                R.id.layoutNecessidades
-            )
-
-        edtObservacoes =
-            findViewById(
-                R.id.edtObservacoes
-            )
-
-        btnSim =
-            findViewById(
-                R.id.btnSimNecessidade
-            )
-
-        btnNao =
-            findViewById(
-                R.id.btnNaoNecessidade
-            )
-
-        txtTitulo =
-            findViewById(
-                R.id.txtTitulo
-            )
-
-        imgFoto =
-            findViewById(
-                R.id.imgFotoNovoPassageiro
-            )
-
-        btnTrocarFoto =
-            findViewById(
-                R.id.btnTrocarFotoPassageiro
-            )
-
-        btnRemoverFoto =
-            findViewById(
-                R.id.btnRemoverFotoPassageiro
-            )
-
-        btnVoltar.setOnClickListener {
-            finish()
-        }
-
-        btnTrocarFoto.setOnClickListener {
-            seletorDeFoto.abrirSeletor()
-        }
-
-        btnRemoverFoto.setOnClickListener {
-            confirmarRemoverFoto()
-        }
+        txtErroGeral = findViewById(R.id.txtErroGeralNovoPassageiro)
+        btnSalvar = findViewById(R.id.btnSalvarEdicaoPerfil)
+        progress = findViewById(R.id.progressEdicaoPerfil)
     }
 
-    // ---------------------------------------------------------
-    // CARREGAR PARA EDIÇÃO
-    // ---------------------------------------------------------
-
-    private fun carregarPassageiroParaEdicao(id: String) {
-
-        lifecycleScope.launch {
-            try {
-                val passageiro = repository.consultarPassageiro(id)
-
-                if (passageiro == null) {
-                    Toast.makeText(
-                        this@AdicionarPassageiroActivity,
-                        "Passageiro não encontrado.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    finish()
-                    return@launch
-                }
-
-                passageiroCarregado = passageiro
-                preencherFormulario(passageiro)
-
-            } catch (erro: Exception) {
-                Toast.makeText(
-                    this@AdicionarPassageiroActivity,
-                    "Erro ao carregar passageiro: ${erro.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                finish()
-            }
-        }
-    }
-
-    private fun preencherFormulario(passageiro: PassageiroEntity) {
-        edtNome.setText(passageiro.nome)
-        edtNascimento.setText(DataUtil.paraBrasileiro(passageiro.dataNascimento))
-        edtObservacoes.setText(passageiro.observacoes ?: "")
-
-        atualizarBotoesNecessidade(selecionado = passageiro.necessidadesEspeciais)
-        if (passageiro.necessidadesEspeciais) {
-            edtNecessidades.setText(passageiro.descricaoNecessidades ?: "")
-        }
-
-        fotoUrlAtual = passageiro.fotoUrl
-        exibirFoto(fotoUrlAtual)
-    }
-
-    // ---------------------------------------------------------
+    // =========================================================
     // FOTO
-    // ---------------------------------------------------------
+    // =========================================================
 
-    private fun exibirFoto(url: String?) {
-        if (url == null) {
-            imgFoto.setImageResource(android.R.drawable.ic_menu_camera)
-            btnTrocarFoto.text = "Adicionar foto"
-            btnRemoverFoto.visibility = View.GONE
-            return
+    /** Galeria ou avatar pronto; com foto já escolhida, também dá pra tirar. */
+    private fun escolherOrigemDaFoto() {
+        val opcoes = buildList {
+            add("Escolher da galeria")
+            add("Escolher um avatar")
+            if (foto != null) add("Remover foto")
         }
 
-        Glide.with(imgFoto)
-            .load(url)
-            .circleCrop()
-            .into(imgFoto)
-
-        btnTrocarFoto.text = "Trocar foto"
-        btnRemoverFoto.visibility = View.VISIBLE
-    }
-
-    private fun onFotoEscolhida(uri: Uri) {
-        novaFotoUri = uri
-        fotoRemovida = false
-
-        Glide.with(imgFoto).load(uri).circleCrop().into(imgFoto)
-
-        btnTrocarFoto.text = "Trocar foto"
-        btnRemoverFoto.visibility = View.VISIBLE
-    }
-
-    private fun confirmarRemoverFoto() {
-        if (novaFotoUri != null) {
-            // Ainda não foi salva — só desfaz a seleção local.
-            novaFotoUri = null
-            exibirFoto(fotoUrlAtual)
-            return
-        }
-
-        if (fotoUrlAtual == null) return
-
-        ConfirmacaoExclusaoHelper.confirmar(
-            contexto = this,
-            titulo = "Remover foto?",
-            mensagem = "A foto deste passageiro será removida ao salvar.",
-            textoConfirmar = "Sim, remover"
-        ) {
-            fotoRemovida = true
-            fotoUrlAtual = null
-            exibirFoto(null)
-        }
-    }
-
-    // ---------------------------------------------------------
-    // DATA DE NASCIMENTO
-    // ---------------------------------------------------------
-
-    private fun configurarDataNascimento() {
-
-        edtNascimento.addTextChangedListener(
-            MascaraUtil.inserir(
-                "##/##/####",
-                edtNascimento
-            )
-        )
-    }
-
-    // ---------------------------------------------------------
-    // NECESSIDADES ESPECIAIS
-    // ---------------------------------------------------------
-
-    private fun configurarToggleNecessidades() {
-
-        atualizarBotoesNecessidade(
-            selecionado = false
-        )
-
-        btnSim.setOnClickListener {
-
-            atualizarBotoesNecessidade(
-                selecionado = true
-            )
-        }
-
-        btnNao.setOnClickListener {
-
-            atualizarBotoesNecessidade(
-                selecionado = false
-            )
-        }
-    }
-
-    private fun atualizarBotoesNecessidade(
-        selecionado: Boolean
-    ) {
-
-        temNecessidadeEspecial =
-            selecionado
-
-        btnSim.backgroundTintList =
-            android.content.res.ColorStateList.valueOf(
-                if (selecionado)
-                    0xFFF6B12F.toInt()
-                else
-                    0xFFAFAFAF.toInt()
-            )
-
-        btnNao.backgroundTintList =
-            android.content.res.ColorStateList.valueOf(
-                if (selecionado)
-                    0xFFAFAFAF.toInt()
-                else
-                    0xFFF6B12F.toInt()
-            )
-
-        layoutNecessidades.visibility =
-            if (selecionado) {
-
-                View.VISIBLE
-
-            } else {
-
-                edtNecessidades.setText("")
-
-                View.GONE
+        AlertDialog.Builder(this)
+            .setTitle("Foto do passageiro")
+            .setItems(opcoes.toTypedArray()) { _, opcao ->
+                when (opcao) {
+                    0 -> seletorDeFoto.abrirSeletor()
+                    1 -> escolherAvatar.launch(Unit)
+                    2 -> definirFoto(null)
+                }
             }
+            .show()
     }
 
-    // ---------------------------------------------------------
-    // BOTÕES
-    // ---------------------------------------------------------
+    private fun definirFoto(uri: Uri?) {
+        foto = uri
 
-    private fun configurarBotoes() {
-
-        btnSalvar.setOnClickListener {
-
-            validarESalvar()
+        if (uri == null) {
+            imgFoto.setImageResource(R.drawable.avatar_01)
+            txtSeloFoto.text = "Adicionar foto"
+        } else {
+            Glide.with(imgFoto).load(uri).circleCrop().into(imgFoto)
+            txtSeloFoto.text = "Trocar foto"
         }
     }
 
-    // ---------------------------------------------------------
-    // VALIDAÇÃO
-    // ---------------------------------------------------------
+    // =========================================================
+    // NECESSIDADES
+    // =========================================================
+
+    private fun selecionarNecessidade(sim: Boolean) {
+        temNecessidade = sim
+
+        val ativo = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_primary))
+        val inativo = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.light_gray))
+        btnSim.backgroundTintList = if (sim) ativo else inativo
+        btnNao.backgroundTintList = if (sim) inativo else ativo
+
+        containerDescricao.visibility = if (sim) View.VISIBLE else View.GONE
+    }
+
+    // =========================================================
+    // SALVAR
+    // =========================================================
+
+    private fun texto(edt: TextInputEditText) = edt.text?.toString()?.trim().orEmpty()
 
     private fun validarESalvar() {
+        val nome = texto(edtNome)
+        val nascimentoIso = DataUtil.paraIso(texto(edtNascimento))
 
-        val nome =
-            edtNome.text
-                ?.toString()
-                ?.trim()
-                ?: ""
-
-        val nascimentoDigitado =
-            edtNascimento.text
-                ?.toString()
-                ?.trim()
-                ?: ""
-
-        // -----------------------------------------------------
-        // NOME
-        // -----------------------------------------------------
-
-        if (nome.length < 3) {
-
-            Toast.makeText(
-                this,
-                "Informe o nome completo do passageiro.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
+        val erroNome = if (nome.length < 3) "*Informe o nome completo do passageiro." else null
+        val erroNascimento = when {
+            nascimentoIso == null -> "*Informe uma data válida (DD/MM/AAAA)."
+            DataUtil.calcularIdade(nascimentoIso) >= IDADE_MAXIMA ->
+                "*Este passageiro já é maior de idade. Peça para ele criar a própria conta."
+            else -> null
         }
 
-        // -----------------------------------------------------
-        // DATA
-        // -----------------------------------------------------
+        mostrarErro(layoutNome, txtErroNome, erroNome)
+        mostrarErro(layoutNascimento, txtErroNascimento, erroNascimento)
+        if (erroNome != null || erroNascimento != null || nascimentoIso == null) return
 
-        if (
-            nascimentoDigitado.length < 10
-        ) {
-
-            Toast.makeText(
-                this,
-                "Informe a data de nascimento completa (DD/MM/AAAA).",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
-        }
-
-        val nascimentoIso =
-            DataUtil.paraIso(
-                nascimentoDigitado
-            )
-
-        if (nascimentoIso == null) {
-
-            Toast.makeText(
-                this,
-                "Data de nascimento inválida.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
-        }
-
-        // -----------------------------------------------------
-        // IDADE
-        // -----------------------------------------------------
-
-        val idade =
-            DataUtil.calcularIdade(
-                nascimentoIso
-            )
-
-        if (idade < 0) {
-
-            Toast.makeText(
-                this,
-                "Não foi possível calcular a idade informada.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
-        }
-
-        // -----------------------------------------------------
-        // MAIOR DE IDADE
-        // -----------------------------------------------------
-
-        if (idade >= 18) {
-
-            Toast.makeText(
-                this,
-                "Este passageiro já é maior de idade. Peça para ele criar a própria conta.",
-                Toast.LENGTH_LONG
-            ).show()
-
-            return
-        }
-
-        // -----------------------------------------------------
-        // USUÁRIO
-        // -----------------------------------------------------
-
-        val uid =
-            auth.currentUser?.uid
-
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid == null) {
-
-            Toast.makeText(
-                this,
-                "Sessão expirada. Faça login novamente.",
-                Toast.LENGTH_SHORT
-            ).show()
-
+            mostrarErroGeral("Sessão expirada. Faça login novamente.")
             return
         }
 
-        // -----------------------------------------------------
-        // NECESSIDADES
-        // -----------------------------------------------------
+        val passageiro = PassageiroEntity(
+            nome = nome,
+            dataNascimento = nascimentoIso,
+            necessidadesEspeciais = temNecessidade,
+            descricaoNecessidades = if (temNecessidade) texto(edtDescricao) else "",
+            observacoes = texto(edtObservacoes),
+            responsavelId = uid
+        )
 
-        val descricaoNecessidades =
-            if (temNecessidadeEspecial) {
+        viewModel.cadastrar(passageiro, foto)
+    }
 
-                edtNecessidades.text
-                    ?.toString()
-                    ?.trim()
-                    ?: ""
+    private fun renderizar(estado: AdicionarPassageiroViewModel.Estado) {
+        val salvando = estado == AdicionarPassageiroViewModel.Estado.Salvando
+        progress.visibility = if (salvando) View.VISIBLE else View.GONE
+        btnSalvar.text = if (salvando) "" else "Cadastrar passageiro"
+        btnSalvar.isEnabled = !salvando
 
-            } else {
-
-                ""
-            }
-
-        val observacoes =
-            edtObservacoes.text
-                ?.toString()
-                ?.trim()
-                ?: ""
-
-        // -----------------------------------------------------
-        // PASSAGEIRO
-        // -----------------------------------------------------
-
-        val passageiroParaSalvar =
-            passageiroCarregado?.copy(
-                nome = nome,
-                dataNascimento = nascimentoIso,
-                necessidadesEspeciais = temNecessidadeEspecial,
-                descricaoNecessidades = descricaoNecessidades,
-                observacoes = observacoes
-            ) ?: PassageiroEntity(
-                id = "",
-                nome = nome,
-                dataNascimento = nascimentoIso,
-                necessidadesEspeciais =
-                    temNecessidadeEspecial,
-                descricaoNecessidades =
-                    descricaoNecessidades,
-                observacoes =
-                    observacoes,
-                responsavelId =
-                    uid,
-            )
-
-        val editando = passageiroCarregado != null
-
-        btnSalvar.isEnabled = false
-
-        lifecycleScope.launch {
-
-            try {
-
-                val idSalvo = repository.salvarPassageiro(
-                    passageiroParaSalvar
-                )
-                val passageiroSalvo = passageiroParaSalvar.copy(id = idSalvo)
-
-                if (novaFotoUri != null) {
-                    // Já vem recortada e comprimida do SeletorDeFotoHelper
-                    repository.atualizarFoto(passageiroSalvo, novaFotoUri!!)
-                } else if (fotoRemovida) {
-                    repository.removerFoto(passageiroSalvo)
-                }
-
+        when (estado) {
+            is AdicionarPassageiroViewModel.Estado.Cadastrado -> {
                 Toast.makeText(
-                    this@AdicionarPassageiroActivity,
-                    if (editando) "Passageiro atualizado com sucesso!" else "Passageiro cadastrado com sucesso!",
-                    Toast.LENGTH_SHORT
+                    this,
+                    estado.aviso ?: "Passageiro cadastrado com sucesso!",
+                    if (estado.aviso == null) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
                 ).show()
-
                 finish()
-
-            } catch (erro: Exception) {
-
-                btnSalvar.isEnabled = true
-
-                Toast.makeText(
-                    this@AdicionarPassageiroActivity,
-                    "Erro ao salvar passageiro: ${erro.message}",
-                    Toast.LENGTH_LONG
-                ).show()
             }
+
+            is AdicionarPassageiroViewModel.Estado.Erro -> {
+                mostrarErroGeral(estado.mensagem)
+                viewModel.erroTratado()
+            }
+
+            else -> Unit
         }
+    }
+
+    private fun mostrarErro(layout: TextInputLayout, txtErro: TextView, mensagem: String?) {
+        txtErro.text = mensagem
+        txtErro.visibility = if (mensagem == null) View.GONE else View.VISIBLE
+        layout.setBackgroundResource(
+            if (mensagem == null) R.drawable.bg_input_white else R.drawable.bg_input_white_red
+        )
+        if (mensagem != null) txtErroGeral.visibility = View.GONE
+    }
+
+    private fun mostrarErroGeral(mensagem: String) {
+        txtErroGeral.text = mensagem
+        txtErroGeral.visibility = View.VISIBLE
     }
 }

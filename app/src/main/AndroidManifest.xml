@@ -152,7 +152,8 @@
         <activity
             android:screenOrientation="portrait"
             android:name=".ui.responsavel.passageiros.AdicionarPassageiroActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:screenOrientation="portrait"
             android:name=".ui.responsavel.passageiros.AdicionarLocalActivity"
@@ -182,7 +183,58 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:screenOrientation="portrait"
-            android:name=".ui.comum.perfil.EditarPerfilActivity"
+            android:name=".ui.comum.perfil.EditarCampoPerfilActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateVisible" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.perfil.EditarDataNascimentoActivity"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.perfil.EditarEnderecoActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.perfil.EditarFotoPerfilActivity"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.perfil.AlterarSenhaActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.locais.LocaisSalvosActivity"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.comum.avatar.EscolherAvatarActivity"
+            android:exported="false" />
+
+        <!-- Perfil do passageiro (uma tela por campo) -->
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.responsavel.passageiros.perfil.PerfilPassageiroActivity"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.responsavel.passageiros.perfil.EditarCampoPassageiroActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateVisible" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.responsavel.passageiros.perfil.EditarNascimentoPassageiroActivity"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.responsavel.passageiros.perfil.EditarNecessidadesPassageiroActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.responsavel.passageiros.perfil.FotoPassageiroActivity"
             android:exported="false" />
         <activity
             android:screenOrientation="portrait"

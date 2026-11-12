@@ -5,42 +5,42 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider // Nativo do Android
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.bumptech.glide.Glide
-import com.example.vaivan.core.util.ExclusaoContaHelper
-import com.example.vaivan.core.util.TrocaSenhaHelper
-import com.example.vaivan.data.remote.routes.GoogleRoutesClient
-import com.example.vaivan.domain.usecase.conta.ExcluirContaUseCase
-import com.example.vaivan.ui.comum.perfil.EditarPerfilActivity
-import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.R
-import com.example.vaivan.data.local.VaivanDatabase // Substitui pelo teu banco do Room
+import com.example.vaivan.core.notificacao.TokenDispositivo
+import com.example.vaivan.core.util.ExclusaoContaHelper
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.data.repository.VeiculoRepository
+import com.example.vaivan.domain.usecase.conta.ExcluirContaUseCase
+import com.example.vaivan.ui.comum.perfil.PerfilCampos
+import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.example.vaivan.core.notificacao.TokenDispositivo
 
 class PerfilFragment : Fragment() {
 
-    // 1. Declaras a variável do ViewModel
-    private lateinit var viewModel: UsuarioViewModel
+    private val viewModel: UsuarioViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = VaivanDatabase.getInstance(requireContext())
+                UsuarioViewModel(UsuarioRepository(db.usuarioDao()))
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,109 +50,19 @@ class PerfilFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_perfil, container, false)
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-        // =========================================================
-        // BANCO / REPOSITÓRIO / VIEWMODEL
-        // =========================================================
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val database = VaivanDatabase.getInstance(requireContext())
 
-        viewModel = ViewModelProvider(
-            this,
-            viewModelFactory {
-                initializer { UsuarioViewModel(UsuarioRepository(database.usuarioDao())) }
-            }
-        )[UsuarioViewModel::class.java]
-
-        // =========================================================
-        // VIEWS
-        // =========================================================
-
-        val txtNome =
-            view.findViewById<TextView>(
-                R.id.txtNomeUsuarioCompleto
-            )
-
-        val txtNascimento =
-            view.findViewById<TextView>(
-                R.id.txtNascimento
-            )
-
-        val txtCPF =
-            view.findViewById<TextView>(
-                R.id.txtCPF
-            )
-
-        val btnDesconectar =
-            view.findViewById<MaterialButton>(
-                R.id.btnDesconectar
-            )
-
-        val imgAvatar =
-            view.findViewById<ShapeableImageView>(
-                R.id.imgUsuarioAvatar
-            )
-
-        val btnEditarPerfil =
-            view.findViewById<View>(
-                R.id.btnEditarPerfil
-            )
-
-        val btnTrocarSenha =
-            view.findViewById<View>(
-                R.id.btnTrocarSenha
-            )
-
-        val btnExcluirConta =
-            view.findViewById<View>(
-                R.id.btnExcluirConta
-            )
-
-        // =========================================================
-        // UID
-        // =========================================================
-
-        val uid =
-            FirebaseAuth
-                .getInstance()
-                .currentUser
-                ?.uid
-
-        // =========================================================
-        // EDITAR PERFIL
-        // =========================================================
-
-        btnEditarPerfil.setOnClickListener {
-
-            startActivity(
-                Intent(
-                    requireContext(),
-                    EditarPerfilActivity::class.java
-                )
-            )
-        }
-
-        // =========================================================
-        // TROCAR SENHA
-        // =========================================================
-
-        btnTrocarSenha.setOnClickListener {
-            TrocaSenhaHelper.mostrar(requireActivity() as AppCompatActivity)
-        }
+        // Cabeçalho + linhas de campos (cada uma abre a sua tela de edição).
+        val campos = PerfilCampos(this, view)
 
         // =========================================================
         // EXCLUIR CONTA
         // =========================================================
 
-        btnExcluirConta.setOnClickListener {
+        view.findViewById<View>(R.id.btnExcluirConta).setOnClickListener {
 
             ExclusaoContaHelper.confirmarExclusaoConta(this) { uid ->
 
@@ -176,95 +86,37 @@ class PerfilFragment : Fragment() {
         // DESCONECTAR
         // =========================================================
 
-        btnDesconectar.setOnClickListener {
+        view.findViewById<View>(R.id.btnDesconectar).setOnClickListener {
 
             viewLifecycleOwner.lifecycleScope.launch {
 
-                /*
-                 * Limpa o Room fora da Main Thread.
-                 */
+                // Limpa o Room fora da Main Thread
                 withContext(Dispatchers.IO) {
-
                     database.clearAllTables()
                 }
 
-                /*
-                 * Desconecta do Firebase.
-                 */
+                // Para de receber notificações desta conta neste aparelho
                 TokenDispositivo.removerDesteDispositivo()
 
-                FirebaseAuth
-                    .getInstance()
-                    .signOut()
+                FirebaseAuth.getInstance().signOut()
 
-                /*
-                 * Volta para o Login.
-                 */
-                val intent =
-                    Intent(
-                        requireContext(),
-                        LoginActivity::class.java
-                    )
-
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK
-
+                // Volta para o Login, sem deixar telas antigas na pilha
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
             }
         }
 
         // =========================================================
-        // OBSERVAR USUÁRIO PELO VIEWMODEL
+        // OBSERVAR USUÁRIO
         // =========================================================
 
-        if (uid != null) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-            viewLifecycleOwner.lifecycleScope.launch {
-
-                viewLifecycleOwner.repeatOnLifecycle(
-                    Lifecycle.State.STARTED
-                ) {
-
-                    viewModel
-                        .observarPorId(uid)
-                        .collect { responsavel ->
-
-                            if (responsavel != null) {
-
-                                /*
-                                 * Nome
-                                 */
-                                txtNome.text =
-                                    responsavel.nome
-
-                                /*
-                                 * CPF
-                                 */
-                                txtCPF.text =
-                                    responsavel.cpf
-
-                                /*
-                                 * Data de nascimento
-                                 */
-                                responsavel.dataNascimento
-                                    ?.let { dataNascimento ->
-
-                                        txtNascimento.text =
-                                            dataNascimento
-                                    }
-
-                                /*
-                                 * Foto de perfil
-                                 */
-                                Glide.with(imgAvatar)
-                                    .load(responsavel.fotoUrl)
-                                    .placeholder(R.drawable.ic_perfil)
-                                    .error(R.drawable.ic_perfil)
-                                    .circleCrop()
-                                    .into(imgAvatar)
-                            }
-                        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.observarPorId(uid).collect { usuario ->
+                    if (usuario != null) campos.preencher(usuario)
                 }
             }
         }

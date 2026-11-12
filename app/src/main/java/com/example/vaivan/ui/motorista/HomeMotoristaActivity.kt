@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
 import com.example.vaivan.core.notificacao.DestinoNotificacao
 import com.example.vaivan.core.notificacao.PermissaoNotificacao
-import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.ui.comum.perfil.AlterarSenhaActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.motorista.chat.ChatFragment
@@ -35,7 +35,7 @@ import com.example.vaivan.ui.motorista.perfil.PerfilFragment
 import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
-import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
+import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -145,7 +145,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
     }
 
     /**
-     * Itens do menu lateral: Meu perfil, Locais salvos, Meus veículos e Trocar senha.
+     * Itens do menu lateral
      */
     private fun configurarMenuLateral(drawerLayout: DrawerLayout) {
 
@@ -156,17 +156,12 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
             drawerLayout.closeDrawers()
-            startActivity(Intent(this, AdicionarLocalActivity::class.java))
+            startActivity(Intent(this, LocaisSalvosActivity::class.java))
         }
 
         findViewById<View>(R.id.btnDrawerVeiculos).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaVeiculosFragment())
-        }
-
-        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
-            drawerLayout.closeDrawers()
-            TrocaSenhaHelper.mostrar(this)
         }
     }
 

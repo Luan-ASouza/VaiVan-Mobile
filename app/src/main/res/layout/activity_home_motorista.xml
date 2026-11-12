@@ -10,8 +10,6 @@
         android:id="@+id/drawerLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
         app:layout_constraintBottom_toTopOf="@id/bottomGap"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -67,8 +65,6 @@
                 android:id="@+id/fragmentContainer"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:clipChildren="false"
-                android:clipToPadding="false"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -265,36 +261,6 @@
 
                 </LinearLayout>
 
-
-                <!-- Trocar senha -->
-                <LinearLayout
-                    android:id="@+id/btnDrawerSenha"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="14dp">
-
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/ic_cadeado"
-                        app:tint="@color/dark_gray" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:text="Trocar senha"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
                 <!-- Meus documentos -->
                 <LinearLayout
                     android:id="@+id/btnDrawerDocumentos"
