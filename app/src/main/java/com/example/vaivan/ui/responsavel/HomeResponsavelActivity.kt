@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.vaivan.core.notificacao.DestinoNotificacao
 import com.example.vaivan.core.notificacao.PermissaoNotificacao
+import com.example.vaivan.ui.responsavel.mensalidades.MensalidadesResponsavelActivity
 
 class HomeResponsavelActivity : BaseActivity() {
 
@@ -201,7 +202,13 @@ class HomeResponsavelActivity : BaseActivity() {
             drawerLayout.closeDrawers()
             abrirFragment(ListaRotasFragment())
         }
+
+        findViewById<View>(R.id.btnDrawerMensalidades).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, MensalidadesResponsavelActivity::class.java))
+        }
     }
+
 
     private fun configurarBottomNavigation() {
         bottomNavigation = BottomNavigationController(

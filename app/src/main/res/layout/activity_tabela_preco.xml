@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tabela de preços do motorista: preenchida uma vez, vale para todas as rotas.
+    Visual igual às telas recentes (fundo bege, cartões brancos, cartão escuro de destaque).
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootTabelaPreco"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/beige"
     android:orientation="vertical">
 
-    <!-- BARRA SUPERIOR -->
+    <!-- BARRA DO TOPO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnVoltarTabelaPreco"
@@ -22,15 +25,15 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Voltar"
             android:src="@drawable/ic_arrowback"
-            app:tint="@color/white" />
+            app:tint="@color/black" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Tabela de preços"
-            android:textColor="@color/orange"
+            android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -39,13 +42,28 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/white"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="12dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="28dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:lineSpacingExtra="2dp"
+            android:text="Defina seus preços uma vez e eles valem para todas as suas rotas. O app calcula o valor de cada passageiro e mostra para o responsável antes de ele pedir a vaga."
+            android:textColor="@color/gray"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_container_round_30"
             android:orientation="vertical"
             android:padding="20dp">
@@ -53,313 +71,778 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="Estes valores valem para todas as suas rotas. O preço de cada passageiro é calculado pelos dias que ele usa, se vai só de ida ou de volta, e pela distância entre a casa e a escola."
-                android:textColor="@color/gray"
-                android:textSize="13sp" />
-
-            <!-- TABELA DE PREÇOS -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tabela de preços"
+                android:text="Valor mensal"
                 android:textColor="@color/dark_gray"
-                android:textSize="16sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Valor mensal de ida e volta, conforme os dias por semana."
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="Quanto você cobra por mês para levar e buscar o aluno, de acordo com quantos dias por semana ele vai de van."
                 android:textColor="@color/medium_gray"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:orientation="vertical">
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="1 dia por semana"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="15sp" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="1 dia por semana"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
 
                     <EditText
                         android:id="@+id/edtPreco1Dia"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
                         android:importantForAutofill="no"
                         android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
                         android:textColor="@color/dark_gray"
                         android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="2 dias por semana"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtPreco2Dias"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
-                        android:importantForAutofill="no"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="3 dias por semana"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtPreco3Dias"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
-                        android:importantForAutofill="no"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="4 dias por semana"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtPreco4Dias"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
-                        android:importantForAutofill="no"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="5 dias por semana"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtPreco5Dias"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
-                        android:importantForAutofill="no"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Só ida ou só volta (%)"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtPercentualUmTrecho"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="60"
-                        android:importantForAutofill="no"
-                        android:inputType="number"
-                        android:maxLength="3"
-                        android:paddingHorizontal="12dp"
-                        android:text="60"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Km incluídos"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtKmIncluidos"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="5"
-                        android:importantForAutofill="no"
-                        android:inputType="number"
-                        android:maxLength="3"
-                        android:paddingHorizontal="12dp"
-                        android:text="5"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Valor por km extra"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtValorKmExtra"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="R$"
-                        android:importantForAutofill="no"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Dia de vencimento"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <EditText
-                        android:id="@+id/edtDiaVencimento"
-                        android:layout_width="130dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_input_white"
-                        android:hint="1 a 28"
-                        android:importantForAutofill="no"
-                        android:inputType="number"
-                        android:maxLength="3"
-                        android:paddingHorizontal="12dp"
-                        android:text="10"
-                        android:textColor="@color/dark_gray"
-                        android:textColorHint="@color/light_gray"
-                        android:textSize="14sp" />
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
-            <Button
-                android:id="@+id/btnSalvarTabelaPreco"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:background="@drawable/bg_button_darkgrey"
-                android:text="Salvar tabela"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="@null" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="2 dias por semana"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+
+                    <EditText
+                        android:id="@+id/edtPreco2Dias"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="3 dias por semana"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+
+                    <EditText
+                        android:id="@+id/edtPreco3Dias"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="4 dias por semana"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+
+                    <EditText
+                        android:id="@+id/edtPreco4Dias"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="5 dias por semana"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+
+                    <EditText
+                        android:id="@+id/edtPreco5Dias"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_container_round_30"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Só ida ou só volta"
+                android:textColor="@color/dark_gray"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="Para quem usa a van em um sentido só, por exemplo, só para ir à escola."
+                android:textColor="@color/medium_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="Quanto essa pessoa paga do valor mensal?"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp" />
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <EditText
+                        android:id="@+id/edtPercentualUmTrecho"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="60"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:text="60"
+                        android:maxLength="3"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="%"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+            <!-- Exemplo que muda conforme o motorista digita -->
+            <TextView
+                android:id="@+id/txtExemploUmTrecho"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_aviso_info"
+                android:lineSpacingExtra="2dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp"
+                android:textColor="@color/gray"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_container_round_30"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Distância até a escola"
+                android:textColor="@color/dark_gray"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="O valor mensal já cobre quem mora perto da escola. Para quem mora mais longe, você pode cobrar um pouco a mais."
+                android:textColor="@color/medium_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="O valor mensal cobre quem mora até"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <EditText
+                        android:id="@+id/edtKmIncluidos"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="5"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:text="5"
+                        android:maxLength="3"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="km da escola"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="Para cada km além disso, somar por mês"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="R$"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+
+                    <EditText
+                        android:id="@+id/edtValorKmExtra"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="0,00"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            <!-- Exemplo que muda conforme o motorista digita -->
+            <TextView
+                android:id="@+id/txtExemploDistancia"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_aviso_info"
+                android:lineSpacingExtra="2dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp"
+                android:textColor="@color/gray"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_container_round_30"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Vencimento"
+                android:textColor="@color/dark_gray"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="O dia do mês em que a mensalidade vence para todos os seus passageiros."
+                android:textColor="@color/medium_gray"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="Vence todo dia"
+                android:textColor="@color/dark_gray"
+                android:textSize="15sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_input_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
+
+                    <EditText
+                        android:id="@+id/edtDiaVencimento"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="10"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:text="10"
+                        android:maxLength="2"
+                        android:textColor="@color/dark_gray"
+                        android:textColorHint="@color/light_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="de cada mês"
+                        android:textColor="@color/medium_gray"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ===== SIMULADOR: o preço que o responsável vai ver ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_hero_card"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confira um exemplo"
+                android:textColor="@android:color/white"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Escolha um passageiro de exemplo e veja o valor que o responsável vai ver no app."
+                android:textColor="#B3FFFFFF"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/grupoSimModalidade"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:checkedButton="@id/btnSimIdaVolta"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimIdaVolta"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="Ida e volta"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimUmTrecho"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="Só ida ou só volta"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Dias por semana"
+                android:textColor="#B3FFFFFF"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/grupoSimDias"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:checkedButton="@id/btnSimDia5"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimDia1"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="1"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimDia2"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="2"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimDia3"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="3"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimDia4"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="4"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimDia5"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="5"
+                    android:textAllCaps="false"
+                    android:textColor="@color/simulador_toggle_texto"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/simulador_toggle_fundo"
+                    app:strokeWidth="0dp" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <TextView
+                android:id="@+id/txtSimDistancia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Mora a 8 km da escola"
+                android:textColor="#B3FFFFFF"
+                android:textSize="13sp" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/sliderSimDistancia"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="Distância da casa até a escola"
+                android:stepSize="1"
+                android:value="8"
+                android:valueFrom="1"
+                android:valueTo="30"
+                app:labelBehavior="gone"
+                app:thumbColor="@color/orange"
+                app:trackColorActive="@color/orange"
+                app:trackColorInactive="#33FFFFFF"
+                app:tickVisible="false" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="#26FFFFFF" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/txtSimValor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="R$ 0,00"
+                    android:textColor="@color/orange"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="por mês"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Como o valor foi calculado -->
+            <TextView
+                android:id="@+id/txtSimConta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="3dp"
+                android:textColor="@android:color/white"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSalvarTabelaPreco"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_button_darkgrey"
+            android:text="Salvar tabela"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
