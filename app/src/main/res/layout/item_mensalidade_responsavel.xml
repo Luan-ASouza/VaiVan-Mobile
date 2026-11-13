@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Cartão de um filho na tela de Mensalidades do responsável. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-    android:background="@drawable/bg_withe_round_10"
+    android:layout_marginTop="12dp"
+    android:background="@drawable/bg_container_round_30"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="18dp">
 
+    <!-- QUEM: inicial, nome, rota e situação -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,55 +18,167 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/txtTituloMensalidade"
+            android:id="@+id/txtInicialFilho"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_avatar_inicial"
+            android:gravity="center"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="M" />
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/dark_gray"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtNomeFilho"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Maria Souza" />
+
+            <TextView
+                android:id="@+id/txtRotaFilho"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/medium_gray"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp"
+                tools:text="La Salle - Manhã" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/txtStatusMensalidade"
+            android:id="@+id/txtSituacaoFilho"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:background="@drawable/bg_badge_situacao"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
             android:textColor="@color/white"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:backgroundTint="@color/green"
+            tools:text="Em dia" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/txtValorMensalidade"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="@color/dark_gray"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/txtDetalheMensalidade"
+    <!-- QUANTO E QUANDO -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="@color/medium_gray"
-        android:textSize="13sp" />
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPagarMensalidade"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mensalidade"
+                android:textColor="@color/medium_gray"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/txtValorFilho"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/dark_gray"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="R$ 400,00" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vencimento"
+                android:textColor="@color/medium_gray"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/txtVencimentoFilho"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/dark_gray"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Todo dia 10" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- SITUAÇÃO DO MÊS (a cor muda: neutro, verde ou vermelho) -->
+    <TextView
+        android:id="@+id/txtDetalheFilho"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="12dp"
-        android:text="Pagar com PIX"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:backgroundTint="@color/dark_gray" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_detalhe_contrato"
+        android:lineSpacingExtra="2dp"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp"
+        android:textColor="@color/gray"
+        android:textSize="13sp"
+        tools:text="Próxima cobrança: 10/12/2026 (Dezembro/2026)" />
+
+    <!-- AÇÕES -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPagarMensalidade"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="Pagar com PIX"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/dark_gray"
+            app:cornerRadius="23dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHistoricoFilho"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="Histórico"
+            android:textAllCaps="false"
+            android:textColor="@color/dark_gray"
+            android:textSize="13sp"
+            app:cornerRadius="23dp"
+            app:strokeColor="@color/dark_gray"
+            app:strokeWidth="1.5dp" />
+    </LinearLayout>
 </LinearLayout>

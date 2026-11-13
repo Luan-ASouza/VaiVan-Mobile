@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pagamentos do motorista: resumo do mês + um cartão por aluno. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootPagamentos"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/beige"
     android:orientation="vertical">
 
-    <!-- BARRA SUPERIOR (preta, com título laranja, como nas demais telas) -->
+    <!-- BARRA DO TOPO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="@color/dark_gray"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnVoltarPagamentos"
@@ -24,15 +23,15 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Voltar"
             android:src="@drawable/ic_arrowback"
-            app:tint="@color/white" />
+            app:tint="@color/black" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Pagamentos"
-            android:textColor="@color/orange"
+            android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -41,237 +40,293 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/white"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="28dp">
 
-            <!-- PAINEL BEGE -->
+            <ProgressBar
+                android:id="@+id/progressPagamentos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="48dp"
+                android:indeterminateTint="@color/dark_gray" />
+
+            <!-- CONTEÚDO (somente com assinatura em dia) -->
             <LinearLayout
+                android:id="@+id/conteudoPagamentos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- RESUMO DO MÊS -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_hero_card"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/txtLabelRecebido"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="13sp"
+                        tools:text="Recebido em novembro" />
+
+                    <TextView
+                        android:id="@+id/txtRecebidoMes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="@color/orange"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        tools:text="R$ 3.200,00" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="A receber no mês"
+                                android:textColor="#B3FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/txtAReceberMes"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@android:color/white"
+                                android:textSize="17sp"
+                                android:textStyle="bold"
+                                tools:text="R$ 800,00" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Em atraso"
+                                android:textColor="#B3FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/txtEmAtraso"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="#FF8A80"
+                                android:textSize="17sp"
+                                android:textStyle="bold"
+                                tools:text="R$ 400,00" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Quantos alunos em cada situação -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtQtdEmDia"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_hero"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="8 em dia" />
+
+                    <TextView
+                        android:id="@+id/txtQtdAtrasados"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_hero"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="1 atrasado" />
+
+                    <TextView
+                        android:id="@+id/txtQtdInadimplentes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_hero"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="1 inadimplente" />
+
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- FILTRO -->
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/grupoFiltroPagamentos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_container_round_30"
+                    android:padding="4dp"
+                    app:checkedButton="@id/btnFiltroTodos"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFiltroTodos"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Todos"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background"
+                    app:cornerRadius="21dp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFiltroEmDia"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Em dia"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background"
+                    app:cornerRadius="21dp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFiltroPendentes"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Pendentes"
+                    android:textAllCaps="false"
+                    android:textColor="@color/button_toggle_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/button_toggle_background"
+                    app:cornerRadius="21dp"
+                    app:strokeWidth="0dp" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="22dp"
+                    android:text="Alunos"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/containerContratos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/txtVazioPagamentos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_container_round_30"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:padding="24dp"
+                    android:textColor="@color/medium_gray"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:text="Nenhum aluno por aqui." />
+            </LinearLayout>
+
+            <!-- BLOQUEIO (assinatura sem condição de operar) -->
+            <LinearLayout
+                android:id="@+id/blocoBloqueado"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_container_round_30"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="20dp"
+                android:visibility="gone">
 
-                <ProgressBar
-                    android:id="@+id/progressPagamentos"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginVertical="24dp"
-                    android:indeterminateTint="@color/dark_gray" />
-
-                <!-- CONTEÚDO (somente com assinatura em dia) -->
-                <LinearLayout
-                    android:id="@+id/conteudoPagamentos"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:text="Área indisponível"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-                    <!-- RESUMO DO MÊS -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_withe_round_10"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:id="@+id/txtLabelRecebido"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/medium_gray"
-                            android:textSize="13sp"
-                            tools:text="Recebido em novembro" />
-
-                        <TextView
-                            android:id="@+id/txtRecebidoMes"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="26sp"
-                            android:textStyle="bold"
-                            tools:text="R$ 3.200,00" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:orientation="horizontal">
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="A receber no mês"
-                                    android:textColor="@color/medium_gray"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:id="@+id/txtAReceberMes"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textColor="@color/dark_gray"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    tools:text="R$ 800,00" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Em atraso"
-                                    android:textColor="@color/medium_gray"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:id="@+id/txtEmAtraso"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textColor="@color/red"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    tools:text="R$ 400,00" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/txtContagens"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:textColor="@color/medium_gray"
-                            android:textSize="13sp"
-                            tools:text="8 em dia · 1 atrasado · 1 inadimplente" />
-                    </LinearLayout>
-
-                    <!-- FILTRO -->
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/grupoFiltroPagamentos"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        app:checkedButton="@id/btnFiltroTodos"
-                        app:selectionRequired="true"
-                        app:singleSelection="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnFiltroTodos"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_weight="1"
-                            android:text="Todos"
-                            android:textAllCaps="false"
-                            android:textColor="@color/button_toggle_text"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="@color/button_toggle_background" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnFiltroEmDia"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_weight="1"
-                            android:text="Em dia"
-                            android:textAllCaps="false"
-                            android:textColor="@color/button_toggle_text"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="@color/button_toggle_background" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnFiltroPendentes"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_weight="1"
-                            android:text="Pendentes"
-                            android:textAllCaps="false"
-                            android:textColor="@color/button_toggle_text"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="@color/button_toggle_background" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:text="Passageiros"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/containerContratos"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-
-                    <TextView
-                        android:id="@+id/txtVazioPagamentos"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textColor="@color/medium_gray"
-                        android:textSize="14sp"
-                        android:visibility="gone"
-                        tools:text="Nenhum passageiro por aqui." />
-                </LinearLayout>
-
-                <!-- BLOQUEIO (assinatura sem condição de operar) -->
-                <LinearLayout
-                    android:id="@+id/blocoBloqueado"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="A gestão de pagamentos fica disponível com a assinatura em dia. Regularize sua assinatura para voltar a acessar."
+                    android:textColor="@color/gray"
+                    android:textSize="14sp" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Área indisponível"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="A gestão de pagamentos fica disponível somente com a assinatura em dia. Regularize sua assinatura para voltar a acessar."
-                        android:textColor="@color/gray"
-                        android:textSize="14sp" />
-
-                    <Button
-                        android:id="@+id/btnIrParaAssinatura"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_button_darkgrey"
-                        android:text="Ver minha assinatura"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null" />
-                </LinearLayout>
+                <Button
+                    android:id="@+id/btnIrParaAssinatura"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_button_darkgrey"
+                    android:text="Ver minha assinatura"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -186,11 +186,11 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.txtRecebidoMes).text = AssinaturaUi.formatarValor(resumo.recebidoNoMesCentavos)
         findViewById<TextView>(R.id.txtAReceberMes).text = AssinaturaUi.formatarValor(resumo.aReceberNoMesCentavos)
         findViewById<TextView>(R.id.txtEmAtraso).text = AssinaturaUi.formatarValor(resumo.emAtrasoCentavos)
-        findViewById<TextView>(R.id.txtContagens).text = listOf(
-            "${resumo.qtdEmDia} em dia",
-            "${resumo.qtdAtrasados} ${if (resumo.qtdAtrasados == 1) "atrasado" else "atrasados"}",
+        findViewById<TextView>(R.id.txtQtdEmDia).text = "${resumo.qtdEmDia} em dia"
+        findViewById<TextView>(R.id.txtQtdAtrasados).text =
+            "${resumo.qtdAtrasados} ${if (resumo.qtdAtrasados == 1) "atrasado" else "atrasados"}"
+        findViewById<TextView>(R.id.txtQtdInadimplentes).text =
             "${resumo.qtdInadimplentes} ${if (resumo.qtdInadimplentes == 1) "inadimplente" else "inadimplentes"}"
-        ).joinToString(" · ")
 
         // FILTRO + ORDEM (quem deve aparece primeiro)
         val visiveis = itens
@@ -212,10 +212,10 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
         txtVazio.visibility = if (visiveis.isEmpty()) View.VISIBLE else View.GONE
         txtVazio.text = when {
-            itens.isEmpty() -> "Você ainda não tem passageiros. Quando aceitar uma solicitação, " +
-                "a mensalidade do passageiro aparece aqui."
-            filtro == Filtro.PENDENTES -> "Nenhum pagamento pendente. Tudo em dia!"
-            else -> "Nenhum passageiro neste filtro."
+            itens.isEmpty() -> "Você ainda não tem alunos. Quando aceitar uma solicitação, " +
+                "a mensalidade do aluno aparece aqui."
+            filtro == Filtro.PENDENTES -> "Nenhum pagamento pendente. Está tudo em dia."
+            else -> "Nenhum aluno neste filtro."
         }
 
         // Histórico aberto acompanha as mudanças em tempo real
@@ -239,13 +239,22 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
     ): View {
         val card = layoutInflater.inflate(R.layout.item_contrato_mensalidade, containerContratos, false)
 
-        card.findViewById<TextView>(R.id.txtNomePassageiroContrato).text =
-            contrato.nomePassageiro.ifBlank { "Passageiro" }
+        val nome = contrato.nomePassageiro.ifBlank { "Aluno" }
+        card.findViewById<TextView>(R.id.txtNomePassageiroContrato).text = nome
+        card.findViewById<TextView>(R.id.txtInicialContrato).text =
+            nome.trim().take(1).uppercase()
 
-        card.findViewById<TextView>(R.id.txtResponsavelContrato).text = listOf(
-            contrato.nomeResponsavel.takeIf { it.isNotBlank() }?.let { "Responsável: $it" },
-            contrato.nomeRota.takeIf { it.isNotBlank() }
-        ).filterNotNull().joinToString(" · ")
+        card.findViewById<TextView>(R.id.txtResponsavelContrato).apply {
+            text = "Responsável: ${contrato.nomeResponsavel}"
+            visibility = if (contrato.nomeResponsavel.isBlank()) View.GONE else View.VISIBLE
+        }
+        card.findViewById<TextView>(R.id.txtRotaContrato).apply {
+            text = contrato.nomeRota
+            visibility = if (contrato.nomeRota.isBlank()) View.GONE else View.VISIBLE
+        }
+
+        card.findViewById<TextView>(R.id.txtVencimentoContrato).text =
+            "Todo dia ${contrato.diaVencimento}"
 
         val badge = card.findViewById<TextView>(R.id.txtSituacaoContrato)
         val txtValor = card.findViewById<TextView>(R.id.txtValorContrato)
@@ -257,7 +266,7 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         // Rota criada antes do campo de preço: o motorista precisa definir o valor.
         if (contrato.valorMensalCentavos <= 0) {
             pintarBadge(badge, "Sem valor", R.color.medium_gray)
-            txtValor.text = "Valor da mensalidade não definido"
+            txtValor.text = "Não definido"
             txtDetalhe.text = "Defina o valor para começar a acompanhar os pagamentos."
             btnAcao.text = "Definir valor"
             btnAcao.setOnClickListener { abrirReajuste(contrato) }
@@ -267,19 +276,18 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         val (rotulo, cor) = MensalidadeUi.rotuloDoContrato(situacao)
         pintarBadge(badge, rotulo, cor)
 
-        txtValor.text = "${AssinaturaUi.formatarValor(contrato.valorMensalCentavos)} / mês · " +
-            "vence dia ${contrato.diaVencimento}"
+        txtValor.text = AssinaturaUi.formatarValor(contrato.valorMensalCentavos)
 
         val emAberto = MensalidadePolicy.proximaEmAberto(doContrato)
-        txtDetalhe.setTextColor(ContextCompat.getColor(this, R.color.gray))
 
         if (emAberto == null) {
             val proximo = MensalidadePolicy.proximoVencimento(contrato, doContrato, agora)
             txtDetalhe.text = if (proximo != null) {
-                "Tudo pago · próxima cobrança em ${AssinaturaUi.formatarData(proximo)}"
+                "Tudo pago. Próxima cobrança em ${AssinaturaUi.formatarData(proximo)}."
             } else {
-                "Tudo pago"
+                "Tudo pago."
             }
+            pintarDetalhe(txtDetalhe, FAIXA_VERDE, R.color.green)
             btnAcao.visibility = View.GONE
             return card
         }
@@ -290,17 +298,26 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         txtDetalhe.text = when (MensalidadePolicy.situacao(emAberto, agora)) {
             SituacaoMensalidade.ATRASADA -> {
                 val dias = MensalidadePolicy.diasDeAtraso(emAberto, agora)
-                val extra = if (vencidas > 1) " (${vencidas} meses em aberto)" else ""
-                txtDetalhe.setTextColor(ContextCompat.getColor(this, R.color.red))
+                val extra = if (vencidas > 1) " ($vencidas meses em aberto)" else ""
+                pintarDetalhe(txtDetalhe, FAIXA_VERMELHA, R.color.red)
                 "$mes em atraso há $dias ${if (dias == 1L) "dia" else "dias"}$extra"
             }
-            SituacaoMensalidade.VENCE_HOJE -> "$mes vence hoje"
+            SituacaoMensalidade.VENCE_HOJE -> {
+                pintarDetalhe(txtDetalhe, FAIXA_LARANJA, R.color.dark_gray)
+                "$mes vence hoje"
+            }
             else -> "Próxima cobrança: ${AssinaturaUi.formatarData(emAberto.vencimento)} ($mes)"
         }
 
         btnAcao.text = "Registrar recebimento"
         btnAcao.setOnClickListener { confirmarRecebimento(emAberto) }
         return card
+    }
+
+    /** Pinta a faixa de situação do cartão (fundo claro + texto da cor da situação). */
+    private fun pintarDetalhe(txt: TextView, fundo: Int, corTexto: Int) {
+        txt.backgroundTintList = ColorStateList.valueOf(fundo)
+        txt.setTextColor(ContextCompat.getColor(this, corTexto))
     }
 
     private fun pintarBadge(badge: TextView, texto: String, cor: Int) {
@@ -486,5 +503,10 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "PagamentosMotorista"
+
+        // Fundos claros da faixa de situação no cartão do aluno
+        private const val FAIXA_VERDE = 0xFFE8F5E9.toInt()
+        private const val FAIXA_VERMELHA = 0xFFFDECEA.toInt()
+        private const val FAIXA_LARANJA = 0xFFFFF3E0.toInt()
     }
 }

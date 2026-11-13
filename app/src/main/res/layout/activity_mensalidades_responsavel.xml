@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Mensalidades do responsável: total em aberto + um cartão por filho. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootMensalidades"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/beige"
     android:orientation="vertical">
 
-    <!-- BARRA SUPERIOR -->
+    <!-- BARRA DO TOPO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnVoltarMensalidades"
@@ -22,15 +23,15 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Voltar"
             android:src="@drawable/ic_arrowback"
-            app:tint="@color/white" />
+            app:tint="@color/black" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Mensalidades"
-            android:textColor="@color/orange"
+            android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -39,23 +40,21 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/white"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_container_round_30"
-            android:layout_margin="12dp"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="28dp">
 
             <ProgressBar
                 android:id="@+id/progressMensalidades"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="24dp"
+                android:layout_marginTop="48dp"
                 android:indeterminateTint="@color/dark_gray" />
 
             <LinearLayout
@@ -65,38 +64,55 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- RESUMO -->
+                <!-- TOTAL EM ABERTO -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_withe_round_10"
+                    android:background="@drawable/bg_hero_card"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Total em aberto"
-                        android:textColor="@color/medium_gray"
+                        android:textColor="#B3FFFFFF"
                         android:textSize="13sp" />
 
                     <TextView
                         android:id="@+id/txtTotalAberto"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="26sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="2dp"
+                        android:textColor="@color/orange"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        tools:text="R$ 400,00" />
 
                     <TextView
                         android:id="@+id/txtResumoAberto"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textSize="13sp" />
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_chip_hero"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="Próximo vencimento: 10/12/2026" />
                 </LinearLayout>
 
-                <!-- LISTA (preenchida pelo código) -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="22dp"
+                    android:text="Seus filhos"
+                    android:textColor="@color/dark_gray"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
                 <LinearLayout
                     android:id="@+id/containerMensalidades"
                     android:layout_width="match_parent"
@@ -107,10 +123,15 @@
                     android:id="@+id/txtVazioMensalidades"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_container_round_30"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:padding="24dp"
                     android:textColor="@color/medium_gray"
                     android:textSize="14sp"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:text="Quando um motorista aceitar seu filho em uma rota, a mensalidade aparece aqui." />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
