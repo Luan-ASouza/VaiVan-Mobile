@@ -1,10 +1,12 @@
 package com.example.vaivan.ui.motorista.rotas
 
 import android.os.Bundle
-import android.widget.ImageButton
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
+import com.example.vaivan.core.util.MapaEstiloUtil
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
@@ -17,11 +19,9 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -34,6 +34,9 @@ class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
     private lateinit var googleMap: GoogleMap
     private lateinit var txtTituloRota: TextView
     private lateinit var txtResumoRota: TextView
+    private lateinit var txtPartidaRota: TextView
+    private lateinit var txtDestinoRota: TextView
+    private lateinit var secaoTrajetoRota: View
 
     private var rotaId: String = ""
 
@@ -58,9 +61,12 @@ class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
             return
         }
 
-        findViewById<ImageButton>(R.id.btnVoltar).setOnClickListener { finish() }
+        findViewById<View>(R.id.btnVoltar).setOnClickListener { finish() }
         txtTituloRota = findViewById(R.id.txtTituloRota)
         txtResumoRota = findViewById(R.id.txtResumoRota)
+        txtPartidaRota = findViewById(R.id.txtPartidaRota)
+        txtDestinoRota = findViewById(R.id.txtDestinoRota)
+        secaoTrajetoRota = findViewById(R.id.secaoTrajetoRota)
 
         val mapFragment =
             supportFragmentManager.findFragmentById(R.id.mapaRota) as SupportMapFragment
@@ -71,7 +77,13 @@ class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        googleMap.uiSettings.isZoomControlsEnabled = true
+        MapaEstiloUtil.aplicarEstiloClaro(this, googleMap)
+        // O mapa ocupa a tela toda: o padding faz o enquadramento caber só na
+        // área visível (entre a status bar e o painel inferior).
+        val painel = findViewById<View>(R.id.painelRota)
+        painel.doOnLayout {
+            googleMap.setPadding(0, findViewById<View>(R.id.topGap).height, 0, painel.height)
+        }
         carregarRota()
     }
 
@@ -112,12 +124,7 @@ class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
             return
         }
 
-        googleMap.addPolyline(
-            PolylineOptions()
-                .addAll(pontos)
-                .width(14f)
-                .color(ContextCompat.getColor(this, R.color.orange))
-        )
+        MapaEstiloUtil.desenharRota(this, googleMap, pontos)
 
         val partida =
             if (rota.origemLatitude != 0.0 || rota.origemLongitude != 0.0)
@@ -126,24 +133,40 @@ class VisualizarRotaActivity : BaseActivity(), OnMapReadyCallback {
 
         val escola = LatLng(rota.destinoLatitude, rota.destinoLongitude)
 
+        val pinoPartida = MapaEstiloUtil.criarPino(
+            context = this,
+            corPino = ContextCompat.getColor(this, R.color.mapa_rota),
+            rotulo = "Partida",
+            iconeResId = R.drawable.ic_van
+        )
         googleMap.addMarker(
             MarkerOptions()
                 .position(partida)
-                .title("Partida")
-                .snippet(rota.origemEndereco)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                .icon(pinoPartida.descriptor)
+                .anchor(0.5f, pinoPartida.anchorY)
+                .zIndex(3f)
+        )
+        val pinoEscola = MapaEstiloUtil.criarPino(
+            context = this,
+            corPino = ContextCompat.getColor(this, R.color.mapa_pino_escuro),
+            rotulo = rota.destinoNome.ifBlank { "Escola" },
+            iconeResId = R.drawable.ic_escola_generica
         )
         googleMap.addMarker(
             MarkerOptions()
                 .position(escola)
-                .title("Escola")
-                .snippet(rota.destinoEndereco)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                .icon(pinoEscola.descriptor)
+                .anchor(0.5f, pinoEscola.anchorY)
+                .zIndex(3f)
         )
 
         val km = String.format(Locale("pt", "BR"), "%.1f km", rota.distanciaMetros / 1000.0)
         val minutos = (rota.duracaoSegundos / 60).coerceAtLeast(1)
         txtResumoRota.text = "${rotulo(rota.tipoTrajeto)} · $km · cerca de $minutos min"
+
+        txtPartidaRota.text = rota.origemEndereco.ifBlank { rota.origemNome }
+        txtDestinoRota.text = rota.destinoNome.ifBlank { rota.destinoEndereco }
+        secaoTrajetoRota.visibility = View.VISIBLE
 
         val bounds = LatLngBounds.Builder().apply {
             pontos.forEach { include(it) }

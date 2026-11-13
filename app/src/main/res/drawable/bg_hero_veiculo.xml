@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo do cabeçalho do cadastro de veículo: grafite com um brilho suave
+     atrás da van e cantos de baixo arredondados. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:centerX="0.5"
+        android:centerY="0.68"
+        android:endColor="@color/hero_base"
+        android:gradientRadius="75%p"
+        android:startColor="@color/hero_glow"
+        android:type="radial" />
+    <corners
+        android:bottomLeftRadius="36dp"
+        android:bottomRightRadius="36dp" />
+</shape>

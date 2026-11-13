@@ -102,7 +102,8 @@
         <activity
             android:screenOrientation="portrait"
             android:name=".ui.motorista.veiculos.CadastroVeiculoActivity"
-            android:exported="false" /> <!-- Cadastro / Documentos -->
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" /> <!-- Cadastro / Documentos -->
         <activity
             android:screenOrientation="portrait"
             android:name=".ui.motorista.entrada.documentos.CapturaSelfieActivity"

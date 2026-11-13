@@ -290,6 +290,22 @@ class HomeMotoristaActivity : AppCompatActivity() {
             .beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
+        marcarItemDoMenuLateral(fragment)
+    }
+
+    /**
+     * Destaca no menu lateral (a "aba" clara) o item da tela aberta.
+     * Itens que abrem Activity própria nunca ficam marcados.
+     */
+    private fun marcarItemDoMenuLateral(fragment: Fragment) {
+        val ativo = when (fragment) {
+            is PerfilFragment -> R.id.btnDrawerPerfil
+            is ListaVeiculosFragment -> R.id.btnDrawerVeiculos
+            else -> null
+        }
+        listOf(R.id.btnDrawerPerfil, R.id.btnDrawerVeiculos).forEach { id ->
+            findViewById<View>(id).isSelected = id == ativo
+        }
     }
 
     //Aplica gaps em cima e embaixo de forma dinâmica

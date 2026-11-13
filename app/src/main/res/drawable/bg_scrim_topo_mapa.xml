@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Degradê branco → transparente atrás da status bar, em telas de mapa claro. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="270"
+        android:endColor="#00FFFFFF"
+        android:startColor="#CCFFFFFF" />
+</shape>

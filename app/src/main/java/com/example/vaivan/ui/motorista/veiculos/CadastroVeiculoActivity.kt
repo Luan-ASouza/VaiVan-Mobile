@@ -11,16 +11,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Button
 import android.widget.Filter
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.widget.doAfterTextChanged
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.vaivan.R
+import com.example.vaivan.core.base.BaseActivity
+import com.example.vaivan.core.util.WindowInsetsUtil
 import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
@@ -28,7 +36,9 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -42,13 +52,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.regex.Pattern
 
-class CadastroVeiculoActivity : AppCompatActivity() {
+class CadastroVeiculoActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_VEICULO_ID = "extra_veiculo_id"
 
         private const val ANO_MINIMO = 1990
         private const val LIMITE_CAPACIDADE = 40
+
+        private const val TEXTO_SALVAR = "Salvar e continuar"
+        private const val TEXTO_SALVAR_EDICAO = "Salvar alterações"
 
         private const val STATUS_VEICULO = "PENDENTE"
         private const val STATUS_DOCUMENTO = "EM_ANALISE"
@@ -71,19 +84,29 @@ class CadastroVeiculoActivity : AppCompatActivity() {
     private lateinit var edtCor: AutoCompleteTextView
     private lateinit var edtCapacidade: TextInputEditText
 
+    private lateinit var layoutPlaca: TextInputLayout
+    private lateinit var layoutMarca: TextInputLayout
+    private lateinit var layoutModelo: TextInputLayout
+    private lateinit var layoutAno: TextInputLayout
+    private lateinit var layoutCor: TextInputLayout
+    private lateinit var layoutCapacidade: TextInputLayout
+
     private lateinit var txtErroPlaca: TextView
     private lateinit var txtErroMarca: TextView
     private lateinit var txtErroModelo: TextView
     private lateinit var txtErroAno: TextView
     private lateinit var txtErroCor: TextView
     private lateinit var txtErroCapacidade: TextView
+    private lateinit var txtErroCrlv: TextView
+    private lateinit var txtErroAutorizacao: TextView
 
     private lateinit var imgFotoVeiculo: ImageView
     private lateinit var txtStatusFoto: TextView
 
-    private lateinit var btnSelecionarCrlv: Button
-    private lateinit var btnSelecionarAutorizacao: Button
-    private lateinit var btnSalvar: Button
+    private lateinit var btnSelecionarCrlv: View
+    private lateinit var btnSelecionarAutorizacao: View
+    private lateinit var btnSalvar: MaterialButton
+    private lateinit var progress: ProgressBar
 
     private lateinit var txtNomeArquivoCrlv: TextView
     private lateinit var txtNomeArquivoAutorizacao: TextView
@@ -116,10 +139,11 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
                 txtNomeArquivoCrlv.text = nomeDoArquivo(it)
                 txtNomeArquivoCrlv.setTextColor(
-                    getColor(R.color.black)
+                    getColor(R.color.text_primary)
                 )
 
                 iconCheckCrlv.visibility = View.VISIBLE
+                txtErroCrlv.visibility = View.GONE
             }
         }
 
@@ -130,10 +154,11 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
                 txtNomeArquivoAutorizacao.text = nomeDoArquivo(it)
                 txtNomeArquivoAutorizacao.setTextColor(
-                    getColor(R.color.black)
+                    getColor(R.color.text_primary)
                 )
 
                 iconCheckAutorizacao.visibility = View.VISIBLE
+                txtErroAutorizacao.visibility = View.GONE
             }
         }
 
@@ -145,9 +170,10 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
         configurarRepositories()
         configurarViews()
+        configurarEdgeToEdge()
         configurarDropdownsVeiculo()
         configurarListeners()
-        configurarErros()
+        configurarLimpezaDeErros()
 
         if (veiculoId != null) {
             configurarModoEdicao()
@@ -180,19 +206,32 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         edtCor = findViewById(R.id.edtCor)
         edtCapacidade = findViewById(R.id.edtCapacidade)
 
+        layoutPlaca = findViewById(R.id.layoutPlaca)
+        layoutMarca = findViewById(R.id.layoutMarca)
+        layoutModelo = findViewById(R.id.layoutModelo)
+        layoutAno = findViewById(R.id.layoutAno)
+        layoutCor = findViewById(R.id.layoutCor)
+        layoutCapacidade = findViewById(R.id.layoutCapacidade)
+
         txtErroPlaca = findViewById(R.id.txtErroPlaca)
         txtErroMarca = findViewById(R.id.txtErroMarca)
         txtErroModelo = findViewById(R.id.txtErroModelo)
         txtErroAno = findViewById(R.id.txtErroAno)
         txtErroCor = findViewById(R.id.txtErroCor)
         txtErroCapacidade = findViewById(R.id.txtErroCapacidade)
+        txtErroCrlv = findViewById(R.id.txtErroCrlv)
+        txtErroAutorizacao = findViewById(R.id.txtErroAutorizacao)
 
         imgFotoVeiculo = findViewById(R.id.imgFotoVeiculo)
         txtStatusFoto = findViewById(R.id.txtStatusFoto)
 
         btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv)
         btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao)
-        btnSalvar = findViewById(R.id.btnSalvarVeiculo)
+        btnSalvar = findViewById(R.id.btnSalvarEdicaoPerfil)
+        progress = findViewById(R.id.progressEdicaoPerfil)
+
+        btnSalvar.text = TEXTO_SALVAR
+        findViewById<View>(R.id.btnVoltarCadastroVeiculo).setOnClickListener { finish() }
 
         txtNomeArquivoCrlv =
             findViewById(R.id.txtNomeArquivoCrlv)
@@ -232,18 +271,44 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         }
     }
 
-    private fun configurarErros() {
+    /** Cabeçalho escuro sob a status bar (ícones claros), voltar fixo logo
+     * abaixo dela e botão Salvar acima do teclado. */
+    private fun configurarEdgeToEdge() {
 
-        listOf(
-            txtErroPlaca,
-            txtErroMarca,
-            txtErroModelo,
-            txtErroAno,
-            txtErroCor,
-            txtErroCapacidade
-        ).forEach {
-            it.visibility = View.GONE
+        aplicarGapsDeSistema(aplicarBase = false)
+        WindowInsetsUtil.aplicarInsets(findViewById(R.id.conteudoCadastroVeiculo), aplicarTopo = false)
+
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+
+        val btnVoltar = findViewById<View>(R.id.btnVoltarCadastroVeiculo)
+        val margemTopo = (8 * resources.displayMetrics.density).toInt()
+
+        ViewCompat.setOnApplyWindowInsetsListener(btnVoltar) { view, insets ->
+            val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = margemTopo + barras.top
+            }
+            insets
         }
+    }
+
+    /** Some com o erro de um campo assim que o usuário mexe nele. */
+    private fun configurarLimpezaDeErros() {
+
+        edtPlaca.doAfterTextChanged { mostrarErro(layoutPlaca, txtErroPlaca, false) }
+        edtCapacidade.doAfterTextChanged { mostrarErro(layoutCapacidade, txtErroCapacidade, false) }
+        edtMarca.doAfterTextChanged { mostrarErro(layoutMarca, txtErroMarca, false) }
+        edtModelo.doAfterTextChanged { mostrarErro(layoutModelo, txtErroModelo, false) }
+        edtAno.doAfterTextChanged { mostrarErro(layoutAno, txtErroAno, false) }
+        edtCor.doAfterTextChanged { mostrarErro(layoutCor, txtErroCor, false) }
+    }
+
+    /** Mensagem embaixo do campo + borda vermelha (mesmo padrão das telas de perfil). */
+    private fun mostrarErro(layout: TextInputLayout, mensagem: TextView, erro: Boolean) {
+        mensagem.visibility = if (erro) View.VISIBLE else View.GONE
+        layout.setBackgroundResource(
+            if (erro) R.drawable.bg_input_white_red else R.drawable.bg_input_white
+        )
     }
 
     // ---------------------------------------------------------
@@ -305,8 +370,11 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             ArrayAdapter(this, android.R.layout.simple_list_item_1, anos)
         )
 
-        edtAno.setOnClickListener {
-            edtAno.showDropDown()
+        // Campos fechados (sem digitação): tocar abre/fecha a lista.
+        listOf(edtMarca, edtModelo, edtAno, edtCor).forEach { campo ->
+            campo.setOnClickListener {
+                if (campo.isPopupShowing) campo.dismissDropDown() else campo.showDropDown()
+            }
         }
     }
 
@@ -314,12 +382,25 @@ class CadastroVeiculoActivity : AppCompatActivity() {
      * [VeiculosEscolares]), não é buscada por request nenhuma. */
     private fun atualizarFotoPreview(veiculo: VeiculoEscolar?) {
         if (veiculo != null) {
-            imgFotoVeiculo.setImageResource(veiculo.foto)
-            txtStatusFoto.text = "Foto de exemplo do modelo"
+            carregarFotoNoCabecalho(veiculo.foto, apagada = false)
+            txtStatusFoto.text = "${veiculo.marca} ${veiculo.modelo} · foto de exemplo"
+            txtStatusFoto.setTextColor(getColor(R.color.color_primary))
         } else {
-            imgFotoVeiculo.setImageResource(R.drawable.ic_truck)
+            // Sem modelo escolhido: silhueta apagada da van, só pra não deixar o cabeçalho vazio.
+            carregarFotoNoCabecalho(R.drawable.van1_img, apagada = true)
             txtStatusFoto.text = "Escolha marca e modelo pra ver uma foto de exemplo"
+            txtStatusFoto.setTextColor(getColor(R.color.text_on_dark_secondary))
         }
+    }
+
+    /** Troca a foto do cabeçalho com um fade (Glide, como no resto do app). */
+    private fun carregarFotoNoCabecalho(@androidx.annotation.DrawableRes foto: Int, apagada: Boolean) {
+        imgFotoVeiculo.animate().alpha(if (apagada) 0.35f else 1f).setDuration(250).start()
+
+        Glide.with(imgFotoVeiculo)
+            .load(foto)
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .into(imgFotoVeiculo)
     }
 
     /** Mostra a bolinha de amostra da cor escolhida dentro do próprio campo
@@ -328,7 +409,7 @@ class CadastroVeiculoActivity : AppCompatActivity() {
      * pra reaproveitar uma instância compartilhada). */
     private fun aplicarBolinhaCor(cor: CorVeiculo?) {
         if (cor == null) {
-            edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
+            edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, setaDropdown(), null)
             return
         }
 
@@ -340,8 +421,10 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             setSize(tamanhoPx, tamanhoPx)
         }
 
-        edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(bolinha, null, null, null)
+        edtCor.setCompoundDrawablesRelativeWithIntrinsicBounds(bolinha, null, setaDropdown(), null)
     }
+
+    private fun setaDropdown() = ContextCompat.getDrawable(this, R.drawable.ic_seta_baixo)
 
     private fun atualizarAdapter(adapter: ArrayAdapter<String>, itens: List<String>) {
         adapter.setNotifyOnChange(false)
@@ -356,12 +439,12 @@ class CadastroVeiculoActivity : AppCompatActivity() {
 
     private fun configurarModoEdicao() {
         findViewById<TextView>(R.id.txtTituloVeiculo).text = "Editar veículo"
-        findViewById<TextView>(R.id.txtSubtituloVeiculo).text = "Atualize os dados do seu veículo"
+        findViewById<TextView>(R.id.txtSubtituloVeiculo).text = "Atualize os dados do seu veículo."
 
-        txtNomeArquivoCrlv.text = "Manter documento atual (opcional trocar)"
-        txtNomeArquivoAutorizacao.text = "Manter documento atual (opcional trocar)"
+        txtNomeArquivoCrlv.text = "Manter documento atual (toque para trocar)"
+        txtNomeArquivoAutorizacao.text = "Manter documento atual (toque para trocar)"
 
-        btnSalvar.text = "Salvar alterações"
+        btnSalvar.text = TEXTO_SALVAR_EDICAO
     }
 
     private fun carregarVeiculoParaEdicao(id: String) {
@@ -465,81 +548,52 @@ class CadastroVeiculoActivity : AppCompatActivity() {
         val cor = corSelecionada?.nomeExibicao.orEmpty()
         val capacidadeTexto = obterTexto(edtCapacidade)
 
-        var valido = true
-
-        if (!REGEX_PLACA.matcher(placa).matches()) {
-            txtErroPlaca.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroPlaca.visibility = View.GONE
-        }
-
-        if (marca.length < 2) {
-            txtErroMarca.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroMarca.visibility = View.GONE
-        }
-
-        if (modelo.length < 2) {
-            txtErroModelo.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroModelo.visibility = View.GONE
-        }
-
         val ano = anoTexto.toIntOrNull() ?: -1
 
         val anoAtual = Calendar.getInstance()
             .get(Calendar.YEAR)
 
-        if (ano !in ANO_MINIMO..anoAtual + 1) {
-            txtErroAno.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroAno.visibility = View.GONE
-        }
-
-        if (cor.length < 2) {
-            txtErroCor.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroCor.visibility = View.GONE
-        }
-
         val capacidade = capacidadeTexto.toIntOrNull() ?: -1
-
-        if (capacidade !in 1..LIMITE_CAPACIDADE) {
-            txtErroCapacidade.visibility = View.VISIBLE
-            valido = false
-        } else {
-            txtErroCapacidade.visibility = View.GONE
-        }
-
-        if (!valido) return
 
         val editando = veiculoCarregado != null
 
-        if (!editando) {
-            if (uriCrlv == null) {
-                Toast.makeText(
-                    this,
-                    "Selecione o arquivo do CRLV",
-                    Toast.LENGTH_SHORT
-                ).show()
+        // Cada campo inválido ganha mensagem + borda vermelha (todos de uma vez).
+        val erroPlaca = !REGEX_PLACA.matcher(placa).matches()
+        val erroMarca = marca.length < 2
+        val erroModelo = modelo.length < 2
+        val erroAno = ano !in ANO_MINIMO..anoAtual + 1
+        val erroCor = cor.length < 2
+        val erroCapacidade = capacidade !in 1..LIMITE_CAPACIDADE
+        // Documentos só são obrigatórios no cadastro (na edição a troca é opcional).
+        val erroCrlv = !editando && uriCrlv == null
+        val erroAutorizacao = !editando && uriAutorizacao == null
 
-                return
-            }
+        mostrarErro(layoutPlaca, txtErroPlaca, erroPlaca)
+        mostrarErro(layoutMarca, txtErroMarca, erroMarca)
+        mostrarErro(layoutModelo, txtErroModelo, erroModelo)
+        mostrarErro(layoutAno, txtErroAno, erroAno)
+        mostrarErro(layoutCor, txtErroCor, erroCor)
+        mostrarErro(layoutCapacidade, txtErroCapacidade, erroCapacidade)
+        txtErroCrlv.visibility = if (erroCrlv) View.VISIBLE else View.GONE
+        txtErroAutorizacao.visibility = if (erroAutorizacao) View.VISIBLE else View.GONE
 
-            if (uriAutorizacao == null) {
-                Toast.makeText(
-                    this,
-                    "Selecione o documento de autorização",
-                    Toast.LENGTH_SHORT
-                ).show()
+        val primeiroErro = listOf(
+            erroPlaca to layoutPlaca,
+            erroMarca to layoutMarca,
+            erroModelo to layoutModelo,
+            erroAno to layoutAno,
+            erroCapacidade to layoutCapacidade,
+            erroCor to layoutCor,
+            erroCrlv to btnSelecionarCrlv,
+            erroAutorizacao to btnSelecionarAutorizacao
+        ).firstOrNull { it.first }?.second
 
-                return
-            }
+        if (primeiroErro != null) {
+            // Rola até o primeiro campo com erro.
+            primeiroErro.requestRectangleOnScreen(
+                android.graphics.Rect(0, 0, primeiroErro.width, primeiroErro.height + (48 * resources.displayMetrics.density).toInt())
+            )
+            return
         }
 
         val motoristaId = FirebaseAuth
@@ -557,8 +611,7 @@ class CadastroVeiculoActivity : AppCompatActivity() {
             return
         }
 
-        btnSalvar.isEnabled = false
-        btnSalvar.text = "Salvando..."
+        definirSalvando(true)
 
         val veiculoParaSalvar = veiculoCarregado?.copy(
             placa = placa,
@@ -723,8 +776,17 @@ class CadastroVeiculoActivity : AppCompatActivity() {
     }
 
     private fun restaurarBotao() {
-        btnSalvar.isEnabled = true
-        btnSalvar.text = if (veiculoCarregado != null) "Salvar alterações" else "Salvar e continuar"
+        definirSalvando(false)
+    }
+
+    private fun definirSalvando(salvando: Boolean) {
+        progress.visibility = if (salvando) View.VISIBLE else View.GONE
+        btnSalvar.isEnabled = !salvando
+        btnSalvar.text = when {
+            salvando -> ""
+            veiculoCarregado != null -> TEXTO_SALVAR_EDICAO
+            else -> TEXTO_SALVAR
+        }
     }
 }
 

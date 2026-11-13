@@ -188,6 +188,11 @@ class HomeResponsavelActivity : BaseActivity() {
             abrirFragment(PerfilFragment())
         }
 
+        findViewById<View>(R.id.drawerPerfil).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
+        }
+
         findViewById<View>(R.id.btnDrawerPassageiros).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaPassageirosFragment())
@@ -286,5 +291,26 @@ class HomeResponsavelActivity : BaseActivity() {
                 fragment
             )
             .commit()
+        marcarItemDoMenuLateral(fragment)
+    }
+
+    /**
+     * Destaca no menu lateral (a "aba" clara) o item da tela aberta.
+     * Itens que abrem Activity própria nunca ficam marcados.
+     */
+    private fun marcarItemDoMenuLateral(fragment: Fragment) {
+        val ativo = when (fragment) {
+            is PerfilFragment -> R.id.btnDrawerPerfil
+            is ListaPassageirosFragment -> R.id.btnDrawerPassageiros
+            is ListaRotasFragment -> R.id.btnDrawerTransportes
+            else -> null
+        }
+        listOf(
+            R.id.btnDrawerPerfil,
+            R.id.btnDrawerPassageiros,
+            R.id.btnDrawerTransportes
+        ).forEach { id ->
+            findViewById<View>(id).isSelected = id == ativo
+        }
     }
 }

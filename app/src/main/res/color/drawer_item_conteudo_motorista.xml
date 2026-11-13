@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone/texto do menu do motorista: claro na aba escura selecionada, escuro no resto. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/text_on_dark" android:state_selected="true" />
+    <item android:color="@color/text_primary" />
+</selector>

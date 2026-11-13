@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Menu lateral do motorista: cabeçalho escuro, corpo claro com itens escuros e o
+     item ativo como uma "aba" escura (ver bg_drawer_item_motorista / DrawerItem.Motorista). -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/dark_gray">
+
+    <!-- Cabeçalho do perfil -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_drawer_head_motorista"
+        android:orientation="vertical"
+        android:paddingStart="15dp"
+        android:paddingTop="50dp"
+        android:paddingBottom="15dp">
+
+        <LinearLayout
+            android:id="@+id/drawerPerfil"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_drawer_profile"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/drawerAvatar"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:padding="3dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_perfil"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="@color/dark_gray"
+                app:strokeWidth="3dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingStart="10dp">
+
+                <TextView
+                    android:id="@+id/drawerTxtNomeDoUsuario"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:text=""
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_star"
+                        app:tint="@color/color_primary" />
+
+                    <TextView
+                        android:id="@+id/drawerNota"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:fontFamily="@font/montserrat_semibold"
+                        android:text="5.0"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <!-- Corpo: fundo claro com canto arredondado -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginEnd="5dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_drawer_body_motorista"
+        android:orientation="vertical"
+        android:paddingBottom="20dp">
+
+        <!-- Menu -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="10dp"
+            android:paddingEnd="10dp">
+
+            <LinearLayout
+                android:id="@+id/btnDrawerPerfil"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_perfil" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Meu perfil" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerLocais"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_local" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Locais salvos" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerVeiculos"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_van" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Meus veículos" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerDocumentos"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_documento" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Meus documentos" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerAssinatura"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_selo" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Planos e assinatura" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerPagamentos"
+                style="@style/DrawerItem.Motorista"
+                android:visibility="gone">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_lucro" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Gestão de pagamentos" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerTabelaPrecos"
+                style="@style/DrawerItem.Motorista">
+
+                <ImageView
+                    style="@style/DrawerItemIcone.Motorista"
+                    android:src="@drawable/ic_pagamentos" />
+
+                <TextView
+                    style="@style/DrawerItemTexto.Motorista"
+                    android:text="Tabela de preços" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <!-- Espaço -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+
+        <!-- Divisor -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/divider_drawer" />
+
+
+        <!-- Desconectar -->
+        <LinearLayout
+            android:id="@+id/btnDrawerDesconectar"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="@drawable/bg_button_red"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_desconectar"
+                app:tint="@color/text_on_dark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:fontFamily="@font/montserrat_semibold"
+                android:text="Desconectar"
+                android:textColor="@color/text_on_dark"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

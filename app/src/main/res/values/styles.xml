@@ -81,4 +81,49 @@
         <item name="android:textSize">16sp</item>
     </style>
 
+    <!-- Menu lateral (drawer_motorista / drawer_responsavel). O item ativo é
+         marcado com isSelected = true pela Home (vira a "aba" clara). -->
+    <style name="DrawerItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">54dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+        <item name="android:paddingStart">28dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">@drawable/bg_drawer_item</item>
+        <item name="android:foreground">@drawable/ripple_drawer_item</item>
+    </style>
+
+    <style name="DrawerItemIcone">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="tint">@color/drawer_item_conteudo</item>
+    </style>
+
+    <style name="DrawerItemTexto">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:fontFamily">@font/montserrat_semibold</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/drawer_item_conteudo</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <!-- Variante do menu do motorista: aba escura, conteúdo escuro no corpo claro. -->
+    <style name="DrawerItem.Motorista">
+        <item name="android:background">@drawable/bg_drawer_item_motorista</item>
+    </style>
+
+    <style name="DrawerItemIcone.Motorista">
+        <item name="tint">@color/drawer_item_conteudo_motorista</item>
+    </style>
+
+    <style name="DrawerItemTexto.Motorista">
+        <item name="android:textColor">@color/drawer_item_conteudo_motorista</item>
+    </style>
+
 </resources>

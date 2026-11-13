@@ -31,7 +31,7 @@
             android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:text="Planos de assinatura"
-            android:textColor="@color/orange"
+            android:textColor="@color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -57,7 +57,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="12dp"
+            android:clipToPadding="false">
 
             <!-- PAINEL BEGE -->
             <LinearLayout
@@ -105,7 +106,9 @@
                     android:id="@+id/containerPlanos"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
+                    android:orientation="horizontal"
+                    android:paddingBottom="4dp"
+                    android:clipToPadding="false"/>
 
                 <View
                     android:layout_width="match_parent"

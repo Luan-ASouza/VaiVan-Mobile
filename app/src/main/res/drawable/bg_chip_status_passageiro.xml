@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chip de status do aluno — a cor é aplicada em código (tom claro da cor do status). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/background_screen" />
+    <corners android:radius="30dp" />
+</shape>

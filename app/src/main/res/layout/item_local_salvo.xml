@@ -18,7 +18,7 @@
         android:layout_width="26dp"
         android:layout_height="26dp"
         android:importantForAccessibility="no"
-        android:src="@drawable/ic_local_salvo"
+        android:src="@drawable/ic_local"
         app:tint="@color/text_primary" />
 
     <LinearLayout

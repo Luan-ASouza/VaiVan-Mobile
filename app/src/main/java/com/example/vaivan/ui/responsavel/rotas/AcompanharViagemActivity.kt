@@ -14,6 +14,8 @@ import android.widget.TextView
 import com.example.vaivan.core.base.BaseActivity
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -45,12 +47,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.RoundCap
 import android.content.Intent
 import android.widget.Toast
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
@@ -92,11 +96,11 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         const val EXTRA_MOTORISTA_ID = "motoristaId"
         const val EXTRA_ROTA_IDA_E_VOLTA = "rotaIdaEVolta"
 
-        /** Proporção vertical (0=topo, 1=base) do centro da foto dentro do
-         * ícone composto foto+nome — ver [criarIconeComFotoENome]. */
-        private const val ANCHOR_Y_FOTO_NOME = 0.32f
-
     }
+
+    /** Ícone de pino pronto + a proporção vertical do anel da base (onde o
+     * pino "toca" o mapa) — ver [criarIconePino]. */
+    private class IconePino(val descriptor: BitmapDescriptor, val anchorY: Float)
 
     private lateinit var mMap: GoogleMap
 
@@ -118,6 +122,10 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     private var marcadorMotorista: Marker? = null
     private var marcadorEmbarqueFilho: Marker? = null
     private var polylineRestante: Polyline? = null
+
+    /** Traço mais largo e escuro por baixo de [polylineRestante] — dá o
+     * contorno da rota. Sempre recebe os mesmos pontos. */
+    private var polylineContorno: Polyline? = null
     private var animacaoMarcador: ValueAnimator? = null
 
     /** Rota desenhada agora: a publicada pelo motorista (espelho do
@@ -289,8 +297,15 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = false
-        mMap.uiSettings.isCompassEnabled = true
-        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.estilo_mapa_escuro))
+        mMap.uiSettings.isCompassEnabled = false
+        mMap.uiSettings.isMapToolbarEnabled = false
+        mMap.isBuildingsEnabled = false
+        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.estilo_mapa_claro))
+
+        // O mapa ocupa a tela toda (por trás da status bar e do sheet): o
+        // padding faz os enquadramentos caberem só na área visível.
+        val topo = findViewById<View>(R.id.topGap).height
+        mMap.setPadding(0, topo, 0, bottomSheetBehavior.peekHeight)
 
         // Gesto do usuário (arrastar/pinçar) pausa a recentralização
         // automática — animateCamera (programático) não entra aqui.
@@ -339,16 +354,27 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         val existente = polylineRestante
         if (existente != null) {
             existente.points = pontos
+            polylineContorno?.points = pontos
             return
         }
+        val densidade = resources.displayMetrics.density
+        polylineContorno = mMap.addPolyline(
+            estiloPolyline(pontos, 9f * densidade, R.color.mapa_rota_contorno).zIndex(1f)
+        )
         polylineRestante = mMap.addPolyline(
-            PolylineOptions()
-                .addAll(pontos)
-                .width(18f)
-                .color(ContextCompat.getColor(this, R.color.color_primary))
-                .geodesic(false)
+            estiloPolyline(pontos, 6f * densidade, R.color.mapa_rota).zIndex(2f)
         )
     }
+
+    private fun estiloPolyline(pontos: List<LatLng>, larguraPx: Float, corRes: Int) =
+        PolylineOptions()
+            .addAll(pontos)
+            .width(larguraPx)
+            .color(ContextCompat.getColor(this, corRes))
+            .startCap(RoundCap())
+            .endCap(RoundCap())
+            .jointType(JointType.ROUND)
+            .geodesic(false)
 
     /** Corta o trecho já percorrido ("rastro que desaparece", igual Uber/99).
      * Procura a van só numa janela à frente do progresso atual e só recorta se
@@ -363,8 +389,9 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         ) ?: return null
 
         indiceProgressoRota = indice
-        polylineRestante?.points =
-            listOf(posicaoAtual) + pontosRota.subList(indice + 1, pontosRota.size)
+        val restante = listOf(posicaoAtual) + pontosRota.subList(indice + 1, pontosRota.size)
+        polylineRestante?.points = restante
+        polylineContorno?.points = restante
         return indice
     }
 
@@ -461,14 +488,19 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
         atualizarStatusViagem(viewModel.viagem.value)
     }
 
+    /** Chip com fundo no tom claro da cor do status (14% de opacidade) e o
+     * texto na cor cheia. "Aguardando" (cinza claro) usaria texto ilegível
+     * sobre o próprio tom — cai pro texto secundário. */
     private fun atualizarStatusAluno(status: StatusPassageiro?) {
-        if (status == null) {
-            txtStatusAluno.text = "Aguardando"
-            txtStatusAluno.setTextColor(ContextCompat.getColor(this, R.color.light_gray))
-            return
-        }
-        txtStatusAluno.text = status.texto
-        txtStatusAluno.setTextColor(ContextCompat.getColor(this, status.cor))
+        val texto = status?.texto ?: "Aguardando"
+        val corRes = status?.cor ?: R.color.light_gray
+        val cor = ContextCompat.getColor(this, corRes)
+
+        txtStatusAluno.text = texto
+        txtStatusAluno.setTextColor(
+            if (corRes == R.color.light_gray) ContextCompat.getColor(this, R.color.text_secondary) else cor
+        )
+        txtStatusAluno.background.mutate().setTint(ColorUtils.setAlphaComponent(cor, 36))
     }
 
     /** Retorna null quando as duas paradas já estiverem resolvidas (filho já
@@ -489,7 +521,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     private fun atualizarEndereco(paradas: List<ParadaViagemEntity>) {
         val pendente = paradaPendente(paradas) ?: return
 
-        txtEndereco.text = "Indo para: ${pendente.endereco.ifBlank { pendente.nomeLocal }}"
+        txtEndereco.text = pendente.endereco.ifBlank { pendente.nomeLocal }
 
         Glide.with(fotoAluno)
             .load(pendente.fotoPassageiroUrl)
@@ -504,7 +536,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
      * [calcularEta]. */
     private fun atualizarEta(paradas: List<ParadaViagemEntity>) {
         val pendente = paradaPendente(paradas)
-        txtEta.text = calcularEta(pendente)?.let { "Chegada estimada: $it" }
+        txtEta.text = calcularEta(pendente)?.let { "Chegada estimada às $it" }
         txtEta.visibility = if (txtEta.text.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
@@ -516,10 +548,8 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     private fun atualizarDesembarqueFinal(todasParadas: List<ParadaViagemEntity>) {
         val ultima = todasParadas.maxByOrNull { it.ordem }
 
-        txtDesembarqueFinal.text = ultima?.let {
-            "Desembarque final: ${it.nomeLocal.ifBlank { it.endereco }}"
-        }
-        txtEtaFinal.text = calcularEta(ultima)?.let { "Chegada final estimada: $it" }
+        txtDesembarqueFinal.text = ultima?.let { it.nomeLocal.ifBlank { it.endereco } }
+        txtEtaFinal.text = calcularEta(ultima)?.let { "Previsão às $it" }
         txtEtaFinal.visibility = if (txtEtaFinal.text.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
@@ -629,26 +659,39 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
      * no clique — ver [criarIconeComFotoENome]). */
     private fun desenharMarcadorFilho(ponto: LatLng, parada: ParadaViagemEntity) {
         if (parada.localId == "escola") {
+            val icone = criarIconePino(
+                corPino = ContextCompat.getColor(this, R.color.mapa_pino_escuro),
+                rotulo = null,
+                foto = null,
+                iconeResId = R.drawable.ic_escola_generica
+            )
             mMap.addMarker(
                 MarkerOptions()
                     .position(ponto)
                     .title("Escola")
-                    .icon(iconeDeVetor(R.drawable.ic_escola_generica, 40))
-                    .anchor(0.5f, 0.5f)
+                    .icon(icone.descriptor)
+                    .anchor(0.5f, icone.anchorY)
+                    .zIndex(3f)
             )
             return
         }
 
         lifecycleScope.launch {
             val bitmapFoto = carregarBitmapFoto(parada.fotoPassageiroUrl)
-            val icone = criarIconeComFotoENome(bitmapFoto, parada.nomePassageiro)
+            val icone = criarIconePino(
+                corPino = ContextCompat.getColor(this@AcompanharViagemActivity, R.color.mapa_rota),
+                rotulo = parada.nomePassageiro.ifBlank { null },
+                foto = bitmapFoto,
+                iconeResId = null
+            )
 
             if (!::mMap.isInitialized) return@launch
             val marker = mMap.addMarker(
                 MarkerOptions()
                     .position(ponto)
-                    .icon(icone)
-                    .anchor(0.5f, ANCHOR_Y_FOTO_NOME)
+                    .icon(icone.descriptor)
+                    .anchor(0.5f, icone.anchorY)
+                    .zIndex(3f)
             )
             if (parada.tipo == ViagemRepository.TIPO_EMBARQUE) {
                 marcadorEmbarqueFilho = marker
@@ -669,87 +712,144 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
 
     private suspend fun carregarBitmapFoto(fotoUrl: String?): Bitmap = withContext(Dispatchers.IO) {
         if (fotoUrl.isNullOrBlank()) {
-            bitmapDoDrawable(R.drawable.ic_perfil, 96, 96)
+            bitmapDoDrawable(R.drawable.ic_perfil, 160, 160)
         } else {
             try {
                 Glide.with(this@AcompanharViagemActivity)
                     .asBitmap()
                     .load(fotoUrl)
                     .circleCrop()
-                    .submit(96, 96)
+                    .submit(160, 160)
                     .get()
             } catch (_: Exception) {
-                bitmapDoDrawable(R.drawable.ic_perfil, 96, 96)
+                bitmapDoDrawable(R.drawable.ic_perfil, 160, 160)
             }
         }
     }
 
-    /** Monta um ícone com a foto circular por cima e o nome sempre visível
-     * num rótulo por baixo — assim o nome não depende de showInfoWindow
-     * (que só mantém uma janela aberta por vez entre vários marcadores). */
-    private fun criarIconeComFotoENome(bitmapFoto: Bitmap, nome: String): BitmapDescriptor {
-        val densidade = resources.displayMetrics.density
-        val diametroFoto = (56 * densidade).toInt()
-        val espacamento = (4 * densidade).toInt()
-        val alturaRotulo = (28 * densidade).toInt()
+    /**
+     * Pino no estilo de apps de transporte: rótulo opcional (pílula branca),
+     * cabeça redonda colorida (com a foto ou um ícone branco dentro), haste
+     * fina e um anel na base — o anel é o ponto exato no mapa (anchor).
+     * O nome fica sempre visível, sem depender de showInfoWindow (que só
+     * mantém uma janela aberta por vez entre vários marcadores).
+     */
+    private fun criarIconePino(
+        corPino: Int,
+        rotulo: String?,
+        foto: Bitmap?,
+        iconeResId: Int?
+    ): IconePino {
+        val d = resources.displayMetrics.density
+        val sombra = 4f * d
+        val diametroCabeca = 46f * d
+        val alturaHaste = 14f * d
+        val raioAnel = 6f * d
+        val espessura = 3f * d
+        val alturaRotulo = 24f * d
+        val espacoRotulo = 6f * d
 
-        val paintTexto = Paint().apply {
-            color = Color.WHITE
-            textSize = 13f * densidade
-            isAntiAlias = true
+        val paintTexto = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(this@AcompanharViagemActivity, R.color.text_primary)
+            textSize = 12f * d
             textAlign = Paint.Align.CENTER
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = ResourcesCompat.getFont(this@AcompanharViagemActivity, R.font.montserrat_semibold)
+                ?: Typeface.DEFAULT_BOLD
         }
+        val larguraRotulo = rotulo?.let { paintTexto.measureText(it) + 20f * d } ?: 0f
 
-        val larguraTexto = paintTexto.measureText(nome)
-        val largura = maxOf(diametroFoto, (larguraTexto + 24 * densidade).toInt())
-        val altura = diametroFoto + espacamento + alturaRotulo
+        val largura = (maxOf(diametroCabeca, larguraRotulo) + 2 * sombra).toInt()
+        val topoCabeca = sombra + if (rotulo != null) alturaRotulo + espacoRotulo else 0f
+        val centroCabecaY = topoCabeca + diametroCabeca / 2f
+        val centroAnelY = topoCabeca + diametroCabeca + alturaHaste + raioAnel
+        val altura = (centroAnelY + raioAnel + espessura + sombra).toInt()
+        val cx = largura / 2f
 
         val bitmap = Bitmap.createBitmap(largura, altura, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
+        val corSombra = Color.argb(70, 0, 0, 0)
 
-        val paintFundoRotulo = Paint().apply {
-            color = Color.argb(220, 33, 33, 33)
-            isAntiAlias = true
+        // Rótulo com o nome
+        if (rotulo != null) {
+            val paintFundo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                setShadowLayer(3f * d, 0f, 1f * d, corSombra)
+            }
+            val esquerda = cx - larguraRotulo / 2f
+            canvas.drawRoundRect(
+                RectF(esquerda, sombra, esquerda + larguraRotulo, sombra + alturaRotulo),
+                alturaRotulo / 2f, alturaRotulo / 2f, paintFundo
+            )
+            val baseTexto = sombra + alturaRotulo / 2f - (paintTexto.descent() + paintTexto.ascent()) / 2f
+            canvas.drawText(rotulo, cx, baseTexto, paintTexto)
         }
-        val topoRotulo = (diametroFoto + espacamento).toFloat()
-        canvas.drawRoundRect(
-            RectF(0f, topoRotulo, largura.toFloat(), altura.toFloat()),
-            alturaRotulo / 2f,
-            alturaRotulo / 2f,
-            paintFundoRotulo
-        )
-        canvas.drawText(
-            nome,
-            largura / 2f,
-            altura - alturaRotulo / 2f + paintTexto.textSize / 3f,
-            paintTexto
+
+        val paintCor = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = corPino }
+
+        // Haste
+        canvas.drawRect(
+            cx - espessura / 2f, centroCabecaY, cx + espessura / 2f, centroAnelY, paintCor
         )
 
-        val fotoEscalada = Bitmap.createScaledBitmap(bitmapFoto, diametroFoto, diametroFoto, true)
-        canvas.drawBitmap(fotoEscalada, (largura - diametroFoto) / 2f, 0f, null)
-
-        val paintBorda = Paint().apply {
-            color = ContextCompat.getColor(this@AcompanharViagemActivity, R.color.color_primary)
+        // Anel da base (branco com borda na cor do pino)
+        canvas.drawCircle(cx, centroAnelY, raioAnel, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            setShadowLayer(2f * d, 0f, 1f * d, corSombra)
+        })
+        canvas.drawCircle(cx, centroAnelY, raioAnel, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = corPino
             style = Paint.Style.STROKE
-            strokeWidth = 3f * densidade
-            isAntiAlias = true
+            strokeWidth = espessura
+        })
+
+        // Cabeça
+        canvas.drawCircle(cx, centroCabecaY, diametroCabeca / 2f, Paint(paintCor).apply {
+            setShadowLayer(4f * d, 0f, 2f * d, corSombra)
+        })
+
+        if (foto != null) {
+            val diametroFoto = (diametroCabeca - 2 * espessura).toInt()
+            val fotoEscalada = Bitmap.createScaledBitmap(foto, diametroFoto, diametroFoto, true)
+            canvas.drawBitmap(fotoEscalada, cx - diametroFoto / 2f, centroCabecaY - diametroFoto / 2f, null)
+        } else if (iconeResId != null) {
+            val tamanhoIcone = (22f * d).toInt()
+            ContextCompat.getDrawable(this, iconeResId)?.mutate()?.let { icone ->
+                icone.setTint(Color.WHITE)
+                val x = (cx - tamanhoIcone / 2f).toInt()
+                val y = (centroCabecaY - tamanhoIcone / 2f).toInt()
+                icone.setBounds(x, y, x + tamanhoIcone, y + tamanhoIcone)
+                icone.draw(canvas)
+            }
         }
-        canvas.drawCircle(largura / 2f, diametroFoto / 2f, diametroFoto / 2f - 2f, paintBorda)
 
-        return BitmapDescriptorFactory.fromBitmap(bitmap)
+        return IconePino(BitmapDescriptorFactory.fromBitmap(bitmap), centroAnelY / altura)
     }
 
-    /** BitmapDescriptorFactory.fromResource() só decodifica imagens raster
-     * (PNG/JPG) — um vector drawable (XML) faz o Maps SDK derrubar o app com
-     * "Failed to decode image. The provided image must be a Bitmap.". Por
-     * isso os ícones genéricos (vetor) precisam ser rasterizados manualmente
-     * antes, igual [bitmapDoDrawable] já faz. */
-    private fun iconeDeVetor(resId: Int, tamanhoDp: Int): BitmapDescriptor {
-        val tamanhoPx = (tamanhoDp * resources.displayMetrics.density).toInt()
-        return BitmapDescriptorFactory.fromBitmap(bitmapDoDrawable(resId, tamanhoPx, tamanhoPx))
+    /** Ponto discreto (anel cinza) pras paradas de outros passageiros. */
+    private val iconeOutraParada: BitmapDescriptor by lazy {
+        val d = resources.displayMetrics.density
+        val raio = 5f * d
+        val espessura = 2.5f * d
+        val margem = 3f * d
+        val lado = (2 * (raio + espessura + margem)).toInt()
+        val bitmap = Bitmap.createBitmap(lado, lado, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val c = lado / 2f
+        canvas.drawCircle(c, c, raio, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            setShadowLayer(2f * d, 0f, 1f * d, Color.argb(60, 0, 0, 0))
+        })
+        canvas.drawCircle(c, c, raio, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(this@AcompanharViagemActivity, R.color.mapa_parada_outra)
+            style = Paint.Style.STROKE
+            strokeWidth = espessura
+        })
+        BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
+    /** Vetores não podem ir direto pro BitmapDescriptorFactory.fromResource()
+     * (o Maps SDK derruba o app com "Failed to decode image") — sempre
+     * rasterizar antes, como aqui e em [criarIconePino]. */
     private fun bitmapDoDrawable(resId: Int, largura: Int, altura: Int): Bitmap {
         val drawable = ContextCompat.getDrawable(this, resId)
             ?: throw IllegalStateException("Drawable não encontrado: $resId")
@@ -791,8 +891,9 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             marcadoresOutrasParadas[chave] = mMap.addMarker(
                 MarkerOptions()
                     .position(LatLng(parada.latitude, parada.longitude))
-                    .icon(iconeDeVetor(R.drawable.ic_parada_generica, 20))
+                    .icon(iconeOutraParada)
                     .anchor(0.5f, 0.5f)
+                    .zIndex(2.5f)
             ) ?: return@forEach
         }
     }
@@ -818,6 +919,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                     .icon(criarIconeVan(ContextCompat.getColor(this, R.color.color_primary)))
                     .anchor(0.5f, 0.5f)
                     .flat(true)
+                    .zIndex(4f)
             )
             if (autoRecentralizarAtivo) recentralizarCamera(novaPosicao)
             return

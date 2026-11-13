@@ -35,7 +35,7 @@ class LocaisSalvosAdapter(
         holder.txtEndereco.text = local.endereco
         holder.imgIcone.setImageResource(
             if (TextoUtil.normalizar(local.nome).contains("casa")) R.drawable.ic_casa
-            else R.drawable.ic_local_salvo
+            else R.drawable.ic_local
         )
 
         // A linha inteira e o lápis levam pra edição.

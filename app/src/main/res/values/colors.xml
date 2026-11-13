@@ -15,6 +15,7 @@
     <color name="light_graysh">#D9D9D9</color>
 
     <color name="orange">#F6B12F</color>
+    <color name="orange_dark">#C98A12</color>
     <color name="green">#2CA144</color>
     <color name="light_blue">#0170CC</color>
     <color name="red">#E53935</color>
@@ -32,14 +33,24 @@
     <color name="background_screen">@color/white_solitude</color>
     <color name="background_card">@color/background_card_base</color>
     <color name="background_container">@color/white</color>
+    <!-- Menu lateral (drawer): fundo escuro; o item ativo usa background_screen
+         para parecer uma "aba" ligada ao conteúdo. -->
+    <color name="background_drawer">@color/dark_gray</color>
+    <color name="divider_drawer">#E3E5E9</color>
     <!-- Telas de mídia em tela cheia (recorte de foto) -->
     <color name="background_midia">@color/black</color>
+    <!-- Cabeçalho escuro com foto do veículo (cadastro de veículo): brilho no
+         centro, borda mais escura. -->
+    <color name="hero_glow">@color/gray</color>
+    <color name="hero_base">@color/dark_gray</color>
+    <color name="hero_botao_voltar">#33FFFFFF</color>
 
     <!-- Classe: Typography (Textos) -->
     <color name="text_primary">@color/dark_gray</color>
     <color name="text_secondary">@color/medium_gray</color>
     <color name="text_tertiary">@color/light_gray</color>
     <color name="text_on_dark">@color/white</color>
+    <color name="text_on_dark_secondary">@color/light_gray</color>
 
     <!-- Classe: Brand & Actions (Identidade e Botões) -->
     <color name="color_primary">@color/orange</color>
@@ -50,6 +61,13 @@
     <color name="status_success">@color/green</color>
     <color name="status_danger">@color/red</color>
     <color name="status_warning">@color/orange</color>
+
+    <!-- Classe: Mapa (acompanhamento ao vivo). Rota = traço da marca com
+         contorno mais escuro por baixo; pino escuro = escola/destino. -->
+    <color name="mapa_rota">@color/color_primary</color>
+    <color name="mapa_rota_contorno">@color/orange_dark</color>
+    <color name="mapa_pino_escuro">@color/dark_gray</color>
+    <color name="mapa_parada_outra">@color/light_gray</color>
 
     <!-- Classe: Borders & Dividers (Linhas e Contornos) -->
     <color name="border_light">@color/light_gray</color>
