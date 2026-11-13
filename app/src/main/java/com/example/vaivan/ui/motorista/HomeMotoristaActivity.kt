@@ -155,6 +155,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
             abrirFragment(PerfilFragment())
         }
 
+        findViewById<View>(R.id.drawerPerfil).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
+        }
+
         findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
             drawerLayout.closeDrawers()
             startActivity(Intent(this, LocaisSalvosActivity::class.java))
