@@ -272,6 +272,11 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="cadastro" />
+
+        <!-- ==================== Telas de Ajuda ==================== -->
+
+        <activity android:name=".ui.ajuda.AjudaActivity" android:exported="false" />
+        <activity android:name=".ui.ajuda.GuiaAjudaActivity" android:exported="false" />
     </application>
 
 </manifest>
