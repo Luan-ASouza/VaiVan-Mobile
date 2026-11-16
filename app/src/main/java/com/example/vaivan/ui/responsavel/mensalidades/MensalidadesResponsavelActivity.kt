@@ -54,6 +54,12 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
     private lateinit var container: LinearLayout
     private lateinit var txtVazio: TextView
 
+    /**
+     * Vindo do cartão do filho ("Pagar e ativar a vaga"): id da reserva/contrato cuja
+     * 1ª mensalidade deve abrir direto no PIX assim que estiver carregada.
+     */
+    private var contratoParaPagar: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mensalidades_responsavel)
@@ -66,6 +72,9 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        contratoParaPagar = intent.getStringExtra(EXTRA_PAGAR_CONTRATO_ID)
+        contratoParaPagar?.let { garantirCobrancaDaReserva(it) }
 
         progress = findViewById(R.id.progressMensalidades)
         conteudo = findViewById(R.id.conteudoMensalidades)
@@ -84,9 +93,41 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
                     mensalidades = m
                     renderizar()
                     gerarMensalidadesFaltando()
+                    abrirPagamentoPedido()
                 }
             }
         }
+    }
+
+    /**
+     * Se o contrato/1ª mensalidade da reserva não foram criados no aceite (ex.: o
+     * celular do motorista estava sem internet), o próprio responsável cria.
+     */
+    private fun garantirCobrancaDaReserva(solicitacaoId: String) {
+        lifecycleScope.launch {
+            try {
+                repository.garantirContrato(solicitacaoId, inicioEm = System.currentTimeMillis())
+            } catch (e: Exception) {
+                Log.w(TAG, "Não foi possível criar a cobrança da reserva", e)
+                Toast.makeText(
+                    this@MensalidadesResponsavelActivity,
+                    "Não foi possível carregar a cobrança agora. Verifique a internet e tente de novo.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    /** Abre o PIX da 1ª mensalidade pedida, uma vez, quando ela aparecer na lista. */
+    private fun abrirPagamentoPedido() {
+        val contratoId = contratoParaPagar ?: return
+        val primeira = mensalidades
+            .filter { it.contratoId == contratoId && it.status == StatusMensalidade.PENDENTE }
+            .minByOrNull { it.vencimento }
+            ?: return // ainda sendo criada: tenta de novo na próxima atualização
+
+        contratoParaPagar = null
+        abrirPix(primeira)
     }
 
     /** Se o motorista ainda não abriu o app neste mês, quem cria a cobrança é o responsável. */
@@ -158,8 +199,9 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
     private fun ordem(s: SituacaoContrato) = when (s) {
         SituacaoContrato.INADIMPLENTE -> 0
         SituacaoContrato.ATRASADO -> 1
-        SituacaoContrato.EM_DIA -> 2
-        SituacaoContrato.ENCERRADO -> 3
+        SituacaoContrato.RESERVADO -> 2
+        SituacaoContrato.EM_DIA -> 3
+        SituacaoContrato.ENCERRADO -> 4
     }
 
     private fun montarCard(
@@ -228,6 +270,13 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
                 "$mes vence hoje"
             }
             else -> "$mes vence em ${AssinaturaUi.formatarData(aPagar.vencimento)}"
+        }
+
+        // Vaga reservada: a 1ª mensalidade é o que ativa a vaga
+        if (contrato.status == StatusContrato.AGUARDANDO_PAGAMENTO) {
+            pintarDetalhe(txtDetalhe, FAIXA_LARANJA, R.color.dark_gray)
+            txtDetalhe.text = "Vaga reservada! Pague a 1ª mensalidade (proporcional aos dias que faltam no mês) " +
+                "até ${AssinaturaUi.formatarData(aPagar.vencimento)} para ativar a vaga."
         }
 
         // Sempre paga a mais antiga primeiro
@@ -356,15 +405,18 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
         sheet.show()
     }
 
-    private companion object {
-        const val TAG = "MensalidadesResponsavel"
+    companion object {
+        /** Id da reserva (= id do contrato) cuja 1ª mensalidade abre direto no PIX. */
+        const val EXTRA_PAGAR_CONTRATO_ID = "pagarContratoId"
+
+        private const val TAG = "MensalidadesResponsavel"
 
         // Fundos claros da faixa de situação no cartão do filho
-        const val FAIXA_VERDE = 0xFFE8F5E9.toInt()
-        const val FAIXA_VERMELHA = 0xFFFDECEA.toInt()
-        const val FAIXA_LARANJA = 0xFFFFF3E0.toInt()
+        private const val FAIXA_VERDE = 0xFFE8F5E9.toInt()
+        private const val FAIXA_VERMELHA = 0xFFFDECEA.toInt()
+        private const val FAIXA_LARANJA = 0xFFFFF3E0.toInt()
 
         // Vermelho claro para ler bem sobre o cartão escuro
-        const val COR_ATRASO_NO_ESCURO = 0xFFFF8A80.toInt()
+        private const val COR_ATRASO_NO_ESCURO = 0xFFFF8A80.toInt()
     }
 }

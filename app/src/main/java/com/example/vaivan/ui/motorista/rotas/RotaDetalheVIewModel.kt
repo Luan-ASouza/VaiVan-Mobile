@@ -9,6 +9,7 @@ import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
+import com.example.vaivan.domain.usecase.solicitacao.ConfirmarReservasPagasUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
@@ -19,7 +20,8 @@ class RotaDetalheViewModel(
     private val solicitacaoRepository: SolicitacaoInclusaoRepository,
     private val aceitarSolicitacaoUseCase: AceitarSolicitacaoUseCase,
     private val iniciarViagemUseCase: IniciarViagemUseCase,
-    private val avisoAusenciaRepository: AvisoAusenciaRepository
+    private val avisoAusenciaRepository: AvisoAusenciaRepository,
+    private val confirmarReservasPagasUseCase: ConfirmarReservasPagasUseCase
 ) : ViewModel() {
 
     // Traz do Firestore para o Room do motorista as solicitações recebidas
@@ -52,6 +54,7 @@ class RotaDetalheViewModel(
      * paradas) — as solicitações e avisos de ausência já chegam em tempo
      * real pelos listeners iniciados no init, não precisam de ação aqui. */
     suspend fun atualizarTudo(rotaId: String, motoristaId: String) {
+        processarReservas(motoristaId)
         rotaRepository.sincronizarRotasDoMotoristaUmaVez(motoristaId)
         rotaRepository.sincronizarParadasUmaVez(rotaId)
     }
@@ -97,11 +100,25 @@ class RotaDetalheViewModel(
         )
     }
 
+    /**
+     * Coloca no trajeto quem já pagou a 1ª mensalidade e expira reservas vencidas.
+     * Devolve quantos alunos entraram na rota. Nunca falha (erro = tenta na próxima vez).
+     */
+    suspend fun processarReservas(motoristaId: String): Int =
+        try {
+            confirmarReservasPagasUseCase(motoristaId)
+        } catch (e: Exception) {
+            0
+        }
+
     suspend fun iniciarViagem(
         rotaId: String,
         motoristaId: String,
         direcao: String
     ): ViagemEntity {
+
+        // Garante que quem já pagou a 1ª mensalidade entre nesta viagem
+        processarReservas(motoristaId)
 
         return iniciarViagemUseCase(
             rotaId = rotaId,

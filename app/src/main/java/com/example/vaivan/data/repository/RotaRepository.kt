@@ -697,7 +697,9 @@ class RotaRepository(
         rotaAtualizada: RotaEntity,
         paradas: List<ParadaRotaEntity>,
         baseCalculadoEm: Long,
-        respondidaEm: Long
+        respondidaEm: Long,
+        // true = a vaga já foi reservada no aceite (ver reservarVaga): não conta de novo
+        vagaJaReservada: Boolean = false
     ) = withContext(Dispatchers.IO) {
 
         val rotaRef = collectionRotas.document(rotaAtualizada.id)
@@ -717,15 +719,18 @@ class RotaRepository(
             if (!rotaServidor.exists()) {
                 throw falha("Rota não encontrada.")
             }
+            val statusEsperado =
+                if (vagaJaReservada) SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO
+                else SolicitacaoInclusaoRepository.STATUS_PENDENTE
             when (solicitacaoServidor.getString("status")) {
-                "PENDENTE" -> Unit
-                "CANCELADA" -> throw falha("O responsável cancelou este pedido.")
+                statusEsperado -> Unit
+                SolicitacaoInclusaoRepository.STATUS_CANCELADA -> throw falha("O responsável cancelou este pedido.")
                 else -> throw falha("Esta solicitação já foi respondida.")
             }
 
             val vagasOcupadas = rotaServidor.getLong("vagasOcupadas") ?: 0L
             val capacidadeTotal = rotaServidor.getLong("capacidadeTotal") ?: 0L
-            if (vagasOcupadas >= capacidadeTotal) {
+            if (!vagaJaReservada && vagasOcupadas >= capacidadeTotal) {
                 throw falha("Esta rota já está com todas as vagas ocupadas.")
             }
 
@@ -736,17 +741,27 @@ class RotaRepository(
 
             // Vagas a partir do número do SERVIDOR: se um responsável cancelou e
             // liberou uma vaga há pouco, a cópia local pode estar desatualizada.
-            transaction.set(rotaRef, rotaAtualizada.copy(vagasOcupadas = vagasOcupadas.toInt() + 1))
+            val vagasFinal = vagasOcupadas.toInt() + if (vagaJaReservada) 0 else 1
+            transaction.set(rotaRef, rotaAtualizada.copy(vagasOcupadas = vagasFinal))
             paradas.forEach { parada ->
                 transaction.set(collectionParadas.document(parada.id), parada)
             }
             transaction.update(
                 solicitacaoRef,
-                mapOf(
-                    "status" to "ACEITA",
-                    "respondidoEm" to respondidaEm,
-                    "lastUpdated" to respondidaEm
-                )
+                if (vagaJaReservada) {
+                    // Ativação depois do 1º pagamento: mantém a data do aceite
+                    mapOf(
+                        "status" to SolicitacaoInclusaoRepository.STATUS_ACEITA,
+                        "ativadaEm" to respondidaEm,
+                        "lastUpdated" to respondidaEm
+                    )
+                } else {
+                    mapOf(
+                        "status" to SolicitacaoInclusaoRepository.STATUS_ACEITA,
+                        "respondidoEm" to respondidaEm,
+                        "lastUpdated" to respondidaEm
+                    )
+                }
             )
 
             null
@@ -756,6 +771,57 @@ class RotaRepository(
         paradaRotaDao.deleteByRota(rotaAtualizada.id)
         paradaRotaDao.upsertAll(paradas)
         rotaDao.upsert(rotaAtualizada)
+    }
+
+    /**
+     * ACEITE DO MOTORISTA (1ª etapa): reserva a vaga, sem colocar o aluno no trajeto.
+     * Numa transação: confere que o pedido ainda está PENDENTE e que há vaga, soma 1
+     * em vagasOcupadas e marca o pedido como AGUARDANDO_PAGAMENTO. O aluno entra no
+     * trajeto só depois que o responsável paga a 1ª mensalidade (ConfirmarReservasPagasUseCase).
+     */
+    suspend fun reservarVaga(
+        solicitacaoId: String,
+        rotaId: String,
+        respondidaEm: Long
+    ) = withContext(Dispatchers.IO) {
+
+        val rotaRef = collectionRotas.document(rotaId)
+        val solicitacaoRef = firestore.collection("solicitacoes_inclusao").document(solicitacaoId)
+
+        fun falha(mensagem: String) = FirebaseFirestoreException(
+            mensagem,
+            FirebaseFirestoreException.Code.FAILED_PRECONDITION
+        )
+
+        firestore.runTransaction { transaction ->
+            val rotaServidor = transaction.get(rotaRef)
+            val solicitacaoServidor = transaction.get(solicitacaoRef)
+
+            if (!rotaServidor.exists()) throw falha("Rota não encontrada.")
+
+            when (solicitacaoServidor.getString("status")) {
+                SolicitacaoInclusaoRepository.STATUS_PENDENTE -> Unit
+                SolicitacaoInclusaoRepository.STATUS_CANCELADA -> throw falha("O responsável cancelou este pedido.")
+                else -> throw falha("Esta solicitação já foi respondida.")
+            }
+
+            val vagasOcupadas = rotaServidor.getLong("vagasOcupadas") ?: 0L
+            val capacidadeTotal = rotaServidor.getLong("capacidadeTotal") ?: 0L
+            if (vagasOcupadas >= capacidadeTotal) {
+                throw falha("Esta rota já está com todas as vagas ocupadas.")
+            }
+
+            transaction.update(rotaRef, "vagasOcupadas", vagasOcupadas + 1)
+            transaction.update(
+                solicitacaoRef,
+                mapOf(
+                    "status" to SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO,
+                    "respondidoEm" to respondidaEm,
+                    "lastUpdated" to respondidaEm
+                )
+            )
+            null
+        }.await()
     }
 
     // =========================================================

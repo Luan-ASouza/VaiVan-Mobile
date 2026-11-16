@@ -208,8 +208,8 @@ service cloud.firestore {
         let depois = getAfter(/databases/$(database)/documents/solicitacoes_inclusao/$(solicitacaoId)).data;
         return antes.responsavelId == request.auth.uid &&
           antes.rotaId == rotaId &&
-          antes.status == 'ACEITA' &&
-          depois.status == 'CANCELADA';
+          antes.status in ['ACEITA', 'AGUARDANDO_PAGAMENTO'] &&
+          depois.status in ['CANCELADA', 'EXPIRADA'];
       }
 
       allow read: if request.auth != null;
@@ -250,25 +250,46 @@ service cloud.firestore {
         request.resource.data.status == 'PENDENTE' &&
         assinaturaOperacional(request.resource.data.motoristaId);
 
-      // Cada parte só faz o que é dela:
-      //  - motorista: aceita (com assinatura em dia) ou recusa; não mexe em cancelada;
-      //  - responsável: só CANCELA um pedido pendente ou uma rota aceita.
-      //    (Antes ele também conseguia marcar o próprio pedido como ACEITA.)
+      // Ciclo de vida: PENDENTE -> AGUARDANDO_PAGAMENTO (motorista aceita e reserva a
+      // vaga) -> ACEITA (1ª mensalidade paga, aluno entra na rota).
+      // Finais: RECUSADA (motorista), CANCELADA (responsável), EXPIRADA (prazo de 3 dias
+      // do 1º pagamento; qualquer uma das partes pode registrar).
+      function primeiraMensalidadePaga(solicitacaoId) {
+        let contrato = get(/databases/$(database)/documents/contratos/$(solicitacaoId)).data;
+        return get(/databases/$(database)/documents/mensalidades/$(solicitacaoId + '_' + contrato.competenciaInicial)).data.status == 'PAGA';
+      }
+      // Espelha MensalidadePolicy.PRAZO_PRIMEIRO_PAGAMENTO_DIAS (3 dias = 259200000 ms)
+      function prazoDoPrimeiroPagamentoVenceu() {
+        return request.time.toMillis() > resource.data.respondidoEm + 259200000;
+      }
+      function mudouPara(de, para) {
+        return resource.data.status == de && request.resource.data.status == para;
+      }
+
       allow update: if logado() &&
         // O valor calculado na solicitação não pode ser alterado depois
         request.resource.data.get('valorMensalCentavos', 0) ==
           resource.data.get('valorMensalCentavos', 0) &&
         (
-          (resource.data.motoristaId == request.auth.uid &&
-           resource.data.status != 'CANCELADA' &&
-           request.resource.data.status != 'CANCELADA' &&
-           (request.resource.data.status != 'ACEITA' ||
-            assinaturaOperacional(resource.data.motoristaId)))
+          // Mesmo status (outros campos), por qualquer das partes, exceto em pedidos encerrados
+          ((resource.data.motoristaId == request.auth.uid || resource.data.responsavelId == request.auth.uid) &&
+           request.resource.data.status == resource.data.status &&
+           !(resource.data.status in ['CANCELADA', 'EXPIRADA']))
           ||
+          // Motorista: aceita (reserva, com assinatura em dia), recusa, ativa após o
+          // pagamento ou expira a reserva vencida
+          (resource.data.motoristaId == request.auth.uid &&
+           ((mudouPara('PENDENTE', 'AGUARDANDO_PAGAMENTO') && assinaturaOperacional(resource.data.motoristaId)) ||
+            mudouPara('PENDENTE', 'RECUSADA') ||
+            (mudouPara('AGUARDANDO_PAGAMENTO', 'ACEITA') && primeiraMensalidadePaga(solicitacaoId)) ||
+            (mudouPara('AGUARDANDO_PAGAMENTO', 'EXPIRADA') && prazoDoPrimeiroPagamentoVenceu())))
+          ||
+          // Responsável: cancela em qualquer etapa ou expira a própria reserva vencida.
+          // (Nunca aceita nem ativa: isso só o motorista, depois do pagamento.)
           (resource.data.responsavelId == request.auth.uid &&
-           (request.resource.data.status == resource.data.status ||
-            (request.resource.data.status == 'CANCELADA' &&
-             resource.data.status in ['PENDENTE', 'ACEITA'])))
+           ((request.resource.data.status == 'CANCELADA' &&
+             resource.data.status in ['PENDENTE', 'AGUARDANDO_PAGAMENTO', 'ACEITA']) ||
+            (mudouPara('AGUARDANDO_PAGAMENTO', 'EXPIRADA') && prazoDoPrimeiroPagamentoVenceu())))
         );
 
       // PassageiroRepository.excluirPassageiro apaga, no mesmo batch do
@@ -330,14 +351,29 @@ service cloud.firestore {
         (resource == null || ehParteDoContrato(resource.data) || ehAdmin());
       allow list: if logado() && (ehParteDoContrato(resource.data) || ehAdmin());
 
-      allow create: if logado() &&
-        request.resource.data.motoristaId == request.auth.uid &&
-        request.resource.data.status == 'ATIVO' &&
-        exists(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)) &&
-        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status == 'ACEITA' &&
-        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.motoristaId == request.auth.uid &&
-        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.responsavelId == request.resource.data.responsavelId &&
-        get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.passageiroId == request.resource.data.passageiroId;
+      // Quem cria: o motorista no aceite ou, se isso falhou (ex.: sem internet), o
+      // próprio responsável, só para a RESERVA do filho dele e com o valor do pedido.
+      function solicitacao() {
+        return get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data;
+      }
+      function confereComSolicitacao() {
+        return exists(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)) &&
+          solicitacao().motoristaId == request.resource.data.motoristaId &&
+          solicitacao().responsavelId == request.resource.data.responsavelId &&
+          solicitacao().passageiroId == request.resource.data.passageiroId;
+      }
+
+      allow create: if logado() && confereComSolicitacao() && (
+        (request.resource.data.motoristaId == request.auth.uid &&
+         request.resource.data.status in ['ATIVO', 'AGUARDANDO_PAGAMENTO'] &&
+         solicitacao().status in ['ACEITA', 'AGUARDANDO_PAGAMENTO'])
+        ||
+        (request.resource.data.responsavelId == request.auth.uid &&
+         request.resource.data.status == 'AGUARDANDO_PAGAMENTO' &&
+         solicitacao().status == 'AGUARDANDO_PAGAMENTO' &&
+         request.resource.data.valorMensalCentavos == solicitacao().get('valorMensalCentavos', 0) &&
+         request.resource.data.valorPrimeiraCentavos <= request.resource.data.valorMensalCentavos)
+      );
 
       allow update: if logado() && (
         (resource.data.motoristaId == request.auth.uid &&
@@ -349,7 +385,7 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['status', 'encerradoEm', 'atualizadoEm']) &&
          request.resource.data.status == 'ENCERRADO' &&
-         getAfter(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status == 'CANCELADA')
+         getAfter(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status in ['CANCELADA', 'EXPIRADA'])
       );
 
       allow delete: if false;
@@ -369,7 +405,11 @@ service cloud.firestore {
         return exists(/databases/$(database)/documents/contratos/$(d.contratoId)) &&
           d.motoristaId == contrato(d.contratoId).motoristaId &&
           d.responsavelId == contrato(d.contratoId).responsavelId &&
-          d.valorCentavos == contrato(d.contratoId).valorMensalCentavos;
+          // A 1ª mensalidade (mês do aceite) é proporcional; as demais, o valor cheio
+          ((d.competencia == contrato(d.contratoId).get('competenciaInicial', '') &&
+            d.valorCentavos == contrato(d.contratoId).get('valorPrimeiraCentavos', 0)) ||
+           (d.competencia != contrato(d.contratoId).get('competenciaInicial', '') &&
+            d.valorCentavos == contrato(d.contratoId).valorMensalCentavos));
       }
       function camposFixosMantidos() {
         return request.resource.data.diff(resource.data).unchangedKeys()
@@ -403,6 +443,14 @@ service cloud.firestore {
          request.resource.data.status == 'CANCELADA' &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'atualizadoEm']) &&
          resource.data.vencimento > request.time.toMillis() &&
+         getAfter(/databases/$(database)/documents/contratos/$(resource.data.contratoId)).data.status == 'ENCERRADO') ||
+        // Reserva cancelada/expirada: a 1ª mensalidade em aberto é cancelada, mesmo
+        // vencida, porque a vaga nunca chegou a ser usada.
+        (request.auth.uid == resource.data.responsavelId &&
+         resource.data.status == 'PENDENTE' &&
+         request.resource.data.status == 'CANCELADA' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'atualizadoEm']) &&
+         get(/databases/$(database)/documents/contratos/$(resource.data.contratoId)).data.status == 'AGUARDANDO_PAGAMENTO' &&
          getAfter(/databases/$(database)/documents/contratos/$(resource.data.contratoId)).data.status == 'ENCERRADO')
       );
 

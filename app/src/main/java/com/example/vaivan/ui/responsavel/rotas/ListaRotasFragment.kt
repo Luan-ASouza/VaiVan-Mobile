@@ -230,6 +230,7 @@ class ListaRotasFragment : Fragment() {
     private fun rotuloStatus(status: String): String =
         when (status) {
             "ACEITA" -> "Aprovada"
+            "AGUARDANDO_PAGAMENTO" -> "Vaga reservada: pague a 1ª mensalidade"
             "RECUSADA" -> "Recusada"
             else -> "Aguardando"
         }
@@ -337,7 +338,8 @@ class ListaRotasFragment : Fragment() {
 
         // Só as que ainda aguardam resposta. As aprovadas já viram cards em
         // "Suas viagens" (com o botão de mensagem) e as antigas/recusadas poluem a tela.
-        val solicitacoes = ultimasSolicitacoes.filter { it.status == "PENDENTE" }
+        // Pedidos ainda sem rota ativa: aguardando o motorista ou o 1º pagamento
+        val solicitacoes = ultimasSolicitacoes.filter { it.status == "PENDENTE" || it.status == "AGUARDANDO_PAGAMENTO" }
 
         if (solicitacoes.isNotEmpty()) {
 

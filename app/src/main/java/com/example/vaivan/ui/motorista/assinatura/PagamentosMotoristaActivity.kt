@@ -227,8 +227,9 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
     private fun ordem(s: SituacaoContrato) = when (s) {
         SituacaoContrato.INADIMPLENTE -> 0
         SituacaoContrato.ATRASADO -> 1
-        SituacaoContrato.EM_DIA -> 2
-        SituacaoContrato.ENCERRADO -> 3
+        SituacaoContrato.RESERVADO -> 2
+        SituacaoContrato.EM_DIA -> 3
+        SituacaoContrato.ENCERRADO -> 4
     }
 
     private fun montarCard(
@@ -307,6 +308,12 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
                 "$mes vence hoje"
             }
             else -> "Próxima cobrança: ${AssinaturaUi.formatarData(emAberto.vencimento)} ($mes)"
+        }
+
+        if (contrato.status == StatusContrato.AGUARDANDO_PAGAMENTO) {
+            pintarDetalhe(txtDetalhe, FAIXA_LARANJA, R.color.dark_gray)
+            txtDetalhe.text = "Vaga reservada. O aluno entra na rota quando a 1ª mensalidade " +
+                "(${AssinaturaUi.formatarValor(emAberto.valorCentavos)}) for paga, até ${AssinaturaUi.formatarData(emAberto.vencimento)}."
         }
 
         btnAcao.text = "Registrar recebimento"

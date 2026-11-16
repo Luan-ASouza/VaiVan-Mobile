@@ -19,6 +19,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.time.YearMonth
 
 /**
  * Contratos e mensalidades entre responsáveis e motoristas.
@@ -96,7 +97,11 @@ class MensalidadeRepository(
      */
     suspend fun garantirContrato(solicitacaoId: String, inicioEm: Long) {
         val solicitacao = colSolicitacoes.document(solicitacaoId).get().await()
-        if (!solicitacao.exists() || solicitacao.getString("status") != "ACEITA") return
+        val status = solicitacao.getString("status")
+        if (!solicitacao.exists() ||
+            (status != SolicitacaoInclusaoRepository.STATUS_ACEITA &&
+                status != SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO)
+        ) return
 
         val ref = colContratos.document(solicitacaoId)
         if (ref.get().await().exists()) return
@@ -108,7 +113,37 @@ class MensalidadeRepository(
 
         val diaTabela = diaVencimentoDoMotorista(solicitacao.getString("motoristaId").orEmpty())
 
-        ref.set(montarContrato(solicitacao, rota, nomeResponsavel, inicioEm, diaTabela)).await()
+        // Vaga reservada: o contrato nasce aguardando a 1ª mensalidade (proporcional, 3 dias).
+        // O início é a data do aceite, mesmo que o contrato seja criado depois
+        // (pelo app do responsável ou do motorista), para o prazo e o valor não mudarem.
+        val reserva = status == SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO
+        val inicio = if (reserva) solicitacao.getLong("respondidoEm") ?: inicioEm else inicioEm
+        val contrato = montarContrato(solicitacao, rota, nomeResponsavel, inicio, diaTabela, reserva)
+        ref.set(contrato).await()
+
+        // A 1ª mensalidade já fica disponível para o responsável pagar
+        gerarMensalidadesFaltando(listOf(contrato), emptyList())
+    }
+
+    /** A 1ª mensalidade de um contrato reservado já foi paga (pelo app ou registrada pelo motorista)? */
+    suspend fun primeiraMensalidadePaga(contratoId: String, motoristaId: String): Boolean {
+        val contrato = colContratos.document(contratoId).get().await()
+        val competencia = contrato.getString("competenciaInicial").orEmpty()
+        if (!contrato.exists() || competencia.isBlank()) return false
+
+        val primeira = colMensalidades.document("${contratoId}_$competencia").get().await()
+        return primeira.getString("status") == StatusMensalidade.PAGA &&
+            primeira.getString("motoristaId") == motoristaId
+    }
+
+    /** Responsável pagou a 1ª mensalidade: o contrato passa a valer mês a mês. */
+    suspend fun ativarContrato(contratoId: String) {
+        val ref = colContratos.document(contratoId)
+        val atual = ref.get().await()
+        if (atual.getString("status") != StatusContrato.AGUARDANDO_PAGAMENTO) return
+        ref.update(
+            mapOf("status" to StatusContrato.ATIVO, "atualizadoEm" to System.currentTimeMillis())
+        ).await()
     }
 
     /**
@@ -224,9 +259,9 @@ class MensalidadeRepository(
                     nomePassageiro = contrato.nomePassageiro,
                     nomeRota = contrato.nomeRota,
                     competencia = mes.toString(),
-                    valorCentavos = contrato.valorMensalCentavos,
+                    valorCentavos = MensalidadePolicy.valorDaCompetencia(contrato, mes),
                     vencimento = MensalidadePolicy.inicioDoDia(
-                        MensalidadePolicy.vencimentoDa(mes, contrato.diaVencimento)
+                        MensalidadePolicy.vencimentoDaCompetencia(contrato, mes)
                     ),
                     status = StatusMensalidade.PENDENTE,
                     criadoEm = agora,
@@ -322,9 +357,13 @@ class MensalidadeRepository(
         rota: DocumentSnapshot,
         nomeResponsavel: String,
         inicioEm: Long,
-        diaVencimentoTabela: Long?
+        diaVencimentoTabela: Long?,
+        reserva: Boolean = false
     ): Contrato {
         val agora = System.currentTimeMillis()
+        val valorMensal = solicitacao.getLong("valorMensalCentavos")?.takeIf { it > 0 }
+            ?: rota.getLong("valorMensalCentavos")
+            ?: 0L
         return Contrato(
             id = solicitacao.id,
             motoristaId = solicitacao.getString("motoristaId").orEmpty(),
@@ -335,16 +374,18 @@ class MensalidadeRepository(
             rotaId = solicitacao.getString("rotaId").orEmpty(),
             nomeRota = rota.getString("nome").orEmpty(),
             // Valor calculado pela tabela na solicitação; rotas antigas usam o valor único.
-            valorMensalCentavos = solicitacao.getLong("valorMensalCentavos")?.takeIf { it > 0 }
-                ?: rota.getLong("valorMensalCentavos")
-                ?: 0L,
+            valorMensalCentavos = valorMensal,
             diaVencimento = MensalidadePolicy.diaValido(
                 (diaVencimentoTabela
                     ?: rota.getLong("diaVencimento")
                     ?: MensalidadePolicy.DIA_VENCIMENTO_PADRAO.toLong()).toInt()
             ),
-            status = StatusContrato.ATIVO,
+            status = if (reserva) StatusContrato.AGUARDANDO_PAGAMENTO else StatusContrato.ATIVO,
             inicioEm = inicioEm,
+            // 1ª mensalidade: proporcional aos dias restantes do mês, com prazo de 3 dias
+            competenciaInicial = if (reserva) YearMonth.from(MensalidadePolicy.dia(inicioEm)).toString() else "",
+            valorPrimeiraCentavos = if (reserva) MensalidadePolicy.valorProporcional(valorMensal, inicioEm) else 0L,
+            vencimentoPrimeira = if (reserva) MensalidadePolicy.prazoPrimeiroPagamento(inicioEm) else 0L,
             criadoEm = agora,
             atualizadoEm = agora
         )

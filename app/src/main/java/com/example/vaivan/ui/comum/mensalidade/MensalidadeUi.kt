@@ -29,6 +29,7 @@ object MensalidadeUi {
         YearMonth.from(MensalidadePolicy.dia(agora)).format(formatoSoMes)
 
     fun rotuloDoContrato(situacao: SituacaoContrato): Pair<String, Int> = when (situacao) {
+        SituacaoContrato.RESERVADO -> "Reservado" to R.color.orange
         SituacaoContrato.EM_DIA -> "Em dia" to R.color.green
         SituacaoContrato.ATRASADO -> "Atrasado" to R.color.orange
         SituacaoContrato.INADIMPLENTE -> "Inadimplente" to R.color.red
