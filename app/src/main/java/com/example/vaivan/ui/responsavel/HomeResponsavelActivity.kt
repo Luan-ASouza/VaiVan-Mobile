@@ -1,7 +1,6 @@
 package com.example.vaivan.ui.responsavel
 
 import com.example.vaivan.ui.comum.guia.GuiaPrimeiroAcesso
-import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.ui.ajuda.AjudaActivity
 import com.example.vaivan.ui.ajuda.PerfilAjuda
 import android.content.Intent
@@ -223,11 +222,6 @@ class HomeResponsavelActivity : BaseActivity() {
             startActivity(Intent(this, MensalidadesResponsavelActivity::class.java))
         }
 
-        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
-            drawerLayout.closeDrawers()
-            TrocaSenhaHelper.mostrar(this)
-        }
-
         findViewById<View>(R.id.btnDrawerAjuda).setOnClickListener {
             drawerLayout.closeDrawers()
             startActivity(
@@ -237,6 +231,11 @@ class HomeResponsavelActivity : BaseActivity() {
         }
     }
 
+
+    /** Vai para a aba Transportes (ex.: "Ver rotas do passageiro" no card do filho). */
+    fun abrirTransportes() {
+        bottomNavigation.selecionar(NavigationItem.ROTAS)
+    }
 
     private fun configurarBottomNavigation() {
         bottomNavigation = BottomNavigationController(

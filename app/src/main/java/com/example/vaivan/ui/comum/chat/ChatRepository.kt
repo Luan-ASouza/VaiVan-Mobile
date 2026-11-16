@@ -23,6 +23,39 @@ object ChatRepository {
         val rotaNome: String = ""
     )
 
+    /** Quem está do outro lado da conversa: nome, foto e se é motorista. */
+    data class Contato(
+        val nome: String,
+        val fotoUrl: String?,
+        val ehMotorista: Boolean
+    )
+
+    /**
+     * Lê o contato direto do Firestore. Motorista = o documento do usuário tem
+     * `statusMotorista` (só o cadastro de motorista grava esse campo).
+     */
+    suspend fun consultarContato(usuarioId: String): Contato? =
+        try {
+            val documento = db.collection("usuarios").document(usuarioId).get().await()
+            if (!documento.exists()) {
+                null
+            } else {
+                val nome = listOfNotNull(
+                    documento.getString("nome"),
+                    documento.getString("sobrenome")
+                ).filter { it.isNotBlank() }.joinToString(" ")
+
+                Contato(
+                    nome = nome.ifBlank { "Usuário" },
+                    fotoUrl = documento.getString("fotoUrl"),
+                    ehMotorista = !documento.getString("statusMotorista").isNullOrBlank()
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Erro ao ler o contato $usuarioId", e)
+            null
+        }
+
     /**
      * Sem contexto: uma conversa por par de usuários (comportamento antigo).
      * Com contexto: uma conversa por par de usuários + rota + aluno.

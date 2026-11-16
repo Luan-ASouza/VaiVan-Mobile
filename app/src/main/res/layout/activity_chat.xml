@@ -1,95 +1,181 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!-- Conversa: onda laranja + cartão do contato no topo, mensagens separadas
+     por dia e campo de digitar com o botão de enviar. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_chat"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/beige"
-    android:orientation="vertical"> <!-- BARRA DE TOPO -->
-    <LinearLayout
+    android:background="@color/chat_fundo"
+    android:orientation="vertical">
+
+    <!-- TOPO -->
+    <FrameLayout
         android:id="@+id/barraTopo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/dark_gray"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:background="@drawable/bg_onda_chat">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/imgFotoContato"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="10dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_perfil"
-            app:shapeAppearanceOverlay="@style/CircleImage" />
-
-        <TextView
-            android:id="@+id/txtNomeContato"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/cartaoTopo"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Conversa"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout> <!-- LISTA DE MENSAGENS -->
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_topo_chat"
+            android:elevation="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="10dp">
+
+            <ImageButton
+                android:id="@+id/btnVoltarChat"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Voltar"
+                android:padding="13dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_arrowback"
+                app:tint="@color/text_primary"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgFotoContato"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="4dp"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_perfil"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="@color/dark_gray"
+                app:strokeWidth="2dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtNomeContato"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Conversa"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtSeloContato"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_selo_motorista"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@color/chat_selo_motorista_texto"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="Motorista"
+                        tools:visibility="visible" />
+
+                    <!-- Aluno da conversa (quando houver) -->
+                    <TextView
+                        android:id="@+id/txtAlunoContato"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:text="Aluno: Lucas"
+                        tools:visibility="visible" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- MENSAGENS -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerMensagens"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="10dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_withe_round_10"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp" /> <!-- BARRA DE DIGITAR -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+        android:paddingTop="6dp"
+        android:paddingBottom="12dp" />
+
+    <!-- BARRA DE DIGITAR -->
+    <LinearLayout
         android:id="@+id/barraMensagem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/beige"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="8dp">
+        android:background="@drawable/bg_barra_mensagem"
+        android:elevation="8dp"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/edtMensagem"
-            android:layout_width="0dp"
+        <!-- Linha interna: o padding de baixo da barra vira o espaço do teclado/nav bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_white_rounded"
-            android:hint="Digite sua mensagem..."
-            android:inputType="textMultiLine"
-            android:maxLines="4"
-            android:padding="10dp"
-            android:textColorHint="@color/light_gray"
-            android:textColor="@color/dark_gray"
-            android:layout_marginEnd="10dp"
+            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp">
 
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnEnviar"
-            app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <EditText
+                android:id="@+id/edtMensagem"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_campo_mensagem"
+                android:hint="Digite uma mensagem..."
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="4"
+                android:minHeight="48dp"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_tertiary"
+                android:textSize="15sp"
+                tools:ignore="HardcodedText" />
 
-
-        <!-- BOTÃO REDONDO (Proporção 1:1 baseada na altura) -->
-        <ImageButton
-            android:id="@+id/btnEnviar"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:background="@drawable/bg_button_darkgrey"
-            android:contentDescription="Enviar mensagem"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_enviar_mensagem"
-            android:padding="5dp"
-            android:paddingStart="7dp"
-
-            app:layout_constraintBottom_toBottomOf="@+id/edtMensagem"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/edtMensagem" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageButton
+                android:id="@+id/btnEnviar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_botao_editar_passageiro"
+                android:contentDescription="Enviar mensagem"
+                android:elevation="3dp"
+                android:paddingVertical="13dp"
+                android:paddingStart="15dp"
+                android:paddingEnd="11dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_enviar_mensagem"
+                app:tint="@color/text_on_dark"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

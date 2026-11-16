@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cartão branco do topo da conversa (fica sobre a onda laranja). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/background_container" />
+    <corners android:radius="26dp" />
+</shape>

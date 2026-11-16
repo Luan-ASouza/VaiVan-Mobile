@@ -155,11 +155,11 @@ class IdentificacaoFragment : Fragment(R.layout.fragment_identificacao) {
     private fun mostrarErro(mensagem: TextView, layout: TextInputLayout, texto: String) {
         mensagem.text = texto
         mensagem.visibility = View.VISIBLE
-        layout.setBackgroundResource(R.drawable.bg_input_white_red)
+        layout.setBackgroundResource(R.drawable.bg_cadastro_input_erro)
     }
 
     private fun limparErro(mensagem: TextView, layout: TextInputLayout) {
         mensagem.visibility = View.GONE
-        layout.setBackgroundResource(R.drawable.bg_input_white)
+        layout.setBackgroundResource(R.drawable.bg_cadastro_input)
     }
 }

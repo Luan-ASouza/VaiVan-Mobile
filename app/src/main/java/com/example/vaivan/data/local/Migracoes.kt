@@ -243,6 +243,48 @@ object Migracoes {
     }
 
     /**
+     * 19 -> 20: passageiros perde as colunas que nunca foram preenchidas nem
+     * lidas (cpf, telefone, matricula, motoristaId, rotaId). Tabela recriada
+     * (DROP COLUMN não existe nas versões antigas do SQLite do Android).
+     */
+    val DE_19_PARA_20 = object : Migration(19, 20) {
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `passageiros_novo` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`nome` TEXT NOT NULL, " +
+                        "`dataNascimento` TEXT NOT NULL, " +
+                        "`necessidadesEspeciais` INTEGER NOT NULL, " +
+                        "`descricaoNecessidades` TEXT, " +
+                        "`observacoes` TEXT, " +
+                        "`responsavelId` TEXT, " +
+                        "`fotoUrl` TEXT, " +
+                        "`lastUpdated` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+            )
+
+            db.execSQL(
+                "INSERT INTO `passageiros_novo` (`id`, `nome`, `dataNascimento`, " +
+                        "`necessidadesEspeciais`, `descricaoNecessidades`, `observacoes`, " +
+                        "`responsavelId`, `fotoUrl`, `lastUpdated`) " +
+                        "SELECT `id`, `nome`, `dataNascimento`, `necessidadesEspeciais`, " +
+                        "`descricaoNecessidades`, `observacoes`, `responsavelId`, `fotoUrl`, " +
+                        "`lastUpdated` FROM `passageiros`"
+            )
+
+            db.execSQL("DROP TABLE `passageiros`")
+            db.execSQL("ALTER TABLE `passageiros_novo` RENAME TO `passageiros`")
+
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_passageiros_responsavelId` " +
+                        "ON `passageiros` (`responsavelId`)"
+            )
+        }
+    }
+
+    /**
      * Todas as migrações registradas.
      */
     val TODAS: Array<Migration> = arrayOf(
@@ -250,6 +292,7 @@ object Migracoes {
         DE_15_PARA_16,
         DE_16_PARA_17,
         DE_17_PARA_18,
-        DE_18_PARA_19
+        DE_18_PARA_19,
+        DE_19_PARA_20
     )
 }

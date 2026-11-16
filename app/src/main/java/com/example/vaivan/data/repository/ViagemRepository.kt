@@ -254,6 +254,28 @@ class ViagemRepository(
         }
     }
 
+    /** Quantas viagens cada filho do responsável já fez (passageiroId → total),
+     * contando as viagens em que ele chegou a desembarcar. Leitura única: os
+     * números do card do passageiro não precisam ser ao vivo. Só igualdades,
+     * então não exige índice composto. */
+    suspend fun consultarViagensFeitasPorPassageiro(responsavelId: String): Map<String, Int> {
+        val snapshot = collectionParadas
+            .whereEqualTo("responsavelId", responsavelId)
+            .whereEqualTo("status", PARADA_DESEMBARCADO)
+            .get()
+            .await()
+
+        return snapshot.documents
+            .mapNotNull { documento ->
+                val passageiroId = documento.getString("passageiroId") ?: return@mapNotNull null
+                val viagemId = documento.getString("viagemId") ?: return@mapNotNull null
+                passageiroId to viagemId
+            }
+            .distinct()
+            .groupingBy { it.first }
+            .eachCount()
+    }
+
     private fun inicioDoDiaEmMillis(): Long = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 0)
         set(Calendar.MINUTE, 0)

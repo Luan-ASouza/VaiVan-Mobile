@@ -219,7 +219,7 @@ object AjudaConteudo {
             resumo = "Defina uma nova senha para a sua conta.",
             perfis = ambos,
             passos = listOf(
-                "Abra o menu lateral e toque em Trocar senha. Você também pode ir em Perfil e tocar em Trocar Senha.",
+                "Abra o Perfil e toque em Trocar senha.",
                 "Digite a sua senha atual.",
                 "Digite a nova senha e confirme.",
                 "Toque em Salvar."

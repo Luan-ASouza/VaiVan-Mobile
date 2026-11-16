@@ -1,28 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Mensagem enviada: bolha laranja à direita, horário no canto da bolha. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:gravity="end"
     android:orientation="horizontal"
-    android:paddingHorizontal="12dp"
-    android:paddingVertical="4dp">
+    android:paddingStart="60dp"
+    android:paddingEnd="14dp"
+    android:paddingVertical="3dp">
 
-    <!-- Espaço vazio à esquerda, empurra a bolha pra direita -->
-    <View
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_weight="1" />
-
-    <TextView
-        android:id="@+id/txtMensagem"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="0"
         android:background="@drawable/bg_bolha_enviada"
-        android:padding="10dp"
-        android:textColor="@color/black"
-        android:textSize="15sp"
-        android:maxWidth="260dp"
-        tools:text="Oi! Gostaria de saber mais sobre o transporte." />
+        android:elevation="1dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="6dp">
 
+        <TextView
+            android:id="@+id/txtMensagem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_on_dark"
+            android:textSize="15sp"
+            tools:text="Bom dia, Carlos! Ótimo, obrigado!" />
+
+        <TextView
+            android:id="@+id/txtHoraMensagem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:alpha="0.85"
+            android:textColor="@color/text_on_dark"
+            android:textSize="11sp"
+            tools:text="07:35" />
+    </LinearLayout>
 </LinearLayout>

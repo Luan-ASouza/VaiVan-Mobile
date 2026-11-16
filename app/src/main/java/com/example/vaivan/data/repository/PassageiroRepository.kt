@@ -90,16 +90,6 @@ class PassageiroRepository(
         )
     }
 
-    /** Observa os passageiros de uma rota no Room. */
-    fun observarPassageirosDaRota(
-        rotaId: String
-    ): Flow<List<PassageiroEntity>> {
-
-        return passageiroDao.getByRota(
-            rotaId
-        )
-    }
-
 
     // =========================================================
     // CONSULTAS

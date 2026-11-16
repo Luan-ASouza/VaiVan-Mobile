@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.responsavel.rotas
 
+import com.example.vaivan.core.util.DataUtil
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -61,7 +62,7 @@ class ResultadosRotasActivity : BaseActivity() {
 
         const val EXTRA_MODALIDADE = "modalidade"
 
-        private val ORDEM_DIAS = listOf("SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM")
+        private val ORDEM_DIAS = DataUtil.ORDEM_DIAS_SEMANA
         private val ROTULO_DIAS = mapOf(
             "SEG" to "Seg", "TER" to "Ter", "QUA" to "Qua", "QUI" to "Qui",
             "SEX" to "Sex", "SAB" to "Sáb", "DOM" to "Dom"

@@ -1,302 +1,478 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Card grande de um filho na lista do responsável: foto, idade, números
+     (viagens/rotas), escola, turno e o botão para as rotas. -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="16dp"
     app:cardBackgroundColor="@color/background_container"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="7dp">
+    app:cardCornerRadius="28dp"
+    app:cardElevation="8dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:layout_height="wrap_content">
 
-        <!-- Linha principal: toque para expandir/recolher os detalhes -->
+        <!-- Onda decorativa do canto superior esquerdo -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="110dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_onda_passageiro" />
+
         <LinearLayout
-            android:id="@+id/linhaPrincipalItem"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:clipToPadding="false">
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/imgFotoPassageiroItem"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:padding="2dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/avatar_01"
-                app:shapeAppearanceOverlay="@style/CircleImage"
-                app:strokeColor="@color/dark_gray"
-                app:strokeWidth="3dp" />
+            <!-- Foto + selo da van; lápis de editar no canto -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-            <LinearLayout
-                android:layout_width="0dp"
+                <FrameLayout
+                    android:layout_width="136dp"
+                    android:layout_height="136dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="10dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/imgFotoPassageiroItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/background_container"
+                        android:padding="6dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/avatar_01"
+                        app:shapeAppearanceOverlay="@style/CircleImage"
+                        app:strokeColor="@color/dark_gray"
+                        app:strokeWidth="4dp" />
+
+                </FrameLayout>
+
+                <ImageView
+                    android:id="@+id/btnEditarPassageiroItem"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/bg_botao_editar_passageiro"
+                    android:contentDescription="Editar passageiro"
+                    android:elevation="4dp"
+                    android:padding="13dp"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/text_on_dark"
+                    tools:ignore="HardcodedText" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/txtNomePassageiroItem"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:layout_marginTop="12dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="2"
+                android:textColor="@color/text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                tools:text="Lucas Santos" />
 
-                <TextView
-                    android:id="@+id/txtNomePassageiroItem"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="@color/dark_gray"
-                    android:textStyle="bold" />
+            <!-- Chip da idade -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_chip_idade_passageiro"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_calendario"
+                    app:tint="@color/passageiro_destaque" />
 
                 <TextView
                     android:id="@+id/txtIdadePassageiroItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#707070" />
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/passageiro_texto_chip"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="11 anos" />
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/imgEditarPassageiroItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Editar passageiro"
-                android:padding="4dp"
-                android:src="@drawable/ic_edit"
-                app:tint="@color/dark_gray" />
 
-            <ImageView
-                android:id="@+id/imgExcluirPassageiroItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Excluir passageiro"
-                android:padding="4dp"
-                android:src="@drawable/ic_delete"
-                app:tint="@color/status_danger" />
 
-            <ImageView
-                android:id="@+id/imgChevronItem"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="Ver mais detalhes"
-                android:padding="8dp"
-                android:src="@drawable/icon_dropdown"
-                app:tint="@color/light_gray" />
-        </LinearLayout>
-
-        <!-- Detalhes (escondido por padrão, abre ao tocar na linha acima) -->
-        <LinearLayout
-            android:id="@+id/containerDetalhesItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="62dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/txtNecessidadePassageiroItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:textColor="@color/dark_gray"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/txtObservacoesPassageiroItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#707070"
-                android:textSize="12sp"
-                android:visibility="gone" />
-        </LinearLayout>
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnBuscarRotaItem"
-            android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/btn_gray_filled"
-            android:text="Buscar rota para este aluno"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"/>
-
-        <!-- ROTA ATUAL OU PEDIDO: aparece NO LUGAR do "Buscar rota".
-             Um filho só pode ter um pedido/rota por vez. -->
-        <LinearLayout
-            android:id="@+id/containerRotaAtualItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="vertical"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#EFEBE4" />
-
+            <!-- Linha 1: Viagens e ponto de embarque -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
+                <!-- Viagens -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/bg_tile_passageiro"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="bottom"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_van"
+                            app:tint="@color/passageiro_destaque" />
+
+                        <TextView
+                            android:id="@+id/txtViagensPassageiroItem"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="42" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/txtRotuloViagensPassageiroItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Viagens"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <!-- Ponto de embarque -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_tile_passageiro"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_local"
+                        app:tint="@color/passageiro_destaque" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtEmbarquePassageiroItem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            tools:text="Casa" />
+
+                        <TextView
+                            android:id="@+id/txtEnderecoEmbarquePassageiroItem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            tools:text="Rua das Flores, 120 - Centro" />
+
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Linha 2: Escola e turno -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_tile_passageiro"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_avatar_inicial"
-                    android:contentDescription="Van"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_van"
-                    app:tint="@color/dark_gray" />
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_escola"
+                    app:tint="@color/passageiro_destaque" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/txtRotaAtualNomeItem"
+                        android:id="@+id/txtEscolaPassageiroItem"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/dark_gray"
+                        android:maxLines="2"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp"
                         android:textStyle="bold"
-                        tools:text="La Salle - Manhã" />
+                        tools:text="Escola Municipal" />
 
-                    <TextView
-                        android:id="@+id/txtRotaAtualInfoItem"
-                        android:layout_width="match_parent"
+                    <!-- Turno -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:textColor="#707070"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/imgTurnoPassageiroItem"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_sol"
+                            app:tint="@color/passageiro_destaque" />
+
+                        <TextView
+                            android:id="@+id/txtTurnoPassageiroItem"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp"
+                            tools:text="Turno da manhã" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <!-- Ver rotas (vai para Transportes) ou Buscar rotas -->
+            <LinearLayout
+                android:id="@+id/btnRotasPassageiroItem"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_botao_rotas_passageiro"
+                android:clickable="true"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp">
+
+                <ImageView
+                    android:id="@+id/imgBotaoRotasPassageiroItem"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_local"
+                    app:tint="@color/text_on_dark" />
+
+                <TextView
+                    android:id="@+id/txtBotaoRotasPassageiroItem"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_on_dark"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Ver rotas do passageiro" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_chevron_direita"
+                    app:tint="@color/text_on_dark" />
+            </LinearLayout>
+
+            <!-- Pedido aguardando / reserva / rota atual, com a opção de cancelar -->
+            <LinearLayout
+                android:id="@+id/containerStatusRotaItem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="6dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtStatusRotaItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_badge_situacao"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:backgroundTint="@color/orange_soft"
+                        tools:text="Aguardando" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/btnCancelarRotaItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp"
+                        android:textColor="@color/status_danger"
                         android:textSize="13sp"
-                        tools:text="R$ 189,00 por mês" />
+                        android:textStyle="bold"
+                        tools:text="Cancelar pedido" />
                 </LinearLayout>
 
-                <!-- "Aguardando" (laranja) ou "Ativa" (verde); cor vem do código -->
+                <!-- Nome da rota + valor / instrução da etapa -->
                 <TextView
-                    android:id="@+id/txtStatusRotaItem"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/txtRotaAtualNomeItem"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_badge_situacao"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"
-                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    tools:backgroundTint="@color/orange"
-                    tools:text="Aguardando" />
-            </LinearLayout>
-
-            <!-- Vaga reservada: pagar a 1ª mensalidade para ativar -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPagarReservaItem"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="12dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="Pagar e ativar a vaga"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="@color/dark_gray"
-                app:cornerRadius="21dp"
-                tools:visibility="visible" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCancelarRotaItem"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="12dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_gray"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                app:cornerRadius="21dp"
-                app:strokeColor="@color/dark_gray"
-                app:strokeWidth="1.5dp"
-                tools:text="Cancelar pedido" />
-        </LinearLayout>
-
-        <!-- MENSALIDADE EM ATRASO: continua aparecendo mesmo depois de cancelar a rota -->
-        <LinearLayout
-            android:id="@+id/containerPendenciaItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_status_rota_filho"
-            android:backgroundTint="#FDECEA"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="10dp"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                    tools:text="Rota Escola Central" />
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mensalidade em atraso"
-                    android:textColor="@color/red"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/txtPendenciaValorItem"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/txtRotaAtualInfoItem"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:textColor="@color/dark_gray"
+                    android:textColor="@color/text_secondary"
                     android:textSize="13sp"
-                    tools:text="R$ 400,00 em aberto" />
+                    tools:text="Esperando o motorista aceitar. R$ 400,00 por mês" />
+
+                <!-- Vaga reservada: pagar a 1ª mensalidade para ativar -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPagarReservaItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="10dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Pagar e ativar a vaga"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_on_dark"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/color_primary"
+                    app:cornerRadius="21dp"
+                    tools:visibility="visible" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPagarPendenciaItem"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="18dp"
-                android:text="Pagar"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/dark_gray"
-                app:cornerRadius="19dp" />
+            <!-- Mensalidade em atraso: continua aparecendo mesmo depois de cancelar a rota -->
+            <LinearLayout
+                android:id="@+id/containerPendenciaItem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_tile_passageiro"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mensalidade em atraso"
+                        android:textColor="@color/status_danger"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txtPendenciaValorItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        tools:text="R$ 400,00 em aberto" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPagarPendenciaItem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="18dp"
+                    android:text="Pagar"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_on_dark"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/status_danger"
+                    app:cornerRadius="19dp" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 </androidx.cardview.widget.CardView>

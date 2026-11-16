@@ -226,7 +226,7 @@ class EnderecoFragment :
                     View.GONE
 
                 layoutCEP.setBackgroundResource(
-                    R.drawable.bg_input_white
+                    R.drawable.bg_cadastro_input
                 )
 
                 configurarCamposEditaveis(
@@ -259,7 +259,7 @@ class EnderecoFragment :
             View.VISIBLE
 
         layoutCEP.setBackgroundResource(
-            R.drawable.bg_input_white_red
+            R.drawable.bg_cadastro_input_erro
         )
     }
 
@@ -425,7 +425,7 @@ class EnderecoFragment :
     ) {
 
         layout.setBackgroundResource(
-            R.drawable.bg_input_white_red
+            R.drawable.bg_cadastro_input_erro
         )
     }
 
@@ -434,7 +434,7 @@ class EnderecoFragment :
     ) {
 
         layout.setBackgroundResource(
-            R.drawable.bg_input_white
+            R.drawable.bg_cadastro_input
         )
     }
 }

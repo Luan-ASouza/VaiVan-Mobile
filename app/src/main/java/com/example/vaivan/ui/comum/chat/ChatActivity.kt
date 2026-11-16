@@ -2,13 +2,13 @@ package com.example.vaivan.ui.comum.chat
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,8 +18,6 @@ import com.example.vaivan.R
 import com.example.vaivan.core.notificacao.NotificadorVaiVan
 import com.example.vaivan.core.notificacao.VaiVanMessagingService
 import com.example.vaivan.core.util.WindowInsetsUtil.aplicarInsets
-import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.repository.UsuarioRepository
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
@@ -42,11 +40,9 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var btnEnviar: ImageButton
     private lateinit var txtNomeContato: TextView
     private lateinit var imgFotoContato: ShapeableImageView
-    private lateinit var barraMensagem: ConstraintLayout
-
-    private val usuarioRepository by lazy {
-        UsuarioRepository(VaivanDatabase.getInstance(this).usuarioDao())
-    }
+    private lateinit var barraMensagem: LinearLayout
+    private lateinit var txtSeloContato: TextView
+    private lateinit var txtAlunoContato: TextView
 
     private val adapter = MensagemAdapter()
 
@@ -69,8 +65,14 @@ class ChatActivity : AppCompatActivity() {
         txtNomeContato = findViewById(R.id.txtNomeContato)
         imgFotoContato = findViewById(R.id.imgFotoContato)
         barraMensagem = findViewById(R.id.barraMensagem)
+        txtSeloContato = findViewById(R.id.txtSeloContato)
+        txtAlunoContato = findViewById(R.id.txtAlunoContato)
 
-        aplicarInsets(activityChat)
+        // A onda do topo passa por trás da status bar; a barra de digitar sobe com o teclado
+        aplicarInsets(findViewById(R.id.barraTopo), aplicarInferior = false)
+        aplicarInsets(barraMensagem, aplicarTopo = false)
+
+        findViewById<ImageButton>(R.id.btnVoltarChat).setOnClickListener { finish() }
 
         // --------------------------------------------------
         // RECYCLERVIEW
@@ -132,26 +134,26 @@ class ChatActivity : AppCompatActivity() {
         val nomeContato =
             intent.getStringExtra("nomeContato")
 
-        txtNomeContato.text =
-            when {
-                nomeContato.isNullOrBlank() -> "Conversa"
-                passageiroNome.isNotBlank() -> "$nomeContato · $passageiroNome"
-                else -> nomeContato
-            }
+        txtNomeContato.text = nomeContato?.takeIf { it.isNotBlank() } ?: "Conversa"
+
+        if (passageiroNome.isNotBlank()) {
+            txtAlunoContato.text = "Aluno: $passageiroNome"
+            txtAlunoContato.visibility = View.VISIBLE
+        }
 
         // --------------------------------------------------
-        // FOTO DO CONTATO
+        // CONTATO: NOME COMPLETO, FOTO E SELO (MOTORISTA / RESPONSÁVEL)
         // --------------------------------------------------
 
         lifecycleScope.launch {
-            val usuario = try {
-                usuarioRepository.consultarUsuario(outroUsuarioId)
-            } catch (e: Exception) {
-                null
-            }
+            val contato = ChatRepository.consultarContato(outroUsuarioId) ?: return@launch
+
+            txtNomeContato.text = contato.nome
+            txtSeloContato.aplicarSeloContato(contato.ehMotorista)
+            adapter.fotoContato = contato.fotoUrl
 
             Glide.with(imgFotoContato)
-                .load(usuario?.fotoUrl)
+                .load(contato.fotoUrl)
                 .placeholder(R.drawable.ic_perfil)
                 .error(R.drawable.ic_perfil)
                 .circleCrop()
@@ -202,7 +204,7 @@ class ChatActivity : AppCompatActivity() {
                             recyclerMensagens.post {
 
                                 recyclerMensagens.scrollToPosition(
-                                    mensagens.size - 1
+                                    adapter.itemCount - 1
                                 )
                             }
                         }

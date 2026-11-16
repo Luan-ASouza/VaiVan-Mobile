@@ -293,7 +293,7 @@ class InformacoesPessoaisFragment :
             View.VISIBLE
 
         layout.setBackgroundResource(
-            R.drawable.bg_input_white_red
+            R.drawable.bg_cadastro_input_erro
         )
     }
 
@@ -306,7 +306,7 @@ class InformacoesPessoaisFragment :
             View.GONE
 
         layout.setBackgroundResource(
-            R.drawable.bg_input_white
+            R.drawable.bg_cadastro_input
         )
     }
 

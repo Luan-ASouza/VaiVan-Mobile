@@ -192,26 +192,12 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnDrawerSenha"
-                style="@style/DrawerItem">
-
-                <ImageView
-                    style="@style/DrawerItemIcone"
-                    android:src="@drawable/ic_cadeado" />
-
-                <TextView
-                    style="@style/DrawerItemTexto"
-                    android:text="Trocar senha" />
-
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/btnDrawerAjuda"
                 style="@style/DrawerItem">
 
                 <ImageView
                     style="@style/DrawerItemIcone"
-                    android:src="@android:drawable/ic_menu_help" />
+                    android:src="@drawable/ic_ajuda" />
 
                 <TextView
                     style="@style/DrawerItemTexto"

@@ -1,28 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Mensagem recebida: foto do contato (só na 1ª de uma sequência) e bolha
+     bege à esquerda, com o horário no canto. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingHorizontal="12dp"
-    android:paddingVertical="4dp">
+    android:paddingStart="12dp"
+    android:paddingEnd="60dp"
+    android:paddingVertical="3dp">
 
-    <TextView
-        android:id="@+id/txtMensagem"
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imgFotoMensagem"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_perfil"
+        app:shapeAppearanceOverlay="@style/CircleImage" />
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="0"
+        android:layout_marginStart="8dp"
         android:background="@drawable/bg_bolha_recebida"
-        android:padding="10dp"
-        android:textColor="@color/white"
-        android:textSize="15sp"
-        android:maxWidth="260dp"
-        tools:text="Claro! Qual é a região de vocês?" />
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="6dp">
 
-    <!-- Espaço vazio à direita, empurra a bolha pra esquerda -->
-    <View
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_weight="1" />
+        <TextView
+            android:id="@+id/txtMensagem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            tools:text="Bom dia! A van já está a caminho." />
 
+        <TextView
+            android:id="@+id/txtHoraMensagem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            tools:text="07:32" />
+    </LinearLayout>
 </LinearLayout>

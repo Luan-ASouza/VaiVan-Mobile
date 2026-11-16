@@ -16,7 +16,15 @@
 
     <color name="orange">#F6B12F</color>
     <color name="orange_dark">#C98A12</color>
+    <color name="orange_deep">#EE8A0E</color>
+    <color name="orange_light">#FFD27A</color>
+    <color name="orange_soft">#FFF5E6</color>
+    <color name="cream">#FFF9F1</color>
+    <color name="beige_light">#F6ECDF</color>
+    <color name="rose_soft">#FDE8EC</color>
+    <color name="rose_dark">#B83B5E</color>
     <color name="green">#2CA144</color>
+    <color name="green_soft">#E6F5EA</color>
     <color name="light_blue">#0170CC</color>
     <color name="red">#E53935</color>
 
@@ -61,6 +69,37 @@
     <color name="status_success">@color/green</color>
     <color name="status_danger">@color/red</color>
     <color name="status_warning">@color/orange</color>
+
+    <!-- Classe: Card do passageiro (lista do responsável). Onda e anel da
+         foto em laranja; quadrinhos de informação em creme. -->
+    <color name="passageiro_destaque">@color/color_primary</color>
+    <color name="passageiro_destaque_forte">@color/orange_deep</color>
+    <color name="passageiro_onda_clara">@color/orange_light</color>
+    <color name="passageiro_tile">@color/orange_soft</color>
+    <color name="passageiro_texto_chip">@color/orange_dark</color>
+
+    <!-- Classe: Chat (lista de conversas e conversa). Bolha enviada em
+         gradiente laranja; recebida em bege claro; selo do papel do contato
+         laranja (motorista) ou rosa (responsável). -->
+    <color name="chat_fundo">@color/cream</color>
+    <color name="chat_bolha_recebida">@color/beige_light</color>
+    <color name="chat_separador_data">@color/beige_light</color>
+    <color name="chat_selo_motorista_fundo">@color/gray</color>
+    <color name="chat_selo_motorista_texto">@color/white</color>
+    <color name="chat_selo_responsavel_fundo">@color/rose_soft</color>
+    <color name="chat_selo_responsavel_texto">@color/rose_dark</color>
+
+    <!-- Classe: Transportes (cards do responsável). Selo da viagem de hoje:
+         verde = em andamento, laranja = programada, cinza = concluída; a
+         linha do tempo acende em laranja conforme o aluno avança. -->
+    <color name="transporte_andamento_fundo">@color/green_soft</color>
+    <color name="transporte_andamento_texto">@color/status_success</color>
+    <color name="transporte_programada_fundo">@color/orange_soft</color>
+    <color name="transporte_programada_texto">@color/orange_dark</color>
+    <color name="transporte_concluida_fundo">@color/background_screen</color>
+    <color name="transporte_concluida_texto">@color/text_secondary</color>
+    <color name="transporte_linha_ativa">@color/color_primary</color>
+    <color name="transporte_linha_inativa">@color/light_graysh</color>
 
     <!-- Classe: Mapa (acompanhamento ao vivo). Rota = traço da marca com
          contorno mais escuro por baixo; pino escuro = escola/destino. -->

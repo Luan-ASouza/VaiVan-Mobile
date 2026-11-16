@@ -1,10 +1,10 @@
 package com.example.vaivan.data.repository
 
+import com.example.vaivan.core.util.DataUtil
 import android.util.Log
 import com.example.vaivan.core.util.GeoUtil
 import com.example.vaivan.core.util.PolylineUtil
 import com.example.vaivan.data.local.dao.ParadaRotaDao
-import com.example.vaivan.data.local.dao.PassageiroDao
 import com.example.vaivan.data.local.dao.RotaDao
 import com.example.vaivan.data.local.dao.SolicitacaoInclusaoDao
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
@@ -38,16 +38,13 @@ class RotaRepository(
     private val routesClient: GoogleRoutesClient,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val assinaturaRepository: AssinaturaRepository = AssinaturaRepository(firestore),
-    // Opcionais: só quem aciona excluirRota precisa passar, pra limpeza em
-    // cascata (desvincular passageiro, apagar solicitação pendente) também
-    // refletir no Room na hora.
-    private val passageiroDao: PassageiroDao? = null,
+    // Opcional: só quem aciona excluirRota precisa passar, pra limpeza em
+    // cascata (apagar solicitação pendente) também refletir no Room na hora.
     private val solicitacaoInclusaoDao: SolicitacaoInclusaoDao? = null
 ) {
 
     private val collectionRotas = firestore.collection("rotas")
     private val collectionParadas = firestore.collection("paradas_rota")
-    private val collectionPassageiros = firestore.collection("passageiros")
     private val collectionSolicitacoes = firestore.collection("solicitacoes_inclusao")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -269,7 +266,7 @@ class RotaRepository(
             destinoLatitude = destinoLatitude,
             destinoLongitude = destinoLongitude,
             turno = turno,
-            diasSemana = diasSemana.joinToString(","),
+            diasSemana = DataUtil.ordenarDiasSemana(diasSemana).joinToString(","),
             escolaId = escolaId,
             escolaNome = escolaNome,
             bairrosAtendidos = bairrosAtendidos,
@@ -377,7 +374,7 @@ class RotaRepository(
                 destinoLatitude = destinoLatitude,
                 destinoLongitude = destinoLongitude,
                 turno = turno,
-                diasSemana = diasSemana.joinToString(","),
+                diasSemana = DataUtil.ordenarDiasSemana(diasSemana).joinToString(","),
                 escolaId = escolaId,
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
@@ -397,7 +394,7 @@ class RotaRepository(
                 nome = nome,
                 tipoTrajeto = tipoTrajeto,
                 turno = turno,
-                diasSemana = diasSemana.joinToString(","),
+                diasSemana = DataUtil.ordenarDiasSemana(diasSemana).joinToString(","),
                 escolaId = escolaId,
                 escolaNome = escolaNome,
                 bairrosAtendidos = bairrosAtendidos,
@@ -583,17 +580,10 @@ class RotaRepository(
     // =========================================================
 
     /** Apaga a rota e as paradas dela no Firestore e no cache local (Room). */
-    /** Exclui a rota e cascateia: apaga as paradas_rota dela, desvincula os
-     * passageiros que apontavam pra ela (rotaId -> null, o passageiro
-     * continua existindo) e apaga solicitações de inclusão ainda pendentes.
-     * Nunca toca em ViagemEntity/histórico. */
+    /** Exclui a rota e cascateia: apaga as paradas_rota dela e as solicitações
+     * de inclusão ainda pendentes. Nunca toca em ViagemEntity/histórico. */
     suspend fun excluirRota(rotaId: String) = withContext(Dispatchers.IO) {
         val paradas = collectionParadas
-            .whereEqualTo("rotaId", rotaId)
-            .get()
-            .await()
-
-        val passageirosVinculados = collectionPassageiros
             .whereEqualTo("rotaId", rotaId)
             .get()
             .await()
@@ -607,13 +597,11 @@ class RotaRepository(
         val batch = firestore.batch()
         paradas.documents.forEach { batch.delete(it.reference) }
         solicitacoesPendentes.documents.forEach { batch.delete(it.reference) }
-        passageirosVinculados.documents.forEach { batch.update(it.reference, "rotaId", null) }
         batch.delete(collectionRotas.document(rotaId))
         batch.commit().await()
 
         paradaRotaDao.deleteByRota(rotaId)
         solicitacaoInclusaoDao?.deletePendentesPorRota(rotaId)
-        passageiroDao?.desvincularRota(rotaId)
         rotaDao.deleteById(rotaId)
     }
 

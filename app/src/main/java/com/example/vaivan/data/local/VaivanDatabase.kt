@@ -57,7 +57,7 @@ import com.example.vaivan.data.local.entities.ViagemEntity
         RotaViagemEntity::class,
         LocalEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

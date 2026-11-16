@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onda laranja do canto superior esquerdo do card do passageiro. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="120dp"
+    android:viewportWidth="220"
+    android:viewportHeight="120">
+
+    <path
+        android:fillColor="@color/passageiro_onda_clara"
+        android:pathData="M0,0 L220,0 C175,8 150,40 110,56 C70,72 30,70 0,112 Z" />
+
+    <path
+        android:fillColor="@color/passageiro_destaque"
+        android:pathData="M0,0 L170,0 C130,12 105,36 72,50 C42,62 16,66 0,90 Z" />
+</vector>

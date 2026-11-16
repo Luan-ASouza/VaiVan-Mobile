@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -21,29 +20,30 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.ui.responsavel.passageiros.perfil.PerfilPassageiroActivity
-import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.core.util.DataUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.ui.responsavel.HomeResponsavelActivity
 import com.example.vaivan.ui.responsavel.rotas.PesquisarRotasFragment
 import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.launch
-import android.content.res.ColorStateList
 import androidx.appcompat.app.AlertDialog
 import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
 import com.example.vaivan.domain.usecase.solicitacao.CancelarSolicitacaoUseCase
-import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
+import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
 import com.example.vaivan.data.models.Mensalidade
 import com.example.vaivan.data.models.StatusMensalidade
 import com.example.vaivan.data.repository.MensalidadeRepository
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.ui.responsavel.mensalidades.MensalidadesResponsavelActivity
 
 class ListaPassageirosFragment : Fragment() {
@@ -57,12 +57,23 @@ class ListaPassageirosFragment : Fragment() {
     private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
     private var listenerSolicitacoes: ListenerRegistration? = null
 
+    // Rotas já consultadas (rotaId -> escola/turno), para os quadrinhos do card
+    private val rotasConsultadas = mutableMapOf<String, RotaResumo>()
+    private val rotasCarregando = mutableSetOf<String>()
+
+    // Viagens feitas por filho (passageiroId -> total); null = ainda carregando/erro
+    private var viagensPorPassageiro: Map<String, Int>? = null
+
     // Mensalidades (para mostrar atraso no cartão, mesmo sem rota ativa)
     private var ultimasMensalidades: List<Mensalidade> = emptyList()
 
-    // Nome das rotas já consultadas (rotaId -> nome)
-    private val nomesDasRotas = mutableMapOf<String, String>()
-    private val rotasCarregando = mutableSetOf<String>()
+    // Reservas cujo prazo de pagamento já venceu e estão sendo liberadas (uma vez por reserva)
+    private val reservasExpirando = mutableSetOf<String>()
+
+    private val viagemRepository: ViagemRepository by lazy {
+        val db = VaivanDatabase.getInstance(requireContext())
+        ViagemRepository(db.viagemDao(), db.paradaViagemDao(), db.eventoViagemDao())
+    }
 
     private val solicitacaoRepository: SolicitacaoInclusaoRepository by lazy {
         SolicitacaoInclusaoRepository(
@@ -115,6 +126,7 @@ class ListaPassageirosFragment : Fragment() {
         observarPassageiros()
         observarSolicitacoes()
         observarMensalidades()
+        carregarViagensFeitas()
     }
 
     /** Atrasos continuam aparecendo no cartão do filho, mesmo depois de cancelar a rota. */
@@ -140,6 +152,20 @@ class ListaPassageirosFragment : Fragment() {
             .filter { it.contratoId !in reservas }
             .filter { MensalidadePolicy.situacao(it, agora) == MensalidadePolicy.SituacaoMensalidade.ATRASADA }
             .sumOf { it.valorCentavos }
+    }
+
+    /** Busca (uma vez por abertura / puxar para atualizar) quantas viagens cada filho já fez. */
+    private fun carregarViagensFeitas() {
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viagensPorPassageiro = try {
+                viagemRepository.consultarViagensFeitasPorPassageiro(responsavelId)
+            } catch (e: Exception) {
+                null
+            }
+            renderizarLista(ultimosPassageiros)
+        }
     }
 
     override fun onDestroyView() {
@@ -174,6 +200,7 @@ class ListaPassageirosFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     viewModel.atualizarPassageiros()
+                    carregarViagensFeitas()
                 } finally {
                     swipeRefresh.isRefreshing = false
                 }
@@ -233,19 +260,11 @@ class ListaPassageirosFragment : Fragment() {
         itemView: View,
         passageiro: PassageiroEntity
     ) {
-        val linhaPrincipal = itemView.findViewById<LinearLayout>(R.id.linhaPrincipalItem)
         val imgFoto = itemView.findViewById<ShapeableImageView>(R.id.imgFotoPassageiroItem)
         val txtNome = itemView.findViewById<TextView>(R.id.txtNomePassageiroItem)
         val txtIdade = itemView.findViewById<TextView>(R.id.txtIdadePassageiroItem)
-        val imgEditar = itemView.findViewById<ImageView>(R.id.imgEditarPassageiroItem)
-        val imgExcluir = itemView.findViewById<ImageView>(R.id.imgExcluirPassageiroItem)
-        val imgChevron = itemView.findViewById<ImageView>(R.id.imgChevronItem)
-        val containerDetalhes = itemView.findViewById<LinearLayout>(R.id.containerDetalhesItem)
-        val txtNecessidade = itemView.findViewById<TextView>(R.id.txtNecessidadePassageiroItem)
-        val txtObservacoes = itemView.findViewById<TextView>(R.id.txtObservacoesPassageiroItem)
-        val btnBuscarRota = itemView.findViewById<Button>(R.id.btnBuscarRotaItem)
+        val btnEditar = itemView.findViewById<ImageView>(R.id.btnEditarPassageiroItem)
 
-        // Informações Principais usando String Resources
         txtNome.text = passageiro.nome
 
         Glide.with(imgFoto)
@@ -262,103 +281,103 @@ class ListaPassageirosFragment : Fragment() {
             getString(R.string.idade_indisponivel)
         }
 
-        // Necessidade Especial
-        if (passageiro.necessidadesEspeciais) {
-            txtNecessidade.visibility = View.VISIBLE
-            txtNecessidade.text = if (!passageiro.descricaoNecessidades.isNullOrBlank()) {
-                getString(R.string.necessidade_especial_descricao, passageiro.descricaoNecessidades)
-            } else {
-                getString(R.string.necessidade_especial_padrao)
-            }
-        } else {
-            txtNecessidade.visibility = View.GONE
-        }
-
-        // Observações
-        if (!passageiro.observacoes.isNullOrBlank()) {
-            txtObservacoes.visibility = View.VISIBLE
-            txtObservacoes.text = getString(R.string.observacoes_descricao, passageiro.observacoes)
-        } else {
-            txtObservacoes.visibility = View.GONE
-        }
-
-        // Expansão do Card
-        val temDetalhes = passageiro.necessidadesEspeciais || !passageiro.observacoes.isNullOrBlank()
-
-        imgChevron.visibility = if (temDetalhes) View.VISIBLE else View.INVISIBLE
-
-        linhaPrincipal.setOnClickListener {
-            if (!temDetalhes) return@setOnClickListener
-
-            val vaiExpandir = containerDetalhes.visibility != View.VISIBLE
-
-            containerDetalhes.visibility = if (vaiExpandir) View.VISIBLE else View.GONE
-
-            imgChevron.animate()
-                .rotation(if (vaiExpandir) 180f else 0f)
-                .setDuration(150)
-                .start()
-        }
-
-        // Buscar Rota: só para quem não tem pedido pendente nem rota aceita
-        btnBuscarRota.setOnClickListener {
-            abrirPesquisaRotas(passageiro)
-        }
-        configurarRotaAtual(itemView, passageiro, btnBuscarRota)
-
         // Editar: abre o perfil do passageiro (cada campo tem sua tela)
-        imgEditar.setOnClickListener {
+        btnEditar.setOnClickListener {
             startActivity(PerfilPassageiroActivity.intent(requireContext(), passageiro.id))
         }
 
-        // Excluir
-        imgExcluir.setOnClickListener {
-            ConfirmacaoExclusaoHelper.confirmar(
-                contexto = requireContext(),
-                titulo = "Excluir \"${passageiro.nome}\"?",
-                mensagem = "Isso remove o passageiro e sua vaga em qualquer rota. Essa ação não pode ser desfeita."
-            ) {
-                excluirPassageiro(passageiro)
+        configurarNumeros(itemView, passageiro)
+        configurarRotaAtual(itemView, passageiro)
+    }
+
+    // ---------------------------------------------------------
+    // QUADRINHOS (VIAGENS, ROTAS, ESCOLA, TURNO)
+    // ---------------------------------------------------------
+
+    private fun configurarNumeros(itemView: View, passageiro: PassageiroEntity) {
+        val viagens = viagensPorPassageiro?.get(passageiro.id) ?: 0
+        itemView.findViewById<TextView>(R.id.txtViagensPassageiroItem).text =
+            if (viagensPorPassageiro == null) "–" else viagens.toString()
+        itemView.findViewById<TextView>(R.id.txtRotuloViagensPassageiroItem).text =
+            if (viagens == 1) "Viagem" else "Viagens"
+
+        // Ponto de embarque: o escolhido no pedido/rota atual do filho
+        val ativa = solicitacaoAtiva(passageiro.id)
+        itemView.findViewById<TextView>(R.id.txtEmbarquePassageiroItem).text =
+            ativa?.nomeLocalEmbarque?.takeIf { it.isNotBlank() } ?: "Sem embarque"
+        itemView.findViewById<TextView>(R.id.txtEnderecoEmbarquePassageiroItem).text =
+            ativa?.enderecoEmbarque?.takeIf { it.isNotBlank() } ?: "Definido ao buscar uma rota"
+
+        // Escola e turno vêm da rota atual (aceita ou pedida) do filho
+        val rota = ativa?.let { ativa ->
+            rotasConsultadas[ativa.rotaId] ?: run {
+                carregarRota(ativa.rotaId)
+                null
             }
         }
+
+        itemView.findViewById<TextView>(R.id.txtEscolaPassageiroItem).text =
+            rota?.escola?.takeIf { it.isNotBlank() } ?: "Não definida"
+
+        val txtTurno = itemView.findViewById<TextView>(R.id.txtTurnoPassageiroItem)
+        val imgTurno = itemView.findViewById<ImageView>(R.id.imgTurnoPassageiroItem)
+        txtTurno.text = when (rota?.turno) {
+            "MANHA" -> "Turno da manhã"
+            "TARDE" -> "Turno da tarde"
+            "NOITE" -> "Turno da noite"
+            else -> "Turno não definido"
+        }
+        imgTurno.setImageResource(if (rota?.turno == "NOITE") R.drawable.ic_lua else R.drawable.ic_sol)
     }
 
     // ---------------------------------------------------------
     // PEDIDO / ROTA ATUAL DO FILHO
     // ---------------------------------------------------------
 
-    /** O pedido pendente ou a rota aceita deste filho, se houver. */
-    private fun solicitacaoAtiva(passageiroId: String): SolicitacaoInclusaoEntity? =
-        ultimasSolicitacoes
-            .filter { it.passageiroId == passageiroId && it.status in SolicitacaoInclusaoRepository.STATUS_ATIVOS }
-            .maxByOrNull { it.criadoEm }
+    /**
+     * O pedido, a reserva ou a rota aceita deste filho, se houver
+     * (prioridade: aceita > reservada aguardando pagamento > pendente).
+     */
+    private fun solicitacaoAtiva(passageiroId: String): SolicitacaoInclusaoEntity? {
+        val doFilho = ultimasSolicitacoes.filter { it.passageiroId == passageiroId }
+        return doFilho.filter { it.status == STATUS_ACEITA }.maxByOrNull { it.criadoEm }
+            ?: doFilho.filter { it.status == STATUS_RESERVADA }.maxByOrNull { it.criadoEm }
+            ?: doFilho.filter { it.status == STATUS_PENDENTE }.maxByOrNull { it.criadoEm }
+    }
 
     /**
-     * Com pedido pendente ou rota aceita, o "Buscar rota" some e aparece a rota
-     * (ou o pedido) com a etiqueta de situação e o botão de cancelar.
-     * Sem nada ativo, volta o "Buscar rota". A faixa de atraso aparece em
-     * qualquer caso, enquanto houver mensalidade vencida e não paga.
+     * Sem pedido nem rota: o botão vira "Buscar rotas para o passageiro".
+     * Com pedido pendente, reserva ou rota aceita: "Ver rotas do passageiro" leva
+     * para a aba Transportes, e abaixo aparece a situação (etiqueta, rota, valor,
+     * pagar a 1ª mensalidade quando reservada) com a opção de cancelar.
+     * A faixa de atraso aparece em qualquer caso, enquanto houver mensalidade
+     * vencida e não paga.
      */
-    private fun configurarRotaAtual(itemView: View, passageiro: PassageiroEntity, btnBuscarRota: View) {
+    private fun configurarRotaAtual(itemView: View, passageiro: PassageiroEntity) {
         configurarPendencia(itemView, passageiro)
 
-        val container = itemView.findViewById<LinearLayout>(R.id.containerRotaAtualItem)
+        val btnRotas = itemView.findViewById<View>(R.id.btnRotasPassageiroItem)
+        val txtBotao = itemView.findViewById<TextView>(R.id.txtBotaoRotasPassageiroItem)
+        val imgBotao = itemView.findViewById<ImageView>(R.id.imgBotaoRotasPassageiroItem)
+        val containerStatus = itemView.findViewById<View>(R.id.containerStatusRotaItem)
         val ativa = solicitacaoAtiva(passageiro.id)
 
         if (ativa == null) {
-            btnBuscarRota.visibility = View.VISIBLE
-            container.visibility = View.GONE
+            txtBotao.text = "Buscar rotas para o passageiro"
+            imgBotao.setImageResource(R.drawable.ic_search)
+            btnRotas.setOnClickListener { abrirPesquisaRotas(passageiro) }
+            containerStatus.visibility = View.GONE
             return
         }
 
-        btnBuscarRota.visibility = View.GONE
-        container.visibility = View.VISIBLE
+        txtBotao.text = "Ver rotas do passageiro"
+        imgBotao.setImageResource(R.drawable.ic_local)
+        btnRotas.setOnClickListener { (activity as? HomeResponsavelActivity)?.abrirTransportes() }
+
+        containerStatus.visibility = View.VISIBLE
 
         itemView.findViewById<TextView>(R.id.txtRotaAtualNomeItem).text =
-            nomesDasRotas[ativa.rotaId] ?: run {
-                carregarNomeDaRota(ativa.rotaId)
-                "Carregando rota..."
-            }
+            rotasConsultadas[ativa.rotaId]?.nome?.takeIf { it.isNotBlank() } ?: "Carregando rota..."
 
         val valorMensal =
             if (ativa.valorMensalCentavos > 0) "${AssinaturaUi.formatarValor(ativa.valorMensalCentavos)} por mês"
@@ -368,8 +387,8 @@ class ListaPassageirosFragment : Fragment() {
         btnPagar.visibility = View.GONE
 
         // Etiqueta, texto e botão de cancelar conforme a etapa
-        val (etiqueta, corEtiqueta, info, textoCancelar) = when (ativa.status) {
-            STATUS_ACEITA -> Etapa("Ativa", R.color.green, valorMensal, "Cancelar rota")
+        val etapa = when (ativa.status) {
+            STATUS_ACEITA -> Etapa("Ativa", COR_ATIVA, "Vai de van com esta rota. $valorMensal", "Cancelar rota")
 
             STATUS_RESERVADA -> {
                 val primeira = primeiraMensalidade(ativa.id)
@@ -378,7 +397,7 @@ class ListaPassageirosFragment : Fragment() {
                 }
                 if (primeira?.status == StatusMensalidade.PAGA) {
                     Etapa(
-                        "Pago", R.color.green,
+                        "Pago", COR_ATIVA,
                         "Pagamento confirmado! A vaga é ativada assim que o motorista abrir a rota ou iniciar a próxima viagem.",
                         "Cancelar reserva"
                     )
@@ -392,7 +411,7 @@ class ListaPassageirosFragment : Fragment() {
                     }
                     val valorPrimeira = primeira?.let { AssinaturaUi.formatarValor(it.valorCentavos) }
                     Etapa(
-                        "Reservada", R.color.orange,
+                        "Reservada", COR_AGUARDANDO,
                         "O motorista aceitou! Pague " +
                             (valorPrimeira?.let { "$it (1ª mensalidade, proporcional ao mês)" } ?: "a 1ª mensalidade") +
                             (prazo?.let { " até $it" } ?: "") +
@@ -402,26 +421,29 @@ class ListaPassageirosFragment : Fragment() {
                 }
             }
 
-            else -> Etapa("Aguardando", R.color.orange, "Esperando o motorista aceitar. $valorMensal", "Cancelar pedido")
+            else -> Etapa("Aguardando", COR_AGUARDANDO, "Esperando o motorista aceitar. $valorMensal", "Cancelar pedido")
         }
 
         itemView.findViewById<TextView>(R.id.txtStatusRotaItem).apply {
-            text = etiqueta
-            backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, corEtiqueta))
-            setTextColor(
-                ContextCompat.getColor(context, if (corEtiqueta == R.color.green) R.color.white else R.color.dark_gray)
-            )
+            text = etapa.etiqueta
+            backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, etapa.cores.first))
+            setTextColor(ContextCompat.getColor(context, etapa.cores.second))
         }
-        itemView.findViewById<TextView>(R.id.txtRotaAtualInfoItem).text = info
+        itemView.findViewById<TextView>(R.id.txtRotaAtualInfoItem).text = etapa.info
 
         itemView.findViewById<TextView>(R.id.btnCancelarRotaItem).apply {
-            text = textoCancelar
+            text = etapa.textoCancelar
             setOnClickListener { confirmarCancelamento(passageiro, ativa) }
         }
     }
 
-    /** Como o quadro do filho aparece em cada etapa. */
-    private data class Etapa(val etiqueta: String, val cor: Int, val info: String, val textoCancelar: String)
+    /** Como o quadro do filho aparece em cada etapa (cores = fundo e texto da etiqueta). */
+    private data class Etapa(
+        val etiqueta: String,
+        val cores: Pair<Int, Int>,
+        val info: String,
+        val textoCancelar: String
+    )
 
     /** 1ª mensalidade de uma reserva (o id do contrato é o da solicitação). */
     private fun primeiraMensalidade(solicitacaoId: String): Mensalidade? =
@@ -430,8 +452,6 @@ class ListaPassageirosFragment : Fragment() {
             .minByOrNull { it.competencia }
 
     /** Reserva com prazo de pagamento vencido: libera a vaga (uma vez por reserva). */
-    private val reservasExpirando = mutableSetOf<String>()
-
     private fun expirarReservasVencidas(lista: List<SolicitacaoInclusaoEntity>) {
         val agora = System.currentTimeMillis()
         lista
@@ -473,21 +493,28 @@ class ListaPassageirosFragment : Fragment() {
         }
     }
 
-    /** Busca o nome da rota uma vez só e redesenha a lista quando chegar. */
-    private fun carregarNomeDaRota(rotaId: String) {
+    /** Busca escola/turno da rota uma vez só e redesenha a lista quando chegar. */
+    private fun carregarRota(rotaId: String) {
         if (rotaId.isBlank() || !rotasCarregando.add(rotaId)) return
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val nome = try {
+            val documento = try {
                 FirebaseFirestore.getInstance().collection("rotas").document(rotaId)
-                    .get().await().getString("nome")
+                    .get().await()
             } catch (e: Exception) {
                 null
             }
-            nomesDasRotas[rotaId] = nome?.takeIf { it.isNotBlank() } ?: "Rota"
+            rotasConsultadas[rotaId] = RotaResumo(
+                nome = documento?.getString("nome")?.takeIf { it.isNotBlank() } ?: "Rota",
+                escola = documento?.getString("escolaNome")?.takeIf { it.isNotBlank() }
+                    ?: documento?.getString("destinoNome").orEmpty(),
+                turno = documento?.getString("turno").orEmpty()
+            )
             renderizarLista(ultimosPassageiros)
         }
     }
+
+    private data class RotaResumo(val nome: String, val escola: String, val turno: String)
 
     private fun confirmarCancelamento(passageiro: PassageiroEntity, solicitacao: SolicitacaoInclusaoEntity) {
         val nome = passageiro.nome
@@ -558,19 +585,6 @@ class ListaPassageirosFragment : Fragment() {
         }
     }
 
-    private fun excluirPassageiro(passageiro: PassageiroEntity) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                viewModel.excluirPassageiro(passageiro.id)
-
-                Toast.makeText(requireContext(), "Passageiro excluído.", Toast.LENGTH_SHORT).show()
-
-            } catch (erro: Exception) {
-                Toast.makeText(requireContext(), "Erro ao excluir: ${erro.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
     private fun abrirPesquisaRotas(passageiro: PassageiroEntity) {
         val fragment = PesquisarRotasFragment()
 
@@ -589,5 +603,9 @@ class ListaPassageirosFragment : Fragment() {
         const val STATUS_PENDENTE = SolicitacaoInclusaoRepository.STATUS_PENDENTE
         const val STATUS_ACEITA = SolicitacaoInclusaoRepository.STATUS_ACEITA
         const val STATUS_RESERVADA = SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO
+
+        // Etiqueta da situação (fundo, texto) — mesmas classes dos cards de Transportes
+        val COR_ATIVA = R.color.transporte_andamento_fundo to R.color.transporte_andamento_texto
+        val COR_AGUARDANDO = R.color.transporte_programada_fundo to R.color.transporte_programada_texto
     }
 }

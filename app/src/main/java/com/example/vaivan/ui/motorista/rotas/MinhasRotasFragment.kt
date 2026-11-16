@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.motorista.rotas
 
+import com.example.vaivan.core.util.DataUtil
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -55,7 +56,6 @@ class MinhasRotasFragment : Fragment() {
             rotaDao = db.rotaDao(),
             paradaRotaDao = db.paradaRotaDao(),
             routesClient = GoogleRoutesClient(requireContext()),
-            passageiroDao = db.passageiroDao(),
             solicitacaoInclusaoDao = db.solicitacaoInclusaoDao()
         )
     }
@@ -278,11 +278,7 @@ class MinhasRotasFragment : Fragment() {
                 )
                 .text =
                 "${traduzirTurno(rota.turno)} · " +
-                        rota.diasSemana
-                            .replace(
-                                ",",
-                                ", "
-                            )
+                        DataUtil.ordenarDiasSemana(rota.diasSemana).joinToString(", ")
 
 
             itemView

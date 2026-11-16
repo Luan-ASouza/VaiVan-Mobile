@@ -110,9 +110,15 @@ class BuscarRotasDoResponsavelUseCase(
 
         Log.d("ROTAS_RESP", "rota $rotaId existe: ${rota.nome}")
 
-        // Motorista da rota.
+        // Motorista da rota. O Room deste celular só guarda o usuário LOGADO,
+        // então o motorista tem que vir do Firestore; o cache fica só de
+        // reserva (sem internet).
         val motorista =
-            usuarioRepository
+            try {
+                usuarioRepository.consultarUsuario(rota.motoristaId)
+            } catch (e: Exception) {
+                null
+            } ?: usuarioRepository
                 .observarUsuario(
                     rota.motoristaId
                 )

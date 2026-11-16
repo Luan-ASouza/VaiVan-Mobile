@@ -1,6 +1,8 @@
 package com.example.vaivan.ui.responsavel.rotas
 
+import com.example.vaivan.core.util.DataUtil
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -54,8 +56,19 @@ class ListaRotasFragment : Fragment() {
     private lateinit var containerRotas: LinearLayout
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var abaViagens: TextView
+    private lateinit var abaPedidos: TextView
+    private lateinit var txtVazio: TextView
+
+    /** Aba aberta: viagens dos filhos (padrão) ou pedidos aguardando o motorista. */
+    private var mostrandoPedidos = false
+
+    /** Em que ponto da viagem de hoje o filho está (linha do tempo do card). */
+    private enum class Etapa { NAO_INICIADA, AGUARDANDO, NA_VAN, DESCEU, FALTA, FINALIZADA }
 
     private var ultimasRotas: List<RotasDoResponsavel> = emptyList()
+    private val listenersRotas = mutableListOf<ListenerRegistration>()
+    private var rotasObservadas: List<String> = emptyList()
     private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
     private var listenerSolicitacoes: ListenerRegistration? = null
     private var listenerAvisosAusencia: ListenerRegistration? = null
@@ -127,6 +140,13 @@ class ListaRotasFragment : Fragment() {
         swipeRefresh = view.findViewById(R.id.swipeRefreshListaRotas)
         swipeRefresh.setOnRefreshListener { atualizarTudo() }
 
+        abaViagens = view.findViewById(R.id.abaViagensRotas)
+        abaPedidos = view.findViewById(R.id.abaPedidosRotas)
+        txtVazio = view.findViewById(R.id.txtVazioRotas)
+
+        abaViagens.setOnClickListener { mostrandoPedidos = false; renderizar() }
+        abaPedidos.setOnClickListener { mostrandoPedidos = true; renderizar() }
+
         return view
     }
 
@@ -150,6 +170,9 @@ class ListaRotasFragment : Fragment() {
         listenerSolicitacoes = null
         listenerAvisosAusencia?.remove()
         listenerAvisosAusencia = null
+        listenersRotas.forEach { it.remove() }
+        listenersRotas.clear()
+        rotasObservadas = emptyList()
         pararStatusViagemDosCards()
         super.onDestroyView()
     }
@@ -325,58 +348,97 @@ class ListaRotasFragment : Fragment() {
                 viewModel.rotas.collect { rotas ->
                     ultimasRotas = rotas
                     renderizar()
+                    observarMudancasDasRotas(rotas)
                 }
             }
         }
     }
 
-    /** Desenha, nesta ordem: seção Solicitações e seção Suas viagens. */
+    /** Quando o motorista recalcula a rota (novo aluno, mudança de ordem...), o
+     * documento da rota muda no Firestore. Esta tela só buscava as rotas uma vez,
+     * então o card ficava desatualizado até o pull-to-refresh: aqui, qualquer
+     * mudança numa rota exibida recarrega a lista. */
+    private fun observarMudancasDasRotas(rotas: List<RotasDoResponsavel>) {
+        val ids = rotas.map { it.rota.id }.distinct()
+        if (ids == rotasObservadas) return
+
+        listenersRotas.forEach { it.remove() }
+        listenersRotas.clear()
+        rotasObservadas = ids
+
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        ids.forEach { rotaId ->
+            var primeira = true
+            listenersRotas += com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("rotas")
+                .document(rotaId)
+                .addSnapshotListener { snapshot, erro ->
+                    if (erro != null || snapshot == null) return@addSnapshotListener
+                    // O primeiro disparo é só o estado atual, que já está na tela.
+                    if (primeira) {
+                        primeira = false
+                        return@addSnapshotListener
+                    }
+                    if (snapshot.metadata.hasPendingWrites()) return@addSnapshotListener
+                    viewModel.carregarRotas(responsavelId)
+                }
+        }
+    }
+
+    /** Desenha a aba aberta: "Viagens" (um card por filho) ou "Pedidos"
+     * (solicitações que ainda aguardam o motorista). */
     private fun renderizar() {
 
         pararStatusViagemDosCards()
         containerRotas.removeAllViews()
 
         // Só as que ainda aguardam resposta. As aprovadas já viram cards em
-        // "Suas viagens" (com o botão de mensagem) e as antigas/recusadas poluem a tela.
+        // "Viagens" (com o botão de mensagem) e as antigas/recusadas poluem a tela.
         // Pedidos ainda sem rota ativa: aguardando o motorista ou o 1º pagamento
         val solicitacoes = ultimasSolicitacoes.filter { it.status == "PENDENTE" || it.status == "AGUARDANDO_PAGAMENTO" }
 
-        if (solicitacoes.isNotEmpty()) {
+        abaViagens.text = "Viagens (${ultimasRotas.size})"
+        abaPedidos.text = "Pedidos (${solicitacoes.size})"
+        aplicarEstiloAba(abaViagens, selecionada = !mostrandoPedidos)
+        aplicarEstiloAba(abaPedidos, selecionada = mostrandoPedidos)
 
-            containerRotas.addView(criarTituloSecao("Solicitações"))
-
+        if (mostrandoPedidos) {
             solicitacoes.forEach { solicitacao ->
-
                 val solicitacaoView = layoutInflater.inflate(
                     R.layout.item_solicitacao_responsavel,
                     containerRotas,
                     false
                 )
-
                 preencherSolicitacao(solicitacaoView, solicitacao)
-
                 containerRotas.addView(solicitacaoView)
             }
-        }
-
-        if (ultimasRotas.isNotEmpty()) {
-
-            containerRotas.addView(criarTituloSecao("Suas viagens"))
-
+            mostrarVazio(
+                solicitacoes.isEmpty(),
+                "Nenhum pedido aguardando resposta.\nPara pedir uma vaga, toque em \"Buscar rotas\" no card do passageiro."
+            )
+        } else {
             mostrarRotas(ultimasRotas)
+            mostrarVazio(
+                ultimasRotas.isEmpty(),
+                "Nenhum transporte ainda.\nQuando um motorista aceitar o pedido, a viagem aparece aqui."
+            )
         }
     }
 
-    private fun criarTituloSecao(titulo: String): TextView {
+    private fun aplicarEstiloAba(aba: TextView, selecionada: Boolean) {
+        aba.setBackgroundResource(if (selecionada) R.drawable.bg_aba_selecionada else R.drawable.bg_aba)
+        aba.setTextColor(
+            ContextCompat.getColor(
+                requireContext(),
+                if (selecionada) R.color.text_on_dark else R.color.text_primary
+            )
+        )
+    }
 
-        val dp = resources.displayMetrics.density
-
-        return TextView(requireContext()).apply {
-            text = titulo
-            textSize = 18f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setPadding(0, (8 * dp).toInt(), 0, (10 * dp).toInt())
-        }
+    private fun mostrarVazio(vazio: Boolean, texto: String) {
+        txtVazio.text = texto
+        txtVazio.visibility = if (vazio) View.VISIBLE else View.GONE
     }
 
     private fun mostrarRotas(rotas: List<RotasDoResponsavel>) {
@@ -414,16 +476,31 @@ class ListaRotasFragment : Fragment() {
         // .consultarPassageiro abaixo, que traz o nome atual de verdade).
         val nomeAlunoDenormalizado = item.parada?.nomePassageiro.orEmpty()
 
-        // Aluno
-        val txtInicialAluno = view.findViewById<TextView>(R.id.txtInicialAlunoCard)
+        val turno = when (rota.turno) {
+            "MANHA" -> "Manhã"
+            "TARDE" -> "Tarde"
+            "NOITE" -> "Noite"
+            else -> rota.turno
+        }
+        val tipo = when (rota.tipoTrajeto) {
+            "IDA" -> "Ida"
+            "VOLTA" -> "Volta"
+            "IDA_E_VOLTA" -> "Ida e volta"
+            else -> rota.tipoTrajeto
+        }
+
+        // Rota (título) e aluno • turno • tipo (subtítulo)
+        view.findViewById<TextView>(R.id.txtNomeRotaCard).text = rota.nome
+
         val imgFotoAluno = view.findViewById<ShapeableImageView>(R.id.imgFotoAlunoCard)
         val txtNomeAluno = view.findViewById<TextView>(R.id.txtNomeAlunoCard)
 
-        txtInicialAluno.text =
-            nomeAlunoDenormalizado.firstOrNull()?.uppercase() ?: "?"
-
-        txtNomeAluno.text =
-            nomeAlunoDenormalizado.ifBlank { "Aluno não informado" }
+        fun aplicarNomeAluno(nome: String) {
+            txtNomeAluno.text = listOf(nome.ifBlank { "Aluno" }, turno, tipo)
+                .filter { it.isNotBlank() }
+                .joinToString(" • ")
+        }
+        aplicarNomeAluno(nomeAlunoDenormalizado)
 
         val passageiroId = item.parada?.passageiroId
         var nomeAluno = nomeAlunoDenormalizado
@@ -436,28 +513,28 @@ class ListaRotasFragment : Fragment() {
                     null
                 }
 
-                val nomeAtual = passageiro?.nome?.ifBlank { null }
-                if (nomeAtual != null) {
+                passageiro?.nome?.ifBlank { null }?.let { nomeAtual ->
                     nomeAluno = nomeAtual
-                    txtInicialAluno.text = nomeAtual.firstOrNull()?.uppercase() ?: "?"
-                    txtNomeAluno.text = nomeAtual
+                    aplicarNomeAluno(nomeAtual)
                 }
 
-                if (!passageiro?.fotoUrl.isNullOrBlank()) {
-                    txtInicialAluno.visibility = View.GONE
-                    imgFotoAluno.visibility = View.VISIBLE
-                    Glide.with(imgFotoAluno).load(passageiro?.fotoUrl).circleCrop().into(imgFotoAluno)
-                }
+                Glide.with(imgFotoAluno)
+                    .load(passageiro?.fotoUrl)
+                    .placeholder(R.drawable.avatar_01)
+                    .error(R.drawable.avatar_01)
+                    .circleCrop()
+                    .into(imgFotoAluno)
             }
         }
 
-        // Rota, turno e desembarque
-        view.findViewById<TextView>(R.id.txtNomeRotaCard).text = rota.nome
-
-        view.findViewById<TextView>(R.id.txtTurnoRotaCard).text = rota.turno
-
+        // Endereços: embarque (casa) e desembarque (escola)
+        view.findViewById<TextView>(R.id.txtEmbarqueCard).text =
+            item.parada?.endereco?.ifBlank { null } ?: "Embarque não informado"
         view.findViewById<TextView>(R.id.txtDesembarqueCard).text =
-            rota.destinoEndereco
+            rota.destinoEndereco.ifBlank { rota.escolaNome.ifBlank { rota.destinoNome } }
+
+        view.findViewById<View>(R.id.txtNotaVoltaCard).visibility =
+            if (rota.tipoTrajeto == "IDA_E_VOLTA") View.VISIBLE else View.GONE
 
         // Dias da semana (um chip por dia)
         montarDias(
@@ -466,55 +543,39 @@ class ListaRotasFragment : Fragment() {
         )
 
         // Motorista e veículo
-        val nomeMotorista = motorista?.nome ?: "Motorista não informado"
-
-        val dadosVeiculo = listOfNotNull(veiculo?.modelo, veiculo?.placa)
-            .joinToString(" • ")
-
         view.findViewById<TextView>(R.id.txtMotoristaCard).text =
-            if (dadosVeiculo.isBlank()) nomeMotorista
-            else "$nomeMotorista  |  $dadosVeiculo"
+            listOfNotNull(motorista?.nome, motorista?.sobrenome)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { "Motorista não informado" }
 
-        // Tipo, turno e embarque
-        view.findViewById<TextView>(R.id.txtTipoRotaCard).text =
-            when (rota.tipoTrajeto) {
-                "IDA" -> "Ida"
-                "VOLTA" -> "Volta"
-                "IDA_E_VOLTA" -> "Ida e volta"
-                else -> rota.tipoTrajeto
-            }
+        val txtVeiculo = view.findViewById<TextView>(R.id.txtVeiculoCard)
+        val dadosVeiculo = listOfNotNull(veiculo?.modelo, veiculo?.placa)
+            .filter { it.isNotBlank() }
+            .joinToString(" • ")
+        txtVeiculo.text = dadosVeiculo
+        txtVeiculo.visibility = if (dadosVeiculo.isBlank()) View.GONE else View.VISIBLE
 
-        view.findViewById<TextView>(R.id.txtTurnoRotaCard).text =
-            when (rota.turno) {
-                "MANHA" -> "Manhã"
-                "TARDE" -> "Tarde"
-                "NOITE" -> "Noite"
-                else -> rota.turno
-            }
+        val imgFotoMotorista = view.findViewById<ShapeableImageView>(R.id.imgFotoMotoristaCard)
+        Glide.with(imgFotoMotorista)
+            .load(motorista?.fotoUrl)
+            .placeholder(R.drawable.ic_perfil)
+            .error(R.drawable.ic_perfil)
+            .circleCrop()
+            .into(imgFotoMotorista)
 
-        view.findViewById<TextView>(R.id.txtEmbarqueCard).text =
-            item.parada?.endereco?.ifBlank { null } ?: "Não informado"
-
-        view.findViewById<View>(R.id.txtNotaVoltaCard).visibility =
-            if (rota.tipoTrajeto == "IDA_E_VOLTA") View.VISIBLE else View.GONE
-
-        // TODO: txtProximaCobrancaCard (depende da regra de cobrança mensal)
-
-        val containerStatusViagem = view.findViewById<ViewGroup>(R.id.containerStatusViagemCard)
-        val btnAcompanhar = view.findViewById<MaterialButton>(R.id.btnAcompanharViagemCard)
-        if (passageiroId != null && containerStatusViagem != null && btnAcompanhar != null) {
-            configurarStatusViagemCard(containerStatusViagem, btnAcompanhar, item, passageiroId)
+        view.findViewById<View>(R.id.btnEnviarMensagemCard).setOnClickListener {
+            abrirChatComMotorista(item)
         }
 
-        // Ações dentro do card (os botões são opcionais: se ainda não
-        // existirem no XML, o código simplesmente os ignora)
-        view.findViewById<View>(R.id.btnEnviarMensagemCard)?.setOnClickListener {
-            abrirChatComMotorista(item)
+        // Selo, linha do tempo e botão Acompanhar / Ver trajeto (ao vivo)
+        if (passageiroId != null) {
+            configurarStatusViagemCard(view, item, passageiroId)
         }
 
         val responsavelId = FirebaseAuth.getInstance().currentUser?.uid
         val containerAviso = view.findViewById<ViewGroup>(R.id.containerAvisoAusenciaCard)
-        if (passageiroId != null && responsavelId != null && containerAviso != null) {
+        if (passageiroId != null && responsavelId != null) {
             configurarBlocoAvisoAusencia(
                 container = containerAviso,
                 lifecycleOwner = viewLifecycleOwner,
@@ -608,20 +669,21 @@ class ListaRotasFragment : Fragment() {
     // STATUS DA VIAGEM/PASSAGEIRO DE HOJE (um por direção da rota)
     // ---------------------------------------------------------
 
-    /** Um TextView por direção que a rota tiver, mostrando se a viagem de
-     * hoje ainda não começou, está em andamento (com o status do próprio
-     * filho: aguardando/na van/desceu), ou já foi finalizada — atualizado ao
-     * vivo via [ViagemRepository.iniciarSincronizacaoDoDia]. O mesmo estado
-     * decide o botão único do card: "Acompanhar viagem" (ao vivo) enquanto
-     * alguma direção estiver em andamento, "Ver trajeto" (só o percurso
-     * planejado, sem navegação) no resto do tempo. */
+    /** Acompanha ao vivo a viagem de hoje de cada direção da rota (via
+     * [ViagemRepository.iniciarSincronizacaoDoDia]) e, a cada mudança,
+     * redesenha no card: o selo (em andamento / programada / concluída), a
+     * linha do tempo da direção mais relevante, uma linha de status por
+     * direção (só em ida e volta) e o botão único — "Acompanhar" (ao vivo)
+     * enquanto alguma direção estiver em andamento, "Ver trajeto" (só o
+     * percurso planejado) no resto do tempo. */
     private fun configurarStatusViagemCard(
-        container: ViewGroup,
-        btnAcompanhar: MaterialButton,
+        view: View,
         item: RotasDoResponsavel,
         passageiroId: String
     ) {
         val rota = item.rota
+        val container = view.findViewById<ViewGroup>(R.id.containerStatusViagemCard)
+        val btnAcompanhar = view.findViewById<MaterialButton>(R.id.btnAcompanharViagemCard)
         container.removeAllViews()
 
         val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -633,49 +695,127 @@ class ListaRotasFragment : Fragment() {
             else -> emptyList()
         }
 
-        val mostrarPrefixo = direcoes.size > 1
-        val ativoPorDirecao = BooleanArray(direcoes.size)
+        val idaEVolta = direcoes.size > 1
+        val etapas = Array(direcoes.size) { Etapa.NAO_INICIADA }
+        val rotulos = Array(direcoes.size) { "Não iniciada" }
 
-        fun atualizarBotaoAcompanhar() {
-            if (ativoPorDirecao.any { it }) {
-                btnAcompanhar.text = "Acompanhar viagem"
+        fun atualizarCard() {
+            val ativo = etapas.any { it == Etapa.AGUARDANDO || it == Etapa.NA_VAN || it == Etapa.DESCEU }
+            val algumaAtiva = etapas.indexOfFirst { it == Etapa.AGUARDANDO || it == Etapa.NA_VAN || it == Etapa.DESCEU }
+            val todasConcluidas = etapas.isNotEmpty() && etapas.all { it == Etapa.FINALIZADA || it == Etapa.FALTA }
+
+            // Selo
+            val (textoSelo, fundoSelo, corSelo) = when {
+                ativo -> Triple("Em andamento", R.color.transporte_andamento_fundo, R.color.transporte_andamento_texto)
+                todasConcluidas -> Triple("Concluída", R.color.transporte_concluida_fundo, R.color.transporte_concluida_texto)
+                else -> Triple("Programada", R.color.transporte_programada_fundo, R.color.transporte_programada_texto)
+            }
+            view.findViewById<TextView>(R.id.txtSeloViagemCard).apply {
+                text = textoSelo
+                backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, fundoSelo))
+                setTextColor(ContextCompat.getColor(context, corSelo))
+            }
+
+            // Botão
+            if (ativo) {
+                btnAcompanhar.text = "Acompanhar"
                 btnAcompanhar.setIconResource(R.drawable.ic_mylocation)
+                btnAcompanhar.backgroundTintList = ColorStateList.valueOf(cor(R.color.color_primary))
+                btnAcompanhar.setTextColor(cor(R.color.text_on_dark))
+                btnAcompanhar.iconTint = ColorStateList.valueOf(cor(R.color.text_on_dark))
                 btnAcompanhar.setOnClickListener { abrirAcompanharViagem(item) }
             } else {
                 btnAcompanhar.text = "Ver trajeto"
                 btnAcompanhar.setIconResource(R.drawable.ic_rotas)
+                btnAcompanhar.backgroundTintList = ColorStateList.valueOf(cor(R.color.transporte_programada_fundo))
+                btnAcompanhar.setTextColor(cor(R.color.transporte_programada_texto))
+                btnAcompanhar.iconTint = ColorStateList.valueOf(cor(R.color.transporte_programada_texto))
                 btnAcompanhar.setOnClickListener { abrirVerTrajeto(rota.id) }
             }
+
+            // Linha do tempo: a direção em andamento; senão a próxima que
+            // ainda não terminou; senão a última.
+            if (direcoes.isEmpty()) return
+            val indice = algumaAtiva.takeIf { it >= 0 }
+                ?: etapas.indexOfFirst { it == Etapa.NAO_INICIADA }.takeIf { it >= 0 }
+                ?: (direcoes.size - 1)
+            desenharLinhaDoTempo(view, item, direcoes[indice], etapas[indice], rotulos[indice])
         }
 
-        atualizarBotaoAcompanhar()
+        atualizarCard()
 
         direcoes.forEachIndexed { index, direcao ->
+            // Em ida e volta, uma linha por direção abaixo da linha do tempo;
+            // numa direção só, o rótulo do meio da linha do tempo já basta.
             val txtStatus = criarTextoStatusViagem(container.context)
-            container.addView(txtStatus)
+            if (idaEVolta) container.addView(txtStatus)
 
             listenersStatusViagem.add(viagemRepository.iniciarSincronizacaoDoDia(rota.id, direcao, responsavelId))
 
             viewLifecycleOwner.lifecycleScope.launch {
                 viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    statusViagemDoDiaFlow(rota.id, passageiroId, responsavelId, direcao).collect { (viagem, statusPassageiro) ->
-                        ativoPorDirecao[index] = viagem != null &&
-                            (viagem.status == ViagemRepository.STATUS_EM_ANDAMENTO || viagem.status == ViagemRepository.STATUS_PAUSADA)
-                        atualizarBotaoAcompanhar()
+                    statusViagemDoDiaFlow(rota.id, passageiroId, responsavelId, direcao).collect { (viagem, statusPassageiro, etapa) ->
+                        val (texto, corTexto) = rotuloEcorStatusViagem(viagem, statusPassageiro)
+                        etapas[index] = etapa
+                        rotulos[index] = texto
 
-                        val (texto, cor) = rotuloEcorStatusViagem(viagem, statusPassageiro)
-                        txtStatus.text = if (mostrarPrefixo) {
-                            val prefixo = if (direcao == ViagemRepository.DIRECAO_IDA) "Ida" else "Volta"
-                            "$prefixo: $texto"
-                        } else {
-                            texto
-                        }
-                        txtStatus.setTextColor(ContextCompat.getColor(requireContext(), cor))
+                        val prefixo = if (direcao == ViagemRepository.DIRECAO_IDA) "Ida" else "Volta"
+                        txtStatus.text = "$prefixo: $texto"
+                        txtStatus.setTextColor(cor(corTexto))
+
+                        atualizarCard()
                     }
                 }
             }
         }
     }
+
+    /** Pontos/linhas acendem em laranja até onde o aluno chegou; falta pinta
+     * o ponto do meio de vermelho. Na volta, o trajeto se inverte. */
+    private fun desenharLinhaDoTempo(
+        view: View,
+        item: RotasDoResponsavel,
+        direcao: String,
+        etapa: Etapa,
+        rotulo: String
+    ) {
+        val casa = item.parada?.nomeLocal?.ifBlank { null } ?: "Embarque"
+        val ida = direcao == ViagemRepository.DIRECAO_IDA
+        view.findViewById<TextView>(R.id.txtRotuloInicioCard).text = if (ida) casa else "Escola"
+        view.findViewById<TextView>(R.id.txtRotuloFimCard).text = if (ida) "Escola" else casa
+
+        val txtAluno = view.findViewById<TextView>(R.id.txtRotuloAlunoCard)
+        txtAluno.text = when (etapa) {
+            Etapa.NAO_INICIADA -> "Não iniciada"
+            Etapa.FINALIZADA -> "Concluída"
+            else -> rotulo
+        }
+
+        val inicio = etapa != Etapa.NAO_INICIADA && etapa != Etapa.FALTA
+        val meio = etapa == Etapa.NA_VAN || etapa == Etapa.DESCEU || etapa == Etapa.FINALIZADA
+        val fim = etapa == Etapa.DESCEU || etapa == Etapa.FINALIZADA
+
+        val ativa = cor(R.color.transporte_linha_ativa)
+        val inativa = cor(R.color.transporte_linha_inativa)
+        fun corDe(aceso: Boolean) = if (aceso) ativa else inativa
+
+        view.findViewById<View>(R.id.pontoInicioCard).backgroundTintList = ColorStateList.valueOf(corDe(inicio))
+        view.findViewById<View>(R.id.linhaInicioCard).setBackgroundColor(corDe(meio))
+        view.findViewById<View>(R.id.linhaFimCard).setBackgroundColor(corDe(fim))
+        view.findViewById<View>(R.id.pontoFimCard).backgroundTintList = ColorStateList.valueOf(corDe(fim))
+
+        val corAluno = when {
+            etapa == Etapa.FALTA -> cor(R.color.status_danger)
+            etapa == Etapa.AGUARDANDO || meio -> ativa
+            else -> inativa
+        }
+        view.findViewById<View>(R.id.pontoAlunoCard).backgroundTintList = ColorStateList.valueOf(corAluno)
+        txtAluno.setTextColor(
+            if (etapa == Etapa.NAO_INICIADA) cor(R.color.text_secondary) else corAluno
+        )
+    }
+
+    private fun cor(@androidx.annotation.ColorRes id: Int): Int = ContextCompat.getColor(requireContext(), id)
 
     private fun abrirVerTrajeto(rotaId: String) {
         startActivity(
@@ -690,7 +830,7 @@ class ListaRotasFragment : Fragment() {
         passageiroId: String,
         responsavelId: String,
         direcao: String
-    ): Flow<Pair<ViagemEntity?, StatusPassageiro?>> =
+    ): Flow<Triple<ViagemEntity?, StatusPassageiro?, Etapa>> =
         viagemRepository.observarUltimaViagemDeHoje(rotaId, direcao)
             .flatMapLatest { viagem ->
                 val emAndamento = viagem != null &&
@@ -712,10 +852,20 @@ class ListaRotasFragment : Fragment() {
                         } else {
                             null
                         }
-                        viagem to status
+                        // Mesma ordem de checagem de statusDoPassageiro (falta antes de "desceu")
+                        val etapa = when {
+                            embarque?.status == ViagemRepository.PARADA_NAO_EMBARCOU -> Etapa.FALTA
+                            desembarque?.status == ViagemRepository.PARADA_DESEMBARCADO -> Etapa.DESCEU
+                            embarque?.status == ViagemRepository.PARADA_EMBARCADO -> Etapa.NA_VAN
+                            else -> Etapa.AGUARDANDO
+                        }
+                        Triple(viagem, status, etapa)
                     }
                 } else {
-                    flowOf(viagem to null)
+                    val etapa =
+                        if (viagem?.status == ViagemRepository.STATUS_FINALIZADA) Etapa.FINALIZADA
+                        else Etapa.NAO_INICIADA
+                    flowOf(Triple(viagem, null, etapa))
                 }
             }
 
@@ -724,7 +874,7 @@ class ListaRotasFragment : Fragment() {
         statusPassageiro: StatusPassageiro?
     ): Pair<String, Int> = when {
         viagem == null || viagem.status == ViagemRepository.STATUS_CANCELADA ->
-            "Ainda não iniciada hoje" to R.color.light_gray
+            "Ainda não iniciada hoje" to R.color.text_tertiary
 
         viagem.status == ViagemRepository.STATUS_FINALIZADA ->
             "Finalizada hoje" to R.color.status_success
@@ -755,17 +905,16 @@ class ListaRotasFragment : Fragment() {
         val padH = (10 * dp).toInt()
         val padV = (4 * dp).toInt()
 
-        diasSemana
-            .split(Regex("[,;/\\s]+"))
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+        DataUtil.ordenarDiasSemana(diasSemana)
             .forEach { dia ->
 
                 val chip = TextView(ctx).apply {
-                    text = dia.take(3).replaceFirstChar { it.uppercase() }
+                    text = dia.take(3).lowercase().replaceFirstChar { it.uppercase() }
                     textSize = 12f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(ContextCompat.getColor(ctx, R.color.passageiro_texto_chip))
                     setPadding(padH, padV, padH, padV)
-                    setBackgroundResource(R.drawable.bg_beige_round_20)
+                    setBackgroundResource(R.drawable.bg_chip_idade_passageiro)
                 }
 
                 container.addView(

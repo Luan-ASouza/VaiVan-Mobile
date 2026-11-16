@@ -18,9 +18,6 @@ interface PassageiroDao {
     @Query("DELETE FROM passageiros WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Query("UPDATE passageiros SET rotaId = NULL WHERE rotaId = :rotaId")
-    suspend fun desvincularRota(rotaId: String)
-
     @Query("SELECT * FROM passageiros WHERE id = :id")
     fun getById(id: String): Flow<PassageiroEntity?>
 
@@ -29,9 +26,6 @@ interface PassageiroDao {
 
     @Query("SELECT * FROM passageiros WHERE responsavelId = :responsavelId")
     fun getByResponsavel(responsavelId: String): Flow<List<PassageiroEntity>>
-
-    @Query("SELECT * FROM passageiros WHERE rotaId = :rotaId")
-    fun getByRota(rotaId: String): Flow<List<PassageiroEntity>>
 
     @Query("DELETE FROM passageiros")
     suspend fun deleteAll()

@@ -171,7 +171,7 @@ class RotaCalculadaActivity : BaseActivity(), OnMapReadyCallback {
                 context = this,
                 corPino = ContextCompat.getColor(this, R.color.mapa_pino_escuro),
                 rotulo = rota.destinoNome.ifBlank { "Escola" },
-                iconeResId = R.drawable.ic_escola_generica
+                iconeResId = R.drawable.ic_escola
             )
             googleMap.addMarker(
                 MarkerOptions()

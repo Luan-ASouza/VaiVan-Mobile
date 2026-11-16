@@ -95,20 +95,20 @@ class CredenciaisSenhaFragment : Fragment(R.layout.fragment_credenciais_senha) {
 
         if (!CadastroValidator.senhaValida(senha)) {
             txtInfoSenha.visibility = View.VISIBLE
-            layoutSenha.setBackgroundResource(R.drawable.bg_input_white_red)
+            layoutSenha.setBackgroundResource(R.drawable.bg_cadastro_input_erro)
             valido = false
         } else {
             txtInfoSenha.visibility = View.GONE
-            layoutSenha.setBackgroundResource(R.drawable.bg_input_white)
+            layoutSenha.setBackgroundResource(R.drawable.bg_cadastro_input)
         }
 
         if (!CadastroValidator.senhasConferem(senha, confirmarSenha)) {
             txtErroSenha.visibility = View.VISIBLE
-            layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_input_white_red)
+            layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_cadastro_input_erro)
             valido = false
         } else {
             txtErroSenha.visibility = View.GONE
-            layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_input_white)
+            layoutConfirmarSenha.setBackgroundResource(R.drawable.bg_cadastro_input)
         }
 
         if (valido) {

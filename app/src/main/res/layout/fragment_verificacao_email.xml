@@ -11,19 +11,42 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:background="#F6B12F"
-        android:padding="10dp">
+        android:background="#F6B12F">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- CABECALHO COLORIDO -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="20dp">
+
+                <include layout="@layout/stepper_cadastro" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_horizontal"
+                    android:contentDescription="VaiVan"
+                    android:src="@drawable/logo_vaivan" />
+            </LinearLayout>
+
+            <!-- CARTAO -->
+            <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="10dp"
-            android:background="@drawable/bg_white">
-
-            <include layout="@layout/stepper_cadastro" />
+            android:background="@drawable/bg_cadastro_card"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -83,6 +106,8 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+
+    </LinearLayout>
 
     </ScrollView>
 

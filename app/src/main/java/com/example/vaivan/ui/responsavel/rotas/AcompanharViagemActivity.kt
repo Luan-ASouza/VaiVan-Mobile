@@ -663,7 +663,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                 corPino = ContextCompat.getColor(this, R.color.mapa_pino_escuro),
                 rotulo = null,
                 foto = null,
-                iconeResId = R.drawable.ic_escola_generica
+                iconeResId = R.drawable.ic_escola
             )
             mMap.addMarker(
                 MarkerOptions()

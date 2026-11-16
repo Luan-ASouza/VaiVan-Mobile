@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pedido de vaga do responsável ainda sem resposta (aba "Pedidos"). -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/beige"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp">
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="@color/background_container"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,70 +26,94 @@
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgFotoAlunoSolicitacaoResp"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="2dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/avatar_01"
-                app:shapeAppearanceOverlay="@style/CircleImage" />
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="@color/passageiro_destaque"
+                app:strokeWidth="2dp" />
 
             <TextView
                 android:id="@+id/txtNomeAlunoSolicitacaoResp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                tools:text="Lucas Santos" />
 
             <TextView
                 android:id="@+id/txtStatusSolicitacaoResp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_card_rounded"
-                android:paddingHorizontal="12dp"
+                android:background="@drawable/bg_pilula_branca"
+                android:backgroundTint="@color/transporte_programada_fundo"
+                android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:textColor="@color/dark_gray"
+                android:textColor="@color/transporte_programada_texto"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Aguardando" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/txtEnderecoSolicitacaoResp"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#707070"
-            android:textSize="12sp" />
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="9dp"
+                android:layout_height="9dp"
+                android:background="@drawable/bg_dot_verde" />
+
+            <TextView
+                android:id="@+id/txtEnderecoSolicitacaoResp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                tools:text="R. Almerinda Ramos Santos, 92" />
+        </LinearLayout>
 
         <!-- Pedido que o responsável escreveu (só aparece se houver) -->
         <TextView
             android:id="@+id/txtMensagemSolicitacaoResp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:padding="10dp"
-            android:textColor="@color/dark_gray"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_tile_passageiro"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:visibility="gone" />
 
         <!-- Só aparece quando a solicitação foi aprovada -->
-        <androidx.appcompat.widget.AppCompatButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChatSolicitacaoResp"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="46dp"
             android:layout_marginTop="10dp"
-            android:background="@drawable/bg_button_green"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="Enviar mensagem"
             android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"
+            android:textColor="@color/text_on_dark"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone"
+            app:backgroundTint="@color/color_primary"
+            app:cornerRadius="16dp"
             tools:ignore="HardcodedText" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

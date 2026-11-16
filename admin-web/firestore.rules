@@ -85,8 +85,12 @@ service cloud.firestore {
     // DOCUMENTOS (motorista e veículo)
     // ===================================================================
     match /documentos/{documentoId} {
+      // "resource == null": o app consulta o documento ANTES de enviar (ex.:
+      // CadastroVeiculoActivity.enviarDocumento -> consultarPorId, pra apagar
+      // o arquivo antigo). Num veículo novo o documento ainda não existe e,
+      // sem isso, a leitura é recusada e o envio inteiro falha.
       allow read: if logado() &&
-        (resource.data.motoristaId == request.auth.uid || ehAdmin());
+        (resource == null || resource.data.motoristaId == request.auth.uid || ehAdmin());
 
       // O motorista só envia documentos dele e sempre "em análise".
       allow create: if logado() &&

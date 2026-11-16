@@ -174,20 +174,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnDrawerSenha"
-                style="@style/DrawerItem.Motorista">
-
-                <ImageView
-                    style="@style/DrawerItemIcone.Motorista"
-                    android:src="@drawable/ic_cadeado" />
-
-                <TextView
-                    style="@style/DrawerItemTexto.Motorista"
-                    android:text="Trocar senha" />
-
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/btnDrawerAssinatura"
                 style="@style/DrawerItem.Motorista">
 
@@ -236,7 +222,7 @@
 
                 <ImageView
                     style="@style/DrawerItemIcone.Motorista"
-                    android:src="@android:drawable/ic_menu_help" />
+                    android:src="@drawable/ic_ajuda" />
 
                 <TextView
                     style="@style/DrawerItemTexto.Motorista"

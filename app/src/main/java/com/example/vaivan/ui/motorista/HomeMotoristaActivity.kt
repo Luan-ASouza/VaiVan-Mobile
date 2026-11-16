@@ -1,7 +1,6 @@
 package com.example.vaivan.ui.motorista
 
 import com.example.vaivan.ui.comum.guia.GuiaPrimeiroAcesso
-import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.ui.ajuda.AjudaActivity
 import com.example.vaivan.ui.ajuda.PerfilAjuda
 import android.os.Bundle
@@ -246,11 +245,6 @@ class HomeMotoristaActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnDrawerTabelaPrecos).setOnClickListener {
             drawerLayout.closeDrawers()
             startActivity(Intent(this, TabelaPrecoActivity::class.java))
-        }
-
-        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
-            drawerLayout.closeDrawers()
-            TrocaSenhaHelper.mostrar(this)
         }
 
         findViewById<View>(R.id.btnDrawerAjuda).setOnClickListener {

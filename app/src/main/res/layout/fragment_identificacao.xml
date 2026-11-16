@@ -11,17 +11,41 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:background="#F6B12F"
-        android:padding="10dp">
+        android:background="#F6B12F">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="10dp"
-            android:background="@drawable/bg_white">
+            android:orientation="vertical">
 
-            <include layout="@layout/stepper_cadastro" />
+            <!-- CABECALHO COLORIDO -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="20dp">
+
+                <include layout="@layout/stepper_cadastro" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_horizontal"
+                    android:contentDescription="VaiVan"
+                    android:src="@drawable/logo_vaivan" />
+            </LinearLayout>
+
+            <!-- CARTAO -->
+            <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_cadastro_card"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -54,7 +78,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_input_white"
+                    android:background="@drawable/bg_cadastro_input"
                     app:boxBackgroundMode="none"
                     app:hintEnabled="false">
 
@@ -107,7 +131,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_input_white">
+                            android:background="@drawable/bg_cadastro_input">
 
                             <Spinner
                                 android:id="@+id/spinnerPais"
@@ -137,7 +161,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_input_white"
+                            android:background="@drawable/bg_cadastro_input"
                             app:boxBackgroundMode="none"
                             app:hintEnabled="false">
 
@@ -188,6 +212,8 @@
                 app:cornerRadius="12dp" />
 
         </LinearLayout>
+
+    </LinearLayout>
 
     </ScrollView>
 

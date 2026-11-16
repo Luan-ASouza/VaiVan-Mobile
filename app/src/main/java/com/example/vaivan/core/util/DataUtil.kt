@@ -75,4 +75,76 @@ object DataUtil {
 
         return idade
     }
+
+    // ---------------------------------------------------------
+    // CHAT: rótulos de dia/horário das mensagens
+    // ---------------------------------------------------------
+
+    private val localeBr = Locale("pt", "BR")
+
+    /** Dias de calendário entre [momento] e [agora] (0 = hoje, 1 = ontem...). */
+    private fun diasAtras(momento: Long, agora: Long): Int {
+        fun inicioDoDia(millis: Long) = Calendar.getInstance().apply {
+            timeInMillis = millis
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val inicioMomento = inicioDoDia(momento)
+        val inicioAgora = inicioDoDia(agora)
+        var dias = 0
+        while (inicioMomento.before(inicioAgora) && dias < 8) {
+            inicioMomento.add(Calendar.DAY_OF_YEAR, 1)
+            dias++
+        }
+        return dias
+    }
+
+    /** Os dois instantes caem no mesmo dia (separador de data do chat). */
+    fun mesmoDia(a: Long, b: Long): Boolean {
+        val ca = Calendar.getInstance().apply { timeInMillis = a }
+        val cb = Calendar.getInstance().apply { timeInMillis = b }
+        return ca.get(Calendar.YEAR) == cb.get(Calendar.YEAR) &&
+            ca.get(Calendar.DAY_OF_YEAR) == cb.get(Calendar.DAY_OF_YEAR)
+    }
+
+    /** "09:24". */
+    fun hora(momento: Long): String = SimpleDateFormat("HH:mm", localeBr).format(momento)
+
+    /** Separador entre os dias da conversa: "Hoje", "Ontem", "Segunda-feira" (até 6 dias) ou "12/11/2026". */
+    fun rotuloDiaChat(momento: Long, agora: Long = System.currentTimeMillis()): String =
+        when (val dias = diasAtras(momento, agora)) {
+            0 -> "Hoje"
+            1 -> "Ontem"
+            in 2..6 -> SimpleDateFormat("EEEE", localeBr).format(momento)
+                .replaceFirstChar { it.uppercase() }
+            else -> SimpleDateFormat("dd/MM/yyyy", localeBr).format(momento)
+        }
+
+    /** Horário na lista de conversas: hoje a hora, "Ontem", o dia da semana abreviado ou "12/11". */
+    fun rotuloCurtoChat(momento: Long, agora: Long = System.currentTimeMillis()): String =
+        when (diasAtras(momento, agora)) {
+            0 -> hora(momento)
+            1 -> "Ontem"
+            in 2..6 -> SimpleDateFormat("EEE", localeBr).format(momento)
+                .removeSuffix(".").replaceFirstChar { it.uppercase() }
+            else -> SimpleDateFormat("dd/MM", localeBr).format(momento)
+        }
+
+    /** Chaves dos dias como são gravadas em `diasSemana`, na ordem da semana. */
+    val ORDEM_DIAS_SEMANA = listOf("SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM")
+
+    /**
+     * Coloca os dias na ordem da semana (SEG, TER, QUA...), sem repetidos e sem vazios.
+     * Os dias são guardados na ordem em que o motorista tocou nos botões, então
+     * sempre ordene antes de gravar ou de exibir. Chave desconhecida vai para o fim.
+     */
+    fun ordenarDiasSemana(dias: Iterable<String>): List<String> =
+        dias.map { it.trim().uppercase() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .sortedBy { ORDEM_DIAS_SEMANA.indexOf(it).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+
+    /** Mesmo que [ordenarDiasSemana], partindo do texto gravado (ex.: "TER,SEG,QUA"). */
+    fun ordenarDiasSemana(diasSemana: String): List<String> =
+        ordenarDiasSemana(diasSemana.split(Regex("[,;/\\s]+")))
 }

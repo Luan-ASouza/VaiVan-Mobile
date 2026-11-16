@@ -15,11 +15,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import com.bumptech.glide.Glide
+import com.example.vaivan.core.util.DataUtil
+import com.google.android.material.imageview.ShapeableImageView
 
 /**
  * Lista das conversas REAIS do usuário logado (serve para motorista e responsável).
@@ -43,9 +41,12 @@ open class ListaConversasFragment : Fragment() {
     private lateinit var progressConversas: ProgressBar
 
     private var listener: ListenerRegistration? = null
-    private val nomesEmCache = mutableMapOf<String, String>()
+    private val contatosEmCache = mutableMapOf<String, ChatRepository.Contato>()
 
     private val firestore by lazy { FirebaseFirestore.getInstance() }
+
+    /** Frase abaixo do título "Chat" (cada perfil tem a sua). */
+    protected open val subtitulo: String = "Converse sobre as viagens"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,6 +62,7 @@ open class ListaConversasFragment : Fragment() {
         containerConversas = view.findViewById(R.id.containerConversas)
         txtSemConversas = view.findViewById(R.id.txtSemConversas)
         progressConversas = view.findViewById(R.id.progressConversas)
+        view.findViewById<TextView>(R.id.txtSubtituloConversas).text = subtitulo
 
         escutarConversas()
     }
@@ -157,7 +159,8 @@ open class ListaConversasFragment : Fragment() {
         val card = layoutInflater.inflate(R.layout.item_conversa, containerConversas, false)
 
         val txtNome = card.findViewById<TextView>(R.id.txtNomeConversa)
-        val txtInicial = card.findViewById<TextView>(R.id.txtInicialConversa)
+        val txtSelo = card.findViewById<TextView>(R.id.txtSeloConversa)
+        val imgFoto = card.findViewById<ShapeableImageView>(R.id.imgFotoConversa)
         val txtContexto = card.findViewById<TextView>(R.id.txtContextoConversa)
 
         // De qual aluno e de qual rota é esta conversa
@@ -183,22 +186,29 @@ open class ListaConversasFragment : Fragment() {
         card.findViewById<TextView>(R.id.txtHoraConversa).text =
             formatarMomento(conversa.enviadaEm)
 
-        fun aplicarNome(nome: String) {
-            txtNome.text = nome
-            txtInicial.text = nome.firstOrNull()?.uppercase() ?: "?"
+        fun aplicarContato(contato: ChatRepository.Contato) {
+            txtNome.text = contato.nome
+            txtSelo.aplicarSeloContato(contato.ehMotorista)
+            Glide.with(imgFoto)
+                .load(contato.fotoUrl)
+                .placeholder(R.drawable.ic_perfil)
+                .error(R.drawable.ic_perfil)
+                .circleCrop()
+                .into(imgFoto)
         }
 
-        val nomeGuardado = nomesEmCache[conversa.outroUsuarioId]
+        val contatoGuardado = contatosEmCache[conversa.outroUsuarioId]
 
-        if (nomeGuardado != null) {
-            aplicarNome(nomeGuardado)
+        if (contatoGuardado != null) {
+            aplicarContato(contatoGuardado)
         } else {
             txtNome.text = "Carregando..."
 
             viewLifecycleOwner.lifecycleScope.launch {
-                val nome = buscarNome(conversa.outroUsuarioId)
-                nomesEmCache[conversa.outroUsuarioId] = nome
-                aplicarNome(nome)
+                val contato = ChatRepository.consultarContato(conversa.outroUsuarioId)
+                    ?: ChatRepository.Contato("Usuário", null, ehMotorista = false)
+                contatosEmCache[conversa.outroUsuarioId] = contato
+                aplicarContato(contato)
             }
         }
 
@@ -206,7 +216,7 @@ open class ListaConversasFragment : Fragment() {
             val intent = Intent(requireContext(), ChatActivity::class.java)
             intent.putExtra("chatId", conversa.chatId)
             intent.putExtra("outroUsuarioId", conversa.outroUsuarioId)
-            intent.putExtra("nomeContato", nomesEmCache[conversa.outroUsuarioId] ?: "Conversa")
+            intent.putExtra("nomeContato", contatosEmCache[conversa.outroUsuarioId]?.nome ?: "Conversa")
             intent.putExtra("passageiroNome", conversa.passageiroNome)
             startActivity(intent)
         }
@@ -214,32 +224,7 @@ open class ListaConversasFragment : Fragment() {
         return card
     }
 
-    private suspend fun buscarNome(usuarioId: String): String =
-        try {
-            firestore.collection("usuarios")
-                .document(usuarioId)
-                .get()
-                .await()
-                .getString("nome")
-                ?: "Usuário"
-        } catch (e: Exception) {
-            "Usuário"
-        }
-
-    /** Hoje mostra a hora; em outros dias, a data. */
-    private fun formatarMomento(momento: Long): String {
-
-        if (momento <= 0L) return ""
-
-        val agora = Calendar.getInstance()
-        val mensagem = Calendar.getInstance().apply { timeInMillis = momento }
-
-        val ehHoje =
-            agora.get(Calendar.YEAR) == mensagem.get(Calendar.YEAR) &&
-                    agora.get(Calendar.DAY_OF_YEAR) == mensagem.get(Calendar.DAY_OF_YEAR)
-
-        val formato = if (ehHoje) "HH:mm" else "dd/MM"
-
-        return SimpleDateFormat(formato, Locale("pt", "BR")).format(Date(momento))
-    }
+    /** Hoje mostra a hora; ontem, "Ontem"; na mesma semana, o dia; antes, a data. */
+    private fun formatarMomento(momento: Long): String =
+        if (momento <= 0L) "" else DataUtil.rotuloCurtoChat(momento)
 }
