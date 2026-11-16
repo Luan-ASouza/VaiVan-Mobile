@@ -3,21 +3,14 @@ package com.example.vaivan.ui.motorista.entrada.documentos
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
-import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.notificacao.PermissaoNotificacao
-import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.ui.inicio.LoginActivity
+import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
 import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import com.example.vaivan.core.notificacao.TokenDispositivo
 
 /**
  * Tela de espera: os documentos já foram enviados e estão em análise.
@@ -38,7 +31,7 @@ class AnaliseDocumentosActivity : BaseActivity() {
         permissaoNotificacao.solicitarSeNecessario()
 
         findViewById<View>(R.id.btnSair).setOnClickListener {
-            sair()
+            voltarAoInicio()
         }
 
         aplicarGapsDeSistema()
@@ -81,33 +74,20 @@ class AnaliseDocumentosActivity : BaseActivity() {
             }
     }
 
-    /** Mesmo fluxo de "Desconectar" do perfil: limpa o cache local e encerra a sessão. */
-    private fun sair() {
+    /**
+     * "Voltar ao início": só volta para a escolha de perfil, SEM encerrar a sessão
+     * (a tela diz que o motorista pode fechar o app e voltar depois). Desconectar
+     * fica no "Desconectar" do perfil.
+     */
+    private fun voltarAoInicio() {
 
-        lifecycleScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    VaivanDatabase.getInstance(this@AnaliseDocumentosActivity).clearAllTables()
-                }
-
-                TokenDispositivo.removerDesteDispositivo()
-
-                FirebaseAuth.getInstance().signOut()
-
-                startActivity(
-                    Intent(this@AnaliseDocumentosActivity, LoginActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                )
-            } catch (e: Exception) {
-                Toast.makeText(
-                    this@AnaliseDocumentosActivity,
-                    "Não foi possível sair. Tente novamente.",
-                    Toast.LENGTH_SHORT
-                ).show()
+        startActivity(
+            Intent(this, EscolhaTipoPerfilActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
-        }
+        )
+        finish()
     }
 
     private fun abrirTela(tela: Class<*>) {
