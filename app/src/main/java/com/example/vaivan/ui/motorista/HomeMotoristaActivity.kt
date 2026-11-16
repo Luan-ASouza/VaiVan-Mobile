@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.motorista
 
+import com.example.vaivan.ui.comum.guia.GuiaPrimeiroAcesso
 import com.example.vaivan.core.util.TrocaSenhaHelper
 import com.example.vaivan.ui.ajuda.AjudaActivity
 import com.example.vaivan.ui.ajuda.PerfilAjuda
@@ -146,6 +147,12 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         permissaoNotificacao.solicitarSeNecessario()
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Guia de primeiro acesso (só aparece uma vez; pode ser revisto pela Ajuda)
+        GuiaPrimeiroAcesso.iniciarSeNecessario(this, PerfilAjuda.MOTORISTA)
     }
 
     /**

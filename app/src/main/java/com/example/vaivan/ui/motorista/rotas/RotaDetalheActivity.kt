@@ -24,6 +24,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.domain.usecase.preco.PrecoPolicy
+import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaRotaEntity
@@ -39,6 +40,8 @@ import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.usecase.rota.CalcularOrdemVoltaUseCase
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
+import com.example.vaivan.domain.usecase.solicitacao.CancelarSolicitacaoUseCase
+import com.example.vaivan.domain.usecase.solicitacao.ConfirmarReservasPagasUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
 import com.example.vaivan.ui.comum.chat.ChatActivity
 import com.example.vaivan.ui.motorista.rotas.navegacao.NavegacaoViagemActivity
@@ -131,8 +134,14 @@ class RotaDetalheActivity : BaseActivity() {
 
                 val aceitarSolicitacaoUseCase = AceitarSolicitacaoUseCase(
                     solicitacaoInclusaoRepository = solicitacaoRepository,
-                    recalcularRotaUseCase = recalcularRotaUseCase,
                     rotaRepository = rotaRepository
+                )
+
+                val confirmarReservasPagasUseCase = ConfirmarReservasPagasUseCase(
+                    solicitacaoRepository = solicitacaoRepository,
+                    recalcularRotaUseCase = recalcularRotaUseCase,
+                    rotaRepository = rotaRepository,
+                    cancelarSolicitacaoUseCase = CancelarSolicitacaoUseCase(db.solicitacaoInclusaoDao())
                 )
 
                 val viagemRepository = ViagemRepository(
@@ -156,7 +165,8 @@ class RotaDetalheActivity : BaseActivity() {
                     solicitacaoRepository = solicitacaoRepository,
                     aceitarSolicitacaoUseCase = aceitarSolicitacaoUseCase,
                     iniciarViagemUseCase = iniciarViagemUseCase,
-                    avisoAusenciaRepository = avisoAusenciaRepository
+                    avisoAusenciaRepository = avisoAusenciaRepository,
+                    confirmarReservasPagasUseCase = confirmarReservasPagasUseCase
                 )
             }
         }
@@ -326,6 +336,7 @@ class RotaDetalheActivity : BaseActivity() {
 
         carregarParadasDoServidor()
         carregarSolicitacoesDoServidor()
+        processarReservasAoAbrir()
 
         aplicarGapsDeSistema()
     }
@@ -760,9 +771,10 @@ class RotaDetalheActivity : BaseActivity() {
 
                         Toast.makeText(
                             this@RotaDetalheActivity,
-                            "Aluno incluído na rota!",
-                            Toast.LENGTH_SHORT
+                            "Vaga reservada! O aluno entra na rota quando o responsável pagar a 1ª mensalidade (prazo de 3 dias).",
+                            Toast.LENGTH_LONG
                         ).show()
+                        carregarSolicitacoesDoServidor()
 
                     } catch (erro: Exception) {
 
@@ -899,6 +911,26 @@ class RotaDetalheActivity : BaseActivity() {
         }
     }
 
+    /**
+     * Ao abrir a tela: quem já pagou a 1ª mensalidade entra no trajeto, e reservas
+     * com prazo vencido são liberadas. Depois recarrega paradas e solicitações.
+     */
+    private fun processarReservasAoAbrir() {
+        val motoristaId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        lifecycleScope.launch {
+            val ativados = viewModel.processarReservas(motoristaId)
+            if (ativados > 0) {
+                Toast.makeText(
+                    this@RotaDetalheActivity,
+                    if (ativados == 1) "1 aluno pagou e entrou na rota." else "$ativados alunos pagaram e entraram na rota.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            carregarParadasDoServidor()
+            carregarSolicitacoesDoServidor()
+        }
+    }
+
     /** Traz as paradas (alunos confirmados) do Firestore para o Room. */
     private fun carregarParadasDoServidor() {
 
@@ -988,6 +1020,30 @@ class RotaDetalheActivity : BaseActivity() {
                 .forEach { parada ->
                     containerAlunosDetalhe.addView(criarCardAlunoConfirmado(parada))
                 }
+        }
+
+        // --- Aguardando pagamento (vaga reservada) -------------------------
+        val reservadas = solicitacoesDoServidor
+            .filter { it.status == SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO }
+
+        if (reservadas.isNotEmpty()) {
+
+            containerAlunosDetalhe.addView(criarTituloDeSecao("Aguardando 1º pagamento"))
+
+            reservadas.forEach { solicitacao ->
+                val prazo = solicitacao.respondidoEm
+                    ?.let { MensalidadePolicy.prazoPrimeiroPagamento(it) }
+                    ?.let { java.text.SimpleDateFormat("dd/MM", java.util.Locale("pt", "BR")).format(java.util.Date(it)) }
+                containerAlunosDetalhe.addView(
+                    TextView(this).apply {
+                        text = "${solicitacao.nomePassageiro}: vaga reservada" +
+                            (prazo?.let { ", o responsável paga até $it" } ?: "") +
+                            ". Entra na rota após o pagamento."
+                        textSize = 14f
+                        setPadding(dp(12), dp(8), dp(12), dp(8))
+                    }
+                )
+            }
         }
 
         // --- Recusados ---------------------------------------------------

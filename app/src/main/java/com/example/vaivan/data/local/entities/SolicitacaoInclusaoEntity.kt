@@ -35,7 +35,9 @@ data class SolicitacaoInclusaoEntity(
     val distanciaMetros: Int = 0,         // casa → escola, em linha reta
     val valorMensalCentavos: Long = 0L,   // 0 = sem tabela (a combinar)
 
-    val status: String = "PENDENTE", // PENDENTE | ACEITA | RECUSADA
+    // PENDENTE | AGUARDANDO_PAGAMENTO | ACEITA | RECUSADA | CANCELADA | EXPIRADA
+    // (constantes em SolicitacaoInclusaoRepository.STATUS_*)
+    val status: String = "PENDENTE",
 
     val criadoEm: Long = 0L,
     val respondidoEm: Long? = null,

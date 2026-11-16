@@ -295,15 +295,35 @@ exports.notificarRespostaSolicitacao = onDocumentUpdated("solicitacoes_inclusao/
   const depois = event.data?.after.data();
   if (!antes || !depois?.responsavelId) return;
   if (antes.status === depois.status) return;
-  if (depois.status !== "ACEITA" && depois.status !== "RECUSADA") return;
 
   const nome = primeiroNome(depois.nomePassageiro);
-  const aceita = depois.status === "ACEITA";
+
+  // Ciclo: PENDENTE -> AGUARDANDO_PAGAMENTO (aceite = vaga reservada) -> ACEITA
+  // (1ª mensalidade paga). EXPIRADA = prazo de 3 dias do 1º pagamento acabou.
+  const mensagens = {
+    AGUARDANDO_PAGAMENTO: {
+      titulo: "Vaga reservada!",
+      texto: `O motorista aceitou ${nome}. Pague a 1ª mensalidade em até 3 dias para ativar a vaga.`
+    },
+    ACEITA: {
+      titulo: "Vaga ativa!",
+      texto: `Pagamento confirmado: ${nome} já está na rota. Vocês podem conversar pelo chat.`
+    },
+    RECUSADA: {
+      titulo: "Solicitação recusada",
+      texto: `O motorista não aceitou a vaga para ${nome}. Procure outra rota no app.`
+    },
+    EXPIRADA: {
+      titulo: "Reserva expirada",
+      texto: `A 1ª mensalidade de ${nome} não foi paga no prazo e a vaga foi liberada. Você pode buscar outra rota no app.`
+    }
+  };
+  const msg = mensagens[depois.status];
+  if (!msg) return;
+
   await enviarPara(depois.responsavelId, {
-    titulo: aceita ? "Vaga aceita!" : "Solicitação recusada",
-    texto: aceita
-      ? `O motorista aceitou ${nome}. Agora vocês já podem conversar pelo chat.`
-      : `O motorista não aceitou a vaga para ${nome}. Procure outra rota no app.`,
+    titulo: msg.titulo,
+    texto: msg.texto,
     categoria: "cadastro",
     grupo: `solicitacao_${event.params.id}`,
     fixa: false,

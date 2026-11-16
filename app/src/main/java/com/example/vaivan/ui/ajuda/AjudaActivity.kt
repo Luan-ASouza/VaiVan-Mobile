@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.vaivan.R
+import com.example.vaivan.ui.comum.guia.GuiaPrimeiroAcesso
 
 /** Converte dp em pixels (usado nas duas telas de ajuda). */
 internal fun Context.dp(valor: Int): Int =
@@ -89,6 +90,9 @@ class AjudaActivity : AppCompatActivity() {
 
         conteudo.addView(criarCartaoWhatsApp())
 
+        // Só dentro do app (com perfil): na tela de login não há tela inicial para guiar
+        perfil?.let { conteudo.addView(criarCartaoRevisarTour(it)) }
+
         if (perfil == null) {
             // Tela de login: mostra tudo, separado por tipo de conta
             val todos = AjudaConteudo.guias
@@ -149,6 +153,43 @@ class AjudaActivity : AppCompatActivity() {
                 setTextColor(Color.WHITE)
                 setBackgroundResource(R.drawable.bg_button_orange)
                 setOnClickListener { WhatsAppHelper.abrir(this@AjudaActivity, perfil) }
+            }
+        )
+
+        return cartao
+    }
+
+    // ---------------------------------------------------------
+    // TOUR DO APP (guia de primeiro acesso)
+    // ---------------------------------------------------------
+
+    /** Volta para a tela inicial e mostra de novo os destaques dos botões principais. */
+    private fun criarCartaoRevisarTour(perfil: PerfilAjuda): View {
+
+        val cartao = criarCartao().apply {
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                GuiaPrimeiroAcesso.mostrarDeNovo(this@AjudaActivity, perfil)
+                finish() // a tela inicial abre o guia ao voltar (onResume)
+            }
+        }
+
+        cartao.addView(
+            TextView(this).apply {
+                text = "Rever o tour do app"
+                textSize = 15f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(ContextCompat.getColor(context, R.color.dark_gray))
+            }
+        )
+
+        cartao.addView(
+            TextView(this).apply {
+                text = "Mostra de novo, na tela inicial, para que serve cada botão principal."
+                textSize = 13f
+                setTextColor(ContextCompat.getColor(context, R.color.dark_gray))
+                setPadding(0, dp(4), 0, 0)
             }
         )
 

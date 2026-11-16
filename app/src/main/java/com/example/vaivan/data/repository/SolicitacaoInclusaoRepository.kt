@@ -123,12 +123,13 @@ class SolicitacaoInclusaoRepository(
     /** Guarda no Room a solicitação aceita (a gravação no Firestore foi feita na transação). */
     suspend fun registrarAceitaLocalmente(
         solicitacao: SolicitacaoInclusaoEntity,
-        respondidaEm: Long
+        respondidaEm: Long,
+        status: String = STATUS_ACEITA
     ) = withContext(Dispatchers.IO) {
 
         dao.upsert(
             solicitacao.copy(
-                status = "ACEITA",
+                status = status,
                 respondidoEm = respondidaEm,
                 lastUpdated = System.currentTimeMillis()
             )
@@ -176,7 +177,7 @@ class SolicitacaoInclusaoRepository(
             .await()
             .documents
             .mapNotNull { it.toObject(SolicitacaoInclusaoEntity::class.java)?.copy(id = it.id) }
-            .firstOrNull { it.status == "PENDENTE" || it.status == "ACEITA" }
+            .firstOrNull { it.status in STATUS_ATIVOS }
     }
 
     suspend fun enviarSolicitacao(
@@ -187,8 +188,10 @@ class SolicitacaoInclusaoRepository(
         // o responsável precisa cancelar antes de pedir outra vaga.
         buscarAtivaDoPassageiro(item.responsavelId, item.passageiroId)?.let { ativa ->
             throw IllegalStateException(
-                if (ativa.status == "ACEITA") {
+                if (ativa.status == STATUS_ACEITA) {
                     "${item.nomePassageiro} já tem uma rota. Para pedir outra, cancele a rota atual na tela de Passageiros."
+                } else if (ativa.status == STATUS_AGUARDANDO_PAGAMENTO) {
+                    "${item.nomePassageiro} já tem uma vaga reservada aguardando pagamento. Para pedir outra, cancele a reserva na tela de Passageiros."
                 } else {
                     "${item.nomePassageiro} já tem um pedido aguardando o motorista. Para pedir outra vaga, cancele esse pedido na tela de Passageiros."
                 }
@@ -328,5 +331,36 @@ class SolicitacaoInclusaoRepository(
                 }
             }
         }
+    }
+
+    /**
+     * Vagas reservadas (aceitas pelo motorista) que ainda esperam a 1ª mensalidade,
+     * consultadas no servidor.
+     */
+    suspend fun consultarReservasDoMotorista(
+        motoristaId: String
+    ): List<SolicitacaoInclusaoEntity> = withContext(Dispatchers.IO) {
+        collection
+            .whereEqualTo("motoristaId", motoristaId)
+            .whereEqualTo("status", STATUS_AGUARDANDO_PAGAMENTO)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { it.toObject(SolicitacaoInclusaoEntity::class.java)?.copy(id = it.id) }
+    }
+
+    companion object {
+        // Ciclo de vida de uma solicitação de vaga:
+        // PENDENTE -> (motorista aceita) AGUARDANDO_PAGAMENTO -> (1ª mensalidade paga) ACEITA
+        // Finais: RECUSADA (motorista), CANCELADA (responsável), EXPIRADA (prazo do 1º pagamento).
+        const val STATUS_PENDENTE = "PENDENTE"
+        const val STATUS_AGUARDANDO_PAGAMENTO = "AGUARDANDO_PAGAMENTO"
+        const val STATUS_ACEITA = "ACEITA"
+        const val STATUS_RECUSADA = "RECUSADA"
+        const val STATUS_CANCELADA = "CANCELADA"
+        const val STATUS_EXPIRADA = "EXPIRADA"
+
+        /** Um filho com uma dessas não pode pedir outra vaga. */
+        val STATUS_ATIVOS = setOf(STATUS_PENDENTE, STATUS_AGUARDANDO_PAGAMENTO, STATUS_ACEITA)
     }
 }

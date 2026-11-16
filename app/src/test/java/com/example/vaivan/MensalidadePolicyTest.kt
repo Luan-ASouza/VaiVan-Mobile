@@ -170,4 +170,71 @@ class MensalidadePolicyTest {
         assertEquals("1200,50", P.centavosParaTexto(120_050))
         assertEquals("0,05", P.centavosParaTexto(5))
     }
+
+    // =========================================================
+    // 1ª MENSALIDADE: reserva, prazo de 3 dias e valor proporcional
+    // =========================================================
+
+    @Test
+    fun primeira_mensalidade_proporcional_aos_dias_restantes() {
+        // Novembro tem 30 dias
+        assertEquals(40_000L, P.valorProporcional(40_000, em(2026, 11, 1)))   // mês inteiro
+        assertEquals(20_000L, P.valorProporcional(40_000, em(2026, 11, 16)))  // 15 de 30 dias
+        assertEquals(1_300L, P.valorProporcional(40_000, em(2026, 11, 30)))   // 1 dia: 13,33 -> 13
+        // Fevereiro de 2027 tem 28 dias: 14 de 28 = metade
+        assertEquals(20_000L, P.valorProporcional(40_000, em(2027, 2, 15)))
+    }
+
+    @Test
+    fun prazo_e_expiracao_da_reserva() {
+        val aceite = em(2026, 11, 15, 10)
+        assertEquals(venc(2026, 11, 18), P.prazoPrimeiroPagamento(aceite))
+
+        assertEquals(false, P.reservaExpirada(aceite, em(2026, 11, 18, 23)))  // último dia do prazo
+        assertEquals(true, P.reservaExpirada(aceite, em(2026, 11, 19, 0)))    // passou
+        assertEquals(false, P.reservaExpirada(0L, em(2027, 1, 1)))            // sem data de aceite
+    }
+
+    private val reservado = contrato.copy(
+        status = StatusContrato.AGUARDANDO_PAGAMENTO,
+        inicioEm = em(2026, 11, 16),
+        competenciaInicial = "2026-11",
+        valorPrimeiraCentavos = 20_000,
+        vencimentoPrimeira = venc(2026, 11, 19)
+    )
+
+    @Test
+    fun reserva_so_gera_a_primeira_mensalidade() {
+        assertEquals(listOf(YearMonth.of(2026, 11)), P.competenciasDevidas(reservado, em(2026, 12, 20)))
+        assertEquals(SituacaoContrato.RESERVADO, P.situacaoDoContrato(reservado, emptyList(), em(2026, 12, 20)))
+    }
+
+    @Test
+    fun contrato_ativado_segue_mes_a_mes_depois_da_primeira() {
+        val ativo = reservado.copy(status = StatusContrato.ATIVO)
+
+        assertEquals(
+            listOf(YearMonth.of(2026, 11), YearMonth.of(2026, 12)),
+            P.competenciasDevidas(ativo, em(2026, 11, 20))
+        )
+        // 1ª: prazo próprio e valor proporcional; depois: dia 10 e valor cheio
+        assertEquals(LocalDate.of(2026, 11, 19), P.vencimentoDaCompetencia(ativo, YearMonth.of(2026, 11)))
+        assertEquals(LocalDate.of(2026, 12, 10), P.vencimentoDaCompetencia(ativo, YearMonth.of(2026, 12)))
+        assertEquals(20_000L, P.valorDaCompetencia(ativo, YearMonth.of(2026, 11)))
+        assertEquals(40_000L, P.valorDaCompetencia(ativo, YearMonth.of(2026, 12)))
+    }
+
+    @Test
+    fun contrato_antigo_sem_primeira_mensalidade_continua_igual() {
+        assertEquals(40_000L, P.valorDaCompetencia(contrato, YearMonth.of(2026, 11)))
+        assertEquals(LocalDate.of(2026, 11, 10), P.vencimentoDaCompetencia(contrato, YearMonth.of(2026, 11)))
+    }
+
+    @Test
+    fun reserva_nao_conta_como_atraso_no_resumo() {
+        val primeiraVencida = mensalidade("2026-11", venc(2026, 11, 19)).copy(id = "r_2026-11", contratoId = "r")
+        val r = P.resumo(listOf(reservado.copy(id = "r")), listOf(primeiraVencida), em(2026, 11, 25))
+        assertEquals(0L, r.emAtrasoCentavos)
+        assertEquals(0, r.qtdInadimplentes)
+    }
 }

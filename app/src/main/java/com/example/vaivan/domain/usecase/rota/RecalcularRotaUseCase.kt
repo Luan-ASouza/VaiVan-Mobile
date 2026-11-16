@@ -30,14 +30,16 @@ class RecalcularRotaUseCase(
 
     suspend fun calcular(
         rotaId: String,
-        novaParada: RotaRepository.ParadaCandidata
+        novaParada: RotaRepository.ParadaCandidata,
+        // true = vaga já reservada no aceite: não confere capacidade nem soma de novo
+        vagaJaReservada: Boolean = false
     ): Resultado = withContext(Dispatchers.IO) {
 
         // 1. Rota atual
         val rotaAtual = rotaRepository.buscarRotaNoFirestore(rotaId)
 
         // 2. Capacidade
-        if (rotaAtual.vagasOcupadas >= rotaAtual.capacidadeTotal) {
+        if (!vagaJaReservada && rotaAtual.vagasOcupadas >= rotaAtual.capacidadeTotal) {
             throw IllegalStateException("Esta rota já está com todas as vagas ocupadas.")
         }
 
@@ -162,7 +164,7 @@ class RecalcularRotaUseCase(
         val agora = System.currentTimeMillis()
 
         val rotaAtualizada = rotaAtual.copy(
-            vagasOcupadas = rotaAtual.vagasOcupadas + 1,
+            vagasOcupadas = rotaAtual.vagasOcupadas + if (vagaJaReservada) 0 else 1,
             distanciaMetros = resultado.distanciaMetros,
             duracaoSegundos = resultado.duracaoSegundos,
             duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,

@@ -39,6 +39,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
+import androidx.core.content.ContextCompat
+import com.example.vaivan.data.models.Mensalidade
+import com.example.vaivan.data.models.StatusMensalidade
+import com.example.vaivan.data.repository.MensalidadeRepository
+import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
+import com.example.vaivan.ui.responsavel.mensalidades.MensalidadesResponsavelActivity
 
 class ListaPassageirosFragment : Fragment() {
 
@@ -50,6 +56,9 @@ class ListaPassageirosFragment : Fragment() {
     private var ultimosPassageiros: List<PassageiroEntity> = emptyList()
     private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
     private var listenerSolicitacoes: ListenerRegistration? = null
+
+    // Mensalidades (para mostrar atraso no cartão, mesmo sem rota ativa)
+    private var ultimasMensalidades: List<Mensalidade> = emptyList()
 
     // Nome das rotas já consultadas (rotaId -> nome)
     private val nomesDasRotas = mutableMapOf<String, String>()
@@ -105,6 +114,32 @@ class ListaPassageirosFragment : Fragment() {
         configurarBotoes()
         observarPassageiros()
         observarSolicitacoes()
+        observarMensalidades()
+    }
+
+    /** Atrasos continuam aparecendo no cartão do filho, mesmo depois de cancelar a rota. */
+    private fun observarMensalidades() {
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                MensalidadeRepository().observarMensalidadesDoResponsavel(responsavelId).collect { lista ->
+                    ultimasMensalidades = lista
+                    renderizarLista(ultimosPassageiros)
+                }
+            }
+        }
+    }
+
+    /** Soma das mensalidades vencidas e não pagas deste filho (em qualquer rota). */
+    private fun valorEmAtraso(passageiroId: String): Long {
+        val agora = System.currentTimeMillis()
+        val reservas = ultimasSolicitacoes.filter { it.status == STATUS_RESERVADA }.map { it.id }.toSet()
+        return ultimasMensalidades
+            .filter { it.passageiroId == passageiroId }
+            .filter { it.contratoId !in reservas }
+            .filter { MensalidadePolicy.situacao(it, agora) == MensalidadePolicy.SituacaoMensalidade.ATRASADA }
+            .sumOf { it.valorCentavos }
     }
 
     override fun onDestroyView() {
@@ -124,6 +159,7 @@ class ListaPassageirosFragment : Fragment() {
                 solicitacaoRepository.observarPorResponsavel(responsavelId).collect { lista ->
                     ultimasSolicitacoes = lista
                     renderizarLista(ultimosPassageiros)
+                    expirarReservasVencidas(lista)
                 }
             }
         }
@@ -294,14 +330,18 @@ class ListaPassageirosFragment : Fragment() {
     /** O pedido pendente ou a rota aceita deste filho, se houver. */
     private fun solicitacaoAtiva(passageiroId: String): SolicitacaoInclusaoEntity? =
         ultimasSolicitacoes
-            .filter { it.passageiroId == passageiroId && (it.status == STATUS_PENDENTE || it.status == STATUS_ACEITA) }
+            .filter { it.passageiroId == passageiroId && it.status in SolicitacaoInclusaoRepository.STATUS_ATIVOS }
             .maxByOrNull { it.criadoEm }
 
     /**
-     * Com pedido pendente ou rota aceita, o "Buscar rota" some e aparece o quadro
-     * com a situação e o botão de cancelar. Sem nada ativo, volta o "Buscar rota".
+     * Com pedido pendente ou rota aceita, o "Buscar rota" some e aparece a rota
+     * (ou o pedido) com a etiqueta de situação e o botão de cancelar.
+     * Sem nada ativo, volta o "Buscar rota". A faixa de atraso aparece em
+     * qualquer caso, enquanto houver mensalidade vencida e não paga.
      */
     private fun configurarRotaAtual(itemView: View, passageiro: PassageiroEntity, btnBuscarRota: View) {
+        configurarPendencia(itemView, passageiro)
+
         val container = itemView.findViewById<LinearLayout>(R.id.containerRotaAtualItem)
         val ativa = solicitacaoAtiva(passageiro.id)
 
@@ -314,24 +354,122 @@ class ListaPassageirosFragment : Fragment() {
         btnBuscarRota.visibility = View.GONE
         container.visibility = View.VISIBLE
 
-        val aceita = ativa.status == STATUS_ACEITA
-        container.backgroundTintList = ColorStateList.valueOf(if (aceita) FUNDO_ACEITA else FUNDO_PENDENTE)
+        itemView.findViewById<TextView>(R.id.txtRotaAtualNomeItem).text =
+            nomesDasRotas[ativa.rotaId] ?: run {
+                carregarNomeDaRota(ativa.rotaId)
+                "Carregando rota..."
+            }
 
-        itemView.findViewById<TextView>(R.id.txtStatusRotaItem).text =
-            if (aceita) "Vai de van com esta rota" else "Aguardando resposta do motorista"
-
-        val nomeRota = nomesDasRotas[ativa.rotaId] ?: run {
-            carregarNomeDaRota(ativa.rotaId)
-            "Carregando rota..."
-        }
-        val valor =
+        val valorMensal =
             if (ativa.valorMensalCentavos > 0) "${AssinaturaUi.formatarValor(ativa.valorMensalCentavos)} por mês"
-            else "Valor a combinar com o motorista"
-        itemView.findViewById<TextView>(R.id.txtDetalheRotaItem).text = "$nomeRota\n$valor"
+            else "Valor a combinar"
+
+        val btnPagar = itemView.findViewById<View>(R.id.btnPagarReservaItem)
+        btnPagar.visibility = View.GONE
+
+        // Etiqueta, texto e botão de cancelar conforme a etapa
+        val (etiqueta, corEtiqueta, info, textoCancelar) = when (ativa.status) {
+            STATUS_ACEITA -> Etapa("Ativa", R.color.green, valorMensal, "Cancelar rota")
+
+            STATUS_RESERVADA -> {
+                val primeira = primeiraMensalidade(ativa.id)
+                val prazo = ativa.respondidoEm?.let {
+                    AssinaturaUi.formatarData(MensalidadePolicy.prazoPrimeiroPagamento(it))
+                }
+                if (primeira?.status == StatusMensalidade.PAGA) {
+                    Etapa(
+                        "Pago", R.color.green,
+                        "Pagamento confirmado! A vaga é ativada assim que o motorista abrir a rota ou iniciar a próxima viagem.",
+                        "Cancelar reserva"
+                    )
+                } else {
+                    btnPagar.visibility = View.VISIBLE
+                    btnPagar.setOnClickListener {
+                        startActivity(
+                            Intent(requireContext(), MensalidadesResponsavelActivity::class.java)
+                                .putExtra(MensalidadesResponsavelActivity.EXTRA_PAGAR_CONTRATO_ID, ativa.id)
+                        )
+                    }
+                    val valorPrimeira = primeira?.let { AssinaturaUi.formatarValor(it.valorCentavos) }
+                    Etapa(
+                        "Reservada", R.color.orange,
+                        "O motorista aceitou! Pague " +
+                            (valorPrimeira?.let { "$it (1ª mensalidade, proporcional ao mês)" } ?: "a 1ª mensalidade") +
+                            (prazo?.let { " até $it" } ?: "") +
+                            " para ativar a vaga. Depois: $valorMensal.",
+                        "Cancelar reserva"
+                    )
+                }
+            }
+
+            else -> Etapa("Aguardando", R.color.orange, "Esperando o motorista aceitar. $valorMensal", "Cancelar pedido")
+        }
+
+        itemView.findViewById<TextView>(R.id.txtStatusRotaItem).apply {
+            text = etiqueta
+            backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, corEtiqueta))
+            setTextColor(
+                ContextCompat.getColor(context, if (corEtiqueta == R.color.green) R.color.white else R.color.dark_gray)
+            )
+        }
+        itemView.findViewById<TextView>(R.id.txtRotaAtualInfoItem).text = info
 
         itemView.findViewById<TextView>(R.id.btnCancelarRotaItem).apply {
-            text = if (aceita) "Cancelar rota" else "Cancelar pedido"
+            text = textoCancelar
             setOnClickListener { confirmarCancelamento(passageiro, ativa) }
+        }
+    }
+
+    /** Como o quadro do filho aparece em cada etapa. */
+    private data class Etapa(val etiqueta: String, val cor: Int, val info: String, val textoCancelar: String)
+
+    /** 1ª mensalidade de uma reserva (o id do contrato é o da solicitação). */
+    private fun primeiraMensalidade(solicitacaoId: String): Mensalidade? =
+        ultimasMensalidades
+            .filter { it.contratoId == solicitacaoId && it.status != StatusMensalidade.CANCELADA }
+            .minByOrNull { it.competencia }
+
+    /** Reserva com prazo de pagamento vencido: libera a vaga (uma vez por reserva). */
+    private val reservasExpirando = mutableSetOf<String>()
+
+    private fun expirarReservasVencidas(lista: List<SolicitacaoInclusaoEntity>) {
+        val agora = System.currentTimeMillis()
+        lista
+            .filter { it.status == STATUS_RESERVADA }
+            .filter { MensalidadePolicy.reservaExpirada(it.respondidoEm ?: 0L, agora) }
+            .filter { primeiraMensalidade(it.id)?.status != StatusMensalidade.PAGA }
+            .filter { reservasExpirando.add(it.id) }
+            .forEach { reserva ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        if (cancelarSolicitacao.expirarReserva(reserva.id)) {
+                            Toast.makeText(
+                                requireContext(),
+                                "A reserva de ${reserva.nomePassageiro} expirou: a 1ª mensalidade não foi paga no prazo.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        reservasExpirando.remove(reserva.id) // tenta de novo depois
+                    }
+                }
+            }
+    }
+
+    private fun configurarPendencia(itemView: View, passageiro: PassageiroEntity) {
+        val container = itemView.findViewById<LinearLayout>(R.id.containerPendenciaItem)
+        val atraso = valorEmAtraso(passageiro.id)
+
+        if (atraso <= 0) {
+            container.visibility = View.GONE
+            return
+        }
+
+        container.visibility = View.VISIBLE
+        itemView.findViewById<TextView>(R.id.txtPendenciaValorItem).text =
+            "${AssinaturaUi.formatarValor(atraso)} em aberto"
+        itemView.findViewById<View>(R.id.btnPagarPendenciaItem).setOnClickListener {
+            startActivity(Intent(requireContext(), MensalidadesResponsavelActivity::class.java))
         }
     }
 
@@ -355,12 +493,30 @@ class ListaPassageirosFragment : Fragment() {
         val nome = passageiro.nome
         val aceita = solicitacao.status == STATUS_ACEITA
 
-        val (titulo, mensagem, botao) = if (aceita) {
+        val atraso = valorEmAtraso(passageiro.id)
+        val avisoAtraso = if (atraso > 0) {
+            "\n\n$nome tem ${AssinaturaUi.formatarValor(atraso)} em mensalidades atrasadas. " +
+                "Esse valor continua devido ao motorista e pode ser pago na tela Mensalidades."
+        } else {
+            ""
+        }
+
+        val reservada = solicitacao.status == STATUS_RESERVADA
+        val pagou = primeiraMensalidade(solicitacao.id)?.status == StatusMensalidade.PAGA
+
+        val (titulo, mensagem, botao) = if (reservada) {
+            Triple(
+                "Cancelar a reserva de $nome?",
+                "A vaga reservada fica livre para outro aluno." +
+                    if (pagou) "\n\nO valor já pago não é devolvido." else " A 1ª mensalidade em aberto é cancelada.",
+                "Cancelar reserva"
+            )
+        } else if (aceita) {
             Triple(
                 "Cancelar a rota de $nome?",
-                "$nome deixa de ir com esta van e a vaga é liberada para outro aluno. " +
+                "$nome deixa de ir com esta van e a vaga fica livre para outro aluno. " +
                     "As mensalidades que ainda não venceram são canceladas.\n\n" +
-                    "Valores já pagos não são devolvidos, e mensalidades já vencidas continuam devidas.",
+                    "Valores já pagos não são devolvidos." + avisoAtraso,
                 "Cancelar rota"
             )
         } else {
@@ -385,7 +541,11 @@ class ListaPassageirosFragment : Fragment() {
                 cancelarSolicitacao(solicitacao.id)
                 Toast.makeText(
                     requireContext(),
-                    if (aceita) "Rota cancelada. Você já pode buscar outra." else "Pedido cancelado.",
+                    when (solicitacao.status) {
+                        STATUS_ACEITA -> "Rota cancelada. Você já pode buscar outra."
+                        STATUS_RESERVADA -> "Reserva cancelada. Você já pode buscar outra."
+                        else -> "Pedido cancelado."
+                    },
                     Toast.LENGTH_SHORT
                 ).show()
             } catch (erro: Exception) {
@@ -426,11 +586,8 @@ class ListaPassageirosFragment : Fragment() {
     }
 
     private companion object {
-        const val STATUS_PENDENTE = "PENDENTE"
-        const val STATUS_ACEITA = "ACEITA"
-
-        // Fundo do quadro: laranja claro (aguardando) e verde claro (rota aceita)
-        const val FUNDO_PENDENTE = 0xFFFFF3E0.toInt()
-        const val FUNDO_ACEITA = 0xFFE8F5E9.toInt()
+        const val STATUS_PENDENTE = SolicitacaoInclusaoRepository.STATUS_PENDENTE
+        const val STATUS_ACEITA = SolicitacaoInclusaoRepository.STATUS_ACEITA
+        const val STATUS_RESERVADA = SolicitacaoInclusaoRepository.STATUS_AGUARDANDO_PAGAMENTO
     }
 }

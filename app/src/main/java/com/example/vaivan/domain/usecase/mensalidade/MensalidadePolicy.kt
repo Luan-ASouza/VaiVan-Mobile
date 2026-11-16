@@ -28,12 +28,15 @@ object MensalidadePolicy {
 
     const val DIA_VENCIMENTO_PADRAO = 10
 
+    /** Dias que o responsável tem, depois do aceite, para pagar a 1ª mensalidade. */
+    const val PRAZO_PRIMEIRO_PAGAMENTO_DIAS = 3L
+
     /** Proteção contra contratos com data inválida: nunca gera mais que isso de uma vez. */
     private const val MAX_COMPETENCIAS = 24
 
     enum class SituacaoMensalidade { PAGA, A_VENCER, VENCE_HOJE, ATRASADA, CANCELADA }
 
-    enum class SituacaoContrato { EM_DIA, ATRASADO, INADIMPLENTE, ENCERRADO }
+    enum class SituacaoContrato { RESERVADO, EM_DIA, ATRASADO, INADIMPLENTE, ENCERRADO }
 
     data class Resumo(
         val recebidoNoMesCentavos: Long,
@@ -91,6 +94,45 @@ object MensalidadePolicy {
         BigDecimal(centavos).movePointLeft(2).setScale(2).toPlainString().replace('.', ',')
 
     // =========================================================
+    // 1ª MENSALIDADE (paga antes de usar a van)
+    // =========================================================
+
+    /** Último dia para pagar a 1ª mensalidade: dia do aceite + 3 dias. */
+    fun prazoPrimeiroPagamento(aceiteEm: Long): Long =
+        inicioDoDia(dia(aceiteEm).plusDays(PRAZO_PRIMEIRO_PAGAMENTO_DIAS))
+
+    /** A reserva vence quando termina o último dia do prazo. */
+    fun reservaExpirada(aceiteEm: Long, agora: Long): Boolean =
+        aceiteEm > 0L && dia(agora).isAfter(dia(aceiteEm).plusDays(PRAZO_PRIMEIRO_PAGAMENTO_DIAS))
+
+    /**
+     * Valor da 1ª mensalidade: proporcional aos dias que faltam no mês, contando o
+     * dia do aceite. Arredondado para reais. Ex.: R$ 400 aceito em 16/11 (15 de 30
+     * dias) = R$ 200.
+     */
+    fun valorProporcional(valorMensalCentavos: Long, aceiteEm: Long): Long {
+        val inicio = dia(aceiteEm)
+        val diasNoMes = inicio.lengthOfMonth()
+        val diasRestantes = diasNoMes - inicio.dayOfMonth + 1
+        val proporcional = valorMensalCentavos.toDouble() * diasRestantes / diasNoMes
+        return Math.round(proporcional / 100.0) * 100
+    }
+
+    private fun mesInicial(contrato: Contrato): YearMonth? =
+        contrato.competenciaInicial.takeIf { it.isNotBlank() }
+            ?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
+
+    /** Vencimento de um mês do contrato (a 1ª tem prazo próprio). */
+    fun vencimentoDaCompetencia(contrato: Contrato, mes: YearMonth): LocalDate =
+        if (mes == mesInicial(contrato) && contrato.vencimentoPrimeira > 0L) dia(contrato.vencimentoPrimeira)
+        else vencimentoDa(mes, contrato.diaVencimento)
+
+    /** Valor de um mês do contrato (a 1ª é proporcional). */
+    fun valorDaCompetencia(contrato: Contrato, mes: YearMonth): Long =
+        if (mes == mesInicial(contrato) && contrato.valorPrimeiraCentavos > 0L) contrato.valorPrimeiraCentavos
+        else contrato.valorMensalCentavos
+
+    // =========================================================
     // GERAÇÃO
     // =========================================================
 
@@ -122,10 +164,13 @@ object MensalidadePolicy {
             }
 
         val resultado = mutableListOf<YearMonth>()
-        var mes = primeiraCompetencia(contrato.inicioEm, contrato.diaVencimento)
+        var mes = mesInicial(contrato) ?: primeiraCompetencia(contrato.inicioEm, contrato.diaVencimento)
+
+        // Vaga só reservada: existe apenas a 1ª mensalidade até ela ser paga
+        if (contrato.status == StatusContrato.AGUARDANDO_PAGAMENTO) return listOf(mes)
 
         while (resultado.size < MAX_COMPETENCIAS) {
-            val vencimento = vencimentoDa(mes, contrato.diaVencimento)
+            val vencimento = vencimentoDaCompetencia(contrato, mes)
             if (limite != null && vencimento.isAfter(limite)) break
 
             resultado += mes
@@ -179,6 +224,8 @@ object MensalidadePolicy {
         mensalidadesDoContrato: List<Mensalidade>,
         agora: Long
     ): SituacaoContrato {
+        if (contrato.status == StatusContrato.AGUARDANDO_PAGAMENTO) return SituacaoContrato.RESERVADO
+
         val vencidas = mensalidadesDoContrato.filter {
             situacao(it, agora) == SituacaoMensalidade.ATRASADA
         }
@@ -218,7 +265,7 @@ object MensalidadePolicy {
             ?: return null
 
         val proximo = if (mensalidadesDoContrato.isEmpty()) ultimoMes else ultimoMes.plusMonths(1)
-        return inicioDoDia(vencimentoDa(proximo, contrato.diaVencimento))
+        return inicioDoDia(vencimentoDaCompetencia(contrato, proximo))
     }
 
     // =========================================================
@@ -231,6 +278,7 @@ object MensalidadePolicy {
         agora: Long
     ): Resumo {
         val mesAtual = YearMonth.from(dia(agora))
+        val reservados = contratos.filter { it.status == StatusContrato.AGUARDANDO_PAGAMENTO }.map { it.id }.toSet()
         val porContrato = mensalidades.groupBy { it.contratoId }
 
         val recebido = mensalidades
@@ -245,6 +293,7 @@ object MensalidadePolicy {
             .sumOf { it.valorCentavos }
 
         val emAtraso = mensalidades
+            .filter { it.contratoId !in reservados }
             .filter { situacao(it, agora) == SituacaoMensalidade.ATRASADA }
             .sumOf { it.valorCentavos }
 

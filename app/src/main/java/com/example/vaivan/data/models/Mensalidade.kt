@@ -29,6 +29,12 @@ data class Contrato(
 
     /** Veja [StatusContrato]. */
     val status: String = StatusContrato.ATIVO,
+
+    // 1ª mensalidade (proporcional aos dias restantes do mês do aceite, com prazo
+    // de 3 dias). Vazio em contratos anteriores a essa regra.
+    val competenciaInicial: String = "",   // "AAAA-MM"
+    val valorPrimeiraCentavos: Long = 0L,
+    val vencimentoPrimeira: Long = 0L,
     val inicioEm: Long = 0L,
     val encerradoEm: Long = 0L,
 
@@ -76,6 +82,8 @@ data class Mensalidade(
 )
 
 object StatusContrato {
+    /** Motorista aceitou e reservou a vaga; falta pagar a 1ª mensalidade. */
+    const val AGUARDANDO_PAGAMENTO = "AGUARDANDO_PAGAMENTO"
     const val ATIVO = "ATIVO"
     const val ENCERRADO = "ENCERRADO"
 }
