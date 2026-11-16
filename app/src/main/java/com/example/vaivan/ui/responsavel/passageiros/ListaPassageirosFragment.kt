@@ -29,12 +29,44 @@ import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.ui.responsavel.rotas.PesquisarRotasFragment
 import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.launch
+import android.content.res.ColorStateList
+import androidx.appcompat.app.AlertDialog
+import com.example.vaivan.data.local.entities.SolicitacaoInclusaoEntity
+import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+import com.example.vaivan.domain.usecase.solicitacao.CancelarSolicitacaoUseCase
+import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.tasks.await
 
 class ListaPassageirosFragment : Fragment() {
 
     private lateinit var containerConfirmados: LinearLayout
     private lateinit var txtSemPassageiros: TextView
     private lateinit var swipeRefresh: SwipeRefreshLayout
+
+    // Pedidos de vaga do responsável (para saber se cada filho já tem rota)
+    private var ultimosPassageiros: List<PassageiroEntity> = emptyList()
+    private var ultimasSolicitacoes: List<SolicitacaoInclusaoEntity> = emptyList()
+    private var listenerSolicitacoes: ListenerRegistration? = null
+
+    // Nome das rotas já consultadas (rotaId -> nome)
+    private val nomesDasRotas = mutableMapOf<String, String>()
+    private val rotasCarregando = mutableSetOf<String>()
+
+    private val solicitacaoRepository: SolicitacaoInclusaoRepository by lazy {
+        SolicitacaoInclusaoRepository(
+            requireContext().applicationContext,
+            VaivanDatabase.getInstance(requireContext()).solicitacaoInclusaoDao()
+        )
+    }
+
+    private val cancelarSolicitacao: CancelarSolicitacaoUseCase by lazy {
+        CancelarSolicitacaoUseCase(
+            VaivanDatabase.getInstance(requireContext()).solicitacaoInclusaoDao()
+        )
+    }
 
     private val viewModel: ListaPassageirosViewModel by viewModels {
         viewModelFactory {
@@ -72,6 +104,29 @@ class ListaPassageirosFragment : Fragment() {
         configurarViews(view)
         configurarBotoes()
         observarPassageiros()
+        observarSolicitacoes()
+    }
+
+    override fun onDestroyView() {
+        listenerSolicitacoes?.remove()
+        listenerSolicitacoes = null
+        super.onDestroyView()
+    }
+
+    /** Mantém os pedidos de vaga atualizados (o motorista pode aceitar a qualquer momento). */
+    private fun observarSolicitacoes() {
+        val responsavelId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        listenerSolicitacoes = solicitacaoRepository.iniciarSincronizacaoDoResponsavel(responsavelId)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                solicitacaoRepository.observarPorResponsavel(responsavelId).collect { lista ->
+                    ultimasSolicitacoes = lista
+                    renderizarLista(ultimosPassageiros)
+                }
+            }
+        }
     }
 
     private fun configurarViews(view: View) {
@@ -114,6 +169,7 @@ class ListaPassageirosFragment : Fragment() {
     }
 
     private fun renderizarLista(passageiros: List<PassageiroEntity>) {
+        ultimosPassageiros = passageiros
         containerConfirmados.removeAllViews()
 
         if (passageiros.isEmpty()) {
@@ -208,10 +264,11 @@ class ListaPassageirosFragment : Fragment() {
                 .start()
         }
 
-        // Buscar Rota
+        // Buscar Rota: só para quem não tem pedido pendente nem rota aceita
         btnBuscarRota.setOnClickListener {
             abrirPesquisaRotas(passageiro)
         }
+        configurarRotaAtual(itemView, passageiro, btnBuscarRota)
 
         // Editar: abre o perfil do passageiro (cada campo tem sua tela)
         imgEditar.setOnClickListener {
@@ -226,6 +283,117 @@ class ListaPassageirosFragment : Fragment() {
                 mensagem = "Isso remove o passageiro e sua vaga em qualquer rota. Essa ação não pode ser desfeita."
             ) {
                 excluirPassageiro(passageiro)
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // PEDIDO / ROTA ATUAL DO FILHO
+    // ---------------------------------------------------------
+
+    /** O pedido pendente ou a rota aceita deste filho, se houver. */
+    private fun solicitacaoAtiva(passageiroId: String): SolicitacaoInclusaoEntity? =
+        ultimasSolicitacoes
+            .filter { it.passageiroId == passageiroId && (it.status == STATUS_PENDENTE || it.status == STATUS_ACEITA) }
+            .maxByOrNull { it.criadoEm }
+
+    /**
+     * Com pedido pendente ou rota aceita, o "Buscar rota" some e aparece o quadro
+     * com a situação e o botão de cancelar. Sem nada ativo, volta o "Buscar rota".
+     */
+    private fun configurarRotaAtual(itemView: View, passageiro: PassageiroEntity, btnBuscarRota: View) {
+        val container = itemView.findViewById<LinearLayout>(R.id.containerRotaAtualItem)
+        val ativa = solicitacaoAtiva(passageiro.id)
+
+        if (ativa == null) {
+            btnBuscarRota.visibility = View.VISIBLE
+            container.visibility = View.GONE
+            return
+        }
+
+        btnBuscarRota.visibility = View.GONE
+        container.visibility = View.VISIBLE
+
+        val aceita = ativa.status == STATUS_ACEITA
+        container.backgroundTintList = ColorStateList.valueOf(if (aceita) FUNDO_ACEITA else FUNDO_PENDENTE)
+
+        itemView.findViewById<TextView>(R.id.txtStatusRotaItem).text =
+            if (aceita) "Vai de van com esta rota" else "Aguardando resposta do motorista"
+
+        val nomeRota = nomesDasRotas[ativa.rotaId] ?: run {
+            carregarNomeDaRota(ativa.rotaId)
+            "Carregando rota..."
+        }
+        val valor =
+            if (ativa.valorMensalCentavos > 0) "${AssinaturaUi.formatarValor(ativa.valorMensalCentavos)} por mês"
+            else "Valor a combinar com o motorista"
+        itemView.findViewById<TextView>(R.id.txtDetalheRotaItem).text = "$nomeRota\n$valor"
+
+        itemView.findViewById<TextView>(R.id.btnCancelarRotaItem).apply {
+            text = if (aceita) "Cancelar rota" else "Cancelar pedido"
+            setOnClickListener { confirmarCancelamento(passageiro, ativa) }
+        }
+    }
+
+    /** Busca o nome da rota uma vez só e redesenha a lista quando chegar. */
+    private fun carregarNomeDaRota(rotaId: String) {
+        if (rotaId.isBlank() || !rotasCarregando.add(rotaId)) return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val nome = try {
+                FirebaseFirestore.getInstance().collection("rotas").document(rotaId)
+                    .get().await().getString("nome")
+            } catch (e: Exception) {
+                null
+            }
+            nomesDasRotas[rotaId] = nome?.takeIf { it.isNotBlank() } ?: "Rota"
+            renderizarLista(ultimosPassageiros)
+        }
+    }
+
+    private fun confirmarCancelamento(passageiro: PassageiroEntity, solicitacao: SolicitacaoInclusaoEntity) {
+        val nome = passageiro.nome
+        val aceita = solicitacao.status == STATUS_ACEITA
+
+        val (titulo, mensagem, botao) = if (aceita) {
+            Triple(
+                "Cancelar a rota de $nome?",
+                "$nome deixa de ir com esta van e a vaga é liberada para outro aluno. " +
+                    "As mensalidades que ainda não venceram são canceladas.\n\n" +
+                    "Valores já pagos não são devolvidos, e mensalidades já vencidas continuam devidas.",
+                "Cancelar rota"
+            )
+        } else {
+            Triple(
+                "Cancelar o pedido de $nome?",
+                "O motorista não poderá mais aceitar este pedido. Depois, você pode buscar outra rota para $nome.",
+                "Cancelar pedido"
+            )
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(titulo)
+            .setMessage(mensagem)
+            .setPositiveButton(botao) { _, _ -> cancelar(solicitacao, aceita) }
+            .setNegativeButton("Voltar", null)
+            .show()
+    }
+
+    private fun cancelar(solicitacao: SolicitacaoInclusaoEntity, aceita: Boolean) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                cancelarSolicitacao(solicitacao.id)
+                Toast.makeText(
+                    requireContext(),
+                    if (aceita) "Rota cancelada. Você já pode buscar outra." else "Pedido cancelado.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (erro: Exception) {
+                Toast.makeText(
+                    requireContext(),
+                    "Não foi possível cancelar: ${erro.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -255,5 +423,14 @@ class ListaPassageirosFragment : Fragment() {
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private companion object {
+        const val STATUS_PENDENTE = "PENDENTE"
+        const val STATUS_ACEITA = "ACEITA"
+
+        // Fundo do quadro: laranja claro (aguardando) e verde claro (rota aceita)
+        const val FUNDO_PENDENTE = 0xFFFFF3E0.toInt()
+        const val FUNDO_ACEITA = 0xFFE8F5E9.toInt()
     }
 }

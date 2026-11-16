@@ -161,9 +161,39 @@ class SolicitacaoInclusaoRepository(
         dao.getPorResponsavel(responsavelId)
 
 
+    /**
+     * Pedido pendente ou rota aceita do filho, consultado no SERVIDOR
+     * (não confia só no Room, que pode estar desatualizado). Null se não houver.
+     */
+    suspend fun buscarAtivaDoPassageiro(
+        responsavelId: String,
+        passageiroId: String
+    ): SolicitacaoInclusaoEntity? = withContext(Dispatchers.IO) {
+        collection
+            .whereEqualTo("responsavelId", responsavelId)
+            .whereEqualTo("passageiroId", passageiroId)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { it.toObject(SolicitacaoInclusaoEntity::class.java)?.copy(id = it.id) }
+            .firstOrNull { it.status == "PENDENTE" || it.status == "ACEITA" }
+    }
+
     suspend fun enviarSolicitacao(
         item: SolicitacaoInclusaoEntity
     ) = withContext(Dispatchers.IO) {
+
+        // Regra: um pedido por vez. Com pedido pendente ou rota aceita,
+        // o responsável precisa cancelar antes de pedir outra vaga.
+        buscarAtivaDoPassageiro(item.responsavelId, item.passageiroId)?.let { ativa ->
+            throw IllegalStateException(
+                if (ativa.status == "ACEITA") {
+                    "${item.nomePassageiro} já tem uma rota. Para pedir outra, cancele a rota atual na tela de Passageiros."
+                } else {
+                    "${item.nomePassageiro} já tem um pedido aguardando o motorista. Para pedir outra vaga, cancele esse pedido na tela de Passageiros."
+                }
+            )
+        }
 
         val docRef =
             collection.document()

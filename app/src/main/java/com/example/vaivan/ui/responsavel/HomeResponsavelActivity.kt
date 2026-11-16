@@ -1,5 +1,8 @@
 package com.example.vaivan.ui.responsavel
 
+import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.ui.ajuda.AjudaActivity
+import com.example.vaivan.ui.ajuda.PerfilAjuda
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -19,12 +22,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
-import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
+import com.example.vaivan.ui.comum.perfil.AlterarSenhaActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.ajuda.AjudaActivity
-import com.example.vaivan.ui.ajuda.PerfilAjuda
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.example.vaivan.ui.responsavel.chat.ChatFragment
@@ -39,16 +41,21 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.vaivan.core.notificacao.DestinoNotificacao
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
+import com.example.vaivan.ui.responsavel.mensalidades.MensalidadesResponsavelActivity
 
 class HomeResponsavelActivity : BaseActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationController
     private lateinit var viewModel: UsuarioViewModel
+    private val permissaoNotificacao = PermissaoNotificacao(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_home_responsavel)
+        permissaoNotificacao.solicitarSeNecessario()
 
         val txtNomeDoUsuario = findViewById<TextView>(R.id.txtNomeDoUsuario)
         val drawerTxtNomeDoUsuario = findViewById<TextView>(R.id.drawerTxtNomeDoUsuario)
@@ -95,8 +102,8 @@ class HomeResponsavelActivity : BaseActivity() {
                         .observarPorId(uid)
                         .collect { usuario ->
                             if (usuario != null) {
-                                txtNomeDoUsuario.text = usuario.nome
-                                drawerTxtNomeDoUsuario.text = usuario.nome
+                                txtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
+                                drawerTxtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
 
                                 Glide.with(imgAvatarHeader)
                                     .load(usuario.fotoUrl)
@@ -165,16 +172,26 @@ class HomeResponsavelActivity : BaseActivity() {
         // --------------------------------------------------
 
         if (savedInstanceState == null) {
-            abrirFragment(ListaPassageirosFragment())
+            // Toque numa notificação pode pedir uma aba específica.
+            when (intent.getStringExtra(DestinoNotificacao.EXTRA_ABA)) {
+                DestinoNotificacao.ABA_ROTAS -> bottomNavigation.selecionar(NavigationItem.ROTAS)
+                DestinoNotificacao.ABA_CHAT -> bottomNavigation.selecionar(NavigationItem.ASSINATURAS)
+                else -> abrirFragment(ListaPassageirosFragment())
+            }
         }
     }
 
     /**
-     * Itens do menu lateral: Meu perfil, Passageiros, Meus transportes, Trocar senha e Ajuda.
+     * Itens do menu lateral
      */
     private fun configurarMenuLateral(drawerLayout: DrawerLayout) {
 
         findViewById<View>(R.id.btnDrawerPerfil).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
+        }
+
+        findViewById<View>(R.id.drawerPerfil).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(PerfilFragment())
         }
@@ -184,9 +201,19 @@ class HomeResponsavelActivity : BaseActivity() {
             abrirFragment(ListaPassageirosFragment())
         }
 
+        findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, LocaisSalvosActivity::class.java))
+        }
+
         findViewById<View>(R.id.btnDrawerTransportes).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaRotasFragment())
+        }
+
+        findViewById<View>(R.id.btnDrawerMensalidades).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, MensalidadesResponsavelActivity::class.java))
         }
 
         findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
@@ -202,6 +229,7 @@ class HomeResponsavelActivity : BaseActivity() {
             )
         }
     }
+
 
     private fun configurarBottomNavigation() {
         bottomNavigation = BottomNavigationController(
@@ -279,5 +307,26 @@ class HomeResponsavelActivity : BaseActivity() {
                 fragment
             )
             .commit()
+        marcarItemDoMenuLateral(fragment)
+    }
+
+    /**
+     * Destaca no menu lateral (a "aba" clara) o item da tela aberta.
+     * Itens que abrem Activity própria nunca ficam marcados.
+     */
+    private fun marcarItemDoMenuLateral(fragment: Fragment) {
+        val ativo = when (fragment) {
+            is PerfilFragment -> R.id.btnDrawerPerfil
+            is ListaPassageirosFragment -> R.id.btnDrawerPassageiros
+            is ListaRotasFragment -> R.id.btnDrawerTransportes
+            else -> null
+        }
+        listOf(
+            R.id.btnDrawerPerfil,
+            R.id.btnDrawerPassageiros,
+            R.id.btnDrawerTransportes
+        ).forEach { id ->
+            findViewById<View>(id).isSelected = id == ativo
+        }
     }
 }

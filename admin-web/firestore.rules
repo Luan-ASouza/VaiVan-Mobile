@@ -201,11 +201,34 @@ service cloud.firestore {
     // ROTAS (criar exige assinatura em dia)
     // ===================================================================
     match /rotas/{rotaId} {
+      // O responsável está cancelando, NESTE MESMO envio, a rota aceita do
+      // próprio filho nesta rota (antes ACEITA, depois CANCELADA).
+      function cancelouVagaDoFilho(solicitacaoId) {
+        let antes = get(/databases/$(database)/documents/solicitacoes_inclusao/$(solicitacaoId)).data;
+        let depois = getAfter(/databases/$(database)/documents/solicitacoes_inclusao/$(solicitacaoId)).data;
+        return antes.responsavelId == request.auth.uid &&
+          antes.rotaId == rotaId &&
+          antes.status == 'ACEITA' &&
+          depois.status == 'CANCELADA';
+      }
+
       allow read: if request.auth != null;
       allow create: if logado() &&
         request.resource.data.motoristaId == request.auth.uid &&
         assinaturaOperacional(request.auth.uid);
-      allow update, delete: if request.auth != null && resource.data.motoristaId == request.auth.uid;
+
+      allow update: if request.auth != null && (
+        // Motorista: tudo na própria rota, como antes
+        resource.data.motoristaId == request.auth.uid ||
+        // Responsável cancelando: só tira exatamente 1 vaga, e nada mais
+        (request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['vagasOcupadas', 'ultimaSolicitacaoCancelada']) &&
+         resource.data.vagasOcupadas > 0 &&
+         request.resource.data.vagasOcupadas == resource.data.vagasOcupadas - 1 &&
+         cancelouVagaDoFilho(request.resource.data.ultimaSolicitacaoCancelada))
+      );
+
+      allow delete: if request.auth != null && resource.data.motoristaId == request.auth.uid;
     }
 
     match /paradas_rota/{paradaId} {
@@ -227,16 +250,26 @@ service cloud.firestore {
         request.resource.data.status == 'PENDENTE' &&
         assinaturaOperacional(request.resource.data.motoristaId);
 
-      // As duas partes podem atualizar (como antes), mas aceitar só é
-      // possível se o motorista estiver com a assinatura em dia.
+      // Cada parte só faz o que é dela:
+      //  - motorista: aceita (com assinatura em dia) ou recusa; não mexe em cancelada;
+      //  - responsável: só CANCELA um pedido pendente ou uma rota aceita.
+      //    (Antes ele também conseguia marcar o próprio pedido como ACEITA.)
       allow update: if logado() &&
-        (resource.data.motoristaId == request.auth.uid ||
-         resource.data.responsavelId == request.auth.uid) &&
-        (request.resource.data.status != 'ACEITA' ||
-         assinaturaOperacional(resource.data.motoristaId)) &&
         // O valor calculado na solicitação não pode ser alterado depois
         request.resource.data.get('valorMensalCentavos', 0) ==
-          resource.data.get('valorMensalCentavos', 0);
+          resource.data.get('valorMensalCentavos', 0) &&
+        (
+          (resource.data.motoristaId == request.auth.uid &&
+           resource.data.status != 'CANCELADA' &&
+           request.resource.data.status != 'CANCELADA' &&
+           (request.resource.data.status != 'ACEITA' ||
+            assinaturaOperacional(resource.data.motoristaId)))
+          ||
+          (resource.data.responsavelId == request.auth.uid &&
+           (request.resource.data.status == resource.data.status ||
+            (request.resource.data.status == 'CANCELADA' &&
+             resource.data.status in ['PENDENTE', 'ACEITA'])))
+        );
 
       // PassageiroRepository.excluirPassageiro apaga, no mesmo batch do
       // passageiro, qualquer solicitação PENDENTE dele — sem essa regra o
@@ -306,10 +339,18 @@ service cloud.firestore {
         get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.responsavelId == request.resource.data.responsavelId &&
         get(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.passageiroId == request.resource.data.passageiroId;
 
-      allow update: if logado() &&
-        resource.data.motoristaId == request.auth.uid &&
-        request.resource.data.diff(resource.data).unchangedKeys()
-          .hasAll(['motoristaId', 'responsavelId', 'passageiroId', 'rotaId', 'inicioEm']);
+      allow update: if logado() && (
+        (resource.data.motoristaId == request.auth.uid &&
+         request.resource.data.diff(resource.data).unchangedKeys()
+           .hasAll(['motoristaId', 'responsavelId', 'passageiroId', 'rotaId', 'inicioEm']))
+        ||
+        // Responsável: só encerra, e só se estiver cancelando a rota deste contrato
+        (resource.data.responsavelId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'encerradoEm', 'atualizadoEm']) &&
+         request.resource.data.status == 'ENCERRADO' &&
+         getAfter(/databases/$(database)/documents/solicitacoes_inclusao/$(contratoId)).data.status == 'CANCELADA')
+      );
 
       allow delete: if false;
     }
@@ -353,7 +394,16 @@ service cloud.firestore {
          resource.data.status == 'PENDENTE' &&
          request.resource.data.status == 'PAGA' &&
          request.resource.data.forma == 'PIX_APP' &&
-         request.resource.data.registradoPor == 'RESPONSAVEL')
+         request.resource.data.registradoPor == 'RESPONSAVEL') ||
+        // Responsável cancelando a rota: só as que AINDA NÃO VENCERAM e não
+        // foram pagas, e só com o contrato sendo encerrado no mesmo envio.
+        // Pagas nunca mudam (não há devolução); vencidas continuam devidas.
+        (request.auth.uid == resource.data.responsavelId &&
+         resource.data.status == 'PENDENTE' &&
+         request.resource.data.status == 'CANCELADA' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'atualizadoEm']) &&
+         resource.data.vencimento > request.time.toMillis() &&
+         getAfter(/databases/$(database)/documents/contratos/$(resource.data.contratoId)).data.status == 'ENCERRADO')
       );
 
       allow delete: if false; // histórico financeiro não se apaga

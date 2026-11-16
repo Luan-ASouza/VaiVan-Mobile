@@ -1,0 +1,17 @@
+[33me7f0fb1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m inclusão de um menu de ajuda, com direcionamento para whatsapp e base de conhecimento diretamente no código
+M	app/src/main/AndroidManifest.xml
+A	app/src/main/java/com/example/vaivan/core/util/TrocaSenhaHelper.kt
+A	app/src/main/java/com/example/vaivan/ui/ajuda/AjudaActivity.kt
+A	app/src/main/java/com/example/vaivan/ui/ajuda/AjudaConteudo.kt
+A	app/src/main/java/com/example/vaivan/ui/ajuda/GuiaAjudaActivity.kt
+A	app/src/main/java/com/example/vaivan/ui/ajuda/WhatsAppHelper.kt
+M	app/src/main/java/com/example/vaivan/ui/motorista/HomeMotoristaActivity.kt
+M	app/src/main/java/com/example/vaivan/ui/responsavel/HomeResponsavelActivity.kt
+M	app/src/main/res/layout/activity_home_motorista.xml
+M	app/src/main/res/layout/drawer_responsavel.xml
+[33me0825c1[m Merge remote-tracking branch 'origin/master'
+[33m1a4d0ca[m Drawer do motorista: replica ajustes do cabeçalho do responsável
+M	app/src/main/java/com/example/vaivan/ui/motorista/HomeMotoristaActivity.kt
+M	app/src/main/res/layout/drawer_motorista.xml
+[33m91fc9eb[m Drawer do motorista: replica ajustes do cabeçalho do responsável
+M	app/src/main/res/layout/drawer_motorista.xml

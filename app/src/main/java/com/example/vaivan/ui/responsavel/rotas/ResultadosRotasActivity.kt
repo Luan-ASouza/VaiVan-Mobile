@@ -496,7 +496,8 @@ class ResultadosRotasActivity : BaseActivity() {
                 finish()
             } catch (e: Exception) {
                 botao.isEnabled = true
-                Toast.makeText(this@ResultadosRotasActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+                val texto = if (e is IllegalStateException) e.message else "Erro: ${e.message}"
+                Toast.makeText(this@ResultadosRotasActivity, texto, Toast.LENGTH_LONG).show()
             }
         }
     }

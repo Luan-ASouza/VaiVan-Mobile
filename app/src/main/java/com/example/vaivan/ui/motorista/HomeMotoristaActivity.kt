@@ -1,5 +1,8 @@
 package com.example.vaivan.ui.motorista
 
+import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.ui.ajuda.AjudaActivity
+import com.example.vaivan.ui.ajuda.PerfilAjuda
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -23,11 +26,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vaivan.R
-import com.example.vaivan.core.util.TrocaSenhaHelper
+import com.example.vaivan.core.notificacao.DestinoNotificacao
+import com.example.vaivan.core.notificacao.PermissaoNotificacao
+import com.example.vaivan.ui.comum.perfil.AlterarSenhaActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.UsuarioRepository
-import com.example.vaivan.ui.ajuda.AjudaActivity
-import com.example.vaivan.ui.ajuda.PerfilAjuda
 import com.example.vaivan.ui.motorista.chat.ChatFragment
 import com.example.vaivan.ui.motorista.navigation.BottomNavigationControllerMotorista
 import com.example.vaivan.ui.motorista.navigation.NavigationItem
@@ -35,7 +38,7 @@ import com.example.vaivan.ui.motorista.perfil.PerfilFragment
 import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
-import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
+import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,11 +50,14 @@ import com.example.vaivan.ui.motorista.assinatura.AssinaturaActivity
 import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
 import com.example.vaivan.ui.motorista.assinatura.PagamentosMotoristaActivity
 import com.example.vaivan.data.local.dao.UsuarioDao
+import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
+import com.example.vaivan.ui.motorista.precos.TabelaPrecoActivity
 
 class HomeMotoristaActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationControllerMotorista
     private lateinit var viewModel: UsuarioViewModel
+    private val permissaoNotificacao = PermissaoNotificacao(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,8 +93,8 @@ class HomeMotoristaActivity : AppCompatActivity() {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.observarPorId(uid).collect { usuario ->
                         if (usuario != null) {
-                            txtNomeDoUsuario.text = usuario.nome
-                            drawerTxtNomeDoUsuario.text = usuario.nome
+                            txtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
+                            drawerTxtNomeDoUsuario.text = "${usuario.nome} ${usuario.sobrenome}"
 
                             Glide.with(imgAvatarHeader)
                                 .load(usuario.fotoUrl)
@@ -117,6 +123,11 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         configurarDesconectar()
 
+        findViewById<View>(R.id.btnDrawerDocumentos).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, DocumentosMotoristaActivity::class.java))
+        }
+
         configurarAssinatura(uid, drawerLayout)
 
         configurarBottomNavigation()
@@ -125,13 +136,20 @@ class HomeMotoristaActivity : AppCompatActivity() {
         applySystemBarGaps(findViewById(android.R.id.content))
 
         if (savedInstanceState == null) {
-            abrirFragment(ListaVeiculosFragment())
+            // Toque numa notificação pode pedir uma aba específica.
+            when (intent.getStringExtra(DestinoNotificacao.EXTRA_ABA)) {
+                DestinoNotificacao.ABA_ROTAS -> bottomNavigation.selecionar(NavigationItem.ROTAS)
+                DestinoNotificacao.ABA_CHAT -> bottomNavigation.selecionar(NavigationItem.CHAT)
+                else -> abrirFragment(ListaVeiculosFragment())
+            }
         }
+
+        permissaoNotificacao.solicitarSeNecessario()
 
     }
 
     /**
-     * Itens do menu lateral: Meu perfil, Locais salvos, Meus veículos, Trocar senha e Ajuda.
+     * Itens do menu lateral
      */
     private fun configurarMenuLateral(drawerLayout: DrawerLayout) {
 
@@ -140,27 +158,19 @@ class HomeMotoristaActivity : AppCompatActivity() {
             abrirFragment(PerfilFragment())
         }
 
+        findViewById<View>(R.id.drawerPerfil).setOnClickListener {
+            drawerLayout.closeDrawers()
+            abrirFragment(PerfilFragment())
+        }
+
         findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
             drawerLayout.closeDrawers()
-            startActivity(Intent(this, AdicionarLocalActivity::class.java))
+            startActivity(Intent(this, LocaisSalvosActivity::class.java))
         }
 
         findViewById<View>(R.id.btnDrawerVeiculos).setOnClickListener {
             drawerLayout.closeDrawers()
             abrirFragment(ListaVeiculosFragment())
-        }
-
-        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
-            drawerLayout.closeDrawers()
-            TrocaSenhaHelper.mostrar(this)
-        }
-
-        findViewById<View>(R.id.btnDrawerAjuda).setOnClickListener {
-            drawerLayout.closeDrawers()
-            startActivity(
-                Intent(this, AjudaActivity::class.java)
-                    .putExtra(AjudaActivity.EXTRA_PERFIL, PerfilAjuda.MOTORISTA.name)
-            )
         }
     }
 
@@ -226,6 +236,24 @@ class HomeMotoristaActivity : AppCompatActivity() {
             startActivity(Intent(this, PagamentosMotoristaActivity::class.java))
         }
 
+        findViewById<View>(R.id.btnDrawerTabelaPrecos).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(Intent(this, TabelaPrecoActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnDrawerSenha).setOnClickListener {
+            drawerLayout.closeDrawers()
+            TrocaSenhaHelper.mostrar(this)
+        }
+
+        findViewById<View>(R.id.btnDrawerAjuda).setOnClickListener {
+            drawerLayout.closeDrawers()
+            startActivity(
+                Intent(this, AjudaActivity::class.java)
+                    .putExtra(AjudaActivity.EXTRA_PERFIL, PerfilAjuda.MOTORISTA.name)
+            )
+        }
+
         if (uid == null) return
 
         val repository = AssinaturaRepository()
@@ -283,6 +311,22 @@ class HomeMotoristaActivity : AppCompatActivity() {
             .beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
+        marcarItemDoMenuLateral(fragment)
+    }
+
+    /**
+     * Destaca no menu lateral (a "aba" clara) o item da tela aberta.
+     * Itens que abrem Activity própria nunca ficam marcados.
+     */
+    private fun marcarItemDoMenuLateral(fragment: Fragment) {
+        val ativo = when (fragment) {
+            is PerfilFragment -> R.id.btnDrawerPerfil
+            is ListaVeiculosFragment -> R.id.btnDrawerVeiculos
+            else -> null
+        }
+        listOf(R.id.btnDrawerPerfil, R.id.btnDrawerVeiculos).forEach { id ->
+            findViewById<View>(id).isSelected = id == ativo
+        }
     }
 
     //Aplica gaps em cima e embaixo de forma dinâmica

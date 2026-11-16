@@ -717,8 +717,10 @@ class RotaRepository(
             if (!rotaServidor.exists()) {
                 throw falha("Rota não encontrada.")
             }
-            if (solicitacaoServidor.getString("status") != "PENDENTE") {
-                throw falha("Esta solicitação já foi respondida.")
+            when (solicitacaoServidor.getString("status")) {
+                "PENDENTE" -> Unit
+                "CANCELADA" -> throw falha("O responsável cancelou este pedido.")
+                else -> throw falha("Esta solicitação já foi respondida.")
             }
 
             val vagasOcupadas = rotaServidor.getLong("vagasOcupadas") ?: 0L
@@ -732,7 +734,9 @@ class RotaRepository(
                 throw falha("A rota foi alterada durante o cálculo. Toque em aceitar novamente.")
             }
 
-            transaction.set(rotaRef, rotaAtualizada)
+            // Vagas a partir do número do SERVIDOR: se um responsável cancelou e
+            // liberou uma vaga há pouco, a cópia local pode estar desatualizada.
+            transaction.set(rotaRef, rotaAtualizada.copy(vagasOcupadas = vagasOcupadas.toInt() + 1))
             paradas.forEach { parada ->
                 transaction.set(collectionParadas.document(parada.id), parada)
             }

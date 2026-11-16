@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quadro do pedido/rota atual no cartão do filho. A cor vem do código (backgroundTint). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#F4F5F7" />
+    <corners android:radius="14dp" />
+</shape>
