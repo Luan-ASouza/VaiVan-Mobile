@@ -1,79 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<!-- Informações pessoais: telefone (+55 fixo) e CPF. Nome/sobrenome só
+     aparecem aqui quando ainda não foram preenchidos na etapa 1 (conta já
+     autenticada sem rascunho — ver CadastroActivity.EXTRA_JA_AUTENTICADO). -->
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollInformacoesPessoaisResponsavel"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:fillViewport="true">
 
-    <ScrollView
-        android:id="@+id/scrollInformacoesPessoaisResponsavel"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="#F6B12F">
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="220dp"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/bg_cadastro_card"
+        android:elevation="12dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="22dp"
+        android:paddingTop="26dp"
+        android:paddingBottom="26dp">
+
+        <include layout="@layout/stepper_cadastro" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="36dp"
+            android:layout_marginBottom="32dp"
+            android:text="Informações pessoais"
+            android:textColor="@color/text_primary"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
         <LinearLayout
+            android:id="@+id/grupoNomeSobrenome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- CABECALHO COLORIDO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingBottom="20dp">
-
-                <include layout="@layout/stepper_cadastro" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:layout_gravity="center_horizontal"
-                    android:contentDescription="VaiVan"
-                    android:src="@drawable/logo_vaivan" />
-            </LinearLayout>
-
-            <!-- CARTAO -->
-            <LinearLayout
-            android:id="@+id/containerPrincipal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginBottom="16dp"
             android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_cadastro_card"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="24dp">
-
-            <!-- TÍTULO -->
-
-            <TextView
-                android:id="@+id/txtTitulo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="32dp"
-                android:text="Informações pessoais"
-                android:textColor="@color/dark_gray"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_marginTop="10dp"/>
+            android:visibility="gone">
 
             <!-- NOME -->
 
             <TextView
-                android:id="@+id/txtLabelNome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="@font/montserrat_bold"
                 android:text="Nome"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutNome"
@@ -88,38 +68,38 @@
                     android:id="@+id/edtNome"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="Digite seu nome"
-                    android:inputType="textPersonName"
-                    android:paddingHorizontal="12dp"
+                    android:inputType="textPersonName|textCapWords"
+                    android:minHeight="50dp"
+                    android:paddingHorizontal="18dp"
                     android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_tertiary"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/txtErroNome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
                 android:text="*Campo obrigatório"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
+                android:textColor="@color/status_danger"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <!-- SOBRENOME -->
 
             <TextView
-                android:id="@+id/txtLabelSobrenome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
                 android:layout_marginTop="16dp"
+                android:fontFamily="@font/montserrat_bold"
                 android:text="Sobrenome"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutSobrenome"
@@ -134,95 +114,140 @@
                     android:id="@+id/edtSobrenome"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="Digite seu sobrenome"
-                    android:inputType="textPersonName"
-                    android:paddingHorizontal="12dp"
+                    android:inputType="textPersonName|textCapWords"
+                    android:minHeight="50dp"
+                    android:paddingHorizontal="18dp"
                     android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"/>
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_tertiary"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/txtErroSobrenome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
                 android:text="*Campo obrigatório"
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- CPF -->
-
-            <TextView
-                android:id="@+id/txtLabelCpf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="CPF"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutCpf"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_cadastro_input"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtCpf"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:hint="000.000.000-00"
-                    android:inputType="number"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"
-                    android:maxLength="14"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:id="@+id/txtErroCpf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginStart="8dp"
-                android:text="*Digite um CPF válido."
-                android:textColor="#F40707"
-                android:textSize="10sp"
-                android:textStyle="bold"/>
-
-            <!-- BOTÃO -->
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnContinuar"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/btn_gray_filled"
-                android:text="Continuar"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textColor="@color/status_danger"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                app:backgroundTint="@null"
-                app:cornerRadius="12dp"
-                android:layout_marginBottom="10dp"/>
-
+                android:visibility="gone" />
         </LinearLayout>
+
+        <!-- TELEFONE: só números do Brasil, então o +55 é um indicativo fixo
+             (prefixo do campo), não um seletor. -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="@font/montserrat_bold"
+            android:text="Telefone"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutTelefone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_cadastro_input"
+            android:paddingStart="18dp"
+            app:boxBackgroundMode="none"
+            app:hintEnabled="false"
+            app:prefixText="+55"
+            app:prefixTextColor="@color/text_secondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtTelefone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="(54) 99111-1111"
+                android:inputType="phone"
+                android:maxLength="15"
+                android:minHeight="50dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="18dp"
+                android:paddingVertical="12dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_tertiary"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/txtErroTelefone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:text="*Telefone inválido"
+            android:textColor="@color/status_danger"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- CPF -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/montserrat_bold"
+            android:text="CPF"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutCpf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_cadastro_input"
+            app:boxBackgroundMode="none"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtCpf"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="000.000.000-00"
+                android:inputType="number"
+                android:maxLength="14"
+                android:minHeight="50dp"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="12dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_tertiary"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/txtErroCpf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:text="*Digite um CPF válido."
+            android:textColor="@color/status_danger"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnContinuar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="40dp"
+            android:background="@drawable/btn_gray_filled"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_dark"
+            android:textSize="18sp"
+            app:backgroundTint="@null" />
 
     </LinearLayout>
 
-    </ScrollView>
-
-</LinearLayout>
+</ScrollView>

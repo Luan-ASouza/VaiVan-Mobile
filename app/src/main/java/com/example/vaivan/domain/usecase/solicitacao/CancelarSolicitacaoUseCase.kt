@@ -33,8 +33,10 @@ import kotlinx.coroutines.tasks.await
  * Firestore conferem cada passo (ver firestore.rules, coleções rotas, contratos e
  * mensalidades).
  *
- * Observação: o desenho do trajeto só é recalculado no próximo aceite/ativação (ou
- * quando o motorista edita a rota).
+ * Trajeto: o responsável não pode gravar o desenho da rota, então aqui só fica o
+ * aviso `ultimaSolicitacaoCancelada` na rota. O app do motorista vê esse aviso e
+ * recalcula o trajeto com os alunos que sobraram (AtualizarTrajetoDaRotaUseCase,
+ * ao abrir as rotas e antes de iniciar viagem).
  */
 class CancelarSolicitacaoUseCase(
     private val solicitacaoDao: SolicitacaoInclusaoDao,

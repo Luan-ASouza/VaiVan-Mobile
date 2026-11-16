@@ -4,7 +4,46 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_container"
+    android:clipChildren="true">
+
+    <!-- FUNDO (comum a todas as etapas): faixa diagonal amarela à direita,
+         marca d'água da van e o logo. Os fragments rolam por cima. -->
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guiaDiagonal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.49" />
+
+    <!-- Retângulo enorme com a borda esquerda presa no centro da tela e
+         girado em torno dela: vira a diagonal do topo-esquerda até a
+         base-direita. -->
+    <View
+        android:layout_width="3000dp"
+        android:layout_height="3000dp"
+        android:background="@color/color_primary"
+        android:rotation="-24"
+        android:transformPivotX="0dp"
+        android:transformPivotY="1500dp"
+        app:layout_constraintStart_toStartOf="@id/guiaDiagonal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:layout_width="300dp"
+        android:layout_height="248dp"
+        android:layout_marginStart="-40dp"
+        android:layout_marginBottom="-36dp"
+        android:alpha="0.5"
+        android:importantForAccessibility="no"
+        android:rotation="-14"
+        android:src="@drawable/ic_vaivan"
+        app:tint="@color/cadastro_marca_dagua"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- Espaço da barra de status -->
     <View
@@ -14,6 +53,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
+
+    <ImageView
+        android:layout_width="290dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="44dp"
+        android:contentDescription="VaiVan, vai contigo!"
+        android:src="@drawable/logo_vaivan"
+        app:layout_constraintTop_toBottomOf="@id/topGap"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/containerCadastro"

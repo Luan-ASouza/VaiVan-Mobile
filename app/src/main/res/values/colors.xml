@@ -41,6 +41,11 @@
     <color name="background_screen">@color/white_solitude</color>
     <color name="background_card">@color/background_card_base</color>
     <color name="background_container">@color/white</color>
+    <!-- Fluxo de cadastro: barra de progresso e van em marca d'água do fundo -->
+    <color name="cadastro_progresso">@color/orange_deep</color>
+    <color name="cadastro_marca_dagua">@color/beige</color>
+    <color name="cadastro_cursor">@color/orange_light</color>
+    <color name="cadastro_selecao">@color/orange</color>
     <!-- Menu lateral (drawer): fundo escuro; o item ativo usa background_screen
          para parecer uma "aba" ligada ao conteúdo. -->
     <color name="background_drawer">@color/dark_gray</color>
@@ -100,6 +105,13 @@
     <color name="transporte_concluida_texto">@color/text_secondary</color>
     <color name="transporte_linha_ativa">@color/color_primary</color>
     <color name="transporte_linha_inativa">@color/light_graysh</color>
+
+    <!-- Classe: Rotas do motorista. Mesmo desenho dos transportes do
+         responsável, com o escuro no lugar do laranja. -->
+    <color name="rota_destaque">@color/dark_gray</color>
+    <color name="rota_onda_clara">@color/gray</color>
+    <color name="rota_tile">@color/background_screen</color>
+    <color name="rota_vagas_fundo">@color/light_graysh</color>
 
     <!-- Classe: Mapa (acompanhamento ao vivo). Rota = traço da marca com
          contorno mais escuro por baixo; pino escuro = escola/destino. -->

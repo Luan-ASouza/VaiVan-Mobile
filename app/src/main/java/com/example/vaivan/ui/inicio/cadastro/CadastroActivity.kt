@@ -8,28 +8,27 @@ import androidx.fragment.app.FragmentContainerView
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.WindowInsetsUtil
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
+import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * Assistente de cadastro. O progresso só vive em memória (CadastroViewModel):
+ * fechar o app no meio descarta o que foi digitado. Quem já criou a conta
+ * retoma assim:
+ * - e-mail ainda não confirmado: começa o cadastro de novo com o mesmo e-mail
+ *   e a mesma senha (ver CredenciaisSenhaFragment), ou entra pelo login;
+ * - e-mail confirmado mas perfil incompleto: entra pelo login, que abre esta
+ *   tela com [EXTRA_JA_AUTENTICADO].
+ */
 class CadastroActivity : BaseActivity() {
 
     companion object {
-        /** Usuário já autenticado mas sem rascunho local (ex.: rascunho
-         * perdido, mas a conta no Firebase Auth ainda existe) — abre direto
-         * na etapa de informações pessoais, pulando identificação/senha/
-         * verificação de e-mail (já resolvidas antes). */
+        /** Usuário já autenticado (veio do login) mas sem perfil em
+         * `usuarios/{uid}` — pula identificação/senha e abre na verificação
+         * de e-mail (se ainda não confirmado) ou nas informações pessoais. */
         const val EXTRA_JA_AUTENTICADO = "ja_autenticado"
-
-        const val ETAPA_IDENTIFICACAO = CadastroRascunhoRepository.ETAPA_IDENTIFICACAO
-        const val ETAPA_CREDENCIAIS_SENHA = CadastroRascunhoRepository.ETAPA_CREDENCIAIS_SENHA
-        const val ETAPA_VERIFICACAO_EMAIL = CadastroRascunhoRepository.ETAPA_VERIFICACAO_EMAIL
-        const val ETAPA_INFORMACOES_PESSOAIS = CadastroRascunhoRepository.ETAPA_INFORMACOES_PESSOAIS
-        const val ETAPA_DATA_NASCIMENTO = CadastroRascunhoRepository.ETAPA_DATA_NASCIMENTO
-        const val ETAPA_ENDERECO = CadastroRascunhoRepository.ETAPA_ENDERECO
-        const val ETAPA_CONSENTIMENTO = CadastroRascunhoRepository.ETAPA_CONSENTIMENTO
     }
 
     private val viewModel: CadastroViewModel by viewModels()
-    private val rascunhoRepository by lazy { CadastroRascunhoRepository(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,18 +36,17 @@ class CadastroActivity : BaseActivity() {
         setContentView(R.layout.activity_cadastro)
 
         if (savedInstanceState == null) {
-            val rascunho = rascunhoRepository.carregar()
+            val contaAtual = FirebaseAuth.getInstance().currentUser
 
-            when {
-                // Reconstrói a pilha inteira (não só abre a etapa atual) —
-                // assim "voltar" continua funcionando passo a passo mesmo
-                // depois do app ter sido fechado e reaberto.
-                rascunho != null -> {
-                    viewModel.cadastro = rascunho.cadastro
-                    rascunho.historico.forEach { etapa -> abrirEtapa(etapa) }
-                }
-                intent.getBooleanExtra(EXTRA_JA_AUTENTICADO, false) -> abrirInformacoesPessoais()
-                else -> abrirIdentificacao()
+            if (intent.getBooleanExtra(EXTRA_JA_AUTENTICADO, false) && contaAtual != null) {
+                viewModel.cadastro.usuario = viewModel.cadastro.usuario.copy(
+                    email = contaAtual.email.orEmpty(),
+                    emailConfirmado = contaAtual.isEmailVerified
+                )
+
+                if (contaAtual.isEmailVerified) abrirInformacoesPessoais() else abrirVerificacaoEmail()
+            } else {
+                abrirIdentificacao()
             }
         }
 
@@ -63,26 +61,13 @@ class CadastroActivity : BaseActivity() {
         )
 
         // Volta uma etapa por vez (cada trocarEtapa empilha uma transação).
-        // Na primeira etapa não há nada pra voltar: sai do cadastro mesmo
-        // (o rascunho continua salvo, pra retomar depois).
+        // Na primeira etapa não há nada pra voltar: sai do cadastro.
         onBackPressedDispatcher.addCallback(this) {
             if (supportFragmentManager.backStackEntryCount > 1) {
                 supportFragmentManager.popBackStack()
             } else {
                 finish()
             }
-        }
-    }
-
-    private fun abrirEtapa(etapa: String) {
-        when (etapa) {
-            ETAPA_CREDENCIAIS_SENHA -> abrirCredenciaisSenha()
-            ETAPA_VERIFICACAO_EMAIL -> abrirVerificacaoEmail()
-            ETAPA_INFORMACOES_PESSOAIS -> abrirInformacoesPessoais()
-            ETAPA_DATA_NASCIMENTO -> abrirDataNascimento()
-            ETAPA_ENDERECO -> abrirEndereco()
-            ETAPA_CONSENTIMENTO -> abrirConsentimento()
-            else -> abrirIdentificacao()
         }
     }
 

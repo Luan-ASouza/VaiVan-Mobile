@@ -1,50 +1,237 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Detalhe da rota (motorista): cabeçalho fixo com as ações (iniciar
+     viagem / ver trajeto) e as abas Informações, Percurso e Alunos. Só o
+     conteúdo da aba rola. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/beige"
+    android:background="@color/background_screen"
     android:orientation="vertical">
 
-    <View
-        android:id="@+id/topGap"
+    <!-- CABEÇALHO (fixo, fora da rolagem) -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/dark_gray"/>
+        android:layout_height="wrap_content">
 
-    <!-- BARRA DO TOPO -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        <!-- Onda decorativa -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="100dp"
+            android:layout_gravity="top|end"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_motorista" />
 
-        <ImageButton
-            android:id="@+id/btnVoltar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:src="@drawable/ic_arrowback"
-            app:tint="@color/black" />
-
-        <TextView
-            android:id="@+id/txtNomeRotaDetalhe"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="vertical">
 
+            <View
+                android:id="@+id/topGap"
+                android:layout_width="match_parent"
+                android:layout_height="0dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="14dp">
+
+                <ImageButton
+                    android:id="@+id/btnVoltar"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="-10dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Voltar"
+                    android:src="@drawable/ic_arrowback"
+                    app:tint="@color/text_primary"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Título -->
+                <TextView
+                    android:id="@+id/txtNomeRotaDetalhe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="@color/text_primary"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    tools:text="Escola Municipal - Manhã" />
+
+                <!-- Subtítulo + selo -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtResumoRotaDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        tools:text="Manhã • Ida e volta • Seg a Sex" />
+
+                    <TextView
+                        android:id="@+id/txtStatusDetalhe"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pilula_branca"
+                        android:backgroundTint="@color/transporte_andamento_fundo"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:textColor="@color/transporte_andamento_texto"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="Ativa" />
+                </LinearLayout>
+
+                <!-- Ações -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnIniciarViagemDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Iniciar viagem"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_on_dark"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/rota_destaque"
+                        app:cornerRadius="16dp"
+                        app:icon="@drawable/ic_van"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/text_on_dark"
+                        tools:ignore="HardcodedText" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTrajetoDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Ver trajeto"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/background_container"
+                        app:cornerRadius="16dp"
+                        app:icon="@drawable/ic_rotas"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/text_primary"
+                        app:strokeColor="@color/rota_vagas_fundo"
+                        app:strokeWidth="1dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <!-- ABAS -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/abaInformacoesDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_aba_escura_selecionada"
+                        android:gravity="center"
+                        android:text="Informações"
+                        android:textColor="@color/text_on_dark"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/abaPercursoDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_aba"
+                        android:gravity="center"
+                        android:text="Percurso"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <LinearLayout
+                        android:id="@+id/abaAlunosDetalhe"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_aba"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/txtAbaAlunosDetalhe"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alunos"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:ignore="HardcodedText" />
+
+                        <!-- Pedidos aguardando resposta -->
+                        <TextView
+                            android:id="@+id/txtBadgeAlunosDetalhe"
+                            android:layout_width="wrap_content"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_badge_contador"
+                            android:gravity="center"
+                            android:minWidth="20dp"
+                            android:paddingHorizontal="6dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="2"
+                            tools:visibility="visible" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ÁREA ROLÁVEL (conteúdo da aba aberta) -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshRotaDetalhe"
         android:layout_width="match_parent"
@@ -52,596 +239,359 @@
         android:layout_weight="1">
 
         <ScrollView
+            android:id="@+id/scrollRotaDetalhe"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:fillViewport="true">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingBottom="28dp">
-
-            <!-- ===== CARTÃO PRINCIPAL (escola + etiquetas) ===== -->
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_hero_card"
-                android:orientation="vertical"
-                android:padding="20dp">
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="32dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DESTINO"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <TextView
-                    android:id="@+id/txtEscolaDetalhe"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
+                <!-- ===== ABA INFORMAÇÕES ===== -->
                 <LinearLayout
+                    android:id="@+id/conteudoInformacoesDetalhe"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/txtStatusDetalhe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_chip_hero"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/txtSentidoDetalhe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_chip_hero"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/txtTurnoDetalhe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_chip_hero"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="@android:color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- ===== DIAS DA SEMANA ===== -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_card_rounded"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dias da semana"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/diaSeg"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Seg"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaTer"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Ter"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaQua"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Qua"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaQui"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Qui"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaSex"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Sex"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaSab"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Sáb"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-
-                    <TextView
-                        android:id="@+id/diaDom"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginHorizontal="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Dom"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- ===== VAGAS ===== -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_card_rounded"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Vagas"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/txtVagasLivresDetalhe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/orange"
-                        android:textSize="40sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/txtVagasLegendaDetalhe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="15sp" />
-                </LinearLayout>
-
-                <ProgressBar
-                    android:id="@+id/progressVagasDetalhe"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="12dp"
-                    android:layout_marginTop="8dp"
-                    android:progressDrawable="@drawable/progress_vagas" />
-
-                <TextView
-                    android:id="@+id/txtVagasOcupadasDetalhe"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/light_gray"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <!-- ===== PERCURSO ===== -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_card_rounded"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Percurso"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
-
-                    <!-- bolinha - linha - bolinha -->
+                    <!-- Vagas -->
                     <LinearLayout
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_card_rounded"
+                        android:orientation="vertical"
+                        android:padding="18dp">
 
-                        <View
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:layout_marginTop="2dp"
-                            android:background="@drawable/bg_dot_verde" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="bottom"
+                            android:orientation="horizontal">
 
-                        <View
-                            android:layout_width="2dp"
-                            android:layout_height="0dp"
-                            android:layout_marginVertical="4dp"
+                            <TextView
+                                android:id="@+id/txtVagasLivresDetalhe"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="30sp"
+                                android:textStyle="bold"
+                                tools:text="3" />
+
+                            <TextView
+                                android:id="@+id/txtVagasLegendaDetalhe"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_marginBottom="6dp"
+                                android:layout_weight="1"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp"
+                                tools:text="vagas livres" />
+
+                            <TextView
+                                android:id="@+id/txtVagasOcupadasDetalhe"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="6dp"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                tools:text="12 de 15 ocupadas" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/progressVagasDetalhe"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:layout_marginTop="10dp"
+                            android:progressDrawable="@drawable/progress_vagas_escuro"
+                            tools:progress="80" />
+                    </LinearLayout>
+
+                    <!-- Rota -->
+                    <TextView
+                        style="@style/TituloSecaoRota"
+                        android:text="Rota"
+                        tools:ignore="HardcodedText" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_card_rounded"
+                        android:orientation="vertical"
+                        android:paddingVertical="4dp">
+
+                        <include
+                            android:id="@+id/campoNomeRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoSentidoRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoTurnoRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoDiasRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoCapacidadeRota"
+                            layout="@layout/item_perfil_campo" />
+                    </LinearLayout>
+
+                    <!-- Locais -->
+                    <TextView
+                        style="@style/TituloSecaoRota"
+                        android:text="Locais"
+                        tools:ignore="HardcodedText" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_card_rounded"
+                        android:orientation="vertical"
+                        android:paddingVertical="4dp">
+
+                        <include
+                            android:id="@+id/campoEscolaRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoPontoRota"
+                            layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoBairrosRota"
+                            layout="@layout/item_perfil_campo" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/btnExcluirRota"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:padding="12dp"
+                        android:text="Excluir rota"
+                        android:textColor="@color/status_danger"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <!-- ===== ABA PERCURSO ===== -->
+                <LinearLayout
+                    android:id="@+id/conteudoPercursoDetalhe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Distância | tempo -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="5dp"
                             android:layout_weight="1"
-                            android:background="#E0DBD2" />
+                            android:background="@drawable/bg_card_rounded"
+                            android:orientation="vertical"
+                            android:padding="16dp">
 
-                        <View
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:layout_marginBottom="2dp"
-                            android:background="@drawable/bg_dot_vermelho" />
+                            <TextView
+                                android:id="@+id/txtDistanciaDetalhe"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                tools:text="12,4 km" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Distância"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_card_rounded"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/txtDuracaoDetalhe"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                tools:text="35 min" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tempo estimado"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
+                        </LinearLayout>
                     </LinearLayout>
 
+                    <TextView
+                        android:id="@+id/txtTituloParadasDetalhe"
+                        style="@style/TituloSecaoRota"
+                        android:text="Ordem das paradas"
+                        tools:ignore="HardcodedText" />
+
+                    <!-- Linha do tempo: partida → alunos → escola (em código) -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/containerPercursoDetalhe"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:background="@drawable/bg_card_rounded"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="PARTIDA"
-                            android:textColor="@color/light_gray"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            tools:ignore="HardcodedText" />
+                    <TextView
+                        android:id="@+id/txtNotaVoltaDetalhe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:paddingHorizontal="6dp"
+                        android:text="Na volta, a van sai da escola e a ordem das casas é recalculada ao iniciar a viagem."
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtOrigemDetalhe"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
-                            android:text="ESCOLA"
-                            android:textColor="@color/light_gray"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            tools:ignore="HardcodedText" />
-
-                        <TextView
-                            android:id="@+id/txtDestinoDetalhe"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp" />
-                    </LinearLayout>
+                    <!-- Refaz o trajeto com os alunos atuais (também acontece
+                         sozinho quando um aluno sai da rota) -->
+                    <TextView
+                        android:id="@+id/btnRecalcularTrajetoDetalhe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:padding="12dp"
+                        android:text="Recalcular trajeto"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="#EFEBE4" />
-
+                <!-- ===== ABA ALUNOS ===== -->
                 <LinearLayout
+                    android:id="@+id/conteudoAlunosDetalhe"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
+                    <!-- Solicitações pendentes (some quando não há) -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/containerSecaoSolicitacoesDetalhe"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Distância"
-                            android:textColor="@color/light_gray"
-                            android:textSize="12sp"
+                            style="@style/TituloSecaoRota"
+                            android:layout_marginTop="0dp"
+                            android:text="Pedidos de vaga"
                             tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtDistanciaDetalhe"
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:id="@+id/containerSolicitacoesDetalhe"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:clipChildren="false"
+                            android:clipToPadding="false"
+                            android:orientation="vertical" />
                     </LinearLayout>
 
+                    <!-- Avisos de ausência (some quando não há) -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/containerSecaoAvisosAusenciaDetalhe"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Tempo estimado"
-                            android:textColor="@color/light_gray"
-                            android:textSize="12sp"
+                            style="@style/TituloSecaoRota"
+                            android:text="Avisos de falta"
                             tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtDuracaoDetalhe"
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:id="@+id/containerAvisosAusenciaDetalhe"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:orientation="vertical" />
                     </LinearLayout>
+
+                    <!-- Confirmados, aguardando pagamento e recusados (em código) -->
+                    <LinearLayout
+                        android:id="@+id/containerAlunosDetalhe"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
+                        android:orientation="vertical" />
                 </LinearLayout>
-            </LinearLayout>
-
-            <!-- ===== BAIRROS ATENDIDOS ===== -->
-            <LinearLayout
-                android:id="@+id/cardBairrosDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_card_rounded"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Bairros atendidos"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupBairrosDetalhe"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp" />
-            </LinearLayout>
-
-            <!-- ===== INICIAR ROTA (Ida / Volta, conforme o sentido da rota) ===== -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnIniciarIdaDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="18dp"
-                android:enabled="false"
-                android:text="Iniciar Ida"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="@color/orange"
-                app:cornerRadius="16dp"
-                app:icon="@drawable/ic_van"
-                app:iconTint="@android:color/white"
-                tools:ignore="HardcodedText" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnIniciarVoltaDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:enabled="false"
-                android:text="Iniciar Volta"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="@color/orange"
-                app:cornerRadius="16dp"
-                app:icon="@drawable/ic_van"
-                app:iconTint="@android:color/white"
-                tools:ignore="HardcodedText" />
-
-            <!-- ===== BOTÕES DE MAPA ===== -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTrajetoDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="18dp"
-                android:text="Ver trajeto no mapa"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/orange"
-                app:cornerRadius="16dp"
-                tools:ignore="HardcodedText" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnVerMapaDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:enabled="false"
-                android:text="Ver rota com os alunos"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/dark_gray"
-                app:cornerRadius="16dp"
-                tools:ignore="HardcodedText" />
-
-            <!-- ===== SOLICITAÇÕES PENDENTES ===== -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="26dp"
-                android:layout_marginBottom="12dp"
-                android:text="Solicitações pendentes"
-                android:textColor="@color/dark_gray"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
-            <LinearLayout
-                android:id="@+id/containerSolicitacoesDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <TextView
-                android:id="@+id/txtSemSolicitacoesDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_rounded"
-                android:gravity="center"
-                android:padding="18dp"
-                android:text="Nenhuma solicitação pendente."
-                android:textColor="@color/light_gray"
-                android:visibility="gone"
-                tools:ignore="HardcodedText" />
-
-            <!-- ===== AVISOS DE AUSÊNCIA (responsável avisou com antecedência) ===== -->
-            <LinearLayout
-                android:id="@+id/containerSecaoAvisosAusenciaDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="26dp"
-                    android:layout_marginBottom="12dp"
-                    android:text="Avisos de ausência"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <LinearLayout
-                    android:id="@+id/containerAvisosAusenciaDetalhe"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-
-            </LinearLayout>
-
-            <!-- ===== ALUNOS CONFIRMADOS ===== -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="26dp"
-                android:layout_marginBottom="12dp"
-                android:text="Alunos confirmados"
-                android:textColor="@color/dark_gray"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:id="@+id/txtAlunosConfirmadosDetalhe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_rounded"
-                android:lineSpacingExtra="6dp"
-                android:padding="18dp"
-                android:text="Nenhum aluno confirmado ainda."
-                android:textColor="@color/dark_gray"
-                android:textSize="14sp"
-                tools:ignore="HardcodedText" />
-
-        </LinearLayout>
+            </FrameLayout>
         </ScrollView>
-
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <View
         android:id="@+id/bottomGap"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/black"/>
+        android:layout_height="0dp" />
 </LinearLayout>

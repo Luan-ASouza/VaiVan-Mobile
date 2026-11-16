@@ -4,57 +4,43 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="#F6B12F">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- CABECALHO COLORIDO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingBottom="20dp">
-
-                <include layout="@layout/stepper_cadastro" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:layout_gravity="center_horizontal"
-                    android:contentDescription="VaiVan"
-                    android:src="@drawable/logo_vaivan" />
-            </LinearLayout>
-
-            <!-- CARTAO -->
             <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center_horizontal"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="220dp"
+            android:layout_marginBottom="24dp"
             android:background="@drawable/bg_cadastro_card"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="24dp">
+            android:elevation="12dp"
+            android:paddingHorizontal="22dp"
+            android:paddingTop="26dp"
+            android:paddingBottom="26dp">
+
+            <include layout="@layout/stepper_cadastro" />
 
             <TextView
+                android:layout_marginTop="10dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="Data de nascimento"
                 android:textColor="@color/dark_gray"
-                android:textSize="20sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -71,6 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:calendarViewShown="false"
+                android:calendarTextColor="@color/dark_gray"
                 android:datePickerMode="spinner"
                 android:spinnersShown="true" />
 
@@ -81,7 +68,7 @@
                 android:layout_marginTop="8dp"
                 android:gravity="center"
                 android:text="*Obrigatório ser maior de 18 anos"
-                android:textColor="#F40707"
+                android:textColor="@color/status_danger"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -89,16 +76,14 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnContinuar"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:background="@drawable/btn_gray_filled"
                 android:text="Continuar"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:backgroundTint="@null"
-                app:cornerRadius="12dp" />
+                android:textSize="18sp"
+                app:backgroundTint="@null" />
 
         </LinearLayout>
 

@@ -7,6 +7,9 @@ import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.local.entities.ViagemEntity
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.ViagemRepository
+import com.example.vaivan.domain.usecase.rota.AtualizarTrajetoDaRotaUseCase
+import com.example.vaivan.domain.usecase.solicitacao.ConfirmarReservasPagasUseCase
+import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -24,8 +27,26 @@ import kotlin.coroutines.cancellation.CancellationException
 @OptIn(ExperimentalCoroutinesApi::class)
 class MinhasRotasViewModel(
     private val rotaRepository: RotaRepository,
-    private val viagemRepository: ViagemRepository
+    private val viagemRepository: ViagemRepository,
+    private val iniciarViagemUseCase: IniciarViagemUseCase,
+    private val confirmarReservasPagasUseCase: ConfirmarReservasPagasUseCase,
+    private val atualizarTrajetoUseCase: AtualizarTrajetoDaRotaUseCase
 ) : ViewModel() {
+
+    /** Botão "Iniciar viagem" do card: quem já pagou a 1ª mensalidade entra
+     * antes (mesma regra do detalhe da rota), depois cria a viagem. */
+    suspend fun iniciarViagem(rotaId: String, direcao: String): ViagemEntity {
+        val id = motoristaId ?: throw IllegalStateException("Sessão expirada. Faça login novamente.")
+        try {
+            confirmarReservasPagasUseCase(id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("MinhasRotasVM", "Falha ao processar reservas antes de iniciar", e)
+        }
+        atualizarTrajetoUseCase.atualizarPendentes(id)
+        return iniciarViagemUseCase(rotaId = rotaId, motoristaId = id, direcao = direcao)
+    }
 
     private val motoristaId =
         FirebaseAuth
@@ -128,6 +149,11 @@ class MinhasRotasViewModel(
                 // Sem rede: fica no que o Room já sabe.
                 Log.w("MinhasRotasVM", "Falha ao consultar viagem ativa", e)
             }
+        }
+        // Rotas que perderam um aluno (cancelamento do responsável) ganham o
+        // trajeto refeito; o Room atualiza e a lista acompanha.
+        viewModelScope.launch {
+            atualizarTrajetoUseCase.atualizarPendentes(id)
         }
     }
 }

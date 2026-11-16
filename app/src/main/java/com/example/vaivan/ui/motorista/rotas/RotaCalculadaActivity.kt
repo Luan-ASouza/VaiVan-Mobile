@@ -91,6 +91,7 @@ class RotaCalculadaActivity : BaseActivity(), OnMapReadyCallback {
                 rotaRepository.observarRotaPorId(rotaId).collect { rota ->
                     rotaAtual = rota
                     atualizarResumo()
+                    renderizarListaParadas()
                     desenharSeTiverDados()
                 }
             }
@@ -113,19 +114,51 @@ class RotaCalculadaActivity : BaseActivity(), OnMapReadyCallback {
         txtResumoMapa.text = "${rota.nome} · %.1f km · ~$minutos min (com trânsito)".format(km)
     }
 
+    /** Lista na ordem do trajeto: partida, cada aluno e a escola. */
     private fun renderizarListaParadas() {
         containerParadasMapa.removeAllViews()
-        val inflater = layoutInflater
+        val rota = rotaAtual
+
+        if (rota != null && temOrigem(rota)) {
+            adicionarItemLista("▶", rotuloPartida(rota), rota.origemEndereco.ifBlank { rota.origemNome }, null)
+        }
 
         paradasAtuais.forEachIndexed { index, parada ->
-            val itemView = inflater.inflate(R.layout.item_parada_mapa, containerParadasMapa, false)
-            itemView.findViewById<TextView>(R.id.txtOrdemParadaMapa).text = "${index + 1}"
-            itemView.findViewById<TextView>(R.id.txtNomeParadaMapa).text = parada.nomePassageiro
-            itemView.findViewById<TextView>(R.id.txtEnderecoParadaMapa).text = parada.endereco
-            itemView.findViewById<TextView>(R.id.txtHorarioParadaMapa).text = "+${parada.horarioEstimadoMinutos} min"
-            containerParadasMapa.addView(itemView)
+            adicionarItemLista(
+                "${index + 1}",
+                parada.nomePassageiro,
+                parada.endereco,
+                "+${parada.horarioEstimadoMinutos} min"
+            )
+        }
+
+        if (rota != null) {
+            adicionarItemLista(
+                "E",
+                rota.escolaNome.ifBlank { rota.destinoNome }.ifBlank { "Escola" },
+                rota.destinoEndereco,
+                null
+            )
         }
     }
+
+    private fun adicionarItemLista(ordem: String, nome: String, endereco: String, horario: String?) {
+        val itemView = layoutInflater.inflate(R.layout.item_parada_mapa, containerParadasMapa, false)
+        itemView.findViewById<TextView>(R.id.txtOrdemParadaMapa).text = ordem
+        itemView.findViewById<TextView>(R.id.txtNomeParadaMapa).text = nome
+        itemView.findViewById<TextView>(R.id.txtEnderecoParadaMapa).text = endereco
+        itemView.findViewById<TextView>(R.id.txtHorarioParadaMapa).apply {
+            text = horario.orEmpty()
+            visibility = if (horario == null) View.GONE else View.VISIBLE
+        }
+        containerParadasMapa.addView(itemView)
+    }
+
+    private fun temOrigem(rota: RotaEntity) = rota.origemLatitude != 0.0 || rota.origemLongitude != 0.0
+
+    /** Numa rota só de volta, o ponto escolhido é onde a van deixa os alunos. */
+    private fun rotuloPartida(rota: RotaEntity) =
+        if (rota.tipoTrajeto == "VOLTA") "Ponto de desembarque" else "Partida"
 
     private fun desenharSeTiverDados() {
         if (!::googleMap.isInitialized) return
@@ -142,6 +175,26 @@ class RotaCalculadaActivity : BaseActivity(), OnMapReadyCallback {
 
         val boundsBuilder = LatLngBounds.Builder()
         var temPontos = false
+
+        // 2a. Ponto de partida da rota (de onde a van sai)
+        if (temOrigem(rota)) {
+            val partida = LatLng(rota.origemLatitude, rota.origemLongitude)
+            val pinoPartida = MapaEstiloUtil.criarPino(
+                context = this,
+                corPino = ContextCompat.getColor(this, R.color.mapa_pino_escuro),
+                rotulo = rotuloPartida(rota),
+                iconeResId = R.drawable.ic_van
+            )
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(partida)
+                    .icon(pinoPartida.descriptor)
+                    .anchor(0.5f, pinoPartida.anchorY)
+                    .zIndex(3f)
+            )
+            boundsBuilder.include(partida)
+            temPontos = true
+        }
 
         // 2. Adiciona pinos numerados para cada parada, com o nome do passageiro
         val corParada = ContextCompat.getColor(this, R.color.mapa_rota)

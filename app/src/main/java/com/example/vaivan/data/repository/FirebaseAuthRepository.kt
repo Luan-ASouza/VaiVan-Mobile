@@ -3,6 +3,7 @@ package com.example.vaivan.data.repository
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthRepository {
@@ -24,35 +25,18 @@ class FirebaseAuthRepository {
             }
     }
 
-    fun cadastrar(
-        email: String,
-        senha: String,
-        onSuccess: (String) -> Unit,
-        onError: (Exception) -> Unit
-    ) {
+    /** Cria a conta no Auth e já deixa a sessão aberta nela. Se o e-mail já
+     * existir, lança `FirebaseAuthUserCollisionException`. */
+    suspend fun criarConta(email: String, senha: String): FirebaseUser =
+        auth.createUserWithEmailAndPassword(email, senha).await().user
+            ?: throw IllegalStateException("Usuário criado sem UID.")
 
-        auth.createUserWithEmailAndPassword(
-            email,
-            senha
-        )
-            .addOnSuccessListener { result ->
-
-                val uid = result.user?.uid
-
-                if (uid != null) {
-                    onSuccess(uid)
-                } else {
-                    onError(
-                        IllegalStateException(
-                            "Usuário criado sem UID."
-                        )
-                    )
-                }
-            }
-            .addOnFailureListener { exception ->
-                onError(exception)
-            }
-    }
+    /** Entra numa conta existente. Senha errada lança
+     * `FirebaseAuthInvalidCredentialsException`. O usuário devolvido vem com
+     * `isEmailVerified` atualizado (token novo). */
+    suspend fun entrar(email: String, senha: String): FirebaseUser =
+        auth.signInWithEmailAndPassword(email, senha).await().user
+            ?: throw IllegalStateException("Login sem usuário.")
 
     fun verificarEmail(
         email: String,

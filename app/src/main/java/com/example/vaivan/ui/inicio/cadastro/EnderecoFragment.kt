@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.data.remote.CepClient
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -23,7 +22,6 @@ class EnderecoFragment :
 
     private val viewModel: CadastroViewModel by activityViewModels()
     private val cepClient = CepClient()
-    private val rascunhoRepository by lazy { CadastroRascunhoRepository(requireContext()) }
 
     private lateinit var edtCEP: TextInputEditText
     private lateinit var edtCidade: TextInputEditText
@@ -60,7 +58,7 @@ class EnderecoFragment :
         configurarBotao()
     }
 
-    /** Reabrindo essa etapa (voltou ou retomou um rascunho) — repõe o que já
+    /** Reabrindo essa etapa (o usuário voltou pra ela) — repõe o que já
      * tinha sido digitado/buscado antes. Chamado ANTES de [configurarCep]
      * de propósito: não precisa disparar uma busca de CEP de novo pra algo
      * que já foi resolvido. */
@@ -404,7 +402,6 @@ class EnderecoFragment :
             complemento = complemento
         )
 
-        rascunhoRepository.salvar(viewModel.cadastro, CadastroActivity.ETAPA_CONSENTIMENTO)
 
         (requireActivity() as CadastroActivity)
             .abrirConsentimento()

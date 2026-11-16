@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aba selecionada nas telas do motorista (versão escura do bg_aba_selecionada). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/rota_destaque" />
+    <corners android:radius="22dp" />
+</shape>

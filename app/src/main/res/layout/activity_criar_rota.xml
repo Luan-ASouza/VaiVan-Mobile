@@ -1,542 +1,348 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Criação (passo a passo, um campo por vez) e edição de um campo da rota.
+     Topo escuro com o título do campo; o campo fica numa folha branca
+     minimalista, como nas telas de edição do perfil. Só um "painel" fica
+     visível por vez (em código, conforme o campo). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/rota_destaque"
     android:orientation="vertical">
 
-    <ScrollView
+    <View
+        android:id="@+id/topGap"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/dark_gray"
-        android:fillViewport="true"
-        android:padding="10dp">
+        android:layout_height="0dp" />
+
+    <!-- TOPO ESCURO: voltar, passo, título e descrição do campo -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_white"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="16dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <!-- CABEÇALHO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageButton
-                    android:id="@+id/btnVoltar"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Voltar"
-                    android:src="@drawable/ic_arrowback"
-                    app:tint="@color/dark_gray" />
-
-                <TextView
-                    android:id="@+id/txtTituloCriarRota"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:text="Nova Rota"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- NOME DA ROTA -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nome da rota"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtNomeRota"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Ex: La Salle Carmo - Manhã"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp"
-                    tools:ignore="Autofill" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- ESCOLA (sempre é um dos extremos da rota) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Escola"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/txtDestinoAtual"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Nenhuma escola selecionada"
-                        android:textColor="@color/light_gray"
-                        android:textSize="14sp" />
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btnDefinirDestino"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Selecionar escola"
-                        android:textAllCaps="false"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- SENTIDO DA ROTA (Substituiu a Ponto de Partida/Origem) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Sentido da rota"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/btnIda"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
-                    android:text="Ida"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/btnVolta"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
-                    android:text="Volta"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/btnIdaVolta"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_gray_filled"
-                    android:text="Ida e Volta"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- AVISO: os campos abaixo vão aparecendo conforme o sentido escolhido -->
-            <TextView
-                android:id="@+id/txtAvisoSentido"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_aviso_info"
-                android:lineSpacingExtra="3dp"
-                android:padding="14dp"
-                android:text="Antes de definir a rota, selecione o sentido (Ida, Volta ou Ida e volta). Os próximos campos vão aparecendo conforme a sua escolha."
-                android:textColor="@color/dark_gray"
-                android:textSize="13sp"
+            <ImageButton
+                android:id="@+id/btnVoltarEdicaoPerfil"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="-10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Voltar"
+                android:src="@drawable/ic_arrowback"
+                app:tint="@color/text_on_dark"
                 tools:ignore="HardcodedText" />
 
-            <!-- PONTO DA ROTA: o nome e a explicação mudam conforme o sentido (Ida / Volta / Ida e volta) -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/txtPassoCriarRota"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_on_dark_secondary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="Passo 2 de 8" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressPassosCriarRota"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="10dp"
+            android:max="8"
+            android:progressBackgroundTint="@color/gray"
+            android:progressTint="@color/color_primary"
+            tools:progress="2" />
+
+        <TextView
+            android:id="@+id/txtTituloCampo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/text_on_dark"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            tools:text="Nome da rota" />
+
+        <TextView
+            android:id="@+id/txtDescricaoCampo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/text_on_dark_secondary"
+            android:textSize="14sp"
+            tools:text="Como a rota aparece para você e para os responsáveis." />
+    </LinearLayout>
+
+    <!-- FOLHA BRANCA: o campo + o botão (sobe com o teclado) -->
+    <LinearLayout
+        android:id="@+id/conteudoEdicaoPerfil"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_folha_branca"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
             <LinearLayout
-                android:id="@+id/containerPonto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone">
+                android:paddingHorizontal="24dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="12dp">
 
-                <TextView
-                    android:id="@+id/txtTituloPonto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Ponto de embarque"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
-                <TextView
-                    android:id="@+id/txtExplicacaoPonto"
+                <!-- TEXTO (nome, capacidade) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutCampo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@color/light_gray"
-                    android:textSize="13sp" />
+                    android:background="@drawable/bg_input_white"
+                    android:visibility="gone"
+                    app:boxBackgroundMode="none"
+                    app:endIconMode="clear_text"
+                    app:hintEnabled="false"
+                    tools:visibility="visible">
 
-                <androidx.cardview.widget.CardView
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtCampo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionDone"
+                        android:minHeight="52dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_tertiary"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- ESCOLHA ÚNICA (sentido, turno) -->
+                <LinearLayout
+                    android:id="@+id/painelOpcoesCriarRota"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:cardBackgroundColor="@color/background_card"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
+                    android:orientation="vertical"
+                    android:visibility="gone" />
+
+                <!-- DIAS DA SEMANA -->
+                <LinearLayout
+                    android:id="@+id/painelDiasCriarRota"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/containerDiasCriarRota"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/txtOrigemAtual"
-                            android:layout_width="match_parent"
+                            android:id="@+id/btnDiasUteisCriarRota"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Nenhum ponto selecionado"
-                            android:textColor="@color/light_gray"
-                            android:textSize="14sp"
+                            android:background="@drawable/bg_tile_rota"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="8dp"
+                            android:text="Seg a Sex"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
                             tools:ignore="HardcodedText" />
 
-                        <androidx.appcompat.widget.AppCompatButton
-                            android:id="@+id/btnDefinirOrigem"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="12dp"
-                            android:background="@drawable/btn_gray_filled"
-                            android:text="Selecionar ponto no mapa"
-                            android:textAllCaps="false"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
+                        <TextView
+                            android:id="@+id/btnTodosDiasCriarRota"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_tile_rota"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="8dp"
+                            android:text="Todos os dias"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
                             android:textStyle="bold"
                             tools:ignore="HardcodedText" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/txtResumoSentido"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:lineSpacingExtra="3dp"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <!-- BAIRROS ATENDIDOS -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Bairros atendidos"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:cardBackgroundColor="@color/background_card"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
-
+                <!-- LOCAL (escola, ponto de embarque/desembarque) -->
                 <LinearLayout
+                    android:id="@+id/painelLocalCriarRota"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:visibility="gone">
 
-                    <TextView
-                        android:id="@+id/txtBairros"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nenhum bairro adicionado"
-                        android:textColor="@color/light_gray"
-                        android:textSize="14sp" />
+                        android:background="@drawable/bg_tile_rota"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btnAdicionarBairro"
+                        <ImageView
+                            android:id="@+id/imgLocalCriarRota"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_circulo_escuro"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_local"
+                            app:tint="@color/text_on_dark" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtLocalCriarRota"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                tools:text="Escola Municipal" />
+
+                            <TextView
+                                android:id="@+id/txtEnderecoLocalCriarRota"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:text="Av. Rio Branco, 450 - Centro" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEscolherLocalCriarRota"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:layout_marginTop="12dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Adicionar bairro no mapa"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         android:textAllCaps="false"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/text_primary"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btnLimparBairros"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@drawable/btn_gray_filled"
-                        android:text="Limpar bairros"
-                        android:textAllCaps="false"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp" />
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/background_container"
+                        app:cornerRadius="16dp"
+                        app:strokeColor="@color/rota_destaque"
+                        app:strokeWidth="1dp"
+                        tools:text="Escolher no mapa" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
-            <!-- TURNO -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Turno"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/grupoTurno"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:selectionRequired="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnManha"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Manhã"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTarde"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Tarde"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnNoite"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Noite"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <!-- DIAS DA SEMANA -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Dias da semana"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/grupoDias"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:singleSelection="false">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSeg"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Seg"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTer"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Ter"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnQua"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Qua"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnQui"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Qui"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSex"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Sex"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSab"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Sáb"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnDom"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="Dom"
-                    android:textAllCaps="false"
-                    android:textColor="@color/button_toggle_text"
-                    android:textSize="12sp"
-                    app:backgroundTint="@color/button_toggle_background" />
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <!-- CAPACIDADE -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Capacidade"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/bg_input_white"
-                app:boxBackgroundMode="none"
-                app:hintEnabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtCapacidade"
+                <!-- BAIRROS ATENDIDOS -->
+                <LinearLayout
+                    android:id="@+id/painelBairrosCriarRota"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Ex: 15 vagas"
-                    android:inputType="number"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="12dp"
-                    android:textColor="@color/dark_gray"
-                    android:textColorHint="@color/light_gray"
-                    android:textSize="14sp" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-            <!-- PREÇOS: definidos uma vez na Tabela de preços do motorista -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:background="@drawable/bg_beige_round_20"
-                android:padding="14dp"
-                android:text="Os valores desta rota seguem a sua Tabela de preços (menu lateral &gt; Tabela de preços)."
-                android:textColor="@color/dark_gray"
-                android:textSize="13sp" />
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupBairrosCriarRota"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp" />
 
-            <!-- BOTÃO -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCriarRota"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:text="Criar rota"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/dark_gray" />
-        </LinearLayout>
-    </ScrollView>
+                    <TextView
+                        android:id="@+id/txtSemBairrosCriarRota"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_tile_rota"
+                        android:gravity="center"
+                        android:padding="16dp"
+                        android:text="Nenhum bairro adicionado"
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAdicionarBairroCriarRota"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="12dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Adicionar bairro pelo mapa"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/background_container"
+                        app:cornerRadius="16dp"
+                        app:icon="@drawable/ic_plus"
+                        app:iconGravity="textStart"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/text_primary"
+                        app:strokeColor="@color/rota_destaque"
+                        app:strokeWidth="1dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtErroCampo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/status_danger"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/txtNotaCriarRota"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:paddingHorizontal="6dp"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    tools:text="Mudar este ponto recalcula o trajeto da rota."
+                    tools:visibility="visible" />
+            </LinearLayout>
+        </ScrollView>
+
+        <include layout="@layout/rodape_salvar_edicao_perfil" />
+    </LinearLayout>
 </LinearLayout>

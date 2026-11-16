@@ -1,89 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pedido de vaga aguardando o motorista (aba Alunos do detalhe da rota). -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="2dp"
     android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/beige"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp">
+    app:cardBackgroundColor="@color/background_container"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgFotoAlunoSolicitacao"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/avatar_01"
                 app:shapeAppearanceOverlay="@style/CircleImage" />
 
-            <TextView
-                android:id="@+id/txtNomeAlunoSolicitacao"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:textColor="@color/dark_gray"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtNomeAlunoSolicitacao"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Lucas Santos" />
+
+                <TextView
+                    android:id="@+id/txtHorarioSolicitacao"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    tools:text="Horário desejado: 07:00" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_pilula_branca"
+                android:backgroundTint="@color/transporte_programada_fundo"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Novo"
+                android:textColor="@color/transporte_programada_texto"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/txtEnderecoSolicitacao"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="#707070"
-            android:textSize="12sp" />
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txtHorarioSolicitacao"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="#707070"
-            android:textSize="12sp" />
+            <View
+                android:layout_width="9dp"
+                android:layout_height="9dp"
+                android:background="@drawable/bg_dot_verde" />
 
-        <!-- Valor calculado pela tabela de preços -->
+            <TextView
+                android:id="@+id/txtEnderecoSolicitacao"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                tools:text="R. Almerinda Ramos Santos, 92" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/txtValorSolicitacao"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/dark_gray"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_tile_rota"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:textColor="@color/text_primary"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="R$ 189,00 / mês · Ida e volta · 5 dias · 3,2 km" />
 
-        <!-- NOVO: mensagem do responsável (só aparece se ele escreveu algo) -->
+        <!-- Mensagem do responsável (só aparece se houver) -->
         <LinearLayout
             android:id="@+id/containerMensagemSolicitacao"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_card_rounded"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_tile_rota"
             android:orientation="vertical"
-            android:padding="10dp"
-            android:visibility="gone">
+            android:padding="12dp"
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Mensagem do responsável"
-                android:textColor="#707070"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 tools:ignore="HardcodedText" />
@@ -93,41 +135,51 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="@color/dark_gray"
-                android:textSize="13sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                tools:text="Ele sai às 6h50, pode buscar no portão?" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnAceitarSolicitacao"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_green"
-                android:text="Aceitar"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
-
-            <androidx.appcompat.widget.AppCompatButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRecusarSolicitacao"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="10dp"
+                android:layout_height="46dp"
+                android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_red"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:text="Recusar"
                 android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"
+                android:textColor="@color/status_danger"
+                android:textSize="14sp"
                 android:textStyle="bold"
+                app:backgroundTint="@color/background_container"
+                app:cornerRadius="14dp"
+                app:strokeColor="@color/status_danger"
+                app:strokeWidth="1dp"
+                tools:ignore="HardcodedText" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAceitarSolicitacao"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Aceitar"
+                android:textAllCaps="false"
+                android:textColor="@color/text_on_dark"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/rota_destaque"
+                app:cornerRadius="14dp"
                 tools:ignore="HardcodedText" />
         </LinearLayout>
     </LinearLayout>

@@ -4,59 +4,55 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="#F6B12F">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- CABECALHO COLORIDO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingBottom="20dp">
-
-                <include layout="@layout/stepper_cadastro" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:layout_gravity="center_horizontal"
-                    android:contentDescription="VaiVan"
-                    android:src="@drawable/logo_vaivan" />
-            </LinearLayout>
-
-            <!-- CARTAO -->
             <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center_vertical"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="220dp"
+            android:layout_marginBottom="24dp"
             android:background="@drawable/bg_cadastro_card"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="24dp">
+            android:elevation="12dp"
+            android:paddingHorizontal="22dp"
+            android:paddingTop="26dp"
+            android:paddingBottom="26dp">
+
+            <include layout="@layout/stepper_cadastro" />
 
             <TextView
+                android:id="@+id/txtTituloSenha"
+                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="30dp"
                 android:text="Crie sua senha"
                 android:textColor="@color/dark_gray"
-                android:textSize="20sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
+
+            <!-- Só aparece ao continuar um cadastro não confirmado (e-mail já existe). -->
+            <TextView
+                android:id="@+id/txtAvisoRetomada"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="Já existe um cadastro iniciado com este e-mail. Digite a senha que você criou para continuar de onde parou."
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
             <!-- SENHA -->
 
@@ -64,9 +60,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Senha"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutSenha"
@@ -85,7 +81,7 @@
                     android:minHeight="48dp"
                     android:hint="**********"
                     android:inputType="textPassword"
-                    android:paddingHorizontal="12dp"
+                    android:paddingHorizontal="18dp"
                     android:paddingVertical="12dp"
                     android:textColor="@color/dark_gray"
                     android:textColorHint="@color/light_gray"
@@ -96,6 +92,7 @@
                 android:id="@+id/progressForcaSenha"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:trackColor="@color/white"
                 android:layout_marginTop="6dp"
                 android:max="3"
                 app:trackCornerRadius="4dp" />
@@ -114,20 +111,21 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="*A senha deve conter:\n- Mínimo 8 caracteres;\n- Mínimo 1 caracter especial;\n- Mínimo 1 número."
-                android:textColor="#F40707"
+                android:textColor="@color/status_danger"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
             <!-- CONFIRMAR SENHA -->
 
             <TextView
+                android:id="@+id/txtRotuloConfirmarSenha"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Confirmar Senha"
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutConfirmarSenha"
@@ -146,7 +144,7 @@
                     android:minHeight="48dp"
                     android:hint="**********"
                     android:inputType="textPassword"
-                    android:paddingHorizontal="12dp"
+                    android:paddingHorizontal="18dp"
                     android:paddingVertical="12dp"
                     android:textColor="@color/dark_gray"
                     android:textColorHint="@color/light_gray"
@@ -159,7 +157,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="*As senhas devem ser iguais"
-                android:textColor="#F40707"
+                android:textColor="@color/status_danger"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
@@ -168,7 +166,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:textColor="#F40707"
+                android:textColor="@color/status_danger"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -176,17 +174,15 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnContinuar"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/btn_gray_filled"
                 android:text="Continuar"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:backgroundTint="@null"
-                app:cornerRadius="12dp" />
+                android:textSize="18sp"
+                app:backgroundTint="@null" />
 
         </LinearLayout>
 

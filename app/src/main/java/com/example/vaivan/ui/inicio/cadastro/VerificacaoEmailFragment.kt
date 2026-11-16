@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -20,7 +19,6 @@ import kotlinx.coroutines.tasks.await
 class VerificacaoEmailFragment : Fragment(R.layout.fragment_verificacao_email) {
 
     private val viewModel: CadastroViewModel by activityViewModels()
-    private val rascunhoRepository by lazy { CadastroRascunhoRepository(requireContext()) }
 
     private lateinit var txtDescricaoVerificacao: TextView
     private lateinit var txtErroVerificacao: TextView
@@ -57,7 +55,6 @@ class VerificacaoEmailFragment : Fragment(R.layout.fragment_verificacao_email) {
 
                 if (usuario.isEmailVerified) {
                     viewModel.definirVerificacaoEmail()
-                    rascunhoRepository.salvar(viewModel.cadastro, CadastroActivity.ETAPA_INFORMACOES_PESSOAIS)
                     (requireActivity() as CadastroActivity).abrirInformacoesPessoais()
                 } else {
                     txtErroVerificacao.visibility = View.VISIBLE

@@ -2,39 +2,31 @@ package com.example.vaivan.ui.inicio.cadastro
 
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
-import com.example.vaivan.core.util.MascaraUtil
 import com.example.vaivan.core.validation.CadastroValidator
-import com.example.vaivan.data.remote.PaisTelefone
-import com.example.vaivan.data.remote.PaisTelefoneClient
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.example.vaivan.data.repository.FirebaseAuthRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.launch
 
-/** Etapa 1 — identificação: e-mail + telefone. */
+/** Etapa 1 — identificação: nome, sobrenome e e-mail. */
 class IdentificacaoFragment : Fragment(R.layout.fragment_identificacao) {
 
     private val viewModel: CadastroViewModel by activityViewModels()
     private val authRepository = FirebaseAuthRepository()
-    private val paisTelefoneClient = PaisTelefoneClient()
-    private val rascunhoRepository by lazy { CadastroRascunhoRepository(requireContext()) }
 
+    private lateinit var edtNome: TextInputEditText
+    private lateinit var edtSobrenome: TextInputEditText
     private lateinit var edtEmail: TextInputEditText
-    private lateinit var edtTelefone: TextInputEditText
+    private lateinit var layoutNome: TextInputLayout
+    private lateinit var layoutSobrenome: TextInputLayout
     private lateinit var layoutEmail: TextInputLayout
-    private lateinit var layoutTelefone: TextInputLayout
+    private lateinit var txtErroNome: TextView
+    private lateinit var txtErroSobrenome: TextView
     private lateinit var txtErroEmail: TextView
-    private lateinit var txtErroTelefone: TextView
-    private lateinit var spinnerPais: Spinner
     private lateinit var btnContinuar: MaterialButton
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,72 +34,53 @@ class IdentificacaoFragment : Fragment(R.layout.fragment_identificacao) {
 
         configurarEtapaCadastro(atual = 1)
         inicializarViews(view)
-        configurarTelefone()
-        configurarPais()
 
         btnContinuar.setOnClickListener { validarFormulario() }
     }
 
     private fun inicializarViews(view: View) {
+        edtNome = view.findViewById(R.id.edtNome)
+        edtSobrenome = view.findViewById(R.id.edtSobrenome)
         edtEmail = view.findViewById(R.id.edtEmail)
-        edtTelefone = view.findViewById(R.id.edtTelefone)
+        layoutNome = view.findViewById(R.id.layoutNome)
+        layoutSobrenome = view.findViewById(R.id.layoutSobrenome)
         layoutEmail = view.findViewById(R.id.layoutEmail)
-        layoutTelefone = view.findViewById(R.id.layoutTelefone)
+        txtErroNome = view.findViewById(R.id.txtErroNome)
+        txtErroSobrenome = view.findViewById(R.id.txtErroSobrenome)
         txtErroEmail = view.findViewById(R.id.txtErroEmail)
-        txtErroTelefone = view.findViewById(R.id.txtErroTelefone)
-        spinnerPais = view.findViewById(R.id.spinnerPais)
         btnContinuar = view.findViewById(R.id.btnContinuar)
 
-        txtErroEmail.visibility = View.GONE
-        txtErroTelefone.visibility = View.GONE
+        edtNome.filters = arrayOf(FILTRO_NOME_CADASTRO)
+        edtSobrenome.filters = arrayOf(FILTRO_NOME_CADASTRO)
 
-        // Reabrindo essa etapa (voltou ou retomou um rascunho) — repõe o que
+        // Reabrindo essa etapa (o usuário voltou pra ela) — repõe o que
         // já tinha sido digitado antes.
         val usuario = viewModel.cadastro.usuario
+        edtNome.setText(usuario.nome)
+        edtSobrenome.setText(usuario.sobrenome)
         edtEmail.setText(usuario.email)
-        edtTelefone.setText(usuario.telefone)
-    }
-
-    private fun configurarTelefone() {
-        edtTelefone.addTextChangedListener(MascaraUtil.inserir("(##) #####-####", edtTelefone))
-    }
-
-    /** Busca a lista de países + código de discagem numa API pública (REST
-     * Countries) em vez de uma lista fixa. Começa com Brasil sozinho (não
-     * dá pra deixar o spinner vazio enquanto a API não responde) e troca
-     * pela lista completa quando ela chegar; sem internet, fica só com
-     * Brasil mesmo. */
-    private fun configurarPais() {
-        configurarSpinnerPaises(listOf(PaisTelefone("Brasil", "+55")))
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val paises = try {
-                paisTelefoneClient.listarPaises()
-            } catch (erro: Exception) {
-                null
-            }
-
-            if (!paises.isNullOrEmpty()) {
-                configurarSpinnerPaises(paises)
-            }
-        }
-    }
-
-    private fun configurarSpinnerPaises(paises: List<PaisTelefone>) {
-        val indiceBrasil = paises.indexOfFirst { it.codigo == "+55" }.takeIf { it >= 0 } ?: 0
-        val rotulos = paises.map { "${it.nome} (${it.codigo})" }
-
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, rotulos)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerPais.adapter = adapter
-        spinnerPais.setSelection(indiceBrasil)
     }
 
     private fun validarFormulario() {
+        val nome = edtNome.text?.toString()?.trim() ?: ""
+        val sobrenome = edtSobrenome.text?.toString()?.trim() ?: ""
         val email = edtEmail.text?.toString()?.trim() ?: ""
-        val telefone = edtTelefone.text?.toString()?.trim() ?: ""
 
         var valido = true
+
+        if (!CadastroValidator.nomeValido(nome)) {
+            mostrarErro(txtErroNome, layoutNome, "*Campo obrigatório")
+            valido = false
+        } else {
+            limparErro(txtErroNome, layoutNome)
+        }
+
+        if (!CadastroValidator.nomeValido(sobrenome)) {
+            mostrarErro(txtErroSobrenome, layoutSobrenome, "*Campo obrigatório")
+            valido = false
+        } else {
+            limparErro(txtErroSobrenome, layoutSobrenome)
+        }
 
         if (!CadastroValidator.emailValido(email)) {
             mostrarErro(txtErroEmail, layoutEmail, "*Digite um email válido")
@@ -116,19 +89,12 @@ class IdentificacaoFragment : Fragment(R.layout.fragment_identificacao) {
             limparErro(txtErroEmail, layoutEmail)
         }
 
-        if (!CadastroValidator.telefoneValido(telefone)) {
-            mostrarErro(txtErroTelefone, layoutTelefone, "*Telefone inválido")
-            valido = false
-        } else {
-            limparErro(txtErroTelefone, layoutTelefone)
-        }
-
         if (valido) {
-            verificarEmail(email, telefone)
+            verificarEmail(nome, sobrenome, email)
         }
     }
 
-    private fun verificarEmail(email: String, telefone: String) {
+    private fun verificarEmail(nome: String, sobrenome: String, email: String) {
         btnContinuar.isEnabled = false
 
         authRepository.verificarEmail(
@@ -136,13 +102,12 @@ class IdentificacaoFragment : Fragment(R.layout.fragment_identificacao) {
             onResult = { existe ->
                 btnContinuar.isEnabled = true
 
-                if (existe) {
-                    mostrarErro(txtErroEmail, layoutEmail, "*Email já cadastrado no sistema")
-                    return@verificarEmail
-                }
-
-                viewModel.definirIdentificacao(email = email, telefone = telefone)
-                rascunhoRepository.salvar(viewModel.cadastro, CadastroActivity.ETAPA_CREDENCIAIS_SENHA)
+                // E-mail já existente não bloqueia aqui: pode ser um cadastro
+                // que parou antes da confirmação do e-mail. A etapa de senha
+                // pede a senha antiga e decide (não confirmado → continua;
+                // confirmado → manda pro login).
+                viewModel.emailJaCadastrado = existe
+                viewModel.definirIdentificacao(nome = nome, sobrenome = sobrenome, email = email)
                 (requireActivity() as CadastroActivity).abrirCredenciaisSenha()
             },
             onError = {

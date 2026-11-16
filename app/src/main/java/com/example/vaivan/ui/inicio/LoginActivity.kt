@@ -2,17 +2,18 @@ package com.example.vaivan.ui.inicio
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
-import com.example.vaivan.core.util.WindowInsetsUtil
 import com.example.vaivan.data.local.VaivanDatabase
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.example.vaivan.data.repository.FirebaseAuthRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.inicio.cadastro.CadastroActivity
@@ -32,11 +33,12 @@ class LoginActivity : BaseActivity() {
         )
     }
 
-    private val rascunhoRepository by lazy {
-        CadastroRascunhoRepository(this)
-    }
-
     private var processando = false
+
+    private companion object {
+        /** Quanto da altura do teclado a imagem de fundo sobe (1 = junto com o sheet). */
+        const val FATOR_SUBIDA_FUNDO = 0.5f
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,11 +63,33 @@ class LoginActivity : BaseActivity() {
             state = BottomSheetBehavior.STATE_HIDDEN
         }
 
-        // Ajuste para teclado e barras do sistema
-        WindowInsetsUtil.aplicarInsets(
-            bottomSheet,
-            aplicarTopo = false
-        )
+        // Ajuste para teclado e barras do sistema.
+        // O listener fica na raiz (não no bottomSheet) porque o
+        // BottomSheetBehavior instala o próprio listener de insets no sheet
+        // no primeiro layout e substituiria o nosso. Com o teclado aberto, a
+        // tela inteira (fundo + sheet) sobe a altura dele, sem redimensionar
+        // a imagem; fechado, o sheet só reserva o espaço da barra de navegação.
+        val raiz = findViewById<View>(android.R.id.content)
+        val telaLogin = findViewById<View>(R.id.activityLogin)
+        val fundoLogin = findViewById<View>(R.id.fundoLogin)
+        val paddingBaseSheet = bottomSheet.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(raiz) { _, insets ->
+            val tecladoAberto = insets.isVisible(WindowInsetsCompat.Type.ime())
+            val teclado = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val navBar = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+
+            val deslocamento = if (tecladoAberto) teclado.toFloat() else 0f
+            telaLogin.translationY = -deslocamento
+            // O fundo compensa parte da subida: no total sobe só FATOR_SUBIDA_FUNDO do teclado.
+            fundoLogin.translationY = deslocamento * (1f - FATOR_SUBIDA_FUNDO)
+            bottomSheet.setPadding(
+                bottomSheet.paddingLeft,
+                bottomSheet.paddingTop,
+                bottomSheet.paddingRight,
+                paddingBaseSheet + if (tecladoAberto) 0 else navBar
+            )
+            insets
+        }
 
         // Abrir painel de login
         btnEntrar.setOnClickListener {
@@ -133,33 +157,13 @@ class LoginActivity : BaseActivity() {
             )
         }
 
-        // RECUPERAÇÃO DE SENHA
+        // RECUPERAÇÃO DE SENHA — tela própria; leva o e-mail já digitado aqui.
         txtEsqueci.setOnClickListener {
-
-            val email = edtEmail.text.toString()
-                .trim()
-                .lowercase()
-
-            if (email.isEmpty()) {
-                edtEmail.error =
-                    "Digite seu e-mail para recuperar a senha"
-
-                edtEmail.requestFocus()
-                return@setOnClickListener
-            }
-
-            authRepository.recuperarSenha(
-                email,
-                onSuccess = {
-                    mostrarMensagem(
-                        "E-mail de recuperação enviado!"
-                    )
-                },
-                onError = { erro ->
-                    mostrarMensagem(
-                        erro.message ?: "Erro ao recuperar senha."
-                    )
-                }
+            startActivity(
+                Intent(this, RecuperarSenhaActivity::class.java).putExtra(
+                    RecuperarSenhaActivity.EXTRA_EMAIL,
+                    edtEmail.text.toString().trim().lowercase()
+                )
             )
         }
 
@@ -168,16 +172,13 @@ class LoginActivity : BaseActivity() {
 
             if (processando) return@setOnClickListener
 
-            val rascunho = rascunhoRepository.carregar()
-
-            if (rascunho != null) {
-                abrirCadastro()
-                return@setOnClickListener
-            }
-
             val usuario = FirebaseAuth.getInstance().currentUser
 
-            if (usuario == null) {
+            // Sem sessão, ou sessão de um cadastro que parou antes de confirmar
+            // o e-mail: começa do zero. Se for o mesmo e-mail, a etapa de
+            // senha retoma a conta existente (ver CredenciaisSenhaFragment).
+            if (usuario == null || !usuario.isEmailVerified) {
+                if (usuario != null) authRepository.logout()
                 abrirCadastro()
                 return@setOnClickListener
             }

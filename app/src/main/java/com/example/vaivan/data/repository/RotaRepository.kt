@@ -15,6 +15,8 @@ import com.example.vaivan.data.models.RotaCompativel
 import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.remote.routes.PontoRota
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
@@ -42,6 +44,14 @@ class RotaRepository(
     // cascata (apagar solicitação pendente) também refletir no Room na hora.
     private val solicitacaoInclusaoDao: SolicitacaoInclusaoDao? = null
 ) {
+
+    companion object {
+        /** Gravado pelo cancelamento do responsável (CancelarSolicitacaoUseCase,
+         * firestore.rules): "um aluno saiu, o trajeto precisa ser recalculado".
+         * Só existe no Firestore (não está na RotaEntity) — por isso as
+         * gravações da rota inteira usam merge, pra não apagá-lo sem querer. */
+        const val CAMPO_SAIDA_PENDENTE = "ultimaSolicitacaoCancelada"
+    }
 
     private val collectionRotas = firestore.collection("rotas")
     private val collectionParadas = firestore.collection("paradas_rota")
@@ -181,9 +191,12 @@ class RotaRepository(
 
     /** Mesma ideia de [sincronizarRotasDoMotoristaUmaVez], pras paradas de uma
      * rota específica — usado pelo pull-to-refresh da tela de detalhe, que
-     * não tem (e não precisa manter) um listener próprio o tempo todo. */
+     * não tem (e não precisa manter) um listener próprio o tempo todo.
+     * Espelha o servidor: paradas removidas lá (aluno saiu) somem do Room. */
     suspend fun sincronizarParadasUmaVez(rotaId: String) {
-        paradaRotaDao.upsertAll(consultarParadas(rotaId))
+        val paradas = consultarParadas(rotaId)
+        paradaRotaDao.deleteByRota(rotaId)
+        paradaRotaDao.upsertAll(paradas)
     }
 
     // =========================================================
@@ -406,7 +419,9 @@ class RotaRepository(
 
         val rotaFinal = rotaAtualizada.comTabela(tabelaPreco)
 
-        collectionRotas.document(rotaId).set(rotaFinal).await()
+        // merge: mantém o aviso de trajeto desatualizado (CAMPO_SAIDA_PENDENTE),
+        // que não faz parte da entity — uma edição só de nome/turno não recalcula.
+        collectionRotas.document(rotaId).set(rotaFinal, SetOptions.merge()).await()
         rotaDao.upsert(rotaFinal)
 
         rotaFinal
@@ -667,6 +682,75 @@ class RotaRepository(
             paradaRotaDao.upsertAll(paradas)
             rotaDao.upsert(rota.copy(voltaCalculadaEm = rota.calculadoEm))
         }
+    }
+
+    // =========================================================
+    // TRAJETO DESATUALIZADO (aluno saiu da rota)
+    // =========================================================
+
+    /**
+     * Rotas do motorista em que um aluno saiu depois do último cálculo do
+     * trajeto. O cancelamento é feito pelo responsável, que pelas regras só
+     * pode gravar `vagasOcupadas` e [CAMPO_SAIDA_PENDENTE] na rota — então é
+     * o app do motorista que recalcula, e esse campo é o aviso de que precisa.
+     */
+    suspend fun consultarRotasComTrajetoDesatualizado(motoristaId: String): List<String> =
+        withContext(Dispatchers.IO) {
+            collectionRotas
+                .whereEqualTo("motoristaId", motoristaId)
+                .get()
+                .await()
+                .documents
+                .filter { !it.getString(CAMPO_SAIDA_PENDENTE).isNullOrBlank() }
+                .map { it.id }
+        }
+
+    /**
+     * Grava o trajeto recalculado só com os alunos atuais e apaga o aviso
+     * [CAMPO_SAIDA_PENDENTE]. Não grava (devolve false) se, desde a leitura,
+     * a rota foi recalculada por outro caminho (`calculadoEm` mudou) ou mais
+     * um aluno saiu (uma das paradas sumiu) — nesse caso o aviso continua lá
+     * e o cálculo é refeito na próxima vez.
+     *
+     * Só os campos do trajeto são tocados: `vagasOcupadas` pode ter mudado
+     * nesse meio-tempo e não é responsabilidade deste cálculo.
+     */
+    suspend fun salvarTrajetoAtualizado(
+        rota: RotaEntity,
+        paradas: List<ParadaRotaEntity>,
+        baseCalculadoEm: Long
+    ): Boolean = withContext(Dispatchers.IO) {
+        val rotaRef = collectionRotas.document(rota.id)
+
+        val vagasNoServidor = firestore.runTransaction { transaction ->
+            val rotaServidor = transaction.get(rotaRef)
+            if ((rotaServidor.getLong("calculadoEm") ?: 0L) != baseCalculadoEm) return@runTransaction null
+
+            val paradasRefs = paradas.map { collectionParadas.document(it.id) }
+            if (paradasRefs.any { !transaction.get(it).exists() }) return@runTransaction null
+
+            transaction.update(
+                rotaRef,
+                mapOf(
+                    "distanciaMetros" to rota.distanciaMetros,
+                    "duracaoSegundos" to rota.duracaoSegundos,
+                    "duracaoSemTrafegoSegundos" to rota.duracaoSemTrafegoSegundos,
+                    "polylineEncoded" to rota.polylineEncoded,
+                    "calculadoEm" to rota.calculadoEm,
+                    "voltaCalculadaEm" to rota.voltaCalculadaEm,
+                    "lastUpdated" to rota.lastUpdated,
+                    CAMPO_SAIDA_PENDENTE to FieldValue.delete()
+                )
+            )
+            paradas.zip(paradasRefs).forEach { (parada, ref) -> transaction.set(ref, parada) }
+
+            rotaServidor.getLong("vagasOcupadas") ?: rota.vagasOcupadas.toLong()
+        }.await() ?: return@withContext false
+
+        rotaDao.upsert(rota.copy(vagasOcupadas = vagasNoServidor.toInt()))
+        paradaRotaDao.deleteByRota(rota.id)
+        paradaRotaDao.upsertAll(paradas)
+        true
     }
 
     fun novoIdParada(): String {

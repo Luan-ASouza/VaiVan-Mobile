@@ -7,12 +7,17 @@ class CadastroViewModel : ViewModel() {
 
     var cadastro = CadastroUsuario()
 
-    /** Etapa 1 — identificação (e-mail/telefone). */
+    /** O e-mail da identificação já existe no Auth — a etapa de senha vira
+     * "continuar cadastro" (pede a senha antiga em vez de criar uma). */
+    var emailJaCadastrado = false
+
+    /** Etapa 1 — identificação (nome, sobrenome e e-mail). */
     fun definirIdentificacao(
-        email: String,
-        telefone: String
+        nome: String,
+        sobrenome: String,
+        email: String
     ) {
-        cadastro.usuario = cadastro.usuario.copy(email = email, telefone = telefone)
+        cadastro.usuario = cadastro.usuario.copy(nome = nome, sobrenome = sobrenome, email = email)
     }
 
     /** Etapa 2 — credenciais (senha). */
@@ -25,15 +30,18 @@ class CadastroViewModel : ViewModel() {
         cadastro.usuario = cadastro.usuario.copy(emailConfirmado = true)
     }
 
-    /** Etapa 3 — informações pessoais. */
+    /** Etapa 3 — informações pessoais (telefone, CPF e, se ainda faltarem,
+     * nome/sobrenome). */
     fun definirDadosPessoais(
         nome: String,
         sobrenome: String,
+        telefone: String,
         cpf: String
     ) {
         cadastro.usuario = cadastro.usuario.copy(
             nome = nome,
             sobrenome = sobrenome,
+            telefone = telefone,
             cpf = cpf
         )
     }

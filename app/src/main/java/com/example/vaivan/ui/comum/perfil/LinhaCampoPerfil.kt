@@ -17,9 +17,10 @@ class LinhaCampoPerfil(raiz: View, idInclude: Int, rotulo: String, editavel: Boo
     private val linha: View = raiz.findViewById(idInclude)
     private val txtValor: TextView = linha.findViewById(R.id.txtValorCampo)
     private val txtStatus: TextView = linha.findViewById(R.id.txtStatusCampo)
+    private val txtRotulo: TextView = linha.findViewById(R.id.txtRotuloCampo)
 
     init {
-        linha.findViewById<TextView>(R.id.txtRotuloCampo).text = rotulo
+        txtRotulo.text = rotulo
         if (!editavel) {
             linha.findViewById<ImageView>(R.id.imgSetaCampo).visibility = View.INVISIBLE
             linha.isClickable = false
@@ -29,6 +30,12 @@ class LinhaCampoPerfil(raiz: View, idInclude: Int, rotulo: String, editavel: Boo
     }
 
     fun aoTocar(acao: () -> Unit) = linha.setOnClickListener { acao() }
+
+    /** Troca o rótulo depois de criada (ex.: "Ponto de embarque" vira
+     * "Ponto de desembarque" numa rota só de volta). */
+    fun rotulo(texto: String) {
+        txtRotulo.text = texto
+    }
 
     fun valor(texto: String) {
         txtValor.text = texto

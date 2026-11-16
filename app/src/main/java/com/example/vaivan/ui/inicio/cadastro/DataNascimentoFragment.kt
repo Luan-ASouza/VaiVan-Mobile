@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.vaivan.R
 import com.example.vaivan.core.validation.CadastroValidator
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.google.android.material.button.MaterialButton
 import java.util.Calendar
 
@@ -18,7 +17,6 @@ import java.util.Calendar
 class DataNascimentoFragment : Fragment(R.layout.fragment_data_nascimento) {
 
     private val viewModel: CadastroViewModel by activityViewModels()
-    private val rascunhoRepository by lazy { CadastroRascunhoRepository(requireContext()) }
 
     private lateinit var datePicker: DatePicker
     private lateinit var txtErroIdade: TextView
@@ -44,7 +42,7 @@ class DataNascimentoFragment : Fragment(R.layout.fragment_data_nascimento) {
         btnContinuar.setOnClickListener { validarFormulario() }
     }
 
-    /** Reabrindo essa etapa (voltou ou retomou um rascunho) — repõe a data
+    /** Reabrindo essa etapa (o usuário voltou pra ela) — repõe a data
      * já escolhida antes; sem nada salvo, começa 18 anos atrás (em vez de
      * "hoje", que já nasceria inválido). */
     private fun preencherDataSalva() {
@@ -93,7 +91,6 @@ class DataNascimentoFragment : Fragment(R.layout.fragment_data_nascimento) {
         )
 
         viewModel.definirDataNascimento(dataFormatada)
-        rascunhoRepository.salvar(viewModel.cadastro, CadastroActivity.ETAPA_ENDERECO)
 
         (requireActivity() as CadastroActivity).abrirEndereco()
     }

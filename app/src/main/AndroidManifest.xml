@@ -74,6 +74,12 @@
         <activity
             android:screenOrientation="portrait"
             android:name=".ui.inicio.cadastro.CadastroActivity"
+            android:theme="@style/Theme.VaiVan.Cadastro"
+            android:exported="false" />
+        <activity
+            android:screenOrientation="portrait"
+            android:name=".ui.inicio.RecuperarSenhaActivity"
+            android:theme="@style/Theme.VaiVan.Cadastro"
             android:exported="false" /> <!-- Planos e assinatura -->
         <activity
             android:screenOrientation="portrait"

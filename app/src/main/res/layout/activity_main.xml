@@ -6,13 +6,14 @@
     android:id="@+id/activityLogin"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/opening"
     tools:context=".ui.inicio.LoginActivity">
 
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEÚDO PRINCIPAL (fundo fica aqui pra poder subir menos que o sheet com o teclado) -->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/fundoLogin"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@drawable/opening">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCadastrar"
@@ -53,7 +54,7 @@
     <LinearLayout
         android:id="@+id/bottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="420dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/bg_bottomsheet_white"
         android:elevation="16dp"
         android:orientation="vertical"

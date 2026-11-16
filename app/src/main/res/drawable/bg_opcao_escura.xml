@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Opção grande de escolha nas telas do motorista (modal de ida/volta,
+     passos da criação de rota): borda escura quando selecionada. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape>
+            <solid android:color="@color/background_container" />
+            <stroke android:width="2dp" android:color="@color/rota_destaque" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/rota_tile" />
+            <stroke android:width="1dp" android:color="@color/rota_tile" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+</selector>

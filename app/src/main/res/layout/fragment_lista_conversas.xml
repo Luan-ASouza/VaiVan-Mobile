@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_screen">
+    android:background="@color/background_screen"
+    android:orientation="vertical">
 
-    <!-- Onda decorativa no canto superior direito (espelhada) -->
-    <ImageView
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:layout_gravity="top|end"
-        android:importantForAccessibility="no"
-        android:scaleType="fitXY"
-        android:scaleX="-1"
-        android:src="@drawable/bg_onda_passageiro" />
-
-    <ScrollView
+    <!-- CABEÇALHO (fixo, fora da rolagem) -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:fillViewport="true">
+        android:layout_height="wrap_content">
+
+        <!-- Onda decorativa -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="100dp"
+            android:layout_gravity="top|end"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_passageiro" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -27,8 +27,9 @@
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
             android:paddingTop="20dp"
-            android:paddingBottom="90dp">
+            android:paddingBottom="16dp">
 
+            <!-- Título -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -38,14 +39,36 @@
                 android:textStyle="bold"
                 tools:ignore="HardcodedText" />
 
+            <!-- Subtítulo (cada perfil tem o seu) -->
             <TextView
                 android:id="@+id/txtSubtituloConversas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="18dp"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
                 tools:text="Converse com os motoristas dos seus filhos" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- ÁREA ROLÁVEL -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="90dp">
 
             <ProgressBar
                 android:id="@+id/progressConversas"
@@ -55,6 +78,7 @@
                 android:layout_marginTop="24dp"
                 android:indeterminateTint="@color/color_primary" />
 
+            <!-- LISTA DE CONVERSAS -->
             <LinearLayout
                 android:id="@+id/containerConversas"
                 android:layout_width="match_parent"
@@ -63,6 +87,7 @@
                 android:clipToPadding="false"
                 android:orientation="vertical" />
 
+            <!-- ESTADO VAZIO -->
             <TextView
                 android:id="@+id/txtSemConversas"
                 android:layout_width="match_parent"
@@ -75,6 +100,9 @@
                 android:textSize="14sp"
                 android:visibility="gone"
                 tools:ignore="HardcodedText" />
+
         </LinearLayout>
+
     </ScrollView>
-</FrameLayout>
+
+</LinearLayout>

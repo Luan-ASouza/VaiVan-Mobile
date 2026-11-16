@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Uma parada da linha do tempo da aba Percurso: marcador + linha vertical
+     à esquerda, nome/endereço e o tempo estimado à direita. A linha de cima
+     some na primeira parada e a de baixo na última (em código). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="32dp"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <View
+            android:id="@+id/linhaCimaPercurso"
+            android:layout_width="2dp"
+            android:layout_height="10dp"
+            android:background="@color/rota_vagas_fundo" />
+
+        <TextView
+            android:id="@+id/marcadorPercurso"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_circulo_escuro"
+            android:gravity="center"
+            android:textColor="@color/text_on_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="1" />
+
+        <View
+            android:id="@+id/linhaBaixoPercurso"
+            android:layout_width="2dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="10dp"
+            android:background="@color/rota_vagas_fundo" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="14dp">
+
+        <TextView
+            android:id="@+id/txtTituloPercurso"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Lucas Santos" />
+
+        <TextView
+            android:id="@+id/txtEnderecoPercurso"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            tools:text="R. Almerinda Ramos Santos, 92" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txtTempoPercurso"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_tile_rota"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:text="+12 min"
+        tools:visibility="visible" />
+</LinearLayout>

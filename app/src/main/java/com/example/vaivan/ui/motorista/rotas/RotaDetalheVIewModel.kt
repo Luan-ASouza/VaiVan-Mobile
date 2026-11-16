@@ -8,6 +8,7 @@ import com.example.vaivan.data.local.entities.ViagemEntity
 import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+import com.example.vaivan.domain.usecase.rota.AtualizarTrajetoDaRotaUseCase
 import com.example.vaivan.domain.usecase.solicitacao.AceitarSolicitacaoUseCase
 import com.example.vaivan.domain.usecase.solicitacao.ConfirmarReservasPagasUseCase
 import com.example.vaivan.domain.usecase.viagem.IniciarViagemUseCase
@@ -21,8 +22,12 @@ class RotaDetalheViewModel(
     private val aceitarSolicitacaoUseCase: AceitarSolicitacaoUseCase,
     private val iniciarViagemUseCase: IniciarViagemUseCase,
     private val avisoAusenciaRepository: AvisoAusenciaRepository,
-    private val confirmarReservasPagasUseCase: ConfirmarReservasPagasUseCase
+    private val confirmarReservasPagasUseCase: ConfirmarReservasPagasUseCase,
+    private val atualizarTrajetoUseCase: AtualizarTrajetoDaRotaUseCase
 ) : ViewModel() {
+
+    /** Botão "Recalcular trajeto" da aba Percurso. */
+    suspend fun recalcularTrajeto(rotaId: String): Boolean = atualizarTrajetoUseCase(rotaId)
 
     // Traz do Firestore para o Room do motorista as solicitações recebidas
     // e os avisos de ausência registrados pelos responsáveis.
@@ -57,6 +62,15 @@ class RotaDetalheViewModel(
         processarReservas(motoristaId)
         rotaRepository.sincronizarRotasDoMotoristaUmaVez(motoristaId)
         rotaRepository.sincronizarParadasUmaVez(rotaId)
+    }
+
+    /** Traz as paradas (alunos confirmados) do Firestore para o Room. */
+    suspend fun sincronizarParadas(rotaId: String) {
+        rotaRepository.sincronizarParadasUmaVez(rotaId)
+    }
+
+    suspend fun excluirRota(rotaId: String) {
+        rotaRepository.excluirRota(rotaId)
     }
 
     fun observarRota(
@@ -102,14 +116,20 @@ class RotaDetalheViewModel(
 
     /**
      * Coloca no trajeto quem já pagou a 1ª mensalidade e expira reservas vencidas.
+     * Também recalcula o trajeto das rotas que perderam um aluno (cancelamento
+     * do responsável). Roda ao abrir a tela, no puxar pra atualizar e antes
+     * de iniciar viagem.
      * Devolve quantos alunos entraram na rota. Nunca falha (erro = tenta na próxima vez).
      */
-    suspend fun processarReservas(motoristaId: String): Int =
-        try {
+    suspend fun processarReservas(motoristaId: String): Int {
+        val ativados = try {
             confirmarReservasPagasUseCase(motoristaId)
         } catch (e: Exception) {
             0
         }
+        atualizarTrajetoUseCase.atualizarPendentes(motoristaId)
+        return ativados
+    }
 
     suspend fun iniciarViagem(
         rotaId: String,

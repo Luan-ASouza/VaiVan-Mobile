@@ -9,7 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Recalcula a rota com mais um aluno. Este caso de uso apenas CALCULA: quem grava
+ * Recalcula a rota com mais um aluno ([calcular]) ou só com os que já estão
+ * nela ([calcularComParadasAtuais]). Este caso de uso apenas CALCULA: quem grava
  * (de forma atômica, junto com a aceitação da solicitação) é o RotaRepository.
  */
 class RecalcularRotaUseCase(
@@ -53,17 +54,53 @@ class RecalcularRotaUseCase(
         }
 
         // 4. Todas as paradas, antigas + nova
-        val todasParadas = paradasExistentes.map { parada ->
-            RotaRepository.ParadaCandidata(
-                passageiroId = parada.passageiroId,
-                nomePassageiro = parada.nomePassageiro,
-                localId = parada.localId,
-                nomeLocal = parada.nomeLocal,
-                endereco = parada.endereco,
-                latitude = parada.latitude,
-                longitude = parada.longitude
-            )
-        } + novaParada
+        val todasParadas = paradasExistentes.map { it.comoCandidata() } + novaParada
+
+        calcularCom(rotaAtual, todasParadas, paradasExistentes, vagasASomar = if (vagaJaReservada) 0 else 1)
+    }
+
+    /**
+     * Recalcula o trajeto só com os alunos que estão na rota agora, sem
+     * incluir ninguém — usado quando um aluno sai (ver
+     * AtualizarTrajetoDaRotaUseCase). Devolve null se não há como traçar
+     * (rota antiga sem ponto de partida e sem nenhum aluno).
+     */
+    suspend fun calcularComParadasAtuais(rotaId: String): Resultado? = withContext(Dispatchers.IO) {
+        val rotaAtual = rotaRepository.buscarRotaNoFirestore(rotaId)
+        val paradasExistentes = rotaRepository
+            .buscarParadasNoFirestore(rotaId)
+            .sortedBy { it.ordem }
+
+        val temPontoDePartida = rotaAtual.origemLatitude != 0.0 || rotaAtual.origemLongitude != 0.0
+        if (paradasExistentes.isEmpty() && !temPontoDePartida) return@withContext null
+
+        calcularCom(
+            rotaAtual,
+            paradasExistentes.map { it.comoCandidata() },
+            paradasExistentes,
+            vagasASomar = 0
+        )
+    }
+
+    private fun ParadaRotaEntity.comoCandidata() = RotaRepository.ParadaCandidata(
+        passageiroId = passageiroId,
+        nomePassageiro = nomePassageiro,
+        localId = localId,
+        nomeLocal = nomeLocal,
+        endereco = endereco,
+        latitude = latitude,
+        longitude = longitude
+    )
+
+    /** Traça origem → [todasParadas] (na ordem otimizada) → destino e monta
+     * a rota e as paradas recalculadas. */
+    private suspend fun calcularCom(
+        rotaAtual: RotaEntity,
+        todasParadas: List<RotaRepository.ParadaCandidata>,
+        paradasExistentes: List<ParadaRotaEntity>,
+        vagasASomar: Int
+    ): Resultado {
+        val rotaId = rotaAtual.id
 
         // 5. Pontos de partida e chegada.
         //    IDA / IDA_E_VOLTA: ponto de partida do motorista -> alunos -> escola
@@ -164,7 +201,7 @@ class RecalcularRotaUseCase(
         val agora = System.currentTimeMillis()
 
         val rotaAtualizada = rotaAtual.copy(
-            vagasOcupadas = rotaAtual.vagasOcupadas + if (vagaJaReservada) 0 else 1,
+            vagasOcupadas = rotaAtual.vagasOcupadas + vagasASomar,
             distanciaMetros = resultado.distanciaMetros,
             duracaoSegundos = resultado.duracaoSegundos,
             duracaoSemTrafegoSegundos = resultado.duracaoSemTrafegoSegundos,
@@ -213,7 +250,7 @@ class RecalcularRotaUseCase(
         val paradasFinais = ordemVolta ?: paradasEntities
         val rotaFinal = rotaAtualizada.copy(voltaCalculadaEm = if (ordemVolta != null) agora else 0L)
 
-        Resultado(
+        return Resultado(
             rota = rotaFinal,
             paradas = paradasFinais,
             baseCalculadoEm = rotaAtual.calculadoEm

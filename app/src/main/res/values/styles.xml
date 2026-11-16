@@ -36,6 +36,18 @@
         <item name="android:background">@color/background_screen</item>
     </style>
 
+    <!-- Título de seção dentro das abas do detalhe da rota ("Rota", "Locais"...). -->
+    <style name="TituloSecaoRota">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <!-- Rótulo + campo das telas de edição do perfil com vários campos (endereço). -->
     <style name="RotuloEdicaoPerfil">
         <item name="android:layout_width">wrap_content</item>

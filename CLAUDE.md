@@ -95,6 +95,15 @@ Funções miscelâneas reaproveitáveis entre features — confira antes de escr
 ### Estilo
 `colors.xml` em duas camadas: paleta base (hex puro) → classes semânticas (`color_primary`, `status_success`, `status_danger`, `background_screen`, `text_primary`, etc.) — sempre referencie a classe semântica no layout, nunca o hex puro direto. `styles.xml` tem `CircleImage` (avatar circular) e `DiaSemanaButton` reaproveitados em várias telas — reuse antes de criar um style novo equivalente.
 
+### Telas de lista (abas do Home)
+Modelo: `fragment_lista_rotas.xml` (Transportes do responsável). Raiz = `LinearLayout` vertical com `background_screen`, em duas partes:
+1. **Cabeçalho fixo, fora da rolagem:** `FrameLayout` com a onda no canto superior direito (`ImageView` 200×100dp, `scaleX="-1"`), e por cima um `LinearLayout` (padding 16dp nas laterais, 20dp em cima e 16dp embaixo) com título 32sp bold `text_primary`, subtítulo 14sp `text_secondary` e, se houver, a ação principal (pílula de 44dp alinhada com o subtítulo) ou abas.
+2. **Área rolável:** `SwipeRefreshLayout` (se tiver atualizar) → `ScrollView` com `layout_height="0dp"` + `layout_weight="1"`, conteúdo com padding 16dp nas laterais, 4dp em cima e 90–100dp embaixo (espaço da bottom nav). Lista em `LinearLayout` montado em código e estado vazio centralizado em `text_tertiary`.
+
+Cards: `CardView` branco, cantos de 22dp, elevação de 4dp, `marginHorizontal` de 2dp (pra sombra não cortar). Os comentários de seção no XML (`<!-- CABEÇALHO -->`, `<!-- ÁREA ROLÁVEL -->`) seguem o mesmo modelo.
+
+Cor por perfil: o **responsável** usa laranja (`bg_onda_passageiro`, `bg_botao_laranja`, `bg_aba_selecionada`). O **motorista** usa a mesma estrutura com escuro no lugar do laranja (`bg_onda_motorista`, `bg_botao_escuro`, cores `rota_*`). Telas comuns aos dois (ex.: Chat) ficam no laranja.
+
 ## Regras do Firestore (`admin-web/firestore.rules`)
 
 Funções helper já definidas no topo do arquivo: `logado()`, `ehAdmin()`, `assinaturaOperacional(motoristaId)`, `statusMotoristaPermitido()`. Padrão pra uma coleção nova:
@@ -114,7 +123,7 @@ O banco exporta o esquema para `app/schemas/` (versionado no Git; a versão 14 �
 
 ## Testes
 
-Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Android): regras de assinatura (`AssinaturaPolicyTest`, `AssinaturaBloqueiosTest`), `PlanoCatalogoTest`, `StatusDocumentoTest`, `ReciboTest`, `GeoUtilTest`, `HorariosDaRotaTest`. Regra de negócio nova vai em objeto Kotlin puro (sem Firebase/Android) para poder ser testada assim. Rodar: botão direito em `app/src/test/java` > Run, ou `./gradlew testDebugUnitTest`.
+Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Android): regras de assinatura (`AssinaturaPolicyTest`, `AssinaturaBloqueiosTest`), `PlanoCatalogoTest`, `StatusDocumentoTest`, `ReciboTest`, `GeoUtilTest`, `HorariosDaRotaTest`, `RotaTextosTest`. Regra de negócio nova vai em objeto Kotlin puro (sem Firebase/Android) para poder ser testada assim. Rodar: botão direito em `app/src/test/java` > Run, ou `./gradlew testDebugUnitTest`.
 
 ## Cadastro de motorista, documentos e painel admin
 

@@ -19,6 +19,20 @@
     <!-- Tema principal -->
     <style name="Theme.VaiVan" parent="Base.Theme.VaiVan" />
 
+    <!-- Fluxo de cadastro (CadastroActivity, no manifest): cursor e alças de
+         seleção de texto em laranja em todos os campos de todas as etapas. -->
+    <style name="Theme.VaiVan.Cadastro">
+        <!-- Pinta as alças de seleção (início/fim/inserção) e o realce. -->
+        <item name="colorControlActivated">@color/cadastro_selecao</item>
+        <item name="android:textColorHighlight">@color/cadastro_cursor</item>
+        <item name="textInputStyle">@style/Widget.VaiVan.Cadastro.TextInputLayout</item>
+    </style>
+
+    <style name="Widget.VaiVan.Cadastro.TextInputLayout"
+        parent="Widget.Material3.TextInputLayout.FilledBox">
+        <item name="cursorColor">@color/cadastro_cursor</item>
+    </style>
+
     <style name="CircleImage">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>

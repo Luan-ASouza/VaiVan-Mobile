@@ -1,57 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF"
-    >
+    android:orientation="vertical">
 
     <ScrollView
         android:id="@+id/scrollEndereco"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:background="#F6B12F">
+        android:fillViewport="true">
 
         <LinearLayout
             android:id="@+id/containerPrincipal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_vertical">
-
-            <!-- CABECALHO COLORIDO -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingBottom="20dp">
-
-                <include layout="@layout/stepper_cadastro" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:layout_gravity="center_horizontal"
-                    android:contentDescription="VaiVan"
-                    android:src="@drawable/logo_vaivan" />
-            </LinearLayout>
-
-            <!-- CARTAO -->
+            android:gravity="center_vertical"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/containerCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="220dp"
+                android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_cadastro_card"
-                android:paddingHorizontal="24dp"
-                android:paddingTop="28dp"
-                android:paddingBottom="24dp">
+                android:elevation="12dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="22dp"
+                android:paddingTop="26dp"
+                android:paddingBottom="26dp">
+
+                <include layout="@layout/stepper_cadastro" />
 
                 <!-- TÍTULO -->
 
@@ -60,11 +41,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="28dp"
+                    android:layout_marginBottom="20dp"
                     android:text="Endereço"
                     android:textColor="@color/dark_gray"
-                    android:textSize="20sp"
-                    android:textStyle="bold"/>
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
 
                 <!-- CEP -->
 
@@ -72,10 +53,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:fontFamily="@font/montserrat_bold"
                     android:text="CEP"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/layoutCEP"
@@ -91,14 +72,14 @@
                         android:id="@+id/edtCEP"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
                         android:hint="12345678"
                         android:inputType="number"
-                        android:paddingHorizontal="12dp"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="18dp"
                         android:paddingVertical="12dp"
                         android:textColor="@color/dark_gray"
                         android:textColorHint="@color/light_gray"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -120,10 +101,10 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_bold"
                             android:text="Estado"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutEstado"
@@ -141,7 +122,7 @@
                                 android:hint="Estado"
                                 android:inputType="textCapWords"
                                 android:minHeight="48dp"
-                                android:paddingHorizontal="12dp"
+                                android:paddingHorizontal="18dp"
                                 android:paddingVertical="12dp"
                                 android:textColor="@color/dark_gray"
                                 android:textColorHint="@color/light_gray"
@@ -155,17 +136,17 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="10dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_bold"
                             android:text="Cidade"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutCidade"
@@ -180,18 +161,17 @@
                                 android:id="@+id/edtCidade"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:minHeight="48dp"
                                 android:hint="Cidade"
                                 android:inputType="textCapWords"
-                                android:paddingHorizontal="12dp"
+                                android:minHeight="48dp"
+                                android:paddingHorizontal="18dp"
                                 android:paddingVertical="12dp"
                                 android:textColor="@color/dark_gray"
                                 android:textColorHint="@color/light_gray"
-                                android:textSize="14sp"/>
+                                android:textSize="14sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
-
 
 
                 </LinearLayout>
@@ -202,10 +182,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:fontFamily="@font/montserrat_bold"
                     android:text="Bairro"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/layoutBairro"
@@ -220,14 +200,14 @@
                         android:id="@+id/edtBairro"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
                         android:hint="Bairro"
                         android:inputType="textCapWords"
-                        android:paddingHorizontal="12dp"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="18dp"
                         android:paddingVertical="12dp"
                         android:textColor="@color/dark_gray"
                         android:textColorHint="@color/light_gray"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- RUA -->
@@ -236,10 +216,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:fontFamily="@font/montserrat_bold"
                     android:text="Rua"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/layoutRua"
@@ -254,14 +234,14 @@
                         android:id="@+id/edtRua"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="48dp"
                         android:hint="Rua"
                         android:inputType="textCapWords"
-                        android:paddingHorizontal="12dp"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="18dp"
                         android:paddingVertical="12dp"
                         android:textColor="@color/dark_gray"
                         android:textColorHint="@color/light_gray"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -275,17 +255,17 @@
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_weight="1"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_bold"
                             android:text="Número"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutNumero"
@@ -300,14 +280,14 @@
                                 android:id="@+id/edtNumero"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:minHeight="48dp"
                                 android:hint="123"
                                 android:inputType="number"
-                                android:paddingHorizontal="12dp"
+                                android:minHeight="48dp"
+                                android:paddingHorizontal="18dp"
                                 android:paddingVertical="12dp"
                                 android:textColor="@color/dark_gray"
                                 android:textColorHint="@color/light_gray"
-                                android:textSize="14sp"/>
+                                android:textSize="14sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
@@ -318,17 +298,17 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="10dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_bold"
                             android:text="Complemento"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="14sp"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/layoutComplemento"
@@ -343,14 +323,14 @@
                                 android:id="@+id/edtComplemento"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:minHeight="48dp"
                                 android:hint="Complemento"
                                 android:inputType="textCapWords"
-                                android:paddingHorizontal="12dp"
+                                android:minHeight="48dp"
+                                android:paddingHorizontal="18dp"
                                 android:paddingVertical="12dp"
                                 android:textColor="@color/dark_gray"
                                 android:textColorHint="@color/light_gray"
-                                android:textSize="14sp"/>
+                                android:textSize="14sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                     </LinearLayout>
@@ -368,26 +348,24 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="*Preencha todos os campos obrigatórios."
-                    android:textColor="#F40707"
+                    android:textColor="@color/status_danger"
                     android:textSize="10sp"
                     android:textStyle="bold"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
                 <!-- BOTÃO -->
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnContinuar"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="24dp"
                     android:background="@drawable/btn_gray_filled"
                     android:text="Continuar"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="12dp"/>
+                    android:textSize="18sp"
+                    app:backgroundTint="@null" />
 
             </LinearLayout>
 

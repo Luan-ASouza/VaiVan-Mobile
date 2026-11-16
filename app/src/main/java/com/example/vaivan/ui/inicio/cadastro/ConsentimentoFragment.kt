@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.UsuarioEntity
-import com.example.vaivan.data.repository.CadastroRascunhoRepository
 import com.example.vaivan.data.repository.UsuarioRepository
 import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
 import com.example.vaivan.ui.inicio.TermosUsoActivity
@@ -374,7 +373,6 @@ class ConsentimentoFragment :
                     usuario
                 )
 
-                CadastroRascunhoRepository(requireContext()).limpar()
 
                 Toast.makeText(
                     requireContext(),

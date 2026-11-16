@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.inicio.cadastro
 
+import android.text.InputFilter
 import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import com.example.vaivan.R
@@ -27,4 +28,13 @@ fun Fragment.configurarEtapaCadastro(atual: Int) {
     view.findViewById<ImageButton>(R.id.btnVoltarEtapa).setOnClickListener {
         requireActivity().onBackPressedDispatcher.onBackPressed()
     }
+}
+
+/** Filtro dos campos de nome/sobrenome do cadastro: só letras, espaço,
+ * hífen e apóstrofo. Usado na identificação e, quando o nome ainda falta,
+ * em informações pessoais. */
+val FILTRO_NOME_CADASTRO = InputFilter { source, _, _, _, _, _ ->
+    if (source.isNullOrEmpty() ||
+        source.all { it.isLetter() || it == ' ' || it == '-' || it == '\'' }
+    ) null else ""
 }
