@@ -141,6 +141,10 @@ class NavegacaoViagemActivity : BaseActivity() {
      * mandados pro SDK em setDestinations. */
     private var indiceProximoWaypoint = 0
 
+    /** setDestinations em andamento (resposta ainda não voltou) — evita
+     * mandar outro por cima numa emissão seguida das paradas. */
+    private var enviandoDestinos = false
+
     /** Sem a permissão de notificação (Android 13+) o rastreio em segundo
      * plano funciona igual — só a notificação fixa fica escondida. Por isso
      * não bloqueia nada se for negada. */
@@ -354,16 +358,24 @@ class NavegacaoViagemActivity : BaseActivity() {
             return
         }
 
-        val pendentes = paradas.filter {
-            it.status == ViagemRepository.PARADA_AGUARDANDO ||
-                it.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
-        }
+        if (enviandoDestinos) return
+        enviarDestinosPendentes(navegador, paradas)
+    }
+
+    /** Manda pro SDK só as paradas ainda pendentes (AGUARDANDO /
+     * AGUARDANDO_DESEMBARQUE), agrupadas por ordem. Usado na montagem inicial
+     * e de novo quando uma falta tira alguém de uma parada mais à frente
+     * ([recalcularSeParadaFuturaResolvida]). O mapa título->ordem e o índice
+     * só são trocados quando o SDK aceita a rota nova. */
+    private fun enviarDestinosPendentes(navegador: Navigator, paradas: List<ParadaViagemEntity>) {
+        val pendentes = paradas.filter(::estaPendente)
 
         if (pendentes.isEmpty()) {
             Log.d(TAG_DEBUG, "montarWaypoints: nenhuma parada pendente, nada a fazer.")
             return
         }
 
+        val novoMapa = linkedMapOf<String, Int>()
         val waypoints = pendentes
             .sortedBy { it.ordem }
             .groupBy { it.ordem }
@@ -382,20 +394,29 @@ class NavegacaoViagemActivity : BaseActivity() {
                         "lat=${referencia.latitude} lng=${referencia.longitude}"
                 )
 
-                ordemPorTituloWaypoint[titulo] = ordem
+                novoMapa[titulo] = ordem
                 waypoint
             }
 
         Log.d(TAG_DEBUG, "montarWaypoints: chamando setDestinations com ${waypoints.size} waypoint(s).")
 
+        enviandoDestinos = true
         navegador.setDestinations(waypoints).setOnResultListener { status ->
+            enviandoDestinos = false
             Log.d(TAG_DEBUG, "setDestinations: status=$status")
             if (status == Navigator.RouteStatus.OK) {
+                ordemPorTituloWaypoint.clear()
+                ordemPorTituloWaypoint.putAll(novoMapa)
+                indiceProximoWaypoint = 0
+
                 Log.d(TAG_DEBUG, "setDestinations: OK, chamando startGuidance().")
                 navegador.startGuidance()
                 // Rastreio pro responsável (posição, ETA e rota real), que
                 // segue rodando com o app minimizado ou esta tela fechada.
+                // Chamar de novo depois de um recálculo força a publicação
+                // imediata da rota nova.
                 RastreioViagemService.iniciar(this, viagemId)
+                if (BuildConfig.DEBUG) iniciarSimulacaoSeDebug()
             } else {
                 Log.w(TAG_DEBUG, "setDestinations: FALHOU com status=$status")
                 Toast.makeText(
@@ -405,6 +426,39 @@ class NavegacaoViagemActivity : BaseActivity() {
                 ).show()
             }
         }
+    }
+
+    private fun estaPendente(parada: ParadaViagemEntity) =
+        parada.status == ViagemRepository.PARADA_AGUARDANDO ||
+            parada.status == ViagemRepository.PARADA_AGUARDANDO_DESEMBARQUE
+
+    /** Falta avisada numa parada que ainda está mais à frente na fila do SDK
+     * (não o alvo atual, que é tratado por [avancarSeAlvoAtualResolvido]):
+     * sem isso o waypoint continuaria na rota e o motorista seria guiado até
+     * uma casa sem ninguém. Recalcula com o que sobrou pendente, e a rota
+     * nova chega ao responsável pelo RastreioViagemService
+     * (RouteChangedListener -> rotas_viagem).
+     *
+     * Só age com o alvo atual ainda pendente e sem card de chegada aberto,
+     * pra não brigar com o avanço normal de waypoint (que mexe no mesmo
+     * índice). Quando o card fecha, o coletor de ordemPainelAtivo chama de
+     * novo. */
+    private fun recalcularSeParadaFuturaResolvida(paradas: List<ParadaViagemEntity>) {
+        val navegador = navigator ?: return
+        if (enviandoDestinos || ordemPorTituloWaypoint.isEmpty()) return
+        if (viewModel.ordemPainelAtivo.value != null) return
+
+        val ordemAtual = ordemAtualDoSdk() ?: return
+        val pendentesPorOrdem = paradas.filter(::estaPendente).map { it.ordem }.toSet()
+        if (ordemAtual !in pendentesPorOrdem) return
+
+        val futurasResolvidas = ordemPorTituloWaypoint.values.toList()
+            .drop(indiceProximoWaypoint + 1)
+            .filter { it !in pendentesPorOrdem }
+        if (futurasResolvidas.isEmpty()) return
+
+        Log.d(TAG_DEBUG, "recalcular: paradas futuras sem ninguém pendente $futurasResolvidas; refazendo destinos.")
+        enviarDestinosPendentes(navegador, paradas)
     }
 
     /** Ordem do waypoint que o SDK ainda não "consumiu" — não necessariamente
@@ -460,6 +514,7 @@ class NavegacaoViagemActivity : BaseActivity() {
                         montarWaypointsEIniciarGuiaSePossivel(paradas)
                         progressoAdapter.submitLista(paradas)
                         avancarSeAlvoAtualResolvido(paradas)
+                        recalcularSeParadaFuturaResolvida(paradas)
                     }
                 }
                 launch {
@@ -482,6 +537,9 @@ class NavegacaoViagemActivity : BaseActivity() {
                             // alvo de detecção de chegada pro próximo waypoint.
                             if (ordemCardAnterior != null) {
                                 avancarWaypointSdk()
+                                // Falta avisada enquanto o card estava aberto
+                                // ficou esperando: aplica agora.
+                                recalcularSeParadaFuturaResolvida(viewModel.paradas.value)
                             }
                         }
                         ordemCardAnterior = ordem

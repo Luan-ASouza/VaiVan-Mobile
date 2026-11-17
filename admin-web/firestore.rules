@@ -85,12 +85,8 @@ service cloud.firestore {
     // DOCUMENTOS (motorista e veículo)
     // ===================================================================
     match /documentos/{documentoId} {
-      // "resource == null": o app consulta o documento ANTES de enviar (ex.:
-      // CadastroVeiculoActivity.enviarDocumento -> consultarPorId, pra apagar
-      // o arquivo antigo). Num veículo novo o documento ainda não existe e,
-      // sem isso, a leitura é recusada e o envio inteiro falha.
       allow read: if logado() &&
-        (resource == null || resource.data.motoristaId == request.auth.uid || ehAdmin());
+       (resource == null || resource.data.motoristaId == request.auth.uid || ehAdmin());
 
       // O motorista só envia documentos dele e sempre "em análise".
       allow create: if logado() &&
@@ -145,6 +141,20 @@ service cloud.firestore {
       // "resource == null": o responsável abre o acompanhamento antes de o
       // motorista mandar a primeira posição — sem isso a leitura de um
       // documento que ainda não existe é recusada e o mapa fica vazio.
+      allow read: if logado() && (
+        resource == null ||
+        request.auth.uid == resource.data.motoristaId ||
+        request.auth.uid in resource.data.responsaveisAutorizados ||
+        ehAdmin()
+      );
+
+      allow write: if logado() && request.auth.uid == request.resource.data.motoristaId;
+    }
+
+    // Rota que o Navigation SDK do motorista está seguindo de fato
+    // (rotas_viagem/{viagemId}, sobrescrito a cada recálculo/falta/parada
+    // concluída). Mesmo modelo de "localizacoes": dono denormalizado no doc.
+    match /rotas_viagem/{viagemId} {
       allow read: if logado() && (
         resource == null ||
         request.auth.uid == resource.data.motoristaId ||

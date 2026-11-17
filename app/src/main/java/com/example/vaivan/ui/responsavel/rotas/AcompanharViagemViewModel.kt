@@ -13,6 +13,8 @@ import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.StatusPassageiro
 import com.example.vaivan.domain.statusDoPassageiro
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -86,22 +88,33 @@ class AcompanharViagemViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
+        // Procura até achar: a tela pode ser aberta antes de o motorista
+        // iniciar a viagem (ou sem rede no primeiro momento) — com uma
+        // consulta só, a van e a rota real nunca apareceriam.
         viewModelScope.launch {
-            val viagemAtiva = try {
-                viagemRepository.consultarViagemAtivaParaRota(rotaId, responsavelId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w("AcompanharViagemVM", "Falha ao buscar a viagem ativa da rota $rotaId", e)
-                null
-            }
+            while (isActive && _viagemId.value == null) {
+                val viagemAtiva = try {
+                    viagemRepository.consultarViagemAtivaParaRota(rotaId, responsavelId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w("AcompanharViagemVM", "Falha ao buscar a viagem ativa da rota $rotaId", e)
+                    null
+                }
 
-            viagemAtiva?.let {
-                viagemRepository.iniciarSincronizacao(it.id, responsavelId)
-                localizacaoViagemRepository.iniciarSincronizacao(it.id)
-                _viagemId.value = it.id
+                if (viagemAtiva != null) {
+                    viagemRepository.iniciarSincronizacao(viagemAtiva.id, responsavelId)
+                    localizacaoViagemRepository.iniciarSincronizacao(viagemAtiva.id)
+                    _viagemId.value = viagemAtiva.id
+                } else {
+                    delay(INTERVALO_BUSCA_VIAGEM_MS)
+                }
             }
         }
+    }
+
+    private companion object {
+        const val INTERVALO_BUSCA_VIAGEM_MS = 5_000L
     }
 
     override fun onCleared() {
