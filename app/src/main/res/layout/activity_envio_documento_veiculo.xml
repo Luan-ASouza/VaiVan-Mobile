@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Envio de um documento do veículo (CRLV ou autorização). Cópia do envio do
+     comprovante de residência: requisitos, área pontilhada, cartão do arquivo
+     com a barra de progresso do upload e o botão Continuar. Os textos de cada
+     tipo vêm do código. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollEnvioDocumentoVeiculo"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_screen"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- VOLTAR -->
+        <ImageButton
+            android:id="@+id/btnVoltarEnvioDocumento"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="-10dp"
+            android:layout_marginBottom="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrowback"
+            app:tint="@color/text_primary" />
+
+        <!-- TÍTULO -->
+        <TextView
+            android:id="@+id/txtTituloEnvioVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textColor="@color/text_primary"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            tools:text="CRLV" />
+
+        <!-- DESCRIÇÃO -->
+        <TextView
+            android:id="@+id/txtDescricaoEnvioVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="24dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            tools:text="Envie o Certificado de Registro e Licenciamento do Veículo." />
+
+        <!-- INFORMAÇÕES DO DOCUMENTO -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_container_round_30"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Requisitos do documento"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/txtRequisitosEnvioVeiculo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:text="O documento deve ser do veículo cadastrado e estar dentro da validade." />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Formatos aceitos:"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="5dp"
+                android:text="• Foto tirada com a câmera&#10;• Imagem da galeria&#10;• Arquivo PDF (documento digital)"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <!-- SEÇÃO DE UPLOAD -->
+        <TextView
+            android:id="@+id/txtRotuloUploadVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="CRLV" />
+
+        <!-- CONTAINER DE SELEÇÃO E PROGRESSO -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <!-- ÁREA PONTILHADA INICIAL -->
+            <LinearLayout
+                android:id="@+id/btnSelecionarDocumentoVeiculo"
+                android:layout_width="match_parent"
+                android:layout_height="112dp"
+                android:background="@drawable/bg_file_upload"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Selecionar documento"
+                    android:src="@android:drawable/ic_menu_upload"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/txtAcaoSelecionarVeiculo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Enviar CRLV" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Toque aqui para tirar uma foto ou selecionar um arquivo"
+                    android:textAlignment="center"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+            <!-- CARTÃO DO ARQUIVO SELECIONADO -->
+            <include
+                android:id="@+id/itemArquivoVeiculo"
+                layout="@layout/item_arquivo_cnh"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- AVISO -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Certifique-se de que o documento esteja legível e que todas as informações estejam visíveis."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            tools:ignore="HardcodedText" />
+
+        <!-- STATUS GERAL -->
+        <TextView
+            android:id="@+id/txtStatusGeralVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Selecione um documento para começar."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            tools:ignore="HardcodedText" />
+
+        <!-- BOTÃO CONTINUAR -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnContinuarDocumentoVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
+            android:enabled="false"
+            android:text="Envie o documento"
+            android:textAllCaps="false"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            app:backgroundTint="@color/color_primary"
+            app:cornerRadius="14dp"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+</ScrollView>

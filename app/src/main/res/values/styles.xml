@@ -93,6 +93,69 @@
         <item name="android:textSize">16sp</item>
     </style>
 
+    <!-- Opção selecionável em pílula dentro de um sheet (forma de pagamento,
+         trajeto da falta). A selecionada é pintada no código (bg da cor do
+         perfil + texto claro); a padrão usa bg_aba. -->
+    <style name="OpcaoFormaPagamento">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_aba</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Linhas do bottom_sheet_origem_arquivo (câmera / galeria / PDF). -->
+    <style name="LinhaOrigemArquivo">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:background">@drawable/bg_tile_rota</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <style name="IconeOrigemArquivo">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:background">@drawable/bg_circulo_branco</item>
+        <item name="android:padding">11dp</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">@color/rota_destaque</item>
+    </style>
+
+    <style name="TituloOrigemArquivo">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ResumoOrigemArquivo">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="SetaOrigemArquivo">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:src">@drawable/ic_chevron_direita</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">@color/text_tertiary</item>
+    </style>
+
     <!-- Menu lateral (drawer_motorista / drawer_responsavel). O item ativo é
          marcado com isSelected = true pela Home (vira a "aba" clara). -->
     <style name="DrawerItem">

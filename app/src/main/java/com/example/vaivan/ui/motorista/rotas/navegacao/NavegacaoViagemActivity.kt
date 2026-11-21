@@ -3,6 +3,7 @@ package com.example.vaivan.ui.motorista.rotas.navegacao
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -22,6 +23,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.vaivan.BuildConfig
 import com.example.vaivan.R
+import com.example.vaivan.ui.comum.chat.ChatActivity
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.ParadaViagemEntity
@@ -86,6 +90,13 @@ class NavegacaoViagemActivity : BaseActivity() {
     private lateinit var fotoProximaParadaNavegacao: ShapeableImageView
     private lateinit var txtProximaParadaNavegacao: TextView
     private lateinit var txtEnderecoProximaParadaNavegacao: TextView
+    private lateinit var linhaProximaParadaNavegacao: View
+    private lateinit var txtNomeProximaParadaNavegacao: TextView
+    private lateinit var txtTipoProximaParadaNavegacao: TextView
+    private lateinit var btnChatProximaParadaNavegacao: View
+
+    /** Rota da viagem em andamento — identifica a conversa com o responsável. */
+    private var rotaIdDaViagem: String = ""
     private lateinit var btnPausarRetomarNavegacao: MaterialButton
     private lateinit var btnFinalizarNavegacao: MaterialButton
     private lateinit var btnReiniciarSimulacaoNavegacao: MaterialButton
@@ -212,6 +223,10 @@ class NavegacaoViagemActivity : BaseActivity() {
         fotoProximaParadaNavegacao = findViewById(R.id.fotoProximaParadaNavegacao)
         txtProximaParadaNavegacao = findViewById(R.id.txtProximaParadaNavegacao)
         txtEnderecoProximaParadaNavegacao = findViewById(R.id.txtEnderecoProximaParadaNavegacao)
+        linhaProximaParadaNavegacao = findViewById(R.id.linhaProximaParadaNavegacao)
+        txtNomeProximaParadaNavegacao = findViewById(R.id.txtNomeProximaParadaNavegacao)
+        txtTipoProximaParadaNavegacao = findViewById(R.id.txtTipoProximaParadaNavegacao)
+        btnChatProximaParadaNavegacao = findViewById(R.id.btnChatProximaParadaNavegacao)
         btnPausarRetomarNavegacao = findViewById(R.id.btnPausarRetomarNavegacao)
         btnFinalizarNavegacao = findViewById(R.id.btnFinalizarNavegacao)
         btnReiniciarSimulacaoNavegacao = findViewById(R.id.btnReiniciarSimulacaoNavegacao)
@@ -236,7 +251,8 @@ class NavegacaoViagemActivity : BaseActivity() {
                     viewModel.confirmarDesembarque(parada)
                 }
             },
-            onNaoEmbarcou = { parada -> viewModel.marcarNaoEmbarcou(parada) }
+            onNaoEmbarcou = { parada -> viewModel.marcarNaoEmbarcou(parada) },
+            onAbrirChat = { parada -> abrirChatComResponsavel(parada) }
         )
 
         recyclerPassageirosPainelParada.layoutManager = LinearLayoutManager(this)
@@ -560,15 +576,33 @@ class NavegacaoViagemActivity : BaseActivity() {
     }
 
     private fun atualizarResumoParada(proxima: ParadaViagemEntity?) {
+        // Mesmo topo do acompanhamento do responsável: status grande, endereço
+        // e a linha do aluno da próxima parada com o atalho da conversa.
         if (proxima == null) {
-            txtProximaParadaNavegacao.text = "Todas as paradas foram concluídas."
-            txtEnderecoProximaParadaNavegacao.text = ""
-            fotoProximaParadaNavegacao.setImageResource(R.drawable.ic_perfil)
+            txtProximaParadaNavegacao.text = "Todas as paradas foram concluídas"
+            txtEnderecoProximaParadaNavegacao.visibility = View.GONE
+            linhaProximaParadaNavegacao.visibility = View.GONE
             return
         }
 
-        txtProximaParadaNavegacao.text = "A caminho de: ${proxima.nomePassageiro}"
-        txtEnderecoProximaParadaNavegacao.text = proxima.endereco.ifBlank { proxima.nomeLocal }
+        val ehEmbarque = proxima.tipo == ViagemRepository.TIPO_EMBARQUE
+        txtProximaParadaNavegacao.text =
+            if (ehEmbarque) "A caminho do embarque" else "A caminho do desembarque"
+
+        val endereco = proxima.endereco.ifBlank { proxima.nomeLocal }
+        txtEnderecoProximaParadaNavegacao.text = endereco
+        txtEnderecoProximaParadaNavegacao.visibility = if (endereco.isBlank()) View.GONE else View.VISIBLE
+
+        linhaProximaParadaNavegacao.visibility = View.VISIBLE
+        txtNomeProximaParadaNavegacao.text = proxima.nomePassageiro.ifBlank { proxima.nomeLocal }
+        txtTipoProximaParadaNavegacao.text = listOf(
+            if (ehEmbarque) "Embarque" else "Desembarque",
+            proxima.nomeLocal
+        ).filter { it.isNotBlank() }.joinToString(" · ")
+
+        btnChatProximaParadaNavegacao.visibility =
+            if (proxima.responsavelId.isBlank()) View.GONE else View.VISIBLE
+        btnChatProximaParadaNavegacao.setOnClickListener { abrirChatComResponsavel(proxima) }
 
         Glide.with(fotoProximaParadaNavegacao)
             .load(proxima.fotoPassageiroUrl)
@@ -578,7 +612,25 @@ class NavegacaoViagemActivity : BaseActivity() {
             .into(fotoProximaParadaNavegacao)
     }
 
+    /** Conversa com o responsável do aluno (mesma conversa por rota + aluno
+     * que o responsável abre do lado dele). */
+    private fun abrirChatComResponsavel(parada: ParadaViagemEntity) {
+        if (parada.responsavelId.isBlank()) return
+
+        startActivity(
+            Intent(this, ChatActivity::class.java).apply {
+                putExtra("outroUsuarioId", parada.responsavelId)
+                putExtra("nomeContato", "Responsável")
+                putExtra("rotaId", rotaIdDaViagem)
+                putExtra("passageiroId", parada.passageiroId)
+                putExtra("passageiroNome", parada.nomePassageiro)
+                putTema(TemaPerfil.MOTORISTA)
+            }
+        )
+    }
+
     private fun atualizarBotaoPausa(viagem: ViagemEntity?) {
+        viagem?.rotaId?.takeIf { it.isNotBlank() }?.let { rotaIdDaViagem = it }
         btnPausarRetomarNavegacao.text = if (viagem?.status == ViagemRepository.STATUS_PAUSADA) {
             "Retomar"
         } else {

@@ -1,31 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Um aluno no card de chegada à parada: foto, nome, status, botão de
+     conversa com o responsável e os botões de confirmação. Sem endereço. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_container_round_30"
     android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_tile_rota"
+    android:backgroundTint="@color/white_solitude"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="14dp"
+    android:clipToPadding="false">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:clipToPadding="false"
+        android:paddingEnd="4dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/fotoProgressoPassageiro"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="2dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@color/background_container"
+            android:padding="3dp"
             android:scaleType="centerCrop"
             android:src="@drawable/avatar_01"
             app:shapeAppearanceOverlay="@style/CircleImage"
             app:strokeColor="@color/dark_gray"
             app:strokeWidth="3dp" />
-
 
         <LinearLayout
             android:layout_width="0dp"
@@ -38,51 +44,80 @@
                 android:id="@+id/nomePassageiroItemParada"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#101010"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:ellipsize="end"
+                android:fontFamily="@font/montserrat_bold"
+                android:maxLines="2"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                tools:text="Lucas Santos" />
 
             <TextView
                 android:id="@+id/statusPassageiroItemParada"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#999999"
-                android:textSize="13sp" />
-
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/montserrat_semibold"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:text="Aguardando" />
         </LinearLayout>
 
+        <!-- Conversa com o responsável do aluno -->
+        <ImageButton
+            android:id="@+id/btnChatItemParada"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:clipToOutline="false"
+            android:background="@drawable/bg_botao_redondo_claro"
+            android:backgroundTint="@color/white"
+            android:contentDescription="Conversar com o responsável"
+            android:elevation="2dp"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_chat"
+            app:tint="@color/text_primary"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/botoesPassageiroItemParada"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNaoAcaoItemParada"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_height="48dp"
             android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:textAllCaps="false"
+            android:textColor="@color/white"
             android:textSize="13sp"
+            android:textStyle="bold"
             app:backgroundTint="@color/status_danger"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="16dp"
+            tools:text="Não embarcou" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmarAcaoItemParada"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_height="48dp"
             android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:textAllCaps="false"
-            android:textColor="@android:color/white"
+            android:textColor="@color/text_on_dark"
             android:textSize="13sp"
+            android:textStyle="bold"
             app:backgroundTint="@color/status_success"
-            app:cornerRadius="12dp" />
-
+            app:cornerRadius="16dp"
+            tools:text="Embarcou" />
     </LinearLayout>
 
 </LinearLayout>

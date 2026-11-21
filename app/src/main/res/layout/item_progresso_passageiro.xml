@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Um passageiro no progresso da viagem (sheet branco da navegação do
+     motorista): foto, nome, endereço e o status colorido à direita. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingHorizontal="20dp"
-    android:paddingVertical="12dp">
+    android:paddingHorizontal="22dp"
+    android:paddingVertical="10dp">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/fotoProgressoPassageiro"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:padding="2dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:scaleType="centerCrop"
         android:src="@drawable/avatar_01"
-        app:shapeAppearanceOverlay="@style/CircleImage"
-        app:strokeColor="@color/dark_gray"
-        app:strokeWidth="3dp" />
+        app:shapeAppearanceOverlay="@style/CircleImage" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -30,22 +30,23 @@
             android:id="@+id/nomeProgressoPassageiro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/color_secondary"
-            android:text="Nome do Passageiro"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:ellipsize="end"
+            android:fontFamily="@font/montserrat_semibold"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            tools:text="Lucas Santos" />
 
         <TextView
             android:id="@+id/enderecoProgressoPassageiro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Endereço do passageiro"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="#686D75"
-            android:textSize="16sp" />
-
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            tools:text="Rua das Flores, 120 - Centro" />
     </LinearLayout>
 
     <TextView
@@ -53,7 +54,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:fontFamily="@font/montserrat_bold"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        tools:text="Na van" />
 
 </LinearLayout>

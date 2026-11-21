@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- De onde vem o arquivo de um documento: câmera, galeria ou PDF. Cada opção
+     é uma linha com o ícone num quadrinho (as que não valem para o documento
+     ficam escondidas — ver OrigemArquivo). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_sheet_rounded"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="24dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_sheet_handle" />
+
+    <TextView
+        android:id="@+id/txtTituloOrigemArquivo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="Enviar comprovante" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:text="Escolha como enviar o documento."
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        tools:ignore="HardcodedText" />
+
+    <!-- CÂMERA -->
+    <LinearLayout
+        android:id="@+id/opcaoOrigemCamera"
+        style="@style/LinhaOrigemArquivo">
+
+        <ImageView
+            style="@style/IconeOrigemArquivo"
+            android:src="@drawable/ic_camera" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TituloOrigemArquivo"
+                android:text="Tirar foto com a câmera"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                style="@style/ResumoOrigemArquivo"
+                android:text="Fotografe o documento agora"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <ImageView style="@style/SetaOrigemArquivo" />
+    </LinearLayout>
+
+    <!-- GALERIA -->
+    <LinearLayout
+        android:id="@+id/opcaoOrigemGaleria"
+        style="@style/LinhaOrigemArquivo">
+
+        <ImageView
+            style="@style/IconeOrigemArquivo"
+            android:src="@drawable/ic_galeria" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TituloOrigemArquivo"
+                android:text="Selecionar da galeria"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                style="@style/ResumoOrigemArquivo"
+                android:text="Use uma foto que já está no celular"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <ImageView style="@style/SetaOrigemArquivo" />
+    </LinearLayout>
+
+    <!-- PDF -->
+    <LinearLayout
+        android:id="@+id/opcaoOrigemPdf"
+        style="@style/LinhaOrigemArquivo">
+
+        <ImageView
+            style="@style/IconeOrigemArquivo"
+            android:src="@drawable/ic_enviar_arquivo" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TituloOrigemArquivo"
+                android:text="Selecionar PDF"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                style="@style/ResumoOrigemArquivo"
+                android:text="Documento digital em PDF"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <ImageView style="@style/SetaOrigemArquivo" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancelarOrigemArquivo"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="Cancelar"
+        android:textAllCaps="false"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
+</LinearLayout>

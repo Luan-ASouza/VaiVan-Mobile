@@ -18,11 +18,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.core.util.PermissaoCameraHelper
+import com.example.vaivan.ui.comum.tema.OrigemArquivo
+import com.example.vaivan.ui.comum.tema.escolherOrigemArquivo
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.ui.comum.recorte.RecortarImagem
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.UploadTask
@@ -66,6 +69,10 @@ class EnvioCnhActivity : AppCompatActivity() {
         var enviando: Boolean = false,
         var erro: Boolean = false
     )
+
+    private val permissaoCamera = PermissaoCameraHelper(this) {
+        txtStatusGeral.text = "Permita o acesso à câmera para tirar a foto (ou escolha da galeria)."
+    }
 
     private val capturaCamera =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { sucesso ->
@@ -153,6 +160,7 @@ class EnvioCnhActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_valida_cnh)
+        findViewById<View>(R.id.btnVoltarEnvioDocumento).setOnClickListener { finish() }
 
 
         btnUploadPdf = findViewById(R.id.btnSelecionarPdf)
@@ -543,28 +551,20 @@ class EnvioCnhActivity : AppCompatActivity() {
         btnExcluir.visibility = View.VISIBLE
 
         btnExcluir.setOnClickListener {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Excluir arquivo?")
-                .setMessage("Deseja remover este arquivo da CNH?")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Excluir") { _, _ ->
-                    excluirArquivo(arquivo)
-                }
-                .show()
+            ConfirmacaoExclusaoHelper.confirmar(
+                contexto = this,
+                titulo = "Excluir arquivo?",
+                mensagem = "Deseja remover este arquivo da CNH?"
+            ) { excluirArquivo(arquivo) }
         }
     }
 
     private fun confirmarExclusaoArquivo(arquivo: ArquivoCnh) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Excluir arquivo?")
-            .setMessage(
-                "Deseja remover ${arquivo.nome} e cancelar seu envio, se estiver em andamento?"
-            )
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Excluir") { _, _ ->
-                excluirArquivo(arquivo)
-            }
-            .show()
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Excluir arquivo?",
+            mensagem = "Deseja remover ${arquivo.nome} e cancelar seu envio, se estiver em andamento?"
+        ) { excluirArquivo(arquivo) }
     }
 
     private fun excluirArquivo(arquivo: ArquivoCnh) {
@@ -640,30 +640,20 @@ class EnvioCnhActivity : AppCompatActivity() {
     }
 
     private fun mostrarOpcoesArquivo(slot: String) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Enviar arquivo")
-            .setItems(
-                arrayOf(
-                    "Tirar foto com a câmera",
-                    "Selecionar da galeria"
-                )
-            ) { _, opcao ->
-                when (opcao) {
-                    0 -> abrirCamera(slot)
-
-                    1 -> {
-                        when (slot) {
-                            "FRENTE_FISICA" ->
-                                seletorImagemFrente.launch("image/*")
-
-                            "VERSO_FISICA" ->
-                                seletorImagemVerso.launch("image/*")
-                        }
-                    }
+        // CNH física: só foto (o PDF é a modalidade digital, com seletor próprio)
+        escolherOrigemArquivo(
+            context = this,
+            titulo = if (slot == "VERSO_FISICA") "Verso da CNH" else "Frente da CNH",
+            origens = listOf(OrigemArquivo.CAMERA, OrigemArquivo.GALERIA)
+        ) { origem ->
+            when (origem) {
+                OrigemArquivo.CAMERA -> permissaoCamera.comPermissao { abrirCamera(slot) }
+                else -> when (slot) {
+                    "FRENTE_FISICA" -> seletorImagemFrente.launch("image/*")
+                    "VERSO_FISICA" -> seletorImagemVerso.launch("image/*")
                 }
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        }
     }
 
     private fun nomeArquivo(uri: Uri): String {

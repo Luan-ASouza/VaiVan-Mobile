@@ -1,11 +1,8 @@
 package com.example.vaivan.ui.motorista.veiculos
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,42 +13,47 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
-import androidx.core.widget.doAfterTextChanged
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
+import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.core.util.WindowInsetsUtil
-import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.VeiculoRepository
-import com.example.vaivan.ui.motorista.entrada.documentos.StatusDocumentosVeiculoActivity
+import com.example.vaivan.data.repository.VeiculoVinculadoARotaException
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.marcarOpcao
+import com.example.vaivan.ui.motorista.entrada.documentos.pintarStatusDocumento
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageMetadata
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 import java.util.regex.Pattern
 
+/**
+ * Cadastro/edição de veículo, no desenho do perfil do passageiro, com duas abas:
+ *  - Informações: o formulário (placa, marca/modelo, ano, lugares, cor) e o Salvar;
+ *  - Documentos: CRLV e autorização com o status de cada um (pendente, em
+ *    análise, aprovado, rejeitado). Tocar abre [EnvioDocumentoVeiculoActivity].
+ *
+ * Os documentos dependem do id do veículo: num cadastro novo, o primeiro
+ * "Salvar" cria o veículo e já leva para a aba Documentos.
+ */
 class CadastroVeiculoActivity : BaseActivity() {
 
     companion object {
@@ -64,15 +66,12 @@ class CadastroVeiculoActivity : BaseActivity() {
         private const val TEXTO_SALVAR_EDICAO = "Salvar alterações"
 
         private const val STATUS_VEICULO = "PENDENTE"
-        private const val STATUS_DOCUMENTO = "EM_ANALISE"
-
-        private const val TIPO_CRLV = "CRLV"
-        private const val TIPO_AUTORIZACAO =
-            "AUTORIZACAO_TRANSPORTE_ESCOLAR"
 
         private val REGEX_PLACA =
             Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$")
     }
+
+    private enum class Aba { INFORMACOES, DOCUMENTOS }
 
     private var veiculoId: String? = null
     private var veiculoCarregado: VeiculoEntity? = null
@@ -97,28 +96,31 @@ class CadastroVeiculoActivity : BaseActivity() {
     private lateinit var txtErroAno: TextView
     private lateinit var txtErroCor: TextView
     private lateinit var txtErroCapacidade: TextView
-    private lateinit var txtErroCrlv: TextView
-    private lateinit var txtErroAutorizacao: TextView
 
+    private lateinit var txtTitulo: TextView
+    private lateinit var txtNomeCabecalho: TextView
+    private lateinit var txtSubtitulo: TextView
     private lateinit var imgFotoVeiculo: ImageView
     private lateinit var txtStatusFoto: TextView
 
-    private lateinit var btnSelecionarCrlv: View
-    private lateinit var btnSelecionarAutorizacao: View
+    private lateinit var scroll: NestedScrollView
+    private lateinit var abaInformacoes: TextView
+    private lateinit var abaDocumentos: TextView
+    private lateinit var conteudoInformacoes: View
+    private lateinit var conteudoDocumentos: View
+    private lateinit var rodapeSalvar: View
+    private lateinit var btnExcluir: View
+    private lateinit var txtDocumentosSemVeiculo: View
+    private lateinit var itemCrlv: View
+    private lateinit var itemAutorizacao: View
+
     private lateinit var btnSalvar: MaterialButton
     private lateinit var progress: ProgressBar
-
-    private lateinit var txtNomeArquivoCrlv: TextView
-    private lateinit var txtNomeArquivoAutorizacao: TextView
-
-    private lateinit var iconCheckCrlv: ImageView
-    private lateinit var iconCheckAutorizacao: ImageView
 
     private lateinit var veiculoRepository: VeiculoRepository
     private lateinit var documentoRepository: DocumentoRepository
 
-    private var uriCrlv: Uri? = null
-    private var uriAutorizacao: Uri? = null
+    private var observacaoDocumentos: Job? = null
 
     private val adapterMarca by lazy { ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mutableListOf()) }
     private val adapterModelo by lazy { ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mutableListOf()) }
@@ -132,69 +134,52 @@ class CadastroVeiculoActivity : BaseActivity() {
      * texto livre, por isso guardada aqui em vez de lida direto do campo. */
     private var corSelecionada: CorVeiculo? = null
 
-    private val pickerCrlv =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let {
-                uriCrlv = it
-
-                txtNomeArquivoCrlv.text = nomeDoArquivo(it)
-                txtNomeArquivoCrlv.setTextColor(
-                    getColor(R.color.text_primary)
-                )
-
-                iconCheckCrlv.visibility = View.VISIBLE
-                txtErroCrlv.visibility = View.GONE
-            }
-        }
-
-    private val pickerAutorizacao =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let {
-                uriAutorizacao = it
-
-                txtNomeArquivoAutorizacao.text = nomeDoArquivo(it)
-                txtNomeArquivoAutorizacao.setTextColor(
-                    getColor(R.color.text_primary)
-                )
-
-                iconCheckAutorizacao.visibility = View.VISIBLE
-                txtErroAutorizacao.visibility = View.GONE
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cadastro_veiculo)
+
+        // Topo pela status bar; o Salvar sobe com o teclado
+        aplicarGapsDeSistema(aplicarBase = false)
+        WindowInsetsUtil.aplicarInsets(findViewById(R.id.conteudoCadastroVeiculo), aplicarTopo = false)
 
         veiculoId = intent.getStringExtra(EXTRA_VEICULO_ID)
 
         configurarRepositories()
         configurarViews()
-        configurarEdgeToEdge()
         configurarDropdownsVeiculo()
-        configurarListeners()
         configurarLimpezaDeErros()
+        configurarAbas()
 
-        if (veiculoId != null) {
+        atualizarFotoPreview(null)
+        atualizarCabecalho()
+
+        val id = veiculoId
+        if (id != null) {
             configurarModoEdicao()
-            carregarVeiculoParaEdicao(veiculoId!!)
+            carregarVeiculoParaEdicao(id)
+            observarDocumentos(id)
+        } else {
+            atualizarDocumentosSemVeiculo()
         }
     }
 
-    private fun configurarRepositories() {
+    override fun onStart() {
+        super.onStart()
+        documentoRepository.iniciarSincronizacao()
+    }
 
+    override fun onStop() {
+        documentoRepository.pararSincronizacao()
+        super.onStop()
+    }
+
+    private fun configurarRepositories() {
         val database = VaivanDatabase.getInstance(this)
         val firestore = FirebaseFirestore.getInstance()
 
-        veiculoRepository = VeiculoRepository(
-            database.veiculoDao(),
-            firestore
-        )
-
-        documentoRepository = DocumentoRepository(
-            database.documentoDao(),
-            firestore
-        )
+        // documentoDao: a exclusão também limpa CRLV/autorização do Room na hora
+        veiculoRepository = VeiculoRepository(database.veiculoDao(), firestore, database.documentoDao())
+        documentoRepository = DocumentoRepository(database.documentoDao(), firestore)
     }
 
     private fun configurarViews() {
@@ -219,78 +204,119 @@ class CadastroVeiculoActivity : BaseActivity() {
         txtErroAno = findViewById(R.id.txtErroAno)
         txtErroCor = findViewById(R.id.txtErroCor)
         txtErroCapacidade = findViewById(R.id.txtErroCapacidade)
-        txtErroCrlv = findViewById(R.id.txtErroCrlv)
-        txtErroAutorizacao = findViewById(R.id.txtErroAutorizacao)
 
+        txtTitulo = findViewById(R.id.txtTituloVeiculo)
+        txtNomeCabecalho = findViewById(R.id.txtNomeVeiculoCabecalho)
+        txtSubtitulo = findViewById(R.id.txtSubtituloVeiculo)
         imgFotoVeiculo = findViewById(R.id.imgFotoVeiculo)
         txtStatusFoto = findViewById(R.id.txtStatusFoto)
 
-        btnSelecionarCrlv = findViewById(R.id.btnSelecionarCrlv)
-        btnSelecionarAutorizacao = findViewById(R.id.btnSelecionarAutorizacao)
+        scroll = findViewById(R.id.scrollCadastroVeiculo)
+        abaInformacoes = findViewById(R.id.abaInformacoesVeiculo)
+        abaDocumentos = findViewById(R.id.abaDocumentosVeiculo)
+        conteudoInformacoes = findViewById(R.id.conteudoInformacoesVeiculo)
+        conteudoDocumentos = findViewById(R.id.conteudoDocumentosVeiculo)
+        rodapeSalvar = findViewById(R.id.rodapeSalvarVeiculo)
+        btnExcluir = findViewById(R.id.btnExcluirVeiculo)
+        btnExcluir.setOnClickListener { confirmarExclusao() }
+        txtDocumentosSemVeiculo = findViewById(R.id.txtDocumentosSemVeiculo)
+        itemCrlv = findViewById(R.id.itemCrlvVeiculo)
+        itemAutorizacao = findViewById(R.id.itemAutorizacaoVeiculo)
+
         btnSalvar = findViewById(R.id.btnSalvarEdicaoPerfil)
         progress = findViewById(R.id.progressEdicaoPerfil)
 
         btnSalvar.text = TEXTO_SALVAR
+        // Rodapé compartilhado com as telas de perfil (laranja); no motorista o botão é escuro
+        btnSalvar.setBackgroundResource(R.drawable.bg_botao_escuro)
+        btnSalvar.setOnClickListener { validarESalvar() }
+
         findViewById<View>(R.id.btnVoltarCadastroVeiculo).setOnClickListener { finish() }
 
-        txtNomeArquivoCrlv =
-            findViewById(R.id.txtNomeArquivoCrlv)
+        itemCrlv.setOnClickListener { abrirEnvio(DocumentoRepository.TIPO_CRLV) }
+        itemAutorizacao.setOnClickListener { abrirEnvio(DocumentoRepository.TIPO_AUTORIZACAO) }
 
-        txtNomeArquivoAutorizacao =
-            findViewById(R.id.txtNomeArquivoAutorizacao)
-
-        iconCheckCrlv =
-            findViewById(R.id.iconCheckCrlv)
-
-        iconCheckAutorizacao =
-            findViewById(R.id.iconCheckAutorizacao)
+        edtPlaca.doAfterTextChanged { atualizarCabecalho() }
     }
 
-    private fun configurarListeners() {
+    // ---------------------------------------------------------
+    // ABAS
+    // ---------------------------------------------------------
 
-        btnSelecionarCrlv.setOnClickListener {
-            pickerCrlv.launch(
-                arrayOf(
-                    "image/*",
-                    "application/pdf"
-                )
-            )
-        }
-
-        btnSelecionarAutorizacao.setOnClickListener {
-            pickerAutorizacao.launch(
-                arrayOf(
-                    "image/*",
-                    "application/pdf"
-                )
-            )
-        }
-
-        btnSalvar.setOnClickListener {
-            validarESalvar()
-        }
+    private fun configurarAbas() {
+        abaInformacoes.setOnClickListener { selecionarAba(Aba.INFORMACOES) }
+        abaDocumentos.setOnClickListener { selecionarAba(Aba.DOCUMENTOS) }
+        selecionarAba(Aba.INFORMACOES)
     }
 
-    /** Cabeçalho escuro sob a status bar (ícones claros), voltar fixo logo
-     * abaixo dela e botão Salvar acima do teclado. */
-    private fun configurarEdgeToEdge() {
+    private fun selecionarAba(aba: Aba) {
+        val informacoes = aba == Aba.INFORMACOES
+        marcarOpcao(
+            listOf(abaInformacoes, abaDocumentos),
+            if (informacoes) abaInformacoes else abaDocumentos,
+            TemaPerfil.MOTORISTA
+        )
+        conteudoInformacoes.visibility = if (informacoes) View.VISIBLE else View.GONE
+        conteudoDocumentos.visibility = if (informacoes) View.GONE else View.VISIBLE
+        // O Salvar é só das informações; os documentos são enviados um a um
+        rodapeSalvar.visibility = if (informacoes) View.VISIBLE else View.GONE
+        // Excluir só existe para um veículo já salvo, junto das informações
+        btnExcluir.visibility = if (informacoes && veiculoId != null) View.VISIBLE else View.GONE
+    }
 
-        aplicarGapsDeSistema(aplicarBase = false)
-        WindowInsetsUtil.aplicarInsets(findViewById(R.id.conteudoCadastroVeiculo), aplicarTopo = false)
+    // ---------------------------------------------------------
+    // DOCUMENTOS
+    // ---------------------------------------------------------
 
-        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+    private fun abrirEnvio(tipo: String) {
+        val id = veiculoId
+        if (id == null) {
+            Toast.makeText(this, "Salve as informações do veículo primeiro.", Toast.LENGTH_SHORT).show()
+            selecionarAba(Aba.INFORMACOES)
+            return
+        }
+        startActivity(EnvioDocumentoVeiculoActivity.intent(this, id, tipo))
+    }
 
-        val btnVoltar = findViewById<View>(R.id.btnVoltarCadastroVeiculo)
-        val margemTopo = (8 * resources.displayMetrics.density).toInt()
+    /** Antes de o veículo existir: cards apagados e o aviso para salvar. */
+    private fun atualizarDocumentosSemVeiculo() {
+        txtDocumentosSemVeiculo.visibility = View.VISIBLE
+        listOf(itemCrlv, itemAutorizacao).forEach { it.alpha = 0.5f }
+        pintarDocumentos(emptyList())
+    }
 
-        ViewCompat.setOnApplyWindowInsetsListener(btnVoltar) { view, insets ->
-            val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = margemTopo + barras.top
+    private fun observarDocumentos(id: String) {
+        txtDocumentosSemVeiculo.visibility = View.GONE
+        listOf(itemCrlv, itemAutorizacao).forEach { it.alpha = 1f }
+
+        observacaoDocumentos?.cancel()
+        observacaoDocumentos = lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                documentoRepository.observarPorVeiculo(id).collect { pintarDocumentos(it) }
             }
-            insets
         }
     }
+
+    private fun pintarDocumentos(documentos: List<DocumentoEntity>) {
+        pintarStatusDocumento(
+            icone = findViewById(R.id.iconeCrlvVeiculo),
+            selo = findViewById(R.id.txtStatusCrlvVeiculo),
+            motivo = findViewById(R.id.txtMotivoCrlvVeiculo),
+            documento = documentos.find { it.tipo == DocumentoRepository.TIPO_CRLV },
+            rotuloNaoEnviado = "Pendente"
+        )
+        pintarStatusDocumento(
+            icone = findViewById(R.id.iconeAutorizacaoVeiculo),
+            selo = findViewById(R.id.txtStatusAutorizacaoVeiculo),
+            motivo = findViewById(R.id.txtMotivoAutorizacaoVeiculo),
+            documento = documentos.find { it.tipo == DocumentoRepository.TIPO_AUTORIZACAO },
+            rotuloNaoEnviado = "Pendente"
+        )
+    }
+
+    // ---------------------------------------------------------
+    // ERROS DOS CAMPOS
+    // ---------------------------------------------------------
 
     /** Some com o erro de um campo assim que o usuário mexe nele. */
     private fun configurarLimpezaDeErros() {
@@ -331,6 +357,7 @@ class CadastroVeiculoActivity : BaseActivity() {
             veiculoEscolarSelecionado = null
             edtModelo.setText("", false)
             atualizarFotoPreview(null)
+            atualizarCabecalho()
 
             // Hoje a lista é sempre 1 modelo por marca, mas continua um
             // dropdown de verdade (não auto-preenchido) pra já suportar
@@ -347,6 +374,7 @@ class CadastroVeiculoActivity : BaseActivity() {
                 it.marca == marcaTexto && it.modelo == modeloTexto
             }
             atualizarFotoPreview(veiculoEscolarSelecionado)
+            atualizarCabecalho()
         }
 
         edtCor.setOnItemClickListener { _, _, posicao, _ ->
@@ -378,23 +406,32 @@ class CadastroVeiculoActivity : BaseActivity() {
         }
     }
 
+    /** Nome (marca + modelo) e placa no cabeçalho, como o nome/idade no perfil do passageiro. */
+    private fun atualizarCabecalho() {
+        val nome = listOf(obterTexto(edtMarca), obterTexto(edtModelo))
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+        txtNomeCabecalho.text = nome.ifBlank { "Seu veículo" }
+
+        val placa = obterTexto(edtPlaca).uppercase(Locale.getDefault())
+        txtSubtitulo.text = placa.ifBlank { "Preencha as informações abaixo" }
+    }
+
     /** Foto de exemplo do modelo escolhido — vem junto do app (ver
      * [VeiculosEscolares]), não é buscada por request nenhuma. */
     private fun atualizarFotoPreview(veiculo: VeiculoEscolar?) {
         if (veiculo != null) {
-            carregarFotoNoCabecalho(veiculo.foto, apagada = false)
-            txtStatusFoto.text = "${veiculo.marca} ${veiculo.modelo} · foto de exemplo"
-            txtStatusFoto.setTextColor(getColor(R.color.color_primary))
+            carregarFoto(veiculo.foto, apagada = false)
+            txtStatusFoto.text = "Foto de exemplo do modelo"
         } else {
-            // Sem modelo escolhido: silhueta apagada da van, só pra não deixar o cabeçalho vazio.
-            carregarFotoNoCabecalho(R.drawable.van1_img, apagada = true)
-            txtStatusFoto.text = "Escolha marca e modelo pra ver uma foto de exemplo"
-            txtStatusFoto.setTextColor(getColor(R.color.text_on_dark_secondary))
+            // Sem modelo escolhido: silhueta apagada da van, só pra não deixar o topo vazio.
+            carregarFoto(R.drawable.van1_img, apagada = true)
+            txtStatusFoto.text = "Escolha marca e modelo para ver a foto"
         }
     }
 
-    /** Troca a foto do cabeçalho com um fade (Glide, como no resto do app). */
-    private fun carregarFotoNoCabecalho(@androidx.annotation.DrawableRes foto: Int, apagada: Boolean) {
+    /** Troca a foto do topo com um fade (Glide, como no resto do app). */
+    private fun carregarFoto(@androidx.annotation.DrawableRes foto: Int, apagada: Boolean) {
         imgFotoVeiculo.animate().alpha(if (apagada) 0.35f else 1f).setDuration(250).start()
 
         Glide.with(imgFotoVeiculo)
@@ -438,13 +475,37 @@ class CadastroVeiculoActivity : BaseActivity() {
     // ---------------------------------------------------------
 
     private fun configurarModoEdicao() {
-        findViewById<TextView>(R.id.txtTituloVeiculo).text = "Editar veículo"
-        findViewById<TextView>(R.id.txtSubtituloVeiculo).text = "Atualize os dados do seu veículo."
-
-        txtNomeArquivoCrlv.text = "Manter documento atual (toque para trocar)"
-        txtNomeArquivoAutorizacao.text = "Manter documento atual (toque para trocar)"
-
+        txtTitulo.text = "Editar veículo"
         btnSalvar.text = TEXTO_SALVAR_EDICAO
+    }
+
+    /** Excluir veículo (saiu do card da lista). O repository bloqueia se ele
+     * estiver numa rota e, se não, apaga também CRLV e autorização. */
+    private fun confirmarExclusao() {
+        val id = veiculoId ?: return
+        val placa = veiculoCarregado?.placa?.takeIf { it.isNotBlank() } ?: "este veículo"
+
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Excluir \"$placa\"?",
+            mensagem = "O veículo e os documentos enviados dele serão apagados. Essa ação não pode ser desfeita."
+        ) {
+            lifecycleScope.launch {
+                try {
+                    veiculoRepository.excluirVeiculo(id)
+                    Toast.makeText(this@CadastroVeiculoActivity, "Veículo excluído.", Toast.LENGTH_SHORT).show()
+                    finish()
+                } catch (erro: VeiculoVinculadoARotaException) {
+                    Toast.makeText(this@CadastroVeiculoActivity, erro.message, Toast.LENGTH_LONG).show()
+                } catch (erro: Exception) {
+                    Toast.makeText(
+                        this@CadastroVeiculoActivity,
+                        "Erro ao excluir: ${erro.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     private fun carregarVeiculoParaEdicao(id: String) {
@@ -495,46 +556,19 @@ class CadastroVeiculoActivity : BaseActivity() {
         // Dado legado (de fora da lista fixa atual) não encontra
         // correspondência aqui — o texto salvo continua exibido, só sem
         // foto de exemplo até o motorista escolher de novo.
-        veiculoEscolarSelecionado = VEICULOS_ESCOLARES.firstOrNull {
-            it.marca.equals(veiculo.marca, ignoreCase = true) && it.modelo.equals(veiculo.modelo, ignoreCase = true)
-        }
+        veiculoEscolarSelecionado = veiculoEscolarDe(veiculo)
         atualizarFotoPreview(veiculoEscolarSelecionado)
 
         corSelecionada = CORES_VEICULO.firstOrNull { it.nomeExibicao.equals(veiculo.cor, ignoreCase = true) }
         edtCor.setText(corSelecionada?.nomeExibicao ?: veiculo.cor, false)
         aplicarBolinhaCor(corSelecionada)
+
+        atualizarCabecalho()
     }
 
-    private fun nomeDoArquivo(uri: Uri): String {
-
-        var nome = "arquivo"
-
-        try {
-            contentResolver.query(
-                uri,
-                null,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-
-                val index = cursor.getColumnIndex(
-                    OpenableColumns.DISPLAY_NAME
-                )
-
-                if (
-                    index != -1 &&
-                    cursor.moveToFirst()
-                ) {
-                    nome = cursor.getString(index)
-                }
-            }
-        } catch (_: Exception) {
-            // Mantém "arquivo" como nome padrão.
-        }
-
-        return nome
-    }
+    // ---------------------------------------------------------
+    // SALVAR
+    // ---------------------------------------------------------
 
     private fun validarESalvar() {
 
@@ -564,9 +598,6 @@ class CadastroVeiculoActivity : BaseActivity() {
         val erroAno = ano !in ANO_MINIMO..anoAtual + 1
         val erroCor = cor.length < 2
         val erroCapacidade = capacidade !in 1..LIMITE_CAPACIDADE
-        // Documentos só são obrigatórios no cadastro (na edição a troca é opcional).
-        val erroCrlv = !editando && uriCrlv == null
-        val erroAutorizacao = !editando && uriAutorizacao == null
 
         mostrarErro(layoutPlaca, txtErroPlaca, erroPlaca)
         mostrarErro(layoutMarca, txtErroMarca, erroMarca)
@@ -574,8 +605,6 @@ class CadastroVeiculoActivity : BaseActivity() {
         mostrarErro(layoutAno, txtErroAno, erroAno)
         mostrarErro(layoutCor, txtErroCor, erroCor)
         mostrarErro(layoutCapacidade, txtErroCapacidade, erroCapacidade)
-        txtErroCrlv.visibility = if (erroCrlv) View.VISIBLE else View.GONE
-        txtErroAutorizacao.visibility = if (erroAutorizacao) View.VISIBLE else View.GONE
 
         val primeiroErro = listOf(
             erroPlaca to layoutPlaca,
@@ -583,9 +612,7 @@ class CadastroVeiculoActivity : BaseActivity() {
             erroModelo to layoutModelo,
             erroAno to layoutAno,
             erroCapacidade to layoutCapacidade,
-            erroCor to layoutCor,
-            erroCrlv to btnSelecionarCrlv,
-            erroAutorizacao to btnSelecionarAutorizacao
+            erroCor to layoutCor
         ).firstOrNull { it.first }?.second
 
         if (primeiroErro != null) {
@@ -636,27 +663,12 @@ class CadastroVeiculoActivity : BaseActivity() {
         lifecycleScope.launch {
 
             try {
-
-                val veiculoIdSalvo =
-                    veiculoRepository.salvarVeiculo(
-                        veiculoParaSalvar
-                    )
-
-                // Os dois documentos sobem em paralelo (independentes entre si)
-                coroutineScope {
-                    uriCrlv?.let {
-                        launch { enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_CRLV, "crlv", it) }
-                    }
-                    uriAutorizacao?.let {
-                        launch { enviarDocumento(veiculoIdSalvo, motoristaId, TIPO_AUTORIZACAO, "autorizacao", it) }
-                    }
-                }
-
-                finalizarCadastro(veiculoIdSalvo, editando)
+                val veiculoIdSalvo = veiculoRepository.salvarVeiculo(veiculoParaSalvar)
+                aoSalvar(veiculoParaSalvar.copy(id = veiculoIdSalvo), editando)
 
             } catch (erro: Exception) {
 
-                restaurarBotao()
+                definirSalvando(false)
 
                 Toast.makeText(
                     this@CadastroVeiculoActivity,
@@ -667,117 +679,31 @@ class CadastroVeiculoActivity : BaseActivity() {
         }
     }
 
-    private fun obterTexto(
-        view: TextInputEditText
-    ): String {
-        return view.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
-    }
-
-    private fun obterTexto(
-        view: AutoCompleteTextView
-    ): String {
-        return view.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
-    }
-
-    /** Envia o arquivo pro Storage e registra o DocumentoEntity
-     * correspondente. Reaproveitado tanto no cadastro (CRLV + autorização
-     * obrigatórios) quanto na edição (troca opcional de um dos dois).
-     *
-     * Id determinístico (idDocumentoVeiculo): uma troca de arquivo na edição
-     * substitui o documento existente — por isso, se já havia um arquivo
-     * aqui, ele é removido do Storage antes do novo upload, pra não sobrar
-     * órfão. */
-    private suspend fun enviarDocumento(
-        veiculoId: String,
-        motoristaId: String,
-        tipo: String,
-        prefixoArquivo: String,
-        uri: Uri
-    ) {
-
-        val docId = DocumentoRepository.idDocumentoVeiculo(veiculoId, tipo)
-
-        documentoRepository.consultarPorId(docId)?.let { antigo ->
-            runCatching {
-                FirebaseStorage.getInstance()
-                    .getReferenceFromUrl(antigo.arquivo)
-                    .delete()
-                    .await()
-            }
-        }
-
-        val referencia = FirebaseStorage
-            .getInstance()
-            .reference
-            .child(
-                "documentos_veiculos/" +
-                        "$veiculoId/${prefixoArquivo}_${System.currentTimeMillis()}"
-            )
-
-        // Foto de documento sobe comprimida (PDF vai como está).
-        val ehImagem = contentResolver.getType(uri)?.startsWith("image/") == true
-        if (ehImagem) {
-            val comprimida = ImagemUtil.comprimir(this, uri, ImagemUtil.DOCUMENTO)
-            val metadata = StorageMetadata.Builder().setContentType("image/jpeg").build()
-            referencia.putFile(comprimida, metadata).await()
-        } else {
-            referencia.putFile(uri).await()
-        }
-        val url = referencia.downloadUrl.await().toString()
-
-        val data = SimpleDateFormat(
-            "dd/MM/yyyy",
-            Locale("pt", "BR")
-        ).format(Date())
-
-        documentoRepository.salvar(
-            DocumentoEntity(
-                id = docId,
-                tipo = tipo,
-                arquivo = url,
-                dataEnvio = data,
-                statusValidacao = STATUS_DOCUMENTO,
-                motoristaId = motoristaId,
-                veiculoId = veiculoId,
-                lastUpdated = 0L
-            )
-        )
-    }
-
-    private fun finalizarCadastro(veiculoId: String, editando: Boolean) {
-
-        Toast.makeText(
-            this,
-            if (editando) "Veículo atualizado!" else "Veículo e documentos enviados!",
-            Toast.LENGTH_SHORT
-        ).show()
-
+    /** Edição: volta para a lista. Cadastro novo: fica na tela, agora em modo
+     * edição, e abre a aba Documentos para o envio do CRLV e da autorização. */
+    private fun aoSalvar(veiculo: VeiculoEntity, editando: Boolean) {
         if (editando) {
+            Toast.makeText(this, "Veículo atualizado!", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        startActivity(
-            Intent(
-                this,
-                StatusDocumentosVeiculoActivity::class.java
-            ).apply {
-                putExtra("veiculoId", veiculoId)
-            }
-        )
-
-        finish()
-    }
-
-    private fun restaurarBotao() {
+        veiculoId = veiculo.id
+        veiculoCarregado = veiculo
+        configurarModoEdicao()
         definirSalvando(false)
+        observarDocumentos(veiculo.id)
+        selecionarAba(Aba.DOCUMENTOS)
+        scroll.scrollTo(0, 0)
+
+        Toast.makeText(this, "Veículo salvo! Agora envie os documentos.", Toast.LENGTH_LONG).show()
     }
+
+    private fun obterTexto(view: TextInputEditText): String =
+        view.text?.toString()?.trim().orEmpty()
+
+    private fun obterTexto(view: AutoCompleteTextView): String =
+        view.text?.toString()?.trim().orEmpty()
 
     private fun definirSalvando(salvando: Boolean) {
         progress.visibility = if (salvando) View.VISIBLE else View.GONE

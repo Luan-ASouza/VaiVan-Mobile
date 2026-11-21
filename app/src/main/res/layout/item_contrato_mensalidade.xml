@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Cartão de um aluno na tela de Pagamentos do motorista. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:background="@drawable/bg_container_round_30"
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@color/background_container"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="4dp">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:padding="16dp">
 
     <!-- QUEM: inicial, nome, responsável e situação -->
     <LinearLayout
@@ -17,16 +24,18 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txtInicialContrato"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="@drawable/bg_avatar_inicial"
-            android:gravity="center"
-            android:textColor="@color/dark_gray"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            tools:text="M" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgFotoContrato"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:contentDescription="Foto do passageiro"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/avatar_01"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:strokeColor="@color/rota_vagas_fundo"
+            app:strokeWidth="2dp"
+            tools:ignore="HardcodedText" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -192,3 +201,4 @@
             app:strokeWidth="1.5dp" />
     </LinearLayout>
 </LinearLayout>
+</androidx.cardview.widget.CardView>

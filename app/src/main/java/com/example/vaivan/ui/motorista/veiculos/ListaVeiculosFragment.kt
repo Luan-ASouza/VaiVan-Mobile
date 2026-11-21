@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -18,11 +17,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.vaivan.R
-import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.VeiculoRepository
-import com.example.vaivan.data.repository.VeiculoVinculadoARotaException
 import kotlinx.coroutines.launch
 import androidx.fragment.app.viewModels
 
@@ -140,15 +137,11 @@ class ListaVeiculosFragment : Fragment() {
                     R.id.imgEditarVeiculoItem
                 )
 
-            val imgExcluir =
-                itemView.findViewById<ImageView>(
-                    R.id.imgExcluirVeiculoItem
-                )
-
-            val containerDetalhes =
-                itemView.findViewById<LinearLayout>(
-                    R.id.containerDetalhesItem
-                )
+            // Foto de exemplo do modelo escolhido no cadastro (lista fixa em
+            // VeiculosEscolares).
+            // Modelo de fora da lista (dado antigo): van genérica.
+            val foto = veiculoEscolarDe(veiculo)?.foto ?: R.drawable.van1_img
+            itemView.findViewById<ImageView>(R.id.imgFotoVeiculoItem).setImageResource(foto)
 
             val txtPlaca =
                 itemView.findViewById<TextView>(
@@ -248,16 +241,6 @@ class ListaVeiculosFragment : Fragment() {
                 )
             }
 
-            imgExcluir.setOnClickListener {
-                ConfirmacaoExclusaoHelper.confirmar(
-                    contexto = requireContext(),
-                    titulo = "Excluir \"${veiculo.placa.ifBlank { "este veículo" }}\"?",
-                    mensagem = "Essa ação não pode ser desfeita."
-                ) {
-                    excluirVeiculo(veiculo)
-                }
-            }
-
             containerConfirmados.addView(itemView)
         }
     }
@@ -301,20 +284,4 @@ class ListaVeiculosFragment : Fragment() {
         }
     }
 
-
-    private fun excluirVeiculo(veiculo: VeiculoEntity) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                viewModel.excluirVeiculo(veiculo.id)
-
-                Toast.makeText(requireContext(), "Veículo excluído.", Toast.LENGTH_SHORT).show()
-
-            } catch (erro: VeiculoVinculadoARotaException) {
-                Toast.makeText(requireContext(), erro.message, Toast.LENGTH_LONG).show()
-
-            } catch (erro: Exception) {
-                Toast.makeText(requireContext(), "Erro ao excluir: ${erro.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
 }

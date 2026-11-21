@@ -39,6 +39,8 @@ import com.example.vaivan.ui.motorista.veiculos.ListaVeiculosFragment
 import com.example.vaivan.ui.inicio.LoginActivity
 import com.example.vaivan.ui.inicio.UsuarioViewModel
 import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -171,7 +173,7 @@ class HomeMotoristaActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
             drawerLayout.closeDrawers()
-            startActivity(Intent(this, LocaisSalvosActivity::class.java))
+            startActivity(Intent(this, LocaisSalvosActivity::class.java).putTema(TemaPerfil.MOTORISTA))
         }
 
         findViewById<View>(R.id.btnDrawerVeiculos).setOnClickListener {

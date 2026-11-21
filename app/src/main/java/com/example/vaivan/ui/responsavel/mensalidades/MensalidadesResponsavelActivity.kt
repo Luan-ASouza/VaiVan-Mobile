@@ -10,12 +10,15 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.example.vaivan.core.base.BaseActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.ui.comum.foto.carregarFotoPassageiro
 import com.example.vaivan.data.models.Contrato
 import com.example.vaivan.data.models.Mensalidade
 import com.example.vaivan.data.models.StatusContrato
@@ -25,8 +28,11 @@ import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
 import com.example.vaivan.ui.comum.mensalidade.MensalidadeUi
+import com.example.vaivan.ui.comum.tema.Folha
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.TomSelo
+import com.example.vaivan.ui.comum.tema.aplicarSelo
 import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.combine
@@ -38,9 +44,14 @@ import kotlinx.coroutines.launch
  * a mensalidade mais antiga em aberto e o histórico de cada um.
  * O pagamento pelo app é SIMULADO, como na assinatura do motorista.
  */
-class MensalidadesResponsavelActivity : AppCompatActivity() {
+class MensalidadesResponsavelActivity : BaseActivity() {
 
     private val repository = MensalidadeRepository()
+
+    // Nome e foto dos alunos (cache no Room; ver carregarFotoPassageiro)
+    private val passageiroRepository by lazy {
+        PassageiroRepository(VaivanDatabase.getInstance(this).passageiroDao())
+    }
 
     private var contratos: List<Contrato> = emptyList()
     private var mensalidades: List<Mensalidade> = emptyList()
@@ -64,7 +75,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mensalidades_responsavel)
 
-        AssinaturaUi.aplicarInsets(findViewById(R.id.rootMensalidades))
+        aplicarGapsDeSistema()
         findViewById<ImageButton>(R.id.btnVoltarMensalidades).setOnClickListener { finish() }
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
@@ -174,7 +185,15 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
                 atrasadas > 1 -> "$atrasadas mensalidades em atraso"
                 else -> "Próximo vencimento: ${AssinaturaUi.formatarData(emAberto.first().vencimento)}"
             }
-            setTextColor(if (atrasadas > 0) COR_ATRASO_NO_ESCURO else Color.WHITE)
+            // Sobre o cartão laranja: atraso vira uma pílula vermelha; senão, a translúcida
+            if (atrasadas > 0) {
+                setBackgroundResource(R.drawable.bg_pilula_branca)
+                backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.status_danger))
+            } else {
+                setBackgroundResource(R.drawable.bg_chip_hero)
+                backgroundTintList = null
+            }
+            setTextColor(Color.WHITE)
         }
 
         // UM CARTÃO POR FILHO (encerrados só enquanto ainda devem algo)
@@ -214,7 +233,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
 
         val nome = contrato.nomePassageiro.ifBlank { "Seu filho" }
         card.findViewById<TextView>(R.id.txtNomeFilho).text = nome
-        card.findViewById<TextView>(R.id.txtInicialFilho).text = nome.trim().take(1).uppercase()
+        carregarFotoPassageiro(this, card.findViewById(R.id.imgFotoFilho), contrato.passageiroId, passageiroRepository)
         card.findViewById<TextView>(R.id.txtRotaFilho).apply {
             text = contrato.nomeRota
             visibility = if (contrato.nomeRota.isBlank()) View.GONE else View.VISIBLE
@@ -230,7 +249,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
 
         // O motorista ainda não definiu o valor
         if (contrato.valorMensalCentavos <= 0) {
-            pintarBadge(badge, "Aguardando", R.color.medium_gray)
+            pintarBadge(badge, "Aguardando", TomSelo.NEUTRO)
             txtValor.text = "A definir"
             txtDetalhe.text = "O motorista ainda não definiu o valor da mensalidade."
             btnPagar.visibility = View.GONE
@@ -290,9 +309,8 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
         txt.setTextColor(ContextCompat.getColor(this, corTexto))
     }
 
-    private fun pintarBadge(badge: TextView, texto: String, cor: Int) {
-        badge.text = texto
-        badge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, cor))
+    private fun pintarBadge(badge: TextView, texto: String, tom: TomSelo) {
+        badge.aplicarSelo(texto, tom)
     }
 
     // =========================================================
@@ -300,9 +318,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
     // =========================================================
 
     private fun abrirHistorico(contrato: Contrato) {
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_historico_mensalidades, null)
-        val dialog = BottomSheetDialog(this)
-        dialog.setContentView(view)
+        val (dialog, view) = Folha.criar(this, R.layout.bottom_sheet_historico_mensalidades)
 
         // Alterar valor ou vencimento é só do motorista
         view.findViewById<View>(R.id.btnReajustarContrato).visibility = View.GONE
@@ -319,6 +335,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
 
         view.findViewById<TextView>(R.id.txtTituloHistorico).text =
             contrato.nomePassageiro.ifBlank { "Seu filho" }
+        carregarFotoPassageiro(this, view.findViewById(R.id.imgFotoHistorico), contrato.passageiroId, passageiroRepository)
         view.findViewById<TextView>(R.id.txtSubtituloHistorico).text =
             if (contrato.valorMensalCentavos > 0) {
                 "${AssinaturaUi.formatarValor(contrato.valorMensalCentavos)} por mês, vence todo dia ${contrato.diaVencimento}"
@@ -336,7 +353,9 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
         if (doContrato.isEmpty()) {
             lista.addView(TextView(this).apply {
                 text = "Nenhuma mensalidade ainda."
-                setTextColor(ContextCompat.getColor(context, R.color.medium_gray))
+                setTextColor(ContextCompat.getColor(context, R.color.text_tertiary))
+                gravity = android.view.Gravity.CENTER
+                setPadding(0, 24, 0, 24)
             })
             return
         }
@@ -346,11 +365,8 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
 
             linha.findViewById<TextView>(R.id.txtMesHistorico).text = MensalidadeUi.nomeDoMes(m.competencia)
 
-            val (rotulo, cor) = MensalidadeUi.rotuloDaMensalidade(m, agora)
-            linha.findViewById<TextView>(R.id.txtStatusHistorico).apply {
-                text = rotulo
-                setTextColor(ContextCompat.getColor(context, cor))
-            }
+            val (rotulo, tom) = MensalidadeUi.rotuloDaMensalidade(m, agora)
+            linha.findViewById<TextView>(R.id.txtStatusHistorico).aplicarSelo(rotulo, tom)
 
             linha.findViewById<TextView>(R.id.txtDetalheHistorico).text =
                 "${AssinaturaUi.formatarValor(m.valorCentavos)}. " +
@@ -360,6 +376,7 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
                 if (m.status == StatusMensalidade.PENDENTE) {
                     visibility = View.VISIBLE
                     text = "Pagar com PIX"
+                    setBackgroundResource(TemaPerfil.RESPONSAVEL.botao)
                     setOnClickListener { abrirPix(m) }
                 } else {
                     visibility = View.GONE
@@ -376,10 +393,8 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
 
     // Reaproveita o mesmo bottom sheet de PIX simulado da assinatura do motorista.
     private fun abrirPix(m: Mensalidade) {
-        val sheet = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_pagamento_pix, null)
-        sheet.setContentView(view)
-        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+        // Layout já vem na cor do responsável (laranja)
+        val (sheet, view) = Folha.criar(this, R.layout.bottom_sheet_pagamento_pix)
 
         view.findViewById<TextView>(R.id.txtPixDescricao).text =
             "Mensalidade de ${MensalidadeUi.nomeDoMes(m.competencia)} – ${m.nomePassageiro}"
@@ -416,7 +431,5 @@ class MensalidadesResponsavelActivity : AppCompatActivity() {
         private const val FAIXA_VERMELHA = 0xFFFDECEA.toInt()
         private const val FAIXA_LARANJA = 0xFFFFF3E0.toInt()
 
-        // Vermelho claro para ler bem sobre o cartão escuro
-        private const val COR_ATRASO_NO_ESCURO = 0xFFFF8A80.toInt()
     }
 }

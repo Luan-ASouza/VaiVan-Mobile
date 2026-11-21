@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.util.Log
@@ -45,6 +46,11 @@ class PassageiroRepository(
     private val paradaRotaDao: ParadaRotaDao? = null,
     private val solicitacaoInclusaoDao: SolicitacaoInclusaoDao? = null
 ) {
+
+    companion object {
+        /** Por quanto tempo o nome/foto de um passageiro no Room vale sem reconsultar. */
+        const val VALIDADE_CACHE_MS = 10 * 60 * 1000L
+    }
 
     private val collection =
         firestore.collection("passageiros")
@@ -115,6 +121,31 @@ class PassageiroRepository(
             ?.copy(
                 id = document.id
             )
+    }
+
+    /** Leitura com cache para telas que só mostram nome/foto de um passageiro
+     * (inclusive alunos de outros responsáveis, no lado do motorista): usa o
+     * Room se o registro foi atualizado há menos de [validadeMs]; senão
+     * consulta o Firestore e guarda no Room. Sem rede, devolve o que houver
+     * no Room. A imagem em si fica no cache do Glide (memória + disco). */
+    suspend fun consultarPassageiroComCache(
+        id: String,
+        validadeMs: Long = VALIDADE_CACHE_MS
+    ): PassageiroEntity? {
+        val local = passageiroDao.getById(id).first()
+        if (local != null && System.currentTimeMillis() - local.lastUpdated < validadeMs) {
+            return local
+        }
+
+        return try {
+            consultarPassageiro(id)
+                ?.copy(lastUpdated = System.currentTimeMillis())
+                ?.also { passageiroDao.upsert(it) }
+                ?: local
+        } catch (e: Exception) {
+            Log.w("PassageiroRepository", "Sem conexão; usando o passageiro do cache", e)
+            local
+        }
     }
 
     /** Consulta no Firebase os passageiros de um responsável. */

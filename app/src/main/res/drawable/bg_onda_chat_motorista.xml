@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onda escura no topo da conversa do motorista (versão do bg_onda_chat). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="120dp"
+    android:viewportWidth="360"
+    android:viewportHeight="120">
+
+    <path
+        android:fillColor="@color/rota_onda_clara"
+        android:pathData="M0,0 L360,0 L360,92 C300,120 250,70 180,86 C110,102 60,120 0,96 Z" />
+
+    <path
+        android:fillColor="@color/rota_destaque"
+        android:pathData="M0,0 L360,0 L360,74 C300,100 250,52 180,68 C110,84 60,100 0,78 Z" />
+</vector>

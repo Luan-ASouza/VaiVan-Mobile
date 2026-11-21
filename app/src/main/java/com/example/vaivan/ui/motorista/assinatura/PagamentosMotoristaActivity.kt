@@ -3,7 +3,6 @@ package com.example.vaivan.ui.motorista.assinatura
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -12,13 +11,16 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import com.example.vaivan.core.base.BaseActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
+import com.google.android.material.imageview.ShapeableImageView
+import com.example.vaivan.data.local.VaivanDatabase
+import com.example.vaivan.data.repository.PassageiroRepository
+import com.example.vaivan.ui.comum.foto.carregarFotoPassageiro
 import com.example.vaivan.data.models.Contrato
 import com.example.vaivan.data.models.FormaPagamentoMensalidade
 import com.example.vaivan.data.models.Mensalidade
@@ -32,7 +34,13 @@ import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
 import com.example.vaivan.ui.comum.mensalidade.MensalidadeUi
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.ui.comum.tema.Folha
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.TomSelo
+import com.example.vaivan.ui.comum.tema.aplicarSelo
+import com.example.vaivan.ui.comum.tema.marcarOpcao
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.auth.FirebaseAuth
@@ -48,11 +56,16 @@ import kotlinx.coroutines.launch
  *
  * Só abre com a assinatura do motorista em dia; sem ela, mostra o bloqueio.
  */
-class PagamentosMotoristaActivity : AppCompatActivity() {
+class PagamentosMotoristaActivity : BaseActivity() {
 
     private enum class Filtro { TODOS, EM_DIA, PENDENTES }
 
     private val repository = MensalidadeRepository()
+
+    // Nome e foto dos alunos (cache no Room; ver carregarFotoPassageiro)
+    private val passageiroRepository by lazy {
+        PassageiroRepository(VaivanDatabase.getInstance(this).passageiroDao())
+    }
 
     private var contratos: List<Contrato> = emptyList()
     private var mensalidades: List<Mensalidade> = emptyList()
@@ -74,7 +87,7 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pagamentos_motorista)
 
-        AssinaturaUi.aplicarInsets(findViewById(R.id.rootPagamentos))
+        aplicarGapsDeSistema()
 
         findViewById<ImageButton>(R.id.btnVoltarPagamentos).setOnClickListener { finish() }
 
@@ -242,8 +255,7 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
         val nome = contrato.nomePassageiro.ifBlank { "Aluno" }
         card.findViewById<TextView>(R.id.txtNomePassageiroContrato).text = nome
-        card.findViewById<TextView>(R.id.txtInicialContrato).text =
-            nome.trim().take(1).uppercase()
+        carregarFotoPassageiro(this, card.findViewById(R.id.imgFotoContrato), contrato.passageiroId, passageiroRepository)
 
         card.findViewById<TextView>(R.id.txtResponsavelContrato).apply {
             text = "Responsável: ${contrato.nomeResponsavel}"
@@ -266,7 +278,7 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
         // Rota criada antes do campo de preço: o motorista precisa definir o valor.
         if (contrato.valorMensalCentavos <= 0) {
-            pintarBadge(badge, "Sem valor", R.color.medium_gray)
+            pintarBadge(badge, "Sem valor", TomSelo.NEUTRO)
             txtValor.text = "Não definido"
             txtDetalhe.text = "Defina o valor para começar a acompanhar os pagamentos."
             btnAcao.text = "Definir valor"
@@ -327,9 +339,8 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         txt.setTextColor(ContextCompat.getColor(this, corTexto))
     }
 
-    private fun pintarBadge(badge: TextView, texto: String, cor: Int) {
-        badge.text = texto
-        badge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, cor))
+    private fun pintarBadge(badge: TextView, texto: String, tom: TomSelo) {
+        badge.aplicarSelo(texto, tom)
     }
 
     // =========================================================
@@ -337,78 +348,100 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
     // =========================================================
 
     private fun confirmarRecebimento(mensalidade: Mensalidade) {
-        val formas = FormaPagamentoMensalidade.manuais
-        var escolhida = 0
+        val (sheet, view) = Folha.criar(this, R.layout.bottom_sheet_registrar_recebimento)
 
-        AlertDialog.Builder(this)
-            .setTitle("Recebimento de ${MensalidadeUi.nomeDoMes(mensalidade.competencia)}")
-            .setSingleChoiceItems(
-                formas.map { FormaPagamentoMensalidade.rotulo(it) }.toTypedArray(), 0
-            ) { _, qual -> escolhida = qual }
-            .setPositiveButton("Confirmar ${AssinaturaUi.formatarValor(mensalidade.valorCentavos)}") { _, _ ->
-                executar("Recebimento registrado.") {
-                    repository.registrarRecebimento(mensalidade.id, formas[escolhida])
-                }
+        view.findViewById<TextView>(R.id.txtDescricaoRecebimento).text =
+            listOf(MensalidadeUi.nomeDoMes(mensalidade.competencia), mensalidade.nomePassageiro)
+                .filter { it.isNotBlank() }
+                .joinToString(" · ")
+        view.findViewById<TextView>(R.id.txtValorRecebimento).text =
+            AssinaturaUi.formatarValor(mensalidade.valorCentavos)
+
+        // Mesma ordem de FormaPagamentoMensalidade.manuais (PIX, dinheiro, transferência, outro)
+        val formas = FormaPagamentoMensalidade.manuais
+        val opcoes = listOf(
+            R.id.opcaoFormaPix, R.id.opcaoFormaDinheiro,
+            R.id.opcaoFormaTransferencia, R.id.opcaoFormaOutro
+        ).map { view.findViewById<TextView>(it) }
+
+        var escolhida = 0
+        marcarOpcao(opcoes, opcoes[escolhida], TemaPerfil.MOTORISTA)
+        opcoes.forEachIndexed { indice, opcao ->
+            opcao.setOnClickListener {
+                escolhida = indice
+                marcarOpcao(opcoes, opcao, TemaPerfil.MOTORISTA)
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        }
+
+        view.findViewById<View>(R.id.btnConfirmarRecebimento).setOnClickListener {
+            sheet.dismiss()
+            executar("Recebimento registrado.") {
+                repository.registrarRecebimento(mensalidade.id, formas[escolhida])
+            }
+        }
+        view.findViewById<View>(R.id.btnCancelarRecebimento).setOnClickListener { sheet.dismiss() }
+
+        sheet.show()
     }
 
     private fun confirmarDesfazer(mensalidade: Mensalidade) {
-        AlertDialog.Builder(this)
-            .setTitle("Desfazer recebimento?")
-            .setMessage(
-                "${MensalidadeUi.nomeDoMes(mensalidade.competencia)} voltará a ficar em aberto. " +
-                    "Use isso apenas se o recebimento foi registrado por engano."
-            )
-            .setPositiveButton("Desfazer") { _, _ ->
-                executar("Recebimento desfeito.") { repository.desfazerRecebimento(mensalidade.id) }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Desfazer recebimento?",
+            mensagem = "${MensalidadeUi.nomeDoMes(mensalidade.competencia)} voltará a ficar em aberto. " +
+                "Use isso apenas se o recebimento foi registrado por engano.",
+            textoConfirmar = "Desfazer recebimento"
+        ) {
+            executar("Recebimento desfeito.") { repository.desfazerRecebimento(mensalidade.id) }
+        }
     }
 
     private fun abrirReajuste(contrato: Contrato) {
-        val densidade = resources.displayMetrics.density
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            val p = (20 * densidade).toInt()
-            setPadding(p, (8 * densidade).toInt(), p, 0)
+        val (sheet, view) = Folha.criar(this, R.layout.bottom_sheet_reajuste_mensalidade)
+
+        val edtValor = view.findViewById<EditText>(R.id.edtValorReajuste)
+        val edtDia = view.findViewById<EditText>(R.id.edtDiaReajuste)
+        val caixaValor = view.findViewById<View>(R.id.caixaValorReajuste)
+        val caixaDia = view.findViewById<View>(R.id.caixaDiaReajuste)
+        val txtErro = view.findViewById<TextView>(R.id.txtErroReajuste)
+
+        view.findViewById<TextView>(R.id.txtTituloReajuste).text =
+            contrato.nomePassageiro.takeIf { it.isNotBlank() }?.let { "Mensalidade de $it" } ?: "Mensalidade"
+
+        if (contrato.valorMensalCentavos > 0) {
+            edtValor.setText(MensalidadePolicy.centavosParaTexto(contrato.valorMensalCentavos))
         }
-        val edtValor = EditText(this).apply {
-            hint = "Valor mensal (ex: 400,00)"
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            if (contrato.valorMensalCentavos > 0) {
-                setText(MensalidadePolicy.centavosParaTexto(contrato.valorMensalCentavos))
+        edtDia.setText(contrato.diaVencimento.toString())
+
+        fun mostrarErro(mensagem: String?, campoComErro: View?) {
+            txtErro.text = mensagem
+            txtErro.visibility = if (mensagem == null) View.GONE else View.VISIBLE
+            listOf(caixaValor, caixaDia).forEach { caixa ->
+                caixa.setBackgroundResource(
+                    if (caixa === campoComErro) R.drawable.bg_input_white_red else R.drawable.bg_input_white
+                )
             }
         }
-        val edtDia = EditText(this).apply {
-            hint = "Dia do vencimento (1 a 28)"
-            inputType = InputType.TYPE_CLASS_NUMBER
-            setText(contrato.diaVencimento.toString())
-        }
-        layout.addView(edtValor)
-        layout.addView(edtDia)
+        edtValor.doAfterTextChanged { mostrarErro(null, null) }
+        edtDia.doAfterTextChanged { mostrarErro(null, null) }
 
-        AlertDialog.Builder(this)
-            .setTitle(contrato.nomePassageiro.ifBlank { "Mensalidade" })
-            .setMessage("A mudança vale a partir da próxima mensalidade gerada. As já geradas não mudam.")
-            .setView(layout)
-            .setPositiveButton("Salvar") { _, _ ->
-                val valor = MensalidadePolicy.textoParaCentavos(edtValor.text.toString())
-                val dia = edtDia.text.toString().trim().toIntOrNull()
-                when {
-                    valor == null || valor <= 0 ->
-                        Toast.makeText(this, "Informe um valor válido.", Toast.LENGTH_SHORT).show()
-                    dia == null || dia !in 1..28 ->
-                        Toast.makeText(this, "O dia deve ser entre 1 e 28.", Toast.LENGTH_SHORT).show()
-                    else -> executar("Mensalidade atualizada.") {
+        view.findViewById<View>(R.id.btnSalvarReajuste).setOnClickListener {
+            val valor = MensalidadePolicy.textoParaCentavos(edtValor.text.toString())
+            val dia = edtDia.text.toString().trim().toIntOrNull()
+            when {
+                valor == null || valor <= 0 -> mostrarErro("*Informe um valor válido.", caixaValor)
+                dia == null || dia !in 1..28 -> mostrarErro("*O dia deve ser entre 1 e 28.", caixaDia)
+                else -> {
+                    sheet.dismiss()
+                    executar("Mensalidade atualizada.") {
                         repository.reajustarContrato(contrato.id, valor, dia)
                     }
                 }
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        }
+        view.findViewById<View>(R.id.btnCancelarReajuste).setOnClickListener { sheet.dismiss() }
+
+        sheet.show()
     }
 
     private fun executar(sucesso: String, acao: suspend () -> Unit) {
@@ -432,9 +465,10 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
     // =========================================================
 
     private fun abrirHistorico(contrato: Contrato) {
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_historico_mensalidades, null)
-        val dialog = BottomSheetDialog(this)
-        dialog.setContentView(view)
+        val (dialog, view) = Folha.criar(this, R.layout.bottom_sheet_historico_mensalidades)
+        // No motorista, o anel da foto é cinza (o layout vem laranja)
+        view.findViewById<ShapeableImageView>(R.id.imgFotoHistorico).strokeColor =
+            ColorStateList.valueOf(ContextCompat.getColor(this, R.color.rota_vagas_fundo))
 
         view.findViewById<View>(R.id.btnReajustarContrato).setOnClickListener {
             abrirReajuste(contratos.firstOrNull { it.id == contrato.id } ?: contrato)
@@ -452,6 +486,7 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
         view.findViewById<TextView>(R.id.txtTituloHistorico).text =
             contrato.nomePassageiro.ifBlank { "Passageiro" }
+        carregarFotoPassageiro(this, view.findViewById(R.id.imgFotoHistorico), contrato.passageiroId, passageiroRepository)
         view.findViewById<TextView>(R.id.txtSubtituloHistorico).text =
             if (contrato.valorMensalCentavos > 0) {
                 "${AssinaturaUi.formatarValor(contrato.valorMensalCentavos)} / mês · vence dia ${contrato.diaVencimento}"
@@ -469,7 +504,9 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
         if (lista.isEmpty()) {
             container.addView(TextView(this).apply {
                 text = "Nenhuma mensalidade gerada ainda."
-                setTextColor(ContextCompat.getColor(context, R.color.medium_gray))
+                setTextColor(ContextCompat.getColor(context, R.color.text_tertiary))
+                gravity = android.view.Gravity.CENTER
+                setPadding(0, 24, 0, 24)
             })
             return
         }
@@ -479,11 +516,8 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
 
             linha.findViewById<TextView>(R.id.txtMesHistorico).text = MensalidadeUi.nomeDoMes(m.competencia)
 
-            val (rotulo, cor) = MensalidadeUi.rotuloDaMensalidade(m, agora)
-            linha.findViewById<TextView>(R.id.txtStatusHistorico).apply {
-                text = rotulo
-                setTextColor(ContextCompat.getColor(context, cor))
-            }
+            val (rotulo, tom) = MensalidadeUi.rotuloDaMensalidade(m, agora)
+            linha.findViewById<TextView>(R.id.txtStatusHistorico).aplicarSelo(rotulo, tom)
 
             linha.findViewById<TextView>(R.id.txtDetalheHistorico).text =
                 "${AssinaturaUi.formatarValor(m.valorCentavos)} · " +
@@ -499,6 +533,8 @@ class PagamentosMotoristaActivity : AppCompatActivity() {
                 m.status == StatusMensalidade.PAGA && m.registradoPor == RegistradoPor.MOTORISTA -> {
                     acao.visibility = View.VISIBLE
                     acao.text = "Desfazer recebimento"
+                    acao.setBackgroundResource(R.drawable.bg_botao_contorno_escuro)
+                    acao.setTextColor(ContextCompat.getColor(this, R.color.rota_destaque))
                     acao.setOnClickListener { confirmarDesfazer(m) }
                 }
                 else -> acao.visibility = View.GONE

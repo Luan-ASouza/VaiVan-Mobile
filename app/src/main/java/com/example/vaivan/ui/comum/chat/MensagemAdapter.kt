@@ -32,6 +32,10 @@ class MensagemAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val itens = mutableListOf<Item>()
     private val meuUid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
+    /** Fundo da bolha enviada (TemaPerfil.bolhaEnviada). Definir antes da
+     * primeira mensagem: é aplicado quando a linha é criada. */
+    var bolhaEnviada: Int = R.drawable.bg_bolha_enviada
+
     /** Foto do contato nas mensagens recebidas (null = ícone padrão). */
     var fotoContato: String? = null
         set(valor) {
@@ -70,7 +74,9 @@ class MensagemAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 inflater.inflate(R.layout.item_separador_data_chat, parent, false)
             )
             TIPO_ENVIADA -> MensagemViewHolder(
-                inflater.inflate(R.layout.item_mensagem_enviada, parent, false)
+                inflater.inflate(R.layout.item_mensagem_enviada, parent, false).apply {
+                    findViewById<View>(R.id.bolhaMensagem).setBackgroundResource(bolhaEnviada)
+                }
             )
             else -> MensagemViewHolder(
                 inflater.inflate(R.layout.item_mensagem_recebida, parent, false)

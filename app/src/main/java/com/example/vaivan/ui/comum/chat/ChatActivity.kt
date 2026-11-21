@@ -18,6 +18,7 @@ import com.example.vaivan.R
 import com.example.vaivan.core.notificacao.NotificadorVaiVan
 import com.example.vaivan.core.notificacao.VaiVanMessagingService
 import com.example.vaivan.core.util.WindowInsetsUtil.aplicarInsets
+import com.example.vaivan.ui.comum.tema.TemaPerfil
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ import kotlinx.coroutines.launch
  *    cada combinação tem a sua própria conversa
  *  - "solicitacaoId", "mensagemInicial", "mensagemInicialEm": a solicitação aprovada e o
  *    pedido do responsável, que vira a primeira mensagem da conversa
+ *  - [TemaPerfil.EXTRA]: perfil de quem abre a conversa (cor da tela); sem ele, laranja
  */
 class ChatActivity : AppCompatActivity() {
 
@@ -67,6 +69,13 @@ class ChatActivity : AppCompatActivity() {
         barraMensagem = findViewById(R.id.barraMensagem)
         txtSeloContato = findViewById(R.id.txtSeloContato)
         txtAlunoContato = findViewById(R.id.txtAlunoContato)
+
+        // Cor do perfil de quem está conversando (laranja no responsável, escuro no motorista)
+        val tema = TemaPerfil.de(intent)
+        findViewById<View>(R.id.barraTopo).setBackgroundResource(tema.ondaChat)
+        activityChat.setBackgroundColor(getColor(tema.fundoChat))
+        btnEnviar.setBackgroundResource(tema.botaoRedondo)
+        adapter.bolhaEnviada = tema.bolhaEnviada
 
         // A onda do topo passa por trás da status bar; a barra de digitar sobe com o teclado
         aplicarInsets(findViewById(R.id.barraTopo), aplicarInferior = false)

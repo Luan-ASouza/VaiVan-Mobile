@@ -5,9 +5,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.content.res.ColorStateList
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
@@ -17,6 +20,8 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 import com.bumptech.glide.Glide
 import com.example.vaivan.core.util.DataUtil
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import com.google.android.material.imageview.ShapeableImageView
 
 /**
@@ -48,6 +53,9 @@ open class ListaConversasFragment : Fragment() {
     /** Frase abaixo do título "Chat" (cada perfil tem a sua). */
     protected open val subtitulo: String = "Converse sobre as viagens"
 
+    /** Cor predominante da aba e da conversa aberta a partir dela. */
+    protected open val tema: TemaPerfil = TemaPerfil.RESPONSAVEL
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -63,6 +71,9 @@ open class ListaConversasFragment : Fragment() {
         txtSemConversas = view.findViewById(R.id.txtSemConversas)
         progressConversas = view.findViewById(R.id.progressConversas)
         view.findViewById<TextView>(R.id.txtSubtituloConversas).text = subtitulo
+        view.findViewById<ImageView>(R.id.imgOndaConversas).setImageResource(tema.onda)
+        progressConversas.indeterminateTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(requireContext(), tema.destaque))
 
         escutarConversas()
     }
@@ -169,6 +180,8 @@ open class ListaConversasFragment : Fragment() {
             conversa.rotaNome.takeIf { it.isNotBlank() }
         ).filterNotNull().joinToString(" · ")
 
+        txtContexto.setTextColor(ContextCompat.getColor(requireContext(), tema.textoDestaque))
+
         if (contexto.isBlank()) {
             txtContexto.visibility = View.GONE
         } else {
@@ -218,6 +231,7 @@ open class ListaConversasFragment : Fragment() {
             intent.putExtra("outroUsuarioId", conversa.outroUsuarioId)
             intent.putExtra("nomeContato", contatosEmCache[conversa.outroUsuarioId]?.nome ?: "Conversa")
             intent.putExtra("passageiroNome", conversa.passageiroNome)
+            intent.putTema(tema)
             startActivity(intent)
         }
 

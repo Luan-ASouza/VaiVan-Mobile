@@ -1,206 +1,169 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Um veículo na lista do motorista. Card no estilo do card do passageiro
+     (cantos de 28dp, elevação 8dp, onda escura), com as informações no arranjo
+     de sempre: coluna à esquerda (modelo, placa, cor · ano, lugares e o selo
+     de status embaixo). Lápis de editar no canto; excluir fica dentro da edição.
 
+     Foto do modelo (trocada no código, ver VeiculosEscolares): não tem tamanho
+     fixo. Ocupa toda a área livre — abaixo do nome do modelo e à direita da
+     coluna de informações (barreira), com folga — e escala com fitEnd (maior
+     tamanho que cabe, encostada embaixo à direita). Assim todos os modelos
+     ficam o maior possível sem encostar no texto. -->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    android:backgroundTint="@color/background_screen"
-    app:cardElevation="0dp"
-    app:cardMaxElevation="0dp">
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="@color/background_container"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="8dp">
 
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="184dp">
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <!-- Onda decorativa do canto superior direito (atrás da van) -->
+        <ImageView
+            android:id="@+id/imgOndaVeiculoItem"
+            android:layout_width="190dp"
+            android:layout_height="104dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_motorista"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <LinearLayout
-                android:layout_width="59dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top|end"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:layout_marginTop="5dp"
-                android:padding="4dp">
+        <!-- Editar (sobre a onda) -->
+        <ImageView
+            android:id="@+id/imgEditarVeiculoItem"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_card_rounded"
+            android:contentDescription="Editar veículo"
+            android:elevation="4dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_editar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/text_primary"
+            tools:ignore="HardcodedText" />
 
-                <!-- Editar / Excluir -->
+        <!-- INFORMAÇÕES -->
+        <TextView
+            android:id="@+id/txtModeloVeiculoItem"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toStartOf="@+id/imgEditarVeiculoItem"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Mercedes Sprinter" />
 
-                <ImageView
-                    android:id="@+id/imgEditarVeiculoItem"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/background_container"
-                    android:clipChildren="false"
-                    android:contentDescription="Editar veículo"
-                    android:elevation="4dp"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_editar"
-                    app:tint="@color/dark_gray" />
+        <TextView
+            android:id="@+id/txtPlacaVeiculoItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:textColor="@color/text_secondary"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@+id/txtModeloVeiculoItem"
+            app:layout_constraintTop_toBottomOf="@+id/txtModeloVeiculoItem"
+            tools:text="ABC1D23" />
 
-                <ImageView
-                    android:id="@+id/imgExcluirVeiculoItem"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_gravity="end"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/background_container"
-                    android:clipChildren="false"
-                    android:contentDescription="Excluir veículo"
-                    android:elevation="4dp"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_delete"
-                    app:tint="@color/status_danger" />
+        <LinearLayout
+            android:id="@+id/linhaCorAnoVeiculoItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="@+id/txtModeloVeiculoItem"
+            app:layout_constraintTop_toBottomOf="@+id/txtPlacaVeiculoItem">
 
-            </LinearLayout>
-
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:paddingStart="4dp">
-
-                <!-- CAMADA 1: O Bloco Cinza Arredondado de Fundo -->
-                <!-- Mudei a margem para DP para ficar responsivo -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="126dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginEnd="100dp"
-                    android:elevation="4dp"
-
-                    android:background="@drawable/bg_item_round"
-                    android:backgroundTint="@color/background_container" />
-
-                <!-- CAMADA 2: A Silhueta Cinza (Sombra da Van) -->
-                <!-- Colocada logo atrás da van colorida, com um leve deslocamento (margins) -->
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="150dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:adjustViewBounds="true"
-                    android:elevation="4dp"
-                    android:src="@drawable/foto_mercedes_benz_sprinter_branco"
-                    app:tint="@color/background_container" />
-
-                <!-- CAMADA 3: A Van Colorida (Na frente de tudo) -->
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="130dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:elevation="4dp"
-                    android:adjustViewBounds="true"
-                    android:src="@drawable/foto_mercedes_benz_sprinter_branco" />
-
-            </FrameLayout>
-
-            <LinearLayout
-                android:id="@+id/containerDetalhesItem"
+            <TextView
+                android:id="@+id/txtCorVeiculoItem"
                 android:layout_width="wrap_content"
-                android:layout_height="144dp"
-                android:layout_gravity="center_vertical|start"
-                android:orientation="vertical"
-                android:padding="14dp">
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                tools:text="Branco" />
 
-                <TextView
-                    android:id="@+id/txtModeloVeiculoItem"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Modelo"
-                    android:textColor="@color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtAnoVeiculoItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                tools:text="2022" />
+        </LinearLayout>
 
+        <TextView
+            android:id="@+id/txtCapacidadeVeiculoItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="@+id/txtModeloVeiculoItem"
+            app:layout_constraintTop_toBottomOf="@+id/linhaCorAnoVeiculoItem"
+            tools:text="15 Lugares" />
 
-                <TextView
-                    android:id="@+id/txtPlacaVeiculoItem"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="Placa"
-                    android:textColor="@color/gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+        <TextView
+            android:id="@+id/txtStatusVeiculoItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_status_pendente"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
+            android:textColor="#E65100"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/txtModeloVeiculoItem"
+            tools:text="PENDENTE" />
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+        <!-- Borda direita das informações abaixo do nome (a foto começa depois dela) -->
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/barreiraInformacoesVeiculoItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="end"
+            app:constraint_referenced_ids="txtPlacaVeiculoItem,linhaCorAnoVeiculoItem,txtCapacidadeVeiculoItem,txtStatusVeiculoItem" />
 
-                    <TextView
-                        android:id="@+id/txtCorVeiculoItem"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="cor"
-                        android:textColor="@color/gray"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/txtAnoVeiculoItem"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="ano"
-                        android:textColor="@color/gray"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/txtCapacidadeVeiculoItem"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="capacidade"
-                    android:textColor="#707070"
-                    android:textSize="12sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/txtStatusVeiculoItem"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_status_pendente"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"
-                    android:text="PENDENTE"
-                    android:textColor="#E65100"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-
-        </FrameLayout>
-
-        <!--
-            Linha principal.
-            Ao tocar, abre ou fecha os detalhes do veículo.
-        -->
-
-
-        <!--
-            Detalhes do veículo.
-            Fica escondido inicialmente.
-        -->
-
-
-    </LinearLayout>
-
+        <!-- FOTO DO MODELO: toda a área livre, maior tamanho que cabe -->
+        <ImageView
+            android:id="@+id/imgFotoVeiculoItem"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="10dp"
+            android:contentDescription="Foto do modelo do veículo"
+            android:scaleType="fitEnd"
+            android:src="@drawable/foto_mercedes_benz_sprinter_branco"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/barreiraInformacoesVeiculoItem"
+            app:layout_constraintTop_toBottomOf="@+id/txtModeloVeiculoItem"
+            tools:ignore="HardcodedText" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

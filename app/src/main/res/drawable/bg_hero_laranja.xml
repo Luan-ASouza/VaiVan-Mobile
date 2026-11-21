@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cartão de destaque das telas do responsável (ex.: total das mensalidades).
+     Versão laranja do bg_hero_card (escuro, motorista). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="0"
+        android:endColor="@color/passageiro_destaque_forte"
+        android:startColor="@color/passageiro_destaque" />
+    <corners android:radius="22dp" />
+</shape>

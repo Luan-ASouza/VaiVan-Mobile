@@ -686,6 +686,15 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             )
 
             if (!::mMap.isInitialized) return@launch
+
+            // O pino é desenhado depois de baixar a foto (assíncrono): se nesse
+            // meio-tempo o filho já embarcou (ou já tinha embarcado ao abrir a
+            // tela), atualizarMarcadorEmbarqueFilho já rodou sem marcador pra
+            // remover — então nem adiciona o pino do embarque.
+            if (parada.tipo == ViagemRepository.TIPO_EMBARQUE && !embarqueDoFilhoPendente()) {
+                return@launch
+            }
+
             val marker = mMap.addMarker(
                 MarkerOptions()
                     .position(ponto)
@@ -709,6 +718,12 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
             marcadorEmbarqueFilho = null
         }
     }
+
+    /** Estado mais recente (não o da hora em que o desenho começou). */
+    private fun embarqueDoFilhoPendente(): Boolean =
+        viewModel.paradasDoFilho.value
+            .firstOrNull { it.tipo == ViagemRepository.TIPO_EMBARQUE }
+            ?.status == ViagemRepository.PARADA_AGUARDANDO
 
     private suspend fun carregarBitmapFoto(fotoUrl: String?): Bitmap = withContext(Dispatchers.IO) {
         if (fotoUrl.isNullOrBlank()) {

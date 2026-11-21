@@ -1,11 +1,10 @@
 package com.example.vaivan.ui.motorista.entrada.documentos
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
@@ -27,9 +26,9 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private val auth = FirebaseAuth.getInstance()
     private lateinit var documentoRepository: DocumentoRepository
 
-    private lateinit var itemCnh: LinearLayout
-    private lateinit var itemComprovante: LinearLayout
-    private lateinit var itemFoto: LinearLayout
+    private lateinit var itemCnh: View
+    private lateinit var itemComprovante: View
+    private lateinit var itemFoto: View
 
     private lateinit var txtStatusCnh: TextView
     private lateinit var txtStatusComprovante: TextView
@@ -40,6 +39,7 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private lateinit var txtMotivoFoto: TextView
 
     private lateinit var txtProgresso: TextView
+    private lateinit var barraProgresso: ProgressBar
 
     private lateinit var iconeCnh: ImageView
     private lateinit var iconeComprovante: ImageView
@@ -80,6 +80,7 @@ class DocumentosMotoristaActivity : BaseActivity() {
         txtMotivoFoto = findViewById(R.id.txtMotivoFoto)
 
         txtProgresso = findViewById(R.id.txtProgressoDocumentos)
+        barraProgresso = findViewById(R.id.barraProgressoDocumentos)
 
         iconeCnh = findViewById(R.id.iconeCnh)
         iconeComprovante = findViewById(R.id.iconeComprovante)
@@ -161,19 +162,17 @@ class DocumentosMotoristaActivity : BaseActivity() {
         val comprovante = documentos.find { it.tipo == DocumentoRepository.TIPO_COMPROVANTE_RESIDENCIA }
         val selfie = documentos.find { it.tipo == DocumentoRepository.TIPO_SELFIE }
 
-        val statusCnh = statusDe(cnh)
-        val statusComprovante = statusDe(comprovante)
-        val statusSelfie = statusDe(selfie)
-
-        atualizarStatusVisual(txtStatusCnh, iconeCnh, txtMotivoCnh, cnh, statusCnh)
-        atualizarStatusVisual(txtStatusComprovante, iconeComprovante, txtMotivoComprovante, comprovante, statusComprovante)
-        atualizarStatusVisual(txtStatusFoto, iconeFoto, txtMotivoFoto, selfie, statusSelfie)
+        val statusCnh = pintarStatusDocumento(iconeCnh, txtStatusCnh, txtMotivoCnh, cnh)
+        val statusComprovante =
+            pintarStatusDocumento(iconeComprovante, txtStatusComprovante, txtMotivoComprovante, comprovante)
+        val statusSelfie = pintarStatusDocumento(iconeFoto, txtStatusFoto, txtMotivoFoto, selfie)
 
         // Progresso: conta os documentos já enviados (em análise ou aprovados)
         val enviados = listOf(statusCnh, statusComprovante, statusSelfie).count {
             it == StatusDocumento.EM_ANALISE || it == StatusDocumento.APROVADO
         }
 
+        barraProgresso.progress = enviados
         txtProgresso.text = if (enviados == 3) {
             "Todos os documentos foram enviados"
         } else {
@@ -181,62 +180,4 @@ class DocumentosMotoristaActivity : BaseActivity() {
         }
     }
 
-    private fun statusDe(documento: DocumentoEntity?): StatusDocumento =
-        documento?.let { StatusDocumento.fromString(it.statusValidacao) }
-            ?: StatusDocumento.NAO_ENVIADO
-
-    private fun atualizarStatusVisual(
-        texto: TextView,
-        icone: ImageView,
-        motivo: TextView,
-        documento: DocumentoEntity?,
-        status: StatusDocumento
-    ) {
-
-        // O motivo só aparece quando o documento foi rejeitado
-        val motivoRejeicao = documento?.motivoRejeicao
-        if (status == StatusDocumento.REJEITADO && !motivoRejeicao.isNullOrBlank()) {
-            motivo.text = "Motivo: $motivoRejeicao"
-            motivo.visibility = View.VISIBLE
-        } else {
-            motivo.visibility = View.GONE
-        }
-
-        when (status) {
-
-            StatusDocumento.NAO_ENVIADO, StatusDocumento.PENDENTE -> {
-                texto.visibility = View.GONE
-
-                icone.setImageResource(R.drawable.ic_enviar_arquivo)
-                icone.clearColorFilter()
-            }
-
-            StatusDocumento.EM_ANALISE -> {
-                texto.text = "Em análise"
-                texto.visibility = View.VISIBLE
-                texto.setTextColor(Color.parseColor("#E5A000"))
-
-                icone.setImageResource(R.drawable.ic_analise)
-                icone.setColorFilter(Color.parseColor("#E5A000"))
-            }
-
-            StatusDocumento.APROVADO -> {
-                texto.text = "Aprovado"
-                texto.visibility = View.VISIBLE
-                texto.setTextColor(Color.parseColor("#2E9D62"))
-
-                icone.setImageResource(R.drawable.ic_aprovado)
-                icone.setColorFilter(Color.parseColor("#2E9D62"))
-            }
-
-            StatusDocumento.REJEITADO -> {
-                texto.text = "Rejeitado - reenviar documento"
-                texto.visibility = View.VISIBLE
-                texto.setTextColor(Color.parseColor("#D64545"))
-
-                icone.setImageResource(R.drawable.ic_rejeitado)
-                icone.setColorFilter(Color.parseColor("#D64545"))
-            }
-        }
-    }
 }

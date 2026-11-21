@@ -57,6 +57,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -826,7 +828,7 @@ class RotaDetalheActivity : BaseActivity() {
     private fun carregarFotoAluno(imagem: ShapeableImageView, passageiroId: String) {
         lifecycleScope.launch {
             val passageiro = try {
-                passageiroRepository.consultarPassageiro(passageiroId)
+                passageiroRepository.consultarPassageiroComCache(passageiroId)
             } catch (e: Exception) {
                 null
             }
@@ -948,6 +950,7 @@ class RotaDetalheActivity : BaseActivity() {
                 putExtra("passageiroId", solicitacao.passageiroId)
                 putExtra("passageiroNome", solicitacao.nomePassageiro)
                 putExtra("rotaNome", rotaCarregada?.nome.orEmpty())
+                putTema(TemaPerfil.MOTORISTA)
             }
         )
     }

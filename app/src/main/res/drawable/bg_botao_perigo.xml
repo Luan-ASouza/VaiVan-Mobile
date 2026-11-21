@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ação destrutiva discreta (ex.: cancelar assinatura): fundo vermelho claro. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#22E53935">
+    <item>
+        <shape>
+            <solid android:color="@color/status_danger_fundo" />
+            <corners android:radius="22dp" />
+        </shape>
+    </item>
+</ripple>

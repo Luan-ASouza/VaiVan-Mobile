@@ -7,7 +7,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.example.vaivan.core.base.BaseActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  * Enquanto o motorista digita, os exemplos e o simulador ("Confira um exemplo")
  * se atualizam usando o mesmo cálculo da busca do responsável (PrecoPolicy).
  */
-class TabelaPrecoActivity : AppCompatActivity() {
+class TabelaPrecoActivity : BaseActivity() {
 
     private val repository = TabelaPrecoRepository()
 
@@ -54,7 +54,7 @@ class TabelaPrecoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tabela_preco)
 
-        AssinaturaUi.aplicarInsets(findViewById(R.id.rootTabelaPreco))
+        aplicarGapsDeSistema()
         findViewById<ImageButton>(R.id.btnVoltarTabelaPreco).setOnClickListener { finish() }
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid

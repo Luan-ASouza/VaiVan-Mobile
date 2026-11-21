@@ -23,6 +23,8 @@ import com.bumptech.glide.Glide
 import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.ui.comum.locais.LocaisSalvosActivity
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import com.example.vaivan.ui.comum.perfil.AlterarSenhaActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.PassageiroEntity
@@ -209,7 +211,7 @@ class HomeResponsavelActivity : BaseActivity() {
 
         findViewById<View>(R.id.btnDrawerLocais).setOnClickListener {
             drawerLayout.closeDrawers()
-            startActivity(Intent(this, LocaisSalvosActivity::class.java))
+            startActivity(Intent(this, LocaisSalvosActivity::class.java).putTema(TemaPerfil.RESPONSAVEL))
         }
 
         findViewById<View>(R.id.btnDrawerTransportes).setOnClickListener {

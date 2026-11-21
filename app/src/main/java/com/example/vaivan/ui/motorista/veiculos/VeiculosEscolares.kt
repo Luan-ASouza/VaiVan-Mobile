@@ -2,6 +2,7 @@ package com.example.vaivan.ui.motorista.veiculos
 
 import androidx.annotation.DrawableRes
 import com.example.vaivan.R
+import com.example.vaivan.data.local.entities.VeiculoEntity
 
 /** Marca/modelo/foto de van escolar aceitos no cadastro — lista fixa, sem
  * API (substitui uma integração anterior com a tabela FIPE + busca de foto
@@ -27,3 +28,11 @@ val VEICULOS_ESCOLARES = listOf(
     VeiculoEscolar("Renault", "Master", R.drawable.foto_renault_master_branco),
     VeiculoEscolar("Volkswagen", "Kombi", R.drawable.foto_volkswagem_kombi_branco)
 )
+
+/** Modelo da lista fixa que corresponde a um veículo salvo (pela marca e
+ * modelo, sem diferenciar maiúsculas) — null para dado legado de fora da lista. */
+fun veiculoEscolarDe(veiculo: VeiculoEntity): VeiculoEscolar? =
+    VEICULOS_ESCOLARES.firstOrNull {
+        it.marca.equals(veiculo.marca.trim(), ignoreCase = true) &&
+            it.modelo.equals(veiculo.modelo.trim(), ignoreCase = true)
+    }

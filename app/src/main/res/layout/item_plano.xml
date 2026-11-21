@@ -1,24 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Um plano na tela de assinatura (cards lado a lado). A faixa do nome é
+     clara no plano limitado e escura no ilimitado (cores no código). -->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="0dp"
     android:layout_height="match_parent"
     android:layout_marginHorizontal="4dp"
+    android:layout_marginBottom="4dp"
     android:layout_weight="1"
-    app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="14dp"
-    app:cardElevation="2dp">
+    app:cardBackgroundColor="@color/background_container"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Faixa colorida com o nome do plano (a cor é definida pelo código) -->
+        <!-- Faixa com o nome do plano (a cor é definida pelo código) -->
         <LinearLayout
             android:id="@+id/faixaPlano"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/rota_tile"
             android:gravity="center"
             android:paddingHorizontal="8dp"
             android:paddingVertical="12dp">
@@ -28,9 +33,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textColor="@color/dark_gray"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Básico" />
         </LinearLayout>
 
         <LinearLayout
@@ -44,32 +50,33 @@
                 android:id="@+id/txtValorPlano"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/dark_gray"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="R$ 49,90/mês" />
 
             <View
                 android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:layout_marginTop="6dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginBottom="10dp"
-                android:background="@color/medium_gray" />
+                android:background="@color/rota_vagas_fundo" />
 
             <TextView
                 android:id="@+id/txtBeneficiosPlano"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="4dp"
-                android:textColor="@color/dark_gray"
+                android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                tools:text="• Até 2 rotas\n• Até 15 passageiros" />
 
             <TextView
                 android:id="@+id/txtAvisoPlano"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:textColor="@color/medium_gray"
+                android:textColor="@color/text_tertiary"
                 android:textSize="11sp"
                 android:visibility="gone" />
 
@@ -84,12 +91,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_button_darkgrey"
+                android:background="@drawable/bg_botao_escuro"
                 android:minHeight="42dp"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="8dp"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
+                android:textColor="@color/text_on_dark"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null" />

@@ -1,40 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Planos e assinatura do motorista: cabeçalho fixo com a onda escura; rolando,
+     o cartão escuro "Sua assinatura", os planos lado a lado e as cobranças. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootAssinatura"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/background_screen"
     android:orientation="vertical">
 
-    <!-- BARRA SUPERIOR (preta, com título laranja, como nas demais telas) -->
-    <LinearLayout
+    <!-- CABEÇALHO (fixo, fora da rolagem) -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="@color/dark_gray"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp">
+        android:layout_height="wrap_content">
 
-        <ImageButton
-            android:id="@+id/btnVoltarAssinatura"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:src="@drawable/ic_arrowback"
-            app:tint="@color/white" />
+        <!-- Onda decorativa -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="100dp"
+            android:layout_gravity="top|end"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_motorista" />
 
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_weight="1"
-            android:text="Planos de assinatura"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="vertical">
+
+            <View
+                android:id="@+id/topGap"
+                android:layout_width="match_parent"
+                android:layout_height="0dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnVoltarAssinatura"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="-10dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Voltar"
+                    android:src="@drawable/ic_arrowback"
+                    app:tint="@color/text_primary"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Título -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Planos e assinatura"
+                    android:textColor="@color/text_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Subtítulo -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Escolha o plano e acompanhe suas cobranças"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- PROGRESSO DE OPERAÇÃO -->
     <ProgressBar
@@ -43,193 +84,252 @@
         android:layout_width="match_parent"
         android:layout_height="4dp"
         android:indeterminate="true"
-        android:indeterminateTint="@color/orange"
+        android:indeterminateTint="@color/rota_destaque"
         android:visibility="gone" />
 
+    <!-- ÁREA ROLÁVEL -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/background_screen"
+        android:clipToPadding="false"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:padding="12dp"
-            android:clipToPadding="false">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="32dp">
 
-            <!-- PAINEL BEGE -->
+            <!-- ERRO AO CARREGAR -->
             <LinearLayout
+                android:id="@+id/blocoErroAssinatura"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_container_round_30"
+                android:layout_marginHorizontal="2dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_tile_rota"
+                android:backgroundTint="@color/status_warning_fundo"
                 android:orientation="vertical"
-                android:elevation="7dp"
-                android:padding="14dp">
+                android:padding="16dp"
+                android:visibility="gone">
 
-                <!-- ERRO AO CARREGAR -->
-                <LinearLayout
-                    android:id="@+id/blocoErroAssinatura"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="14dp"
-                    android:background="@drawable/bg_aviso_info"
-                    android:orientation="vertical"
-                    android:padding="14dp"
-                    android:visibility="gone">
+                    android:lineSpacingExtra="2dp"
+                    android:text="Não foi possível carregar a sua assinatura. Verifique a conexão com a internet e tente novamente."
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Não foi possível carregar a sua assinatura. Verifique a conexão com a internet e tente novamente."
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp" />
-
-                    <Button
-                        android:id="@+id/btnTentarNovamente"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_button_orange"
-                        android:text="Tentar novamente"
-                        android:textAllCaps="false"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null" />
-                </LinearLayout>
-
-                <!-- PLANOS LADO A LADO -->
-                <LinearLayout
-                    android:id="@+id/containerPlanos"
+                <Button
+                    android:id="@+id/btnTentarNovamente"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingBottom="4dp"
-                    android:clipToPadding="false"/>
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_botao_escuro"
+                    android:text="Tentar novamente"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_on_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    android:layout_marginHorizontal="6dp"
-                    android:layout_marginTop="14dp"
-                    android:background="@color/medium_gray" />
+            <!-- SUA ASSINATURA (cartão escuro de destaque) -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="2dp"
+                app:cardBackgroundColor="@color/rota_destaque"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="6dp">
 
-                <!-- SUA ASSINATURA -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="10dp"
-                    android:paddingTop="14dp">
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/txtStatusAssinatura"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_status_chip"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp"
-                        android:text="Carregando..."
-                        android:textColor="@color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:background="@drawable/bg_ponto_timeline"
+                            android:backgroundTint="@color/white"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_selo"
+                            app:tint="@color/orange" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Sua assinatura"
+                                android:textColor="@color/text_on_dark_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
+
+                            <TextView
+                                android:id="@+id/txtStatusAssinatura"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:background="@drawable/bg_pilula_branca"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="3dp"
+                                android:text="Carregando..."
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
+                        </LinearLayout>
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/txtPlanoAtual"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:textColor="@color/dark_gray"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="14dp"
+                        android:textColor="@color/text_on_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        tools:text="Plano Básico · R$ 49,90/mês" />
 
                     <TextView
                         android:id="@+id/txtVigenciaAssinatura"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="@color/gray"
-                        android:textSize="13sp" />
+                        android:lineSpacingExtra="2dp"
+                        android:textColor="@color/text_on_dark_secondary"
+                        android:textSize="13sp"
+                        tools:text="Próxima cobrança em 10/12/2026." />
 
                     <TextView
                         android:id="@+id/txtAvisoAssinatura"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="@color/gray"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_chip_hero"
+                        android:lineSpacingExtra="2dp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/text_on_dark"
                         android:textSize="13sp"
-                        android:visibility="gone" />
+                        android:visibility="gone"
+                        tools:text="Mudança para o Plano Pro na próxima renovação."
+                        tools:visibility="visible" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDesfazerCancelamento"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Manter minha assinatura"
+                        android:textAllCaps="false"
+                        android:textColor="@color/rota_destaque"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/color_primary"
+                        app:cornerRadius="16dp"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <Button
-                    android:id="@+id/btnDesfazerCancelamento"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="10dp"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_button_darkgrey"
-                    android:text="Manter minha assinatura"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    app:backgroundTint="@null" />
+            <Button
+                android:id="@+id/btnCancelarAssinatura"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginHorizontal="2dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_botao_perigo"
+                android:text="Cancelar assinatura"
+                android:textAllCaps="false"
+                android:textColor="@color/status_danger"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@null"
+                tools:ignore="HardcodedText" />
 
-                <Button
-                    android:id="@+id/btnCancelarAssinatura"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="10dp"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_button_red"
-                    android:text="Cancelar assinatura"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    app:backgroundTint="@null" />
+            <!-- PLANOS LADO A LADO -->
+            <TextView
+                style="@style/TituloSecaoRota"
+                android:text="Planos"
+                tools:ignore="HardcodedText" />
 
-                <!-- COBRANÇAS -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="10dp"
-                    android:text="Cobranças"
-                    android:textColor="@color/dark_gray"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/containerPlanos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingBottom="6dp" />
 
-                <TextView
-                    android:id="@+id/txtSemCobrancas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="10dp"
-                    android:text="Nenhuma cobrança até o momento."
-                    android:textColor="@color/medium_gray"
-                    android:textSize="14sp" />
+            <!-- COBRANÇAS -->
+            <TextView
+                style="@style/TituloSecaoRota"
+                android:text="Cobranças"
+                tools:ignore="HardcodedText" />
 
-                <LinearLayout
-                    android:id="@+id/containerCobrancas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+            <TextView
+                android:id="@+id/txtSemCobrancas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="Nenhuma cobrança até o momento."
+                android:textColor="@color/text_tertiary"
+                android:textSize="14sp"
+                tools:ignore="HardcodedText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="10dp"
-                    android:layout_marginTop="16dp"
-                    android:text="Ambiente de demonstração: os pagamentos são simulados e nenhum valor real é cobrado."
-                    android:textColor="@color/medium_gray"
-                    android:textSize="12sp" />
-            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/containerCobrancas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="Ambiente de demonstração: os pagamentos são simulados e nenhum valor real é cobrado."
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
         </LinearLayout>
     </ScrollView>
+
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
 </LinearLayout>

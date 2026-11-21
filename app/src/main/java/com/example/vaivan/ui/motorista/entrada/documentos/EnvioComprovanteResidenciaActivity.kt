@@ -15,11 +15,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.vaivan.R
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.example.vaivan.core.util.PermissaoCameraHelper
+import com.example.vaivan.ui.comum.tema.OrigemArquivo
+import com.example.vaivan.ui.comum.tema.escolherOrigemArquivo
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.ui.comum.recorte.RecortarImagem
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.UploadTask
@@ -49,6 +52,10 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
     private var uploadAtual: UploadTask? = null
     private var fotoPendente: Uri? = null
     private var arquivoCameraPendente: File? = null
+
+    private val permissaoCamera = PermissaoCameraHelper(this) {
+        txtStatus.text = "Permita o acesso à câmera para tirar a foto (ou escolha da galeria)."
+    }
 
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) { sucesso ->
         val uri = fotoPendente
@@ -92,6 +99,7 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
         btnContinuar = findViewById(R.id.btnEnviarContinuarComprovante)
         txtStatus = findViewById(R.id.txtStatusGeral)
 
+        findViewById<View>(R.id.btnVoltarEnvioDocumento).setOnClickListener { finish() }
         btnSelecionar.setOnClickListener { mostrarOpcoesArquivo() }
         btnContinuar.setOnClickListener { salvarDadosNoFirestore() }
 
@@ -110,17 +118,13 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
     }
 
     private fun mostrarOpcoesArquivo() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Enviar comprovante")
-            .setItems(arrayOf("Tirar foto com a câmera", "Selecionar da galeria", "Selecionar PDF")) { _, opcao ->
-                when (opcao) {
-                    0 -> abrirCamera()
-                    1 -> galeria.launch("image/*")
-                    2 -> seletorPdf.launch(arrayOf("application/pdf"))
-                }
+        escolherOrigemArquivo(this, "Enviar comprovante") { origem ->
+            when (origem) {
+                OrigemArquivo.CAMERA -> permissaoCamera.comPermissao { abrirCamera() }
+                OrigemArquivo.GALERIA -> galeria.launch("image/*")
+                OrigemArquivo.PDF -> seletorPdf.launch(arrayOf("application/pdf"))
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        }
     }
 
     private fun abrirCamera() {
@@ -252,12 +256,11 @@ class EnvioComprovanteResidenciaActivity : AppCompatActivity() {
     }
 
     private fun confirmarExclusao() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Excluir arquivo?")
-            .setMessage("Deseja remover $nomeArquivo e cancelar o envio, se estiver em andamento?")
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Excluir") { _, _ -> excluirArquivo() }
-            .show()
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Excluir arquivo?",
+            mensagem = "Deseja remover $nomeArquivo e cancelar o envio, se estiver em andamento?"
+        ) { excluirArquivo() }
     }
 
     private fun excluirArquivo() {

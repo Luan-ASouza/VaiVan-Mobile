@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botão secundário (contorno) das telas do motorista. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#22000000">
+    <item>
+        <shape>
+            <solid android:color="@color/background_container" />
+            <stroke
+                android:width="1.5dp"
+                android:color="@color/rota_destaque" />
+            <corners android:radius="22dp" />
+        </shape>
+    </item>
+</ripple>

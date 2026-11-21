@@ -1,5 +1,6 @@
 package com.example.vaivan.ui.comum.locais
 
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +12,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.vaivan.R
 import com.example.vaivan.core.util.TextoUtil
 import com.example.vaivan.data.local.entities.LocalEntity
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import androidx.core.content.ContextCompat
 
 class LocaisSalvosAdapter(
+    private val tema: TemaPerfil,
     private val aoEditar: (LocalEntity) -> Unit
 ) : ListAdapter<LocalEntity, LocaisSalvosAdapter.ViewHolder>(Diff) {
 
@@ -23,10 +27,15 @@ class LocaisSalvosAdapter(
         val btnEditar: View = view.findViewById(R.id.btnEditarLocalSalvo)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-        ViewHolder(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val holder = ViewHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.item_local_salvo, parent, false)
         )
+        holder.imgIcone.setBackgroundResource(tema.fundoIcone)
+        holder.imgIcone.imageTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(parent.context, tema.destaque))
+        return holder
+    }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val local = getItem(position)

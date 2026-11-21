@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -20,12 +21,14 @@ import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.LocalEntity
 import com.example.vaivan.data.repository.LocalRepository
+import com.example.vaivan.ui.comum.tema.TemaPerfil
 import com.example.vaivan.ui.responsavel.passageiros.AdicionarLocalActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 /** Lista dos locais salvos do usuário (motorista ou responsável), com busca.
- * Tocar num local abre a edição; "Adicionar local" abre a criação. */
+ * Tocar num local abre a edição; "Novo local" abre a criação. A cor segue o
+ * perfil de quem abriu ([TemaPerfil.EXTRA]). */
 class LocaisSalvosActivity : BaseActivity() {
 
     private val uid: String? = FirebaseAuth.getInstance().currentUser?.uid
@@ -39,7 +42,9 @@ class LocaisSalvosActivity : BaseActivity() {
         }
     }
 
-    private val adapter = LocaisSalvosAdapter { local -> abrirEdicao(local) }
+    private val tema by lazy { TemaPerfil.de(intent) }
+
+    private val adapter by lazy { LocaisSalvosAdapter(tema) { local -> abrirEdicao(local) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +59,8 @@ class LocaisSalvosActivity : BaseActivity() {
         aplicarGapsDeSistema()
 
         findViewById<View>(R.id.btnVoltarLocais).setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.imgOndaLocais).setImageResource(tema.onda)
+        findViewById<View>(R.id.btnAdicionarLocalSalvo).setBackgroundResource(tema.botao)
 
         findViewById<RecyclerView>(R.id.recyclerLocaisSalvos).apply {
             layoutManager = LinearLayoutManager(this@LocaisSalvosActivity)

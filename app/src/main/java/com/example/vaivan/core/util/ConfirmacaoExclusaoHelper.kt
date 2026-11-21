@@ -1,18 +1,22 @@
 package com.example.vaivan.core.util
 
 import android.content.Context
-import android.graphics.Color
-import android.view.LayoutInflater
-import android.view.View
+import android.content.res.ColorStateList
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.example.vaivan.R
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.example.vaivan.ui.comum.tema.Folha
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.pintarPrincipal
 import com.google.android.material.button.MaterialButton
 
 /** Mesmo bottom sheet de confirmação que MinhasRotasFragment já usa pra excluir
  * rota (bottom_sheet_confirmar_exclusao.xml) — aqui só pra não duplicar o
  * inflate/wiring em cada tela nova que precisa da mesma confirmação
- * (perfil, foto, passageiro, veículo). */
+ * (perfil, foto, passageiro, veículo, assinatura, recebimentos).
+ *
+ * Sem [tema], o botão de confirmar é vermelho (ação destrutiva). Com [tema],
+ * ele ganha a cor do perfil — para confirmações que não apagam nada. */
 object ConfirmacaoExclusaoHelper {
 
     fun confirmar(
@@ -20,24 +24,28 @@ object ConfirmacaoExclusaoHelper {
         titulo: String,
         mensagem: String,
         textoConfirmar: String = "Sim, excluir",
+        textoCancelar: String = "Cancelar",
+        tema: TemaPerfil? = null,
         aoConfirmar: () -> Unit
     ) {
-        val sheet = BottomSheetDialog(contexto)
-        val view = LayoutInflater.from(contexto)
-            .inflate(R.layout.bottom_sheet_confirmar_exclusao, null)
-
-        sheet.setContentView(view)
-        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+        val (sheet, view) = Folha.criar(contexto, R.layout.bottom_sheet_confirmar_exclusao)
 
         view.findViewById<TextView>(R.id.txtConfirmarTitulo).text = titulo
         view.findViewById<TextView>(R.id.txtConfirmarMensagem).text = mensagem
-        view.findViewById<MaterialButton>(R.id.btnConfirmarExcluir).text = textoConfirmar
 
-        view.findViewById<View>(R.id.btnCancelarExcluir).setOnClickListener {
-            sheet.dismiss()
+        val btnConfirmar = view.findViewById<MaterialButton>(R.id.btnConfirmarExcluir)
+        btnConfirmar.text = textoConfirmar
+        tema?.let { btnConfirmar.pintarPrincipal(it) }
+
+        view.findViewById<MaterialButton>(R.id.btnCancelarExcluir).apply {
+            text = textoCancelar
+            backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(contexto, R.color.background_screen))
+            setTextColor(ContextCompat.getColor(contexto, R.color.text_primary))
+            setOnClickListener { sheet.dismiss() }
         }
 
-        view.findViewById<View>(R.id.btnConfirmarExcluir).setOnClickListener {
+        btnConfirmar.setOnClickListener {
             sheet.dismiss()
             aoConfirmar()
         }

@@ -1,51 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- PIX simulado (assinatura do motorista e mensalidade do responsável).
+     Ícone e botão principal ganham a cor do perfil no código (TemaPerfil). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottomsheet_white"
+    android:background="@drawable/bg_sheet_rounded"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_sheet_handle" />
+
+    <ImageView
+        android:id="@+id/imgIconePix"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_icone_responsavel"
+        android:importantForAccessibility="no"
+        android:padding="14dp"
+        android:src="@drawable/ic_pagamentos"
+        app:tint="@color/passageiro_destaque_forte" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:gravity="center"
         android:text="Pagamento via PIX"
-        android:textColor="@color/dark_gray"
+        android:textColor="@color/text_primary"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/txtPixDescricao"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:gravity="center"
-        android:textColor="@color/gray"
-        android:textSize="14sp" />
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        tools:text="Mensalidade de Novembro/2026 – Lucas" />
 
     <TextView
         android:id="@+id/txtPixValor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
-        android:textColor="@color/dark_gray"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textColor="@color/text_primary"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        tools:text="R$ 400,00" />
 
-    <TextView
+    <!-- Código PIX (simulado) -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_beige_round_20"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_file_upload"
         android:gravity="center"
-        android:padding="16dp"
-        android:text="CÓDIGO PIX (SIMULADO)\nVAIVAN-DEMO-0001"
-        android:textColor="@color/dark_gray"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Código PIX (simulado)"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="monospace"
+            android:text="VAIVAN-DEMO-0001"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
@@ -53,32 +98,36 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="Ambiente de demonstração: nenhum valor real é cobrado."
-        android:textColor="@color/medium_gray"
-        android:textSize="12sp" />
+        android:textColor="@color/text_tertiary"
+        android:textSize="12sp"
+        tools:ignore="HardcodedText" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnConfirmarPix"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:layout_marginTop="18dp"
-        android:background="@drawable/bg_button_green"
+        android:layout_marginTop="20dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="Confirmar pagamento (simulado)"
         android:textAllCaps="false"
-        android:textColor="@color/white"
+        android:textColor="@color/text_on_dark"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:backgroundTint="@null" />
+        app:backgroundTint="@color/passageiro_destaque_forte"
+        app:cornerRadius="16dp"
+        tools:ignore="HardcodedText" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCancelarPix"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/transparent"
+        android:layout_marginTop="6dp"
         android:text="Pagar depois"
         android:textAllCaps="false"
-        android:textColor="@color/dark_gray"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:backgroundTint="@null" />
+        tools:ignore="HardcodedText" />
 </LinearLayout>

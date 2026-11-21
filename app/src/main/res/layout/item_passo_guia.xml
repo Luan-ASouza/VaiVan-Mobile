@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Um passo do guia: número num círculo da cor do perfil + texto. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/txtNumeroPasso"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_ponto_timeline"
+        android:backgroundTint="@color/passageiro_destaque_forte"
+        android:gravity="center"
+        android:textColor="@color/text_on_dark"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        tools:text="1" />
+
+    <TextView
+        android:id="@+id/txtTextoPasso"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:lineSpacingExtra="2dp"
+        android:paddingTop="4dp"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        tools:text="Abra a aba Passageiros e toque em Novo passageiro." />
+</LinearLayout>

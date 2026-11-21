@@ -13,9 +13,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:padding="20dp"
         >
+
+        <!-- VOLTAR -->
+        <ImageButton
+            android:id="@+id/btnVoltarEnvioDocumento"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="-10dp"
+            android:layout_marginBottom="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrowback"
+            app:tint="@color/text_primary" />
 
         <!-- TÍTULO -->
 

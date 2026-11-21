@@ -9,7 +9,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
@@ -22,11 +21,10 @@ import com.example.vaivan.R
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.core.util.DataUtil
 import com.example.vaivan.core.util.MascaraUtil
-import com.example.vaivan.core.util.SeletorDeFotoHelper
 import com.example.vaivan.core.util.WindowInsetsUtil
 import com.example.vaivan.data.local.entities.PassageiroEntity
-import com.example.vaivan.ui.comum.avatar.EscolherAvatar
 import com.example.vaivan.ui.responsavel.passageiros.perfil.EditarPassageiroViewModel
+import com.example.vaivan.ui.responsavel.passageiros.perfil.EscolherFotoNovoPassageiro
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
@@ -56,10 +54,9 @@ class AdicionarPassageiroActivity : BaseActivity() {
         }
     }
 
-    // Os dois precisam ser registrados em onCreate (antes de STARTED).
-    private lateinit var seletorDeFoto: SeletorDeFotoHelper
-    private val escolherAvatar = registerForActivityResult(EscolherAvatar()) { uri ->
-        if (uri != null) definirFoto(uri)
+    // Mesma tela de foto da edição do passageiro, no modo "escolher" (devolve a foto).
+    private val escolherFoto = registerForActivityResult(EscolherFotoNovoPassageiro()) { escolha ->
+        if (escolha != null) definirFoto(escolha.uri)
     }
 
     /** Foto (galeria ou avatar) escolhida; sobe depois de salvar o passageiro. */
@@ -93,12 +90,10 @@ class AdicionarPassageiroActivity : BaseActivity() {
         aplicarGapsDeSistema(aplicarBase = false)
         WindowInsetsUtil.aplicarInsets(findViewById(R.id.conteudoEdicaoPerfil), aplicarTopo = false)
 
-        seletorDeFoto = SeletorDeFotoHelper(this) { uri -> definirFoto(uri) }
-
         inicializarViews()
 
         findViewById<ImageButton>(R.id.btnVoltarEdicaoPerfil).setOnClickListener { finish() }
-        findViewById<View>(R.id.btnFotoNovoPassageiro).setOnClickListener { escolherOrigemDaFoto() }
+        findViewById<View>(R.id.btnFotoNovoPassageiro).setOnClickListener { escolherFoto.launch(foto) }
 
         edtNascimento.addTextChangedListener(MascaraUtil.inserir("##/##/####", edtNascimento))
         edtNome.doAfterTextChanged { mostrarErro(layoutNome, txtErroNome, null) }
@@ -144,26 +139,6 @@ class AdicionarPassageiroActivity : BaseActivity() {
     // =========================================================
     // FOTO
     // =========================================================
-
-    /** Galeria ou avatar pronto; com foto já escolhida, também dá pra tirar. */
-    private fun escolherOrigemDaFoto() {
-        val opcoes = buildList {
-            add("Escolher da galeria")
-            add("Escolher um avatar")
-            if (foto != null) add("Remover foto")
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Foto do passageiro")
-            .setItems(opcoes.toTypedArray()) { _, opcao ->
-                when (opcao) {
-                    0 -> seletorDeFoto.abrirSeletor()
-                    1 -> escolherAvatar.launch(Unit)
-                    2 -> definirFoto(null)
-                }
-            }
-            .show()
-    }
 
     private fun definirFoto(uri: Uri?) {
         foto = uri

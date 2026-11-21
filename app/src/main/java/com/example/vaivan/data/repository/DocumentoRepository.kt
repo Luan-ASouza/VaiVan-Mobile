@@ -37,6 +37,10 @@ class DocumentoRepository(
         const val TIPO_COMPROVANTE_RESIDENCIA = "COMPROVANTE_RESIDENCIA"
         const val TIPO_SELFIE = "SELFIE"
 
+        // Documentos do veículo (veiculoId preenchido)
+        const val TIPO_CRLV = "CRLV"
+        const val TIPO_AUTORIZACAO = "AUTORIZACAO_TRANSPORTE_ESCOLAR"
+
         const val SLOT_FRENTE = "frente"
         const val SLOT_VERSO = "verso"
         const val SLOT_DIGITAL = "digital"
@@ -137,6 +141,57 @@ class DocumentoRepository(
         )
         val referencia = arquivoRepository.referencia(caminho)
         return UploadEmAndamento(referencia, arquivoRepository.iniciarUpload(uri, caminho, mimeType))
+    }
+
+    /** Upload de um documento de veículo (CRLV ou autorização). O registro no
+     * Firestore só é gravado depois, por [salvarDocumentoVeiculo]. */
+    fun iniciarUploadDocumentoVeiculo(
+        veiculoId: String,
+        tipo: String,
+        uri: Uri,
+        mimeType: String
+    ): UploadEmAndamento {
+        val caminho = arquivoRepository.caminhoDocumentoVeiculo(
+            veiculoId, tipo.lowercase(), extensaoPara(mimeType)
+        )
+        val referencia = arquivoRepository.referencia(caminho)
+        return UploadEmAndamento(referencia, arquivoRepository.iniciarUpload(uri, caminho, mimeType))
+    }
+
+    /** Apaga um arquivo enviado nesta seleção que não vai mais ser usado. */
+    suspend fun excluirUpload(referencia: StorageReference) {
+        referencia.delete().await()
+    }
+
+    /** Registra (ou substitui) o documento do veículo, sempre "em análise".
+     * Id determinístico ([idDocumentoVeiculo]): o reenvio troca o documento
+     * existente — e o arquivo anterior é apagado do Storage para não ficar órfão. */
+    suspend fun salvarDocumentoVeiculo(
+        veiculoId: String,
+        motoristaId: String,
+        tipo: String,
+        url: String,
+        dataEnvio: String
+    ) {
+        val id = idDocumentoVeiculo(veiculoId, tipo)
+        val anterior = runCatching { consultarPorId(id) }.getOrNull()
+
+        salvar(
+            DocumentoEntity(
+                id = id,
+                tipo = tipo,
+                arquivo = url,
+                dataEnvio = dataEnvio,
+                statusValidacao = StatusDocumento.EM_ANALISE.name,
+                motoristaId = motoristaId,
+                veiculoId = veiculoId
+            )
+        )
+
+        val urlAnterior = anterior?.arquivo
+        if (!urlAnterior.isNullOrBlank() && urlAnterior != url) {
+            runCatching { arquivoRepository.excluirPorUrl(urlAnterior) }
+        }
     }
 
     suspend fun excluirArquivoCnh(motoristaId: String, slot: String, mimeType: String) {

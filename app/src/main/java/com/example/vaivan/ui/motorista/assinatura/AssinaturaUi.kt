@@ -3,14 +3,12 @@ package com.example.vaivan.ui.motorista.assinatura
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.view.View
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.vaivan.data.models.Assinatura
 import com.example.vaivan.data.models.Pagamento
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
+import com.example.vaivan.ui.comum.tema.TomSelo
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,21 +46,21 @@ object AssinaturaUi {
         }
     }
 
-    /** Rótulo e cor do "selo" de status da assinatura. */
-    fun rotuloDoEstado(estado: Estado, cancelamentoAgendado: Boolean): Pair<String, Int> =
+    /** Rótulo e tom do "selo" de status da assinatura. */
+    fun rotuloDoEstado(estado: Estado, cancelamentoAgendado: Boolean): Pair<String, TomSelo> =
         when (estado) {
-            Estado.SEM_PLANO -> Pair("Sem plano", Color.parseColor("#6B6B6B"))
-            Estado.AGUARDANDO_PAGAMENTO -> Pair("Pagamento pendente", Color.parseColor("#F6B12F"))
+            Estado.SEM_PLANO -> Pair("Sem plano", TomSelo.NEUTRO)
+            Estado.AGUARDANDO_PAGAMENTO -> Pair("Pagamento pendente", TomSelo.ALERTA)
             Estado.ATIVA ->
                 if (cancelamentoAgendado) {
-                    Pair("Cancelamento agendado", Color.parseColor("#F6B12F"))
+                    Pair("Cancelamento agendado", TomSelo.ALERTA)
                 } else {
-                    Pair("Ativa", Color.parseColor("#2CA144"))
+                    Pair("Ativa", TomSelo.SUCESSO)
                 }
-            Estado.EM_CARENCIA -> Pair("Pagamento em atraso", Color.parseColor("#F6B12F"))
-            Estado.SUSPENSA -> Pair("Suspensa", Color.parseColor("#E53935"))
-            Estado.EXPIRADA -> Pair("Expirada", Color.parseColor("#6B6B6B"))
-            Estado.CANCELADA -> Pair("Cancelada", Color.parseColor("#6B6B6B"))
+            Estado.EM_CARENCIA -> Pair("Pagamento em atraso", TomSelo.ALERTA)
+            Estado.SUSPENSA -> Pair("Suspensa", TomSelo.PERIGO)
+            Estado.EXPIRADA -> Pair("Expirada", TomSelo.NEUTRO)
+            Estado.CANCELADA -> Pair("Cancelada", TomSelo.NEUTRO)
         }
 
     /** Texto do aviso exibido no topo da Home do motorista (null = sem aviso). */
@@ -104,15 +102,5 @@ object AssinaturaUi {
             }
             .setNegativeButton("Fechar", null)
             .show()
-    }
-
-    /** Evita que o conteúdo fique embaixo das barras do sistema (tela cheia). */
-    fun aplicarInsets(raiz: View) {
-        ViewCompat.setOnApplyWindowInsetsListener(raiz) { view, insets ->
-            val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(barras.left, barras.top, barras.right, barras.bottom)
-            insets
-        }
-        ViewCompat.requestApplyInsets(raiz)
     }
 }

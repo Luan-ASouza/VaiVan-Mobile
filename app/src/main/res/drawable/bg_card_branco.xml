@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo de card para LinearLayout (quando não dá para usar CardView): branco,
+     cantos de 22dp. Usar com android:elevation="4dp" e marginHorizontal 2dp. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/background_container" />
+    <corners android:radius="22dp" />
+</shape>

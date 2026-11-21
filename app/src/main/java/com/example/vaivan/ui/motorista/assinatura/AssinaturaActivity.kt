@@ -1,8 +1,6 @@
 package com.example.vaivan.ui.motorista.assinatura
 
 import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,12 +10,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.vaivan.R
+import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.models.Assinatura
 import com.example.vaivan.data.models.Pagamento
 import com.example.vaivan.data.models.Plano
@@ -27,7 +25,15 @@ import com.example.vaivan.data.repository.AssinaturaBloqueadaException
 import com.example.vaivan.data.repository.AssinaturaRepository
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.example.vaivan.ui.comum.tema.TomSelo
+import com.example.vaivan.ui.comum.tema.Folha
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.pintarPrincipal
+import com.example.vaivan.core.util.ConfirmacaoExclusaoHelper
+import com.google.android.material.button.MaterialButton
+import android.widget.ImageView
+import android.content.res.ColorStateList
+import com.example.vaivan.ui.comum.tema.aplicarSelo
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,7 +42,7 @@ import kotlinx.coroutines.launch
  * Tela "Planos de assinatura" do motorista: situação da assinatura, planos disponíveis
  * (contratar, upgrade, downgrade), cancelamento e cobranças (pagamento simulado).
  */
-class AssinaturaActivity : AppCompatActivity() {
+class AssinaturaActivity : BaseActivity() {
 
     private val repository by lazy { AssinaturaRepository() }
 
@@ -64,8 +70,7 @@ class AssinaturaActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_assinatura)
-
-        AssinaturaUi.aplicarInsets(findViewById(R.id.rootAssinatura))
+        aplicarGapsDeSistema()
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid == null) {
@@ -153,8 +158,7 @@ class AssinaturaActivity : AppCompatActivity() {
 
         // Enquanto a assinatura não chegou, não mostra "Sem plano" nem botões de contratar
         if (!assinaturaCarregada) {
-            txtStatus.text = "Carregando..."
-            txtStatus.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#6B6B6B"))
+            txtStatus.aplicarSelo("Carregando...", TomSelo.NEUTRO)
             txtPlanoAtual.text = ""
             txtVigencia.text = "Carregando a sua assinatura..."
             txtAviso.visibility = View.GONE
@@ -169,9 +173,8 @@ class AssinaturaActivity : AppCompatActivity() {
         val estado = AssinaturaPolicy.estado(a, agora)
 
         // Selo de status
-        val (rotulo, cor) = AssinaturaUi.rotuloDoEstado(estado, a?.cancelamentoAgendado == true)
-        txtStatus.text = rotulo
-        txtStatus.backgroundTintList = ColorStateList.valueOf(cor)
+        val (rotulo, tom) = AssinaturaUi.rotuloDoEstado(estado, a?.cancelamentoAgendado == true)
+        txtStatus.aplicarSelo(rotulo, tom)
 
         // Plano atual
         txtPlanoAtual.text = when {
@@ -381,14 +384,12 @@ class AssinaturaActivity : AppCompatActivity() {
 
             item.findViewById<TextView>(R.id.txtDescricaoCobranca).text = pagamento.descricao
 
-            val (rotulo, cor) = when (pagamento.status) {
-                StatusPagamento.PAGO -> Pair("Pago", Color.parseColor("#2CA144"))
-                StatusPagamento.RECUSADO -> Pair("Recusado", Color.parseColor("#E53935"))
-                else -> Pair("Pendente", Color.parseColor("#F6B12F"))
+            val (rotulo, tom) = when (pagamento.status) {
+                StatusPagamento.PAGO -> Pair("Pago", TomSelo.SUCESSO)
+                StatusPagamento.RECUSADO -> Pair("Recusado", TomSelo.PERIGO)
+                else -> Pair("Pendente", TomSelo.ALERTA)
             }
-            val chip = item.findViewById<TextView>(R.id.txtStatusCobranca)
-            chip.text = rotulo
-            chip.backgroundTintList = ColorStateList.valueOf(cor)
+            item.findViewById<TextView>(R.id.txtStatusCobranca).aplicarSelo(rotulo, tom)
 
             val valor = AssinaturaUi.formatarValor(pagamento.valorCentavos)
             val pagoEm = pagamento.pagoEm
@@ -475,25 +476,26 @@ class AssinaturaActivity : AppCompatActivity() {
             "A assinatura será cancelada agora."
         }
 
-        AlertDialog.Builder(this)
-            .setTitle("Cancelar assinatura?")
-            .setMessage(mensagem)
-            .setPositiveButton("Cancelar assinatura") { _, _ ->
-                executar {
-                    val fim = repository.cancelarAssinatura(motoristaId)
-                    Toast.makeText(
-                        this,
-                        if (fim != null) {
-                            "Cancelamento agendado para ${AssinaturaUi.formatarData(fim)}."
-                        } else {
-                            "Assinatura cancelada."
-                        },
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+        ConfirmacaoExclusaoHelper.confirmar(
+            contexto = this,
+            titulo = "Cancelar assinatura?",
+            mensagem = mensagem,
+            textoConfirmar = "Cancelar assinatura",
+            textoCancelar = "Voltar"
+        ) {
+            executar {
+                val fim = repository.cancelarAssinatura(motoristaId)
+                Toast.makeText(
+                    this,
+                    if (fim != null) {
+                        "Cancelamento agendado para ${AssinaturaUi.formatarData(fim)}."
+                    } else {
+                        "Assinatura cancelada."
+                    },
+                    Toast.LENGTH_LONG
+                ).show()
             }
-            .setNegativeButton("Voltar", null)
-            .show()
+        }
     }
 
     private fun desfazerCancelamento() {
@@ -537,19 +539,20 @@ class AssinaturaActivity : AppCompatActivity() {
         val conta = FirebaseAuth.getInstance().currentUser?.email ?: "-"
         val texto = AssinaturaUi.textoDoRecibo(pagamento, conta)
 
-        AlertDialog.Builder(this)
-            .setTitle("Recibo")
-            .setMessage(texto)
-            .setPositiveButton("Compartilhar") { _, _ ->
-                val envio = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Recibo VaiVan")
-                    putExtra(Intent.EXTRA_TEXT, texto)
-                }
-                startActivity(Intent.createChooser(envio, "Compartilhar recibo"))
+        val (sheet, view) = Folha.criar(this, R.layout.bottom_sheet_recibo)
+        view.findViewById<TextView>(R.id.txtRecibo).text = texto
+
+        view.findViewById<View>(R.id.btnCompartilharRecibo).setOnClickListener {
+            val envio = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, "Recibo VaiVan")
+                putExtra(Intent.EXTRA_TEXT, texto)
             }
-            .setNegativeButton("Fechar", null)
-            .show()
+            startActivity(Intent.createChooser(envio, "Compartilhar recibo"))
+        }
+        view.findViewById<View>(R.id.btnFecharRecibo).setOnClickListener { sheet.dismiss() }
+
+        sheet.show()
     }
 
     // ---------------------------------------------------------
@@ -557,11 +560,15 @@ class AssinaturaActivity : AppCompatActivity() {
     // ---------------------------------------------------------
 
     private fun abrirPix(pagamento: Pagamento) {
-        val sheet = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_pagamento_pix, null)
-        sheet.setContentView(view)
+        val (sheet, view) = Folha.criar(this, R.layout.bottom_sheet_pagamento_pix)
 
-        (view.parent as? View)?.setBackgroundColor(Color.TRANSPARENT)
+        // O layout vem em laranja (responsável); na assinatura do motorista fica escuro
+        val tema = TemaPerfil.MOTORISTA
+        view.findViewById<ImageView>(R.id.imgIconePix).apply {
+            setBackgroundResource(tema.fundoIcone)
+            imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, tema.destaque))
+        }
+        view.findViewById<MaterialButton>(R.id.btnConfirmarPix).pintarPrincipal(tema)
 
         view.findViewById<TextView>(R.id.txtPixDescricao).text = pagamento.descricao
         view.findViewById<TextView>(R.id.txtPixValor).text =

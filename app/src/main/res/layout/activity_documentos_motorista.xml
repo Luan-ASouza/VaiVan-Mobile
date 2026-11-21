@@ -1,324 +1,490 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Documentos do motorista (cadastro e "Meus documentos"): cabeçalho fixo com
+     a onda escura, cartão escuro com o progresso e um card por documento com
+     o selo de status. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@color/background_screen"
     android:orientation="vertical">
 
-    <View
-        android:id="@+id/topGap"
+    <!-- CABEÇALHO (fixo, fora da rolagem) -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="30dp"/>
+        android:layout_height="wrap_content">
 
-    <!-- CABEÇALHO -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="10dp"
-        android:paddingEnd="24dp">
+        <!-- Onda decorativa -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="100dp"
+            android:layout_gravity="top|end"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_motorista" />
 
-        <ImageButton
-            android:id="@+id/btnVoltar"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:src="@drawable/ic_arrowback"
-            app:tint="#202124" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            <View
+                android:id="@+id/topGap"
+                android:layout_width="match_parent"
+                android:layout_height="0dp" />
 
-        <TextView
-            android:id="@+id/btnAjuda"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:paddingHorizontal="12dp"
-            android:text="Ajuda"
-            android:textColor="#202124"
-            android:textSize="16sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="16dp">
 
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <ImageButton
+                        android:id="@+id/btnVoltar"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="-10dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Voltar"
+                        android:src="@drawable/ic_arrowback"
+                        app:tint="@color/text_primary"
+                        tools:ignore="HardcodedText" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <!-- Ajuda (fica sobre a onda escura) -->
+                    <ImageButton
+                        android:id="@+id/btnAjuda"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_botao_voltar_hero"
+                        android:contentDescription="Ajuda"
+                        android:padding="9dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_ajuda"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <!-- Título -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Meus documentos"
+                    android:textColor="@color/text_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Subtítulo -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Envie e acompanhe a análise dos seus documentos"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ÁREA ROLÁVEL -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshDocumentosMotorista"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
-
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="48dp"
-            android:paddingBottom="32dp">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fillViewport="true">
 
-            <!-- TÍTULO -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:text="Enviar documentos"
-                android:textColor="#101010"
-                android:textSize="32sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Envie os documentos necessários para concluir seu cadastro como motorista."
-                android:textColor="#858585"
-                android:textSize="16sp" />
-
-            <!-- PROGRESSO -->
-            <TextView
-                android:id="@+id/txtProgressoDocumentos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="0 de 3 documentos enviados"
-                android:textColor="@color/text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <!-- LISTA -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:orientation="vertical">
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="32dp">
+
+                <!-- PROGRESSO -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/rota_destaque"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="6dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:background="@drawable/bg_ponto_timeline"
+                            android:backgroundTint="@color/color_primary"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_documento"
+                            app:tint="@color/white" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txtProgressoDocumentos"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="0 de 3 documentos enviados"
+                                android:textColor="@color/text_on_dark"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
+
+                            <ProgressBar
+                                android:id="@+id/barraProgressoDocumentos"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="6dp"
+                                android:layout_marginTop="8dp"
+                                android:max="3"
+                                android:progress="0"
+                                android:progressBackgroundTint="@color/rota_onda_clara"
+                                android:progressTint="@color/color_primary" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <!-- CNH -->
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:id="@+id/itemCnh"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="96dp"
-                    android:background="?attr/selectableItemBackground"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:id="@+id/iconeCnh"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/ic_enviar_arquivo"
-                        app:tint="@color/dark_gray"/>
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/background_container"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="4dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <ImageView
+                            android:id="@+id/iconeCnh"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:background="@drawable/bg_icone_motorista"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_enviar_arquivo"
+                            app:tint="@color/rota_destaque" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="CNH"
-                            android:textColor="#101010"
-                            android:textSize="19sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="14dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/txtStatusCnh"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Pendente"
-                            android:visibility="gone"
-                            android:textColor="#999999"
-                            android:textSize="15sp" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="CNH"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtMotivoCnh"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/status_danger"
-                            android:textSize="13sp"
-                            android:visibility="gone" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Frente e verso, ou o PDF da CNH digital"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
 
+                            <TextView
+                                android:id="@+id/txtStatusCnh"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_pilula_branca"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="3dp"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                tools:text="Em análise"
+                                tools:visibility="visible" />
+
+                            <TextView
+                                android:id="@+id/txtMotivoCnh"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:textColor="@color/status_danger"
+                                android:textSize="13sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_direita"
+                            app:tint="@color/text_tertiary" />
                     </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@drawable/ic_chevron_direita"
-                        app:tint="@color/dark_gray"/>
-
-                </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <!-- COMPROVANTE DE RESIDÊNCIA -->
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:id="@+id/itemComprovante"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="96dp"
-                    android:background="?attr/selectableItemBackground"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:id="@+id/iconeComprovante"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/ic_enviar_arquivo"
-                        app:tint="@color/dark_gray"/>
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/background_container"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="4dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <ImageView
+                            android:id="@+id/iconeComprovante"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:background="@drawable/bg_icone_motorista"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_enviar_arquivo"
+                            app:tint="@color/rota_destaque" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Comprovante de Residência"
-                            android:textColor="#101010"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="14dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/txtStatusComprovante"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Pendente"
-                            android:visibility="gone"
-                            android:textColor="#999999"
-                            android:textSize="15sp" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Comprovante de residência"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtMotivoComprovante"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/status_danger"
-                            android:textSize="13sp"
-                            android:visibility="gone" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Um comprovante recente do seu endereço"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
 
+                            <TextView
+                                android:id="@+id/txtStatusComprovante"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_pilula_branca"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="3dp"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <TextView
+                                android:id="@+id/txtMotivoComprovante"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:textColor="@color/status_danger"
+                                android:textSize="13sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_direita"
+                            app:tint="@color/text_tertiary" />
                     </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@drawable/ic_chevron_direita"
-                        app:tint="@color/dark_gray"/>
-
-                </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <!-- FOTO -->
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:id="@+id/itemFoto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="96dp"
-                    android:background="?attr/selectableItemBackground"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:id="@+id/iconeFoto"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/ic_enviar_arquivo"
-                        app:tint="@color/dark_gray"/>
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/background_container"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="4dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <ImageView
+                            android:id="@+id/iconeFoto"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:background="@drawable/bg_icone_motorista"
+                            android:importantForAccessibility="no"
+                            android:padding="11dp"
+                            android:src="@drawable/ic_enviar_arquivo"
+                            app:tint="@color/rota_destaque" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Foto do motorista"
-                            android:textColor="#101010"
-                            android:textSize="19sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="14dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/txtStatusFoto"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Pendente"
-                            android:visibility="gone"
-                            android:textColor="#999999"
-                            android:textSize="15sp" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Foto do motorista"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:ignore="HardcodedText" />
 
-                        <TextView
-                            android:id="@+id/txtMotivoFoto"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textColor="@color/status_danger"
-                            android:textSize="13sp"
-                            android:visibility="gone" />
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Uma selfie para confirmar a sua identidade"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:ignore="HardcodedText" />
 
+                            <TextView
+                                android:id="@+id/txtStatusFoto"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_pilula_branca"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="3dp"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <TextView
+                                android:id="@+id/txtMotivoFoto"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:textColor="@color/status_danger"
+                                android:textSize="13sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_chevron_direita"
+                            app:tint="@color/text_tertiary" />
                     </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@drawable/ic_chevron_direita"
-                        app:tint="@color/dark_gray"/>
+                <!-- DICAS -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_icone_motorista"
+                    android:backgroundTint="@color/rota_vagas_fundo"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dica"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Os documentos enviados são armazenados com segurança. Mantenha suas informações atualizadas para facilitar a verificação."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
                 </LinearLayout>
-
             </LinearLayout>
-
-            <!-- DICAS -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:text="Dicas"
-                android:textColor="#929292"
-                android:textSize="16sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Os documentos enviados serão armazenados com segurança. Mantenha suas informações atualizadas para facilitar a verificação."
-                android:textColor="#929292"
-                android:textSize="15sp" />
-
-        </LinearLayout>
-
-    </ScrollView>
-
+        </ScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <View
         android:id="@+id/bottomGap"
         android:layout_width="match_parent"
-        android:layout_height="30dp"/>
+        android:layout_height="0dp" />
 
 </LinearLayout>

@@ -13,8 +13,9 @@ import com.example.vaivan.data.local.entities.AvisoAusenciaEntity
 import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.usecase.ausencia.RegistrarAvisoAusenciaUseCase
-import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.example.vaivan.ui.comum.tema.Folha
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.marcarOpcao
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -173,21 +174,13 @@ fun configurarBlocoAvisoAusencia(
 
     btnMarcarFalta.setOnClickListener {
         if (!rotaIdaEVolta) {
-            MaterialAlertDialogBuilder(context)
-                .setTitle("Marcar falta")
-                .setMessage(
-                    "Seu filho não vai usar o transporte hoje. O motorista será avisado e " +
-                        "essa parada não vai entrar na rota."
-                )
-                .setPositiveButton("Continuar") { _, _ ->
-                    salvarAviso(
-                        tipo = AvisoAusenciaRepository.TIPO_DIA_INTEIRO,
-                        pendenteIda = true,
-                        pendenteVolta = false
-                    ) { atualizarEstado() }
-                }
-                .setNegativeButton("Cancelar", null)
-                .show()
+            mostrarConfirmacaoFaltaSimples(context) {
+                salvarAviso(
+                    tipo = AvisoAusenciaRepository.TIPO_DIA_INTEIRO,
+                    pendenteIda = true,
+                    pendenteVolta = false
+                ) { atualizarEstado() }
+            }
             return@setOnClickListener
         }
 
@@ -221,52 +214,74 @@ private fun mostrarModalMarcarFalta(
     voltaLivre: Boolean,
     onConfirmar: (tipo: String, pendenteIda: Boolean, pendenteVolta: Boolean) -> Unit
 ) {
-    val view = LayoutInflater.from(context).inflate(R.layout.dialog_marcar_falta, null)
+    val (dialog, view) = Folha.criar(context, R.layout.dialog_marcar_falta)
+    val tema = TemaPerfil.RESPONSAVEL
 
-    val toggle = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleDirecaoFalta)
     val btnIda = view.findViewById<View>(R.id.btnFaltaIda)
     val btnVolta = view.findViewById<View>(R.id.btnFaltaVolta)
     val btnAmbas = view.findViewById<View>(R.id.btnFaltaAmbas)
+    val opcoes = listOf(btnIda, btnVolta, btnAmbas)
     val txtAviso = view.findViewById<TextView>(R.id.txtAvisoBloqueioFalta)
-    val btnCancelar = view.findViewById<View>(R.id.btnCancelarMarcarFalta)
-    val btnConfirmar = view.findViewById<View>(R.id.btnConfirmarMarcarFalta)
 
-    btnIda.isEnabled = idaLivre
-    btnAmbas.isEnabled = idaLivre && voltaLivre
-    btnVolta.isEnabled = voltaLivre
+    // Trajeto que já não faz diferença hoje fica apagado e sem toque
+    val livres = mapOf(btnIda to idaLivre, btnVolta to voltaLivre, btnAmbas to (idaLivre && voltaLivre))
+    livres.forEach { (opcao, livre) ->
+        opcao.isEnabled = livre
+        opcao.alpha = if (livre) 1f else 0.4f
+    }
 
-    when {
-        !idaLivre && voltaLivre -> {
-            toggle.check(R.id.btnFaltaVolta)
-            txtAviso.visibility = View.VISIBLE
-            txtAviso.text = "Seu filho já embarcou na viagem de ida de hoje — só dá pra avisar falta na volta."
-        }
-        idaLivre && !voltaLivre -> {
-            toggle.check(R.id.btnFaltaIda)
-            txtAviso.visibility = View.VISIBLE
-            txtAviso.text = "Seu filho já embarcou na viagem de volta de hoje — só dá pra avisar falta na ida."
-        }
-        else -> {
-            toggle.check(R.id.btnFaltaAmbas)
-            txtAviso.visibility = View.GONE
+    var escolhida = when {
+        !idaLivre && voltaLivre -> btnVolta
+        idaLivre && !voltaLivre -> btnIda
+        else -> btnAmbas
+    }
+    txtAviso.visibility = if (idaLivre && voltaLivre) View.GONE else View.VISIBLE
+    txtAviso.text = if (!idaLivre) {
+        "Seu filho já embarcou na viagem de ida de hoje — só dá pra avisar falta na volta."
+    } else {
+        "Seu filho já embarcou na viagem de volta de hoje — só dá pra avisar falta na ida."
+    }
+
+    marcarOpcao(opcoes, escolhida, tema)
+    opcoes.forEach { opcao ->
+        opcao.setOnClickListener {
+            escolhida = opcao
+            marcarOpcao(opcoes, opcao, tema)
         }
     }
 
-    val dialog = MaterialAlertDialogBuilder(context)
-        .setView(view)
-        .create()
+    view.findViewById<View>(R.id.btnCancelarMarcarFalta).setOnClickListener { dialog.dismiss() }
 
-    btnCancelar.setOnClickListener { dialog.dismiss() }
-
-    btnConfirmar.setOnClickListener {
-        val (tipo, pendenteIda, pendenteVolta) = when (toggle.checkedButtonId) {
-            R.id.btnFaltaIda -> Triple(AvisoAusenciaRepository.TIPO_SOMENTE_IDA, true, false)
-            R.id.btnFaltaVolta -> Triple(AvisoAusenciaRepository.TIPO_SOMENTE_VOLTA, false, true)
+    view.findViewById<View>(R.id.btnConfirmarMarcarFalta).setOnClickListener {
+        val (tipo, pendenteIda, pendenteVolta) = when (escolhida) {
+            btnIda -> Triple(AvisoAusenciaRepository.TIPO_SOMENTE_IDA, true, false)
+            btnVolta -> Triple(AvisoAusenciaRepository.TIPO_SOMENTE_VOLTA, false, true)
             else -> Triple(AvisoAusenciaRepository.TIPO_DIA_INTEIRO, true, true)
         }
 
         dialog.dismiss()
         onConfirmar(tipo, pendenteIda, pendenteVolta)
+    }
+
+    dialog.show()
+}
+
+/** Rota de um sentido só: o mesmo sheet, sem as opções de trajeto. */
+private fun mostrarConfirmacaoFaltaSimples(
+    context: android.content.Context,
+    onConfirmar: () -> Unit
+) {
+    val (dialog, view) = Folha.criar(context, R.layout.dialog_marcar_falta)
+
+    view.findViewById<View>(R.id.grupoDirecaoFalta).visibility = View.GONE
+    view.findViewById<TextView>(R.id.txtMensagemMarcarFalta).text =
+        "Seu filho não vai usar o transporte hoje. O motorista será avisado e " +
+            "essa parada não vai entrar na rota."
+
+    view.findViewById<View>(R.id.btnCancelarMarcarFalta).setOnClickListener { dialog.dismiss() }
+    view.findViewById<View>(R.id.btnConfirmarMarcarFalta).setOnClickListener {
+        dialog.dismiss()
+        onConfirmar()
     }
 
     dialog.show()

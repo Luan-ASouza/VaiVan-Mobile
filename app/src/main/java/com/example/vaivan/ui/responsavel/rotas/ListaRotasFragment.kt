@@ -270,7 +270,7 @@ class ListaRotasFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val passageiro = try {
-                passageiroRepository.consultarPassageiro(solicitacao.passageiroId)
+                passageiroRepository.consultarPassageiroComCache(solicitacao.passageiroId)
             } catch (e: Exception) {
                 null
             }
@@ -508,7 +508,7 @@ class ListaRotasFragment : Fragment() {
         if (passageiroId != null) {
             viewLifecycleOwner.lifecycleScope.launch {
                 val passageiro = try {
-                    passageiroRepository.consultarPassageiro(passageiroId)
+                    passageiroRepository.consultarPassageiroComCache(passageiroId)
                 } catch (e: Exception) {
                     null
                 }

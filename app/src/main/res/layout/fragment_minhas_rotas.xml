@@ -149,11 +149,11 @@
                                 android:layout_width="46dp"
                                 android:layout_height="46dp"
                                 android:background="@drawable/bg_ponto_timeline"
-                                android:backgroundTint="@color/color_primary"
+                                android:backgroundTint="@color/medium_gray"
                                 android:importantForAccessibility="no"
                                 android:padding="11dp"
                                 android:src="@drawable/ic_van"
-                                app:tint="@color/rota_destaque" />
+                                app:tint="@color/white" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -192,14 +192,14 @@
                             android:insetBottom="0dp"
                             android:text="Retomar viagem"
                             android:textAllCaps="false"
-                            android:textColor="@color/rota_destaque"
+                            android:textColor="@color/white"
                             android:textSize="15sp"
                             android:textStyle="bold"
                             app:backgroundTint="@color/color_primary"
-                            app:cornerRadius="16dp"
+                            app:cornerRadius="99dp"
                             app:icon="@drawable/ic_mylocation"
                             app:iconGravity="textStart"
-                            app:iconTint="@color/rota_destaque"
+                            app:iconTint="@color/white"
                             tools:ignore="HardcodedText" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

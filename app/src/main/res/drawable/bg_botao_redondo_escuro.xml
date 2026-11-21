@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botão redondo escuro (enviar mensagem no chat do motorista). Versão
+     escura do bg_botao_editar_passageiro. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/rota_destaque" />
+        </shape>
+    </item>
+</ripple>

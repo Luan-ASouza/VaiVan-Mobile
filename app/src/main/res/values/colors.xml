@@ -27,6 +27,7 @@
     <color name="green_soft">#E6F5EA</color>
     <color name="light_blue">#0170CC</color>
     <color name="red">#E53935</color>
+    <color name="red_soft">#FDECEA</color>
 
     <color name="beige">#E4DBD4</color>
     <color name="beige_cream">#FAD897</color>
@@ -75,6 +76,15 @@
     <color name="status_danger">@color/red</color>
     <color name="status_warning">@color/orange</color>
 
+    <!-- Classe: Selo de status (fundo claro + texto forte), igual ao selo da
+         viagem nos transportes. Usado em documentos, assinatura e cobranças. -->
+    <color name="status_success_fundo">@color/green_soft</color>
+    <color name="status_warning_fundo">@color/orange_soft</color>
+    <color name="status_warning_texto">@color/orange_dark</color>
+    <color name="status_danger_fundo">@color/red_soft</color>
+    <color name="status_neutro_fundo">@color/background_screen</color>
+    <color name="status_neutro_texto">@color/text_secondary</color>
+
     <!-- Classe: Card do passageiro (lista do responsável). Onda e anel da
          foto em laranja; quadrinhos de informação em creme. -->
     <color name="passageiro_destaque">@color/color_primary</color>
@@ -83,9 +93,11 @@
     <color name="passageiro_tile">@color/orange_soft</color>
     <color name="passageiro_texto_chip">@color/orange_dark</color>
 
-    <!-- Classe: Chat (lista de conversas e conversa). Bolha enviada em
-         gradiente laranja; recebida em bege claro; selo do papel do contato
-         laranja (motorista) ou rosa (responsável). -->
+    <!-- Classe: Chat (lista de conversas e conversa). Segue a cor do perfil
+         de quem está usando (TemaPerfil): no responsável, onda e bolha
+         enviada em laranja sobre fundo creme; no motorista, em escuro sobre
+         o fundo padrão. Recebida em bege claro; selo do papel do contato
+         escuro (motorista) ou rosa (responsável). -->
     <color name="chat_fundo">@color/cream</color>
     <color name="chat_bolha_recebida">@color/beige_light</color>
     <color name="chat_separador_data">@color/beige_light</color>

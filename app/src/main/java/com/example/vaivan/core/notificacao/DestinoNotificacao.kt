@@ -3,6 +3,8 @@ package com.example.vaivan.core.notificacao
 import android.content.Context
 import android.content.Intent
 import com.example.vaivan.ui.comum.chat.ChatActivity
+import com.example.vaivan.ui.comum.tema.TemaPerfil
+import com.example.vaivan.ui.comum.tema.putTema
 import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
 import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.example.vaivan.ui.motorista.entrada.EntradaMotoristaActivity
@@ -49,6 +51,7 @@ object DestinoNotificacao {
                     .putExtra("chatId", chatId)
                     .putExtra("outroUsuarioId", dado("outroUsuarioId"))
                     .putExtra("nomeContato", dado("nomeContato"))
+                    .putTema(TemaPerfil.de(ehMotorista = motorista))
                 arrayOf(escolha, home(ABA_CHAT), conversa)
             }
 

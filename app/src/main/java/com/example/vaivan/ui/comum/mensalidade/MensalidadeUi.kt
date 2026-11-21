@@ -1,6 +1,5 @@
 package com.example.vaivan.ui.comum.mensalidade
 
-import com.example.vaivan.R
 import com.example.vaivan.data.models.FormaPagamentoMensalidade
 import com.example.vaivan.data.models.Mensalidade
 import com.example.vaivan.data.models.RegistradoPor
@@ -8,6 +7,7 @@ import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoContrato
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy.SituacaoMensalidade
 import com.example.vaivan.ui.motorista.assinatura.AssinaturaUi
+import com.example.vaivan.ui.comum.tema.TomSelo
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -28,24 +28,24 @@ object MensalidadeUi {
     fun mesAtual(agora: Long): String =
         YearMonth.from(MensalidadePolicy.dia(agora)).format(formatoSoMes)
 
-    fun rotuloDoContrato(situacao: SituacaoContrato): Pair<String, Int> = when (situacao) {
-        SituacaoContrato.RESERVADO -> "Reservado" to R.color.orange
-        SituacaoContrato.EM_DIA -> "Em dia" to R.color.green
-        SituacaoContrato.ATRASADO -> "Atrasado" to R.color.orange
-        SituacaoContrato.INADIMPLENTE -> "Inadimplente" to R.color.red
-        SituacaoContrato.ENCERRADO -> "Encerrado" to R.color.medium_gray
+    fun rotuloDoContrato(situacao: SituacaoContrato): Pair<String, TomSelo> = when (situacao) {
+        SituacaoContrato.RESERVADO -> "Reservado" to TomSelo.ALERTA
+        SituacaoContrato.EM_DIA -> "Em dia" to TomSelo.SUCESSO
+        SituacaoContrato.ATRASADO -> "Atrasado" to TomSelo.ALERTA
+        SituacaoContrato.INADIMPLENTE -> "Inadimplente" to TomSelo.PERIGO
+        SituacaoContrato.ENCERRADO -> "Encerrado" to TomSelo.NEUTRO
     }
 
-    fun rotuloDaMensalidade(mensalidade: Mensalidade, agora: Long): Pair<String, Int> =
+    fun rotuloDaMensalidade(mensalidade: Mensalidade, agora: Long): Pair<String, TomSelo> =
         when (MensalidadePolicy.situacao(mensalidade, agora)) {
-            SituacaoMensalidade.PAGA -> "Paga" to R.color.green
-            SituacaoMensalidade.A_VENCER -> "A vencer" to R.color.medium_gray
-            SituacaoMensalidade.VENCE_HOJE -> "Vence hoje" to R.color.orange
+            SituacaoMensalidade.PAGA -> "Paga" to TomSelo.SUCESSO
+            SituacaoMensalidade.A_VENCER -> "A vencer" to TomSelo.NEUTRO
+            SituacaoMensalidade.VENCE_HOJE -> "Vence hoje" to TomSelo.ALERTA
             SituacaoMensalidade.ATRASADA -> {
                 val dias = MensalidadePolicy.diasDeAtraso(mensalidade, agora)
-                (if (dias == 1L) "1 dia de atraso" else "$dias dias de atraso") to R.color.red
+                (if (dias == 1L) "1 dia de atraso" else "$dias dias de atraso") to TomSelo.PERIGO
             }
-            SituacaoMensalidade.CANCELADA -> "Cancelada" to R.color.light_gray
+            SituacaoMensalidade.CANCELADA -> "Cancelada" to TomSelo.NEUTRO
         }
 
     /** Linha de detalhe de uma mensalidade no histórico. */

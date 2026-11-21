@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Círculo da inicial do aluno nas telas do motorista (versão neutra do
+     bg_avatar_inicial, que é laranja). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/rota_vagas_fundo" />
+</shape>

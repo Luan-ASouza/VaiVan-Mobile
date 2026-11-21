@@ -102,7 +102,9 @@ Modelo: `fragment_lista_rotas.xml` (Transportes do responsável). Raiz = `Linear
 
 Cards: `CardView` branco, cantos de 22dp, elevação de 4dp, `marginHorizontal` de 2dp (pra sombra não cortar). Os comentários de seção no XML (`<!-- CABEÇALHO -->`, `<!-- ÁREA ROLÁVEL -->`) seguem o mesmo modelo.
 
-Cor por perfil: o **responsável** usa laranja (`bg_onda_passageiro`, `bg_botao_laranja`, `bg_aba_selecionada`). O **motorista** usa a mesma estrutura com escuro no lugar do laranja (`bg_onda_motorista`, `bg_botao_escuro`, cores `rota_*`). Telas comuns aos dois (ex.: Chat) ficam no laranja.
+Cor por perfil: o **responsável** usa laranja (`bg_onda_passageiro`, `bg_botao_laranja`, `bg_aba_selecionada`, `bg_hero_laranja`). O **motorista** usa a mesma estrutura com escuro no lugar do laranja (`bg_onda_motorista`, `bg_botao_escuro`, `bg_hero_card`, cores `rota_*`). Telas comuns aos dois (Chat, Locais salvos, Ajuda) seguem a cor de quem abre: `ui/comum/tema/TemaPerfil` (`RESPONSAVEL`/`MOTORISTA`) reúne os drawables/cores de cada perfil; quem abre a tela passa `intent.putTema(...)` (sem extra = laranja) e a tela aplica `tema.onda`, `tema.botao` etc. em código. Fragment reaproveitado entre perfis sobrescreve `tema` (ex.: `motorista/chat/ChatFragment`).
+
+Activity dedicada (fora das abas) usa o mesmo cabeçalho, com `topGap` dentro do `FrameLayout` da onda e o voltar de 44dp acima do título (modelo: `activity_rota_detalhe.xml`, `activity_assinatura.xml`). Cartão de destaque (resumo/valor) = `bg_hero_card` (motorista) ou `bg_hero_laranja` (responsável), elevação 6dp. Selo de status = pílula `bg_pilula_branca` pintada com `TextView.aplicarSelo(texto, TomSelo.X)` (fundo claro + texto forte; cores `status_*_fundo`).
 
 ## Regras do Firestore (`admin-web/firestore.rules`)
 

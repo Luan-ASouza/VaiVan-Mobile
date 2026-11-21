@@ -27,13 +27,6 @@ class ListaVeiculosViewModel(
                 motoristaId
             )
 
-    /** Bloqueio de exclusão com veículo vinculado a rota já vem do
-     * VeiculoRepository.excluirVeiculo (VeiculoVinculadoARotaException) —
-     * aqui é só a ponte pra UI. */
-    suspend fun excluirVeiculo(id: String) {
-        repository.excluirVeiculo(id)
-    }
-
     /** Pull-to-refresh: força uma releitura pontual, sem depender só do
      * listener contínuo (que pode não estar ativo nesse momento). */
     suspend fun atualizarVeiculos() {

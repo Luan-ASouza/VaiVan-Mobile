@@ -1,70 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Tabela de preços do motorista: preenchida uma vez, vale para todas as rotas.
-    Visual igual às telas recentes (fundo bege, cartões brancos, cartão escuro de destaque).
+    Mesmo desenho das telas do motorista: cabeçalho com a onda escura, cards
+    brancos e o cartão escuro de destaque (simulador).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootTabelaPreco"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/beige"
+    android:background="@color/background_screen"
     android:orientation="vertical">
 
-    <!-- BARRA DO TOPO -->
-    <LinearLayout
+    <!-- CABEÇALHO (fixo, fora da rolagem) -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
-        <ImageButton
-            android:id="@+id/btnVoltarTabelaPreco"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:src="@drawable/ic_arrowback"
-            app:tint="@color/black" />
+        <!-- Onda decorativa -->
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="100dp"
+            android:layout_gravity="top|end"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:scaleX="-1"
+            android:src="@drawable/bg_onda_motorista" />
 
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:text="Tabela de preços"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="vertical">
 
+            <View
+                android:id="@+id/topGap"
+                android:layout_width="match_parent"
+                android:layout_height="0dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnVoltarTabelaPreco"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="-10dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Voltar"
+                    android:src="@drawable/ic_arrowback"
+                    app:tint="@color/text_primary"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Título -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tabela de preços"
+                    android:textColor="@color/text_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <!-- Subtítulo -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Defina uma vez, vale para todas as suas rotas"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ÁREA ROLÁVEL -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingBottom="28dp">
+            android:paddingTop="4dp"
+            android:paddingBottom="32dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="4dp"
+            android:layout_marginHorizontal="6dp"
             android:lineSpacingExtra="2dp"
-            android:text="Defina seus preços uma vez e eles valem para todas as suas rotas. O app calcula o valor de cada passageiro e mostra para o responsável antes de ele pedir a vaga."
-            android:textColor="@color/gray"
-            android:textSize="14sp" />
+            android:text="O app calcula o valor de cada passageiro e mostra para o responsável antes de ele pedir a vaga."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            tools:ignore="HardcodedText" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_container_round_30"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_card_branco"
+            android:elevation="4dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -326,7 +376,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_container_round_30"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_card_branco"
+            android:elevation="4dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -394,7 +446,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_aviso_info"
+                android:background="@drawable/bg_tile_rota"
                 android:lineSpacingExtra="2dp"
                 android:paddingHorizontal="14dp"
                 android:paddingVertical="10dp"
@@ -407,7 +459,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_container_round_30"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_card_branco"
+            android:elevation="4dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -514,7 +568,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_aviso_info"
+                android:background="@drawable/bg_tile_rota"
                 android:lineSpacingExtra="2dp"
                 android:paddingHorizontal="14dp"
                 android:paddingVertical="10dp"
@@ -527,7 +581,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_container_round_30"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_card_branco"
+            android:elevation="4dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -595,8 +651,10 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
             android:layout_marginTop="16dp"
             android:background="@drawable/bg_hero_card"
+            android:elevation="6dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -835,8 +893,10 @@
             android:id="@+id/btnSalvarTabelaPreco"
             android:layout_width="match_parent"
             android:layout_height="54dp"
+            android:layout_marginHorizontal="2dp"
             android:layout_marginTop="20dp"
-            android:background="@drawable/bg_button_darkgrey"
+            android:background="@drawable/bg_botao_escuro"
+            android:elevation="3dp"
             android:text="Salvar tabela"
             android:textAllCaps="false"
             android:textColor="@color/white"
@@ -845,4 +905,10 @@
             app:backgroundTint="@null" />
         </LinearLayout>
     </ScrollView>
+
+    <View
+        android:id="@+id/bottomGap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
 </LinearLayout>

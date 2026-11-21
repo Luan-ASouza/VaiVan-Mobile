@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Mensagem enviada: bolha laranja à direita, horário no canto da bolha. -->
+<!-- Mensagem enviada: bolha à direita (laranja no responsável, escura no
+     motorista: MensagemAdapter.bolhaEnviada), horário no canto da bolha. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,6 +12,7 @@
     android:paddingVertical="3dp">
 
     <LinearLayout
+        android:id="@+id/bolhaMensagem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_bolha_enviada"

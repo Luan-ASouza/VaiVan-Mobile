@@ -31,6 +31,20 @@ class ArquivoRepository(
         extensao: String
     ): String = "documentos/$motoristaId/$tipo/$slot.$extensao"
 
+    /** Caminho de um documento de veículo: documentos_veiculos/{veiculoId}/{slot}_{momento}.{extensao}.
+     * O momento deixa cada envio num arquivo próprio — um upload cancelado
+     * nunca sobrescreve nem apaga o envio seguinte. */
+    fun caminhoDocumentoVeiculo(
+        veiculoId: String,
+        slot: String,
+        extensao: String
+    ): String = "documentos_veiculos/$veiculoId/${slot}_${System.currentTimeMillis()}.$extensao"
+
+    /** Apaga um arquivo a partir da URL de download (ex.: documento substituído). */
+    suspend fun excluirPorUrl(url: String) {
+        storage.getReferenceFromUrl(url).delete().await()
+    }
+
     /** Caminho da foto de perfil do próprio usuário: usuarios/{uid}/foto */
     fun caminhoFotoUsuario(uid: String): String = "usuarios/$uid/foto"
 

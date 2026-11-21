@@ -19,7 +19,8 @@ import com.google.android.material.imageview.ShapeableImageView
  */
 class PassageiroParadaAdapter(
     private val onConfirmar: (ParadaViagemEntity) -> Unit,
-    private val onNaoEmbarcou: (ParadaViagemEntity) -> Unit
+    private val onNaoEmbarcou: (ParadaViagemEntity) -> Unit,
+    private val onAbrirChat: (ParadaViagemEntity) -> Unit
 ) : RecyclerView.Adapter<PassageiroParadaAdapter.ParadaViewHolder>() {
 
     private var itens: List<ParadaViagemEntity> = emptyList()
@@ -48,9 +49,14 @@ class PassageiroParadaAdapter(
         private val status = itemView.findViewById<TextView>(R.id.statusPassageiroItemParada)
         private val btnConfirmar = itemView.findViewById<MaterialButton>(R.id.btnConfirmarAcaoItemParada)
         private val btnNao = itemView.findViewById<MaterialButton>(R.id.btnNaoAcaoItemParada)
+        private val btnChat = itemView.findViewById<View>(R.id.btnChatItemParada)
 
         fun bind(parada: ParadaViagemEntity) {
             nome.text = parada.nomePassageiro
+
+            // Conversa com o responsável do aluno (sem responsável, sem botão)
+            btnChat.visibility = if (parada.responsavelId.isBlank()) View.GONE else View.VISIBLE
+            btnChat.setOnClickListener { onAbrirChat(parada) }
 
             Glide.with(foto)
                 .load(parada.fotoPassageiroUrl)
@@ -67,7 +73,7 @@ class PassageiroParadaAdapter(
             btnNao.isEnabled = !resolvido
 
             if (parada.tipo == ViagemRepository.TIPO_EMBARQUE) {
-                btnConfirmar.text = "Confirmar embarque"
+                btnConfirmar.text = "Embarcou"
                 btnNao.text = "Não embarcou"
                 btnNao.visibility = View.VISIBLE
 

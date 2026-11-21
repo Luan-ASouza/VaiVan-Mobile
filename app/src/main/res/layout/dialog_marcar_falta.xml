@@ -1,108 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet "Marcar falta" (responsável). Rota de ida e volta mostra as
+     opções Ida / Volta / Ida e volta (pílulas; a marcada fica laranja e as
+     que já não valem hoje ficam apagadas). Rota de um sentido só esconde as
+     opções e vira uma confirmação simples. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_sheet_rounded"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_sheet_handle" />
+
+    <ImageView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_icone_responsavel"
+        android:importantForAccessibility="no"
+        android:padding="14dp"
+        android:src="@drawable/ic_calendario"
+        app:tint="@color/passageiro_destaque_forte" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
         android:text="Marcar falta"
-        android:textColor="@color/dark_gray"
-        android:textSize="18sp"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
         android:textStyle="bold"
         tools:ignore="HardcodedText" />
 
     <TextView
+        android:id="@+id/txtMensagemMarcarFalta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
         android:text="Em qual trajeto seu filho vai faltar hoje? O motorista será avisado e a parada dele não vai entrar na rota escolhida."
-        android:textColor="@color/light_gray"
-        android:textSize="13sp"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
         tools:ignore="HardcodedText" />
 
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/toggleDirecaoFalta"
+    <!-- OPÇÕES (só em rota de ida e volta) -->
+    <LinearLayout
+        android:id="@+id/grupoDirecaoFalta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:singleSelection="true">
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
+        <TextView
             android:id="@+id/btnFaltaIda"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            style="@style/OpcaoFormaPagamento"
+            android:layout_marginEnd="4dp"
             android:text="Ida"
-            android:textAllCaps="false"
-            android:textSize="13sp"
             tools:ignore="HardcodedText" />
 
-        <com.google.android.material.button.MaterialButton
+        <TextView
             android:id="@+id/btnFaltaVolta"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            style="@style/OpcaoFormaPagamento"
+            android:layout_marginHorizontal="4dp"
             android:text="Volta"
-            android:textAllCaps="false"
-            android:textSize="13sp"
             tools:ignore="HardcodedText" />
 
-        <com.google.android.material.button.MaterialButton
+        <TextView
             android:id="@+id/btnFaltaAmbas"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            style="@style/OpcaoFormaPagamento"
+            android:layout_marginStart="4dp"
             android:text="Ida e volta"
-            android:textAllCaps="false"
-            android:textSize="13sp"
             tools:ignore="HardcodedText" />
-
-    </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/txtAvisoBloqueioFalta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:textColor="@color/status_danger"
-        android:textSize="12sp"
+        android:background="@drawable/bg_tile_rota"
+        android:backgroundTint="@color/status_warning_fundo"
+        android:lineSpacingExtra="2dp"
+        android:padding="12dp"
+        android:textColor="@color/status_warning_texto"
+        android:textSize="13sp"
         android:visibility="gone"
-        tools:text="O filho já embarcou na ida de hoje — só dá pra avisar falta na volta." />
+        tools:text="Seu filho já embarcou na ida de hoje — só dá pra avisar falta na volta."
+        tools:visibility="visible" />
 
-    <LinearLayout
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConfirmarMarcarFalta"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:gravity="end"
-        android:orientation="horizontal">
+        android:layout_height="52dp"
+        android:layout_marginTop="24dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="Avisar falta"
+        android:textAllCaps="false"
+        android:textColor="@color/text_on_dark"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/passageiro_destaque_forte"
+        app:cornerRadius="16dp"
+        tools:ignore="HardcodedText" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancelarMarcarFalta"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cancelar"
-            android:textAllCaps="false"
-            tools:ignore="HardcodedText" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnConfirmarMarcarFalta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Continuar"
-            android:textAllCaps="false"
-            app:backgroundTint="@color/status_danger"
-            tools:ignore="HardcodedText" />
-
-    </LinearLayout>
-
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancelarMarcarFalta"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="6dp"
+        android:text="Cancelar"
+        android:textAllCaps="false"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
 </LinearLayout>

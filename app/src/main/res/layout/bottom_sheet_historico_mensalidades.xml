@@ -1,44 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Histórico de mensalidades de um passageiro (motorista). -->
+<!-- Histórico de mensalidades de um aluno (motorista e responsável): cabeçalho
+     com a inicial, uma linha por mês (selo de status) e, só no motorista,
+     "Alterar valor ou vencimento". -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottomsheet_white"
+    android:background="@drawable/bg_sheet_rounded"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="24dp">
 
     <View
-        android:layout_width="80dp"
-        android:layout_height="7dp"
+        android:layout_width="40dp"
+        android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_white_rounded"
-        android:backgroundTint="#dbdce0" />
+        android:background="@drawable/bg_sheet_handle" />
 
-    <TextView
-        android:id="@+id/txtTituloHistorico"
+    <!-- CABEÇALHO -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/dark_gray"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        tools:text="Maria Souza" />
+        android:layout_marginTop="20dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgFotoHistorico"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Foto do passageiro"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/avatar_01"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:strokeColor="@color/passageiro_destaque"
+            app:strokeWidth="2dp"
+            tools:ignore="HardcodedText" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtTituloHistorico"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                tools:text="Maria Souza" />
+
+            <TextView
+                android:id="@+id/txtSubtituloHistorico"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:text="R$ 400,00 / mês · vence dia 10" />
+        </LinearLayout>
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/txtSubtituloHistorico"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="@color/medium_gray"
-        android:textSize="13sp"
-        tools:text="R$ 400,00 / mês · vence dia 10" />
+        style="@style/TituloSecaoRota"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="18dp"
+        android:text="Histórico"
+        tools:ignore="HardcodedText" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:id="@+id/containerHistorico"
@@ -51,10 +91,20 @@
         android:id="@+id/btnReajustarContrato"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="16dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="Alterar valor ou vencimento"
         android:textAllCaps="false"
-        android:textColor="@color/dark_gray"
-        app:strokeColor="@color/dark_gray" />
+        android:textColor="@color/rota_destaque"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_editar"
+        app:iconGravity="textStart"
+        app:iconTint="@color/rota_destaque"
+        app:strokeColor="@color/rota_destaque"
+        app:strokeWidth="1.5dp"
+        tools:ignore="HardcodedText" />
 </LinearLayout>

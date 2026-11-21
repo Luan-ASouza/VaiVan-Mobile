@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Título de seção numa lista montada em código (ex.: seções da Ajuda). -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/TituloSecaoRota"
+    android:layout_marginTop="12dp"
+    tools:text="Guias passo a passo" />

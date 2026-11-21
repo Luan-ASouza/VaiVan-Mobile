@@ -1,20 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cadastro/edição de veículo: cabeçalho escuro com a foto da van em destaque
-     e, abaixo, o formulário no mesmo estilo das telas de perfil. O cabeçalho
-     rola junto com o formulário; o voltar e o botão Salvar ficam fixos. -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Cadastro/edição de veículo, no mesmo desenho do perfil do passageiro:
+     barra com voltar, foto de exemplo do modelo centralizada com nome e placa,
+     e duas abas — Informações (formulário + Salvar) e Documentos (CRLV e
+     autorização, com o selo de status; tocar abre o envio). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/background_screen"
+    android:orientation="vertical">
+
+    <View
+        android:id="@+id/topGap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
 
     <LinearLayout
         android:id="@+id/conteudoCadastroVeiculo"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical">
 
+        <!-- BARRA DO TOPO -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <ImageButton
+                android:id="@+id/btnVoltarCadastroVeiculo"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Voltar"
+                android:src="@drawable/ic_arrowback"
+                app:tint="@color/text_primary"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/txtTituloVeiculo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Novo veículo"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
         <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollCadastroVeiculo"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -24,89 +65,124 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="24dp">
 
-                <!-- ================= CABEÇALHO ================= -->
+                <!-- CABEÇALHO: FOTO DE EXEMPLO + NOME + PLACA -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_hero_veiculo"
-                    android:orientation="vertical">
-
-                    <View
-                        android:id="@+id/topGap"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp" />
-
-                    <!-- espaço do botão voltar (que fica fixo por cima) -->
-                    <Space
-                        android:layout_width="match_parent"
-                        android:layout_height="64dp" />
-
-                    <TextView
-                        android:id="@+id/txtTituloVeiculo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/montserrat_semibold"
-                        android:paddingHorizontal="24dp"
-                        android:text="Novo veículo"
-                        android:textColor="@color/text_on_dark"
-                        android:textSize="28sp" />
-
-                    <TextView
-                        android:id="@+id/txtSubtituloVeiculo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:paddingHorizontal="24dp"
-                        android:text="Última etapa antes de começar a rodar. Escolha o modelo e veja a sua van."
-                        android:textColor="@color/text_on_dark_secondary"
-                        android:textSize="14sp" />
+                    android:gravity="center_horizontal"
+                    android:orientation="horizontal">
 
                     <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp">
-
-                        <!-- sombra no chão, sob a van -->
-                        <View
-                            android:layout_width="260dp"
-                            android:layout_height="22dp"
-                            android:layout_gravity="bottom|center_horizontal"
-                            android:layout_marginBottom="14dp"
-                            android:background="@drawable/bg_sombra_chao" />
+                        android:layout_width="200dp"
+                        android:layout_height="130dp">
 
                         <ImageView
                             android:id="@+id/imgFotoVeiculo"
                             android:layout_width="match_parent"
-                            android:layout_height="210dp"
-                            android:layout_marginHorizontal="12dp"
-                            android:alpha="0.35"
-                            android:contentDescription="Foto do veículo"
+                            android:layout_height="match_parent"
+                            android:layout_marginBottom="10dp"
+                            android:adjustViewBounds="true"
+                            android:contentDescription="Foto de exemplo do modelo"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/van1_img" />
+                            android:src="@drawable/van1_img"
+                            tools:ignore="HardcodedText" />
+
+                        <TextView
+                            android:id="@+id/txtStatusFoto"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:layout_gravity="bottom|center"
+                            android:gravity="center"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="8sp"
+                            tools:text="Foto de exemplo do modelo" />
                     </FrameLayout>
 
-                    <TextView
-                        android:id="@+id/txtStatusFoto"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:paddingHorizontal="24dp"
-                        android:paddingBottom="24dp"
-                        android:text="Escolha marca e modelo pra ver uma foto de exemplo"
-                        android:textColor="@color/text_on_dark_secondary"
-                        android:textSize="12sp" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/txtNomeVeiculoCabecalho"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="Mercedes Sprinter" />
+
+                        <TextView
+                            android:id="@+id/txtSubtituloVeiculo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:gravity="center"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp"
+                            tools:text="ABC1D23" />
+
+                    </LinearLayout>
                 </LinearLayout>
 
-                <!-- ================= FORMULÁRIO ================= -->
+                <!-- ABAS -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/abaInformacoesVeiculo"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_aba_escura_selecionada"
+                        android:gravity="center"
+                        android:text="Informações"
+                        android:textColor="@color/text_on_dark"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:id="@+id/abaDocumentosVeiculo"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_aba"
+                        android:gravity="center"
+                        android:text="Documentos"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <!-- ================= ABA INFORMAÇÕES ================= -->
+                <LinearLayout
+                    android:id="@+id/conteudoInformacoesVeiculo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_branco"
+                    android:elevation="4dp"
                     android:orientation="vertical"
-                    android:paddingHorizontal="24dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="16dp">
+                    android:paddingHorizontal="18dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="20dp">
 
                     <!-- PLACA -->
                     <TextView
@@ -141,9 +217,9 @@
 
                         <AutoCompleteTextView
                             android:id="@+id/edtMarca"
-                            android:drawableEnd="@drawable/ic_seta_baixo"
                             style="@style/TextoEdicaoPerfil"
                             android:cursorVisible="false"
+                            android:drawableEnd="@drawable/ic_seta_baixo"
                             android:focusable="false"
                             android:hint="Selecione a marca"
                             android:inputType="none" />
@@ -164,9 +240,9 @@
 
                         <AutoCompleteTextView
                             android:id="@+id/edtModelo"
-                            android:drawableEnd="@drawable/ic_seta_baixo"
                             style="@style/TextoEdicaoPerfil"
                             android:cursorVisible="false"
+                            android:drawableEnd="@drawable/ic_seta_baixo"
                             android:focusable="false"
                             android:hint="Selecione o modelo"
                             android:inputType="none" />
@@ -200,9 +276,9 @@
 
                                 <AutoCompleteTextView
                                     android:id="@+id/edtAno"
-                                    android:drawableEnd="@drawable/ic_seta_baixo"
                                     style="@style/TextoEdicaoPerfil"
                                     android:cursorVisible="false"
+                                    android:drawableEnd="@drawable/ic_seta_baixo"
                                     android:focusable="false"
                                     android:hint="Ano"
                                     android:inputType="none" />
@@ -255,9 +331,9 @@
 
                         <AutoCompleteTextView
                             android:id="@+id/edtCor"
-                            android:drawableEnd="@drawable/ic_seta_baixo"
                             style="@style/TextoEdicaoPerfil"
                             android:cursorVisible="false"
+                            android:drawableEnd="@drawable/ic_seta_baixo"
                             android:drawablePadding="10dp"
                             android:focusable="false"
                             android:hint="Selecione a cor"
@@ -268,183 +344,275 @@
                         android:id="@+id/txtErroCor"
                         style="@style/ErroEdicaoPerfil"
                         android:text="*Escolha a cor do veículo." />
+                </LinearLayout>
 
-                    <!-- DOCUMENTOS -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="32dp"
-                        android:text="Documentos"
-                        android:textColor="@color/text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                <!-- Excluir (só na edição, aba Informações) — como no perfil do passageiro -->
+                <TextView
+                    android:id="@+id/btnExcluirVeiculo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:text="Excluir veículo"
+                    android:textColor="@color/status_danger"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:ignore="HardcodedText"
+                    tools:visibility="visible" />
 
+                <!-- ================= ABA DOCUMENTOS ================= -->
+                <LinearLayout
+                    android:id="@+id/conteudoDocumentosVeiculo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <!-- Veículo ainda não salvo: os documentos dependem dele -->
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/txtDocumentosSemVeiculo"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Envie uma foto ou o PDF de cada documento."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:layout_marginHorizontal="2dp"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/bg_tile_rota"
+                        android:backgroundTint="@color/status_warning_fundo"
+                        android:lineSpacingExtra="2dp"
+                        android:padding="14dp"
+                        android:text="Salve as informações do veículo para poder enviar os documentos."
+                        android:textColor="@color/status_warning_texto"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        tools:ignore="HardcodedText"
+                        tools:visibility="visible" />
 
                     <!-- CRLV -->
-                    <LinearLayout
-                        android:id="@+id/btnSelecionarCrlv"
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/itemCrlvVeiculo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_beige_round_20"
+                        android:layout_marginHorizontal="2dp"
+                        android:layout_marginBottom="12dp"
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_documento"
-                            app:tint="@color/text_primary" />
+                        app:cardBackgroundColor="@color/background_container"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="4dp">
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="14dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="CRLV"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                            <ImageView
+                                android:id="@+id/iconeCrlvVeiculo"
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"
+                                android:background="@drawable/bg_icone_motorista"
+                                android:importantForAccessibility="no"
+                                android:padding="11dp"
+                                android:src="@drawable/ic_enviar_arquivo"
+                                app:tint="@color/rota_destaque" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="Certificado de Registro e Licenciamento do Veículo"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:layout_marginStart="14dp"
+                                android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <TextView
-                                android:id="@+id/txtNomeArquivoCrlv"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:ellipsize="middle"
-                                android:singleLine="true"
-                                android:text="Toque para selecionar"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp"
-                                android:textStyle="italic" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="CRLV"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:ignore="HardcodedText" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Certificado de Registro e Licenciamento do Veículo"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="13sp"
+                                    tools:ignore="HardcodedText" />
+
+                                <TextView
+                                    android:id="@+id/txtStatusCrlvVeiculo"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/bg_pilula_branca"
+                                    android:paddingHorizontal="10dp"
+                                    android:paddingVertical="3dp"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    tools:text="Em análise" />
+
+                                <TextView
+                                    android:id="@+id/txtMotivoCrlvVeiculo"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:textColor="@color/status_danger"
+                                    android:textSize="13sp"
+                                    android:visibility="gone" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_chevron_direita"
+                                app:tint="@color/text_tertiary" />
                         </LinearLayout>
-
-                        <ImageView
-                            android:id="@+id/iconCheckCrlv"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="10dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/icon_check"
-                            android:visibility="gone" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/txtErroCrlv"
-                        style="@style/ErroEdicaoPerfil"
-                        android:text="*Selecione o arquivo do CRLV." />
+                    </androidx.cardview.widget.CardView>
 
                     <!-- AUTORIZAÇÃO -->
-                    <LinearLayout
-                        android:id="@+id/btnSelecionarAutorizacao"
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/itemAutorizacaoVeiculo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/bg_beige_round_20"
+                        android:layout_marginHorizontal="2dp"
+                        android:layout_marginBottom="12dp"
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_documento"
-                            app:tint="@color/text_primary" />
+                        app:cardBackgroundColor="@color/background_container"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="4dp">
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="14dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Autorização de transporte escolar"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                            <ImageView
+                                android:id="@+id/iconeAutorizacaoVeiculo"
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"
+                                android:background="@drawable/bg_icone_motorista"
+                                android:importantForAccessibility="no"
+                                android:padding="11dp"
+                                android:src="@drawable/ic_enviar_arquivo"
+                                app:tint="@color/rota_destaque" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="Documento de liberação para dirigir transporte escolar"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:layout_marginStart="14dp"
+                                android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <TextView
-                                android:id="@+id/txtNomeArquivoAutorizacao"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:ellipsize="middle"
-                                android:singleLine="true"
-                                android:text="Toque para selecionar"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp"
-                                android:textStyle="italic" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Autorização de transporte escolar"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:ignore="HardcodedText" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Liberação para dirigir transporte escolar"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="13sp"
+                                    tools:ignore="HardcodedText" />
+
+                                <TextView
+                                    android:id="@+id/txtStatusAutorizacaoVeiculo"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/bg_pilula_branca"
+                                    android:paddingHorizontal="10dp"
+                                    android:paddingVertical="3dp"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    tools:text="Pendente" />
+
+                                <TextView
+                                    android:id="@+id/txtMotivoAutorizacaoVeiculo"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:textColor="@color/status_danger"
+                                    android:textSize="13sp"
+                                    android:visibility="gone" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_chevron_direita"
+                                app:tint="@color/text_tertiary" />
                         </LinearLayout>
+                    </androidx.cardview.widget.CardView>
 
-                        <ImageView
-                            android:id="@+id/iconCheckAutorizacao"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="10dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/icon_check"
-                            android:visibility="gone" />
+                    <!-- DICA -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="2dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/bg_icone_motorista"
+                        android:backgroundTint="@color/rota_vagas_fundo"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dica"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:ignore="HardcodedText" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:lineSpacingExtra="2dp"
+                            android:text="Envie uma foto legível ou o PDF de cada documento. Depois de enviados, eles passam por análise."
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp"
+                            tools:ignore="HardcodedText" />
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/txtErroAutorizacao"
-                        style="@style/ErroEdicaoPerfil"
-                        android:text="*Selecione o documento de autorização." />
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
-        <include layout="@layout/rodape_salvar_edicao_perfil" />
+        <!-- Salvar (só na aba Informações) -->
+        <FrameLayout
+            android:id="@+id/rodapeSalvarVeiculo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <include layout="@layout/rodape_salvar_edicao_perfil" />
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Voltar fixo por cima do cabeçalho (a margem do topo acompanha a status bar). -->
-    <ImageButton
-        android:id="@+id/btnVoltarCadastroVeiculo"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_botao_voltar_hero"
-        android:contentDescription="Voltar"
-        android:src="@drawable/ic_arrowback"
-        app:tint="@color/text_on_dark" />
-
-</FrameLayout>
+</LinearLayout>
