@@ -31,6 +31,8 @@ import com.example.vaivan.data.local.entities.VeiculoEntity
 import com.example.vaivan.data.repository.DocumentoRepository
 import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.data.repository.VeiculoVinculadoARotaException
+import com.example.vaivan.data.repository.PlacaDuplicadaException
+import com.example.vaivan.domain.usecase.veiculo.VeiculoPolicy
 import com.example.vaivan.ui.comum.tema.TemaPerfil
 import com.example.vaivan.ui.comum.tema.marcarOpcao
 import com.example.vaivan.ui.motorista.entrada.documentos.pintarStatusDocumento
@@ -65,7 +67,7 @@ class CadastroVeiculoActivity : BaseActivity() {
         private const val TEXTO_SALVAR = "Salvar e continuar"
         private const val TEXTO_SALVAR_EDICAO = "Salvar alterações"
 
-        private const val STATUS_VEICULO = "PENDENTE"
+        private const val ERRO_PLACA_FORMATO = "*Digite uma placa válida (ABC1234 ou ABC1D23)."
 
         private val REGEX_PLACA =
             Pattern.compile("^[A-Z]{3}[0-9][0-9A-Z][0-9]{2}$")
@@ -599,6 +601,7 @@ class CadastroVeiculoActivity : BaseActivity() {
         val erroCor = cor.length < 2
         val erroCapacidade = capacidade !in 1..LIMITE_CAPACIDADE
 
+        txtErroPlaca.text = ERRO_PLACA_FORMATO
         mostrarErro(layoutPlaca, txtErroPlaca, erroPlaca)
         mostrarErro(layoutMarca, txtErroMarca, erroMarca)
         mostrarErro(layoutModelo, txtErroModelo, erroModelo)
@@ -655,16 +658,29 @@ class CadastroVeiculoActivity : BaseActivity() {
             cor = cor,
             anoFabricacao = ano,
             capacidadePassageiros = capacidade,
-            status = STATUS_VEICULO,
+            status = VeiculoRepository.STATUS_PENDENTE,
             motoristaId = motoristaId,
             lastUpdated = 0L
         )
+
+        val voltaParaAnalise = veiculoCarregado?.let {
+            VeiculoPolicy.alterouDadosCriticos(it, veiculoParaSalvar)
+        } ?: false
 
         lifecycleScope.launch {
 
             try {
                 val veiculoIdSalvo = veiculoRepository.salvarVeiculo(veiculoParaSalvar)
-                aoSalvar(veiculoParaSalvar.copy(id = veiculoIdSalvo), editando)
+                aoSalvar(veiculoParaSalvar.copy(id = veiculoIdSalvo), editando, voltaParaAnalise)
+
+            } catch (erro: PlacaDuplicadaException) {
+
+                definirSalvando(false)
+                txtErroPlaca.text = "*Esta placa já está cadastrada em outro veículo."
+                mostrarErro(layoutPlaca, txtErroPlaca, true)
+                layoutPlaca.requestRectangleOnScreen(
+                    android.graphics.Rect(0, 0, layoutPlaca.width, layoutPlaca.height)
+                )
 
             } catch (erro: Exception) {
 
@@ -681,9 +697,14 @@ class CadastroVeiculoActivity : BaseActivity() {
 
     /** Edição: volta para a lista. Cadastro novo: fica na tela, agora em modo
      * edição, e abre a aba Documentos para o envio do CRLV e da autorização. */
-    private fun aoSalvar(veiculo: VeiculoEntity, editando: Boolean) {
+    private fun aoSalvar(veiculo: VeiculoEntity, editando: Boolean, voltaParaAnalise: Boolean) {
         if (editando) {
-            Toast.makeText(this, "Veículo atualizado!", Toast.LENGTH_SHORT).show()
+            val mensagem = if (voltaParaAnalise) {
+                "Veículo atualizado. Como dados do documento mudaram, ele volta para validação."
+            } else {
+                "Veículo atualizado!"
+            }
+            Toast.makeText(this, mensagem, Toast.LENGTH_LONG).show()
             finish()
             return
         }

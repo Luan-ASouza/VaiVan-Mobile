@@ -46,18 +46,36 @@
 
     </FrameLayout>
 
+    <!-- Voltar no topo, à esquerda da busca (mesmo botão das outras telas de mapa) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnVoltarSelecao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:contentDescription="Voltar"
+        android:src="@drawable/ic_arrowback"
+        app:backgroundTint="@color/background_container"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        app:fabCustomSize="48dp"
+        app:layout_constraintBottom_toBottomOf="@+id/cardBusca"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/cardBusca"
+        app:maxImageSize="18dp"
+        app:tint="@color/text_primary" />
+
     <!-- Busca flutuante -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardBusca"
         android:layout_width="0dp"
         android:layout_height="58dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="10dp"
         android:layout_marginEnd="16dp"
         app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="18dp"
         app:cardElevation="6dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btnVoltarSelecao"
         app:layout_constraintTop_toBottomOf="@+id/topGap"
         app:strokeColor="#E8EAF0"
         app:strokeWidth="1dp"
@@ -128,14 +146,18 @@
         android:id="@+id/btnMinhaLocalizacao"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="20dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
         android:contentDescription="Usar minha localização"
-        app:backgroundTint="@android:color/white"
+        app:backgroundTint="@color/background_container"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        app:fabCustomSize="48dp"
         app:layout_constraintBottom_toTopOf="@+id/cardLocalizacao"
         app:layout_constraintEnd_toEndOf="@+id/mapContainer"
+        app:maxImageSize="22dp"
         app:srcCompat="@drawable/ic_minha_localizacao"
-        app:tint="@color/dark_gray" />
+        app:tint="@color/text_primary" />
 
     <!-- Painel inferior -->
     <com.google.android.material.card.MaterialCardView

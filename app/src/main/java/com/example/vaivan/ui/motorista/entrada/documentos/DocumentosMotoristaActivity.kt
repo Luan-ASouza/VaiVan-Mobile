@@ -17,13 +17,30 @@ import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.local.entities.DocumentoEntity
 import com.example.vaivan.data.models.StatusDocumento
 import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.ui.inicio.EscolhaTipoPerfilActivity
+import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 
+/**
+ * Documentos do motorista. Dois usos:
+ *  - cadastro (EXTRA_CADASTRO): motorista ainda não aprovado. Mostra o status de cada
+ *    documento, permite reenviar e, quando o painel aprova (statusMotorista = ATIVO),
+ *    segue sozinho para a Home;
+ *  - "Meus documentos" (aberto pela Home): só consulta/troca de documentos.
+ */
 class DocumentosMotoristaActivity : BaseActivity() {
 
+    companion object {
+        const val EXTRA_CADASTRO = "documentos_cadastro"
+    }
+
     private val auth = FirebaseAuth.getInstance()
+    private var observadorCadastro: ListenerRegistration? = null
+    private val modoCadastro by lazy { intent.getBooleanExtra(EXTRA_CADASTRO, false) }
     private lateinit var documentoRepository: DocumentoRepository
 
     private lateinit var itemCnh: View
@@ -60,9 +77,35 @@ class DocumentosMotoristaActivity : BaseActivity() {
         aplicarGapsDeSistema()
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (modoCadastro) observarCadastro()
+    }
+
     override fun onStop() {
+        observadorCadastro?.remove()
+        observadorCadastro = null
         documentoRepository.pararSincronizacao()
         super.onStop()
+    }
+
+    /** Cadastro: acompanha o statusMotorista para seguir à Home quando o painel aprovar. */
+    private fun observarCadastro() {
+        val uid = auth.currentUser?.uid ?: return
+        observadorCadastro = FirebaseFirestore.getInstance()
+            .collection("usuarios")
+            .document(uid)
+            .addSnapshotListener { snapshot, erro ->
+                if (erro != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
+                if (snapshot.getString("statusMotorista") == "ATIVO") {
+                    startActivity(
+                        Intent(this, HomeMotoristaActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                    )
+                    finish()
+                }
+            }
     }
 
     private fun inicializarViews() {
@@ -101,6 +144,15 @@ class DocumentosMotoristaActivity : BaseActivity() {
     private fun configurarCliques() {
 
         findViewById<View>(R.id.btnVoltar).setOnClickListener {
+            if (modoCadastro && isTaskRoot) {
+                // No cadastro esta é a única tela da pilha: volta à escolha de perfil
+                // (sem encerrar a sessão), como na tela de análise.
+                startActivity(
+                    Intent(this, EscolhaTipoPerfilActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                )
+            }
             finish()
         }
 
@@ -173,7 +225,13 @@ class DocumentosMotoristaActivity : BaseActivity() {
         }
 
         barraProgresso.progress = enviados
-        txtProgresso.text = if (enviados == 3) {
+        val aprovados = listOf(statusCnh, statusComprovante, statusSelfie).count {
+            it == StatusDocumento.APROVADO
+        }
+
+        txtProgresso.text = if (enviados == 3 && modoCadastro && aprovados < 3) {
+            "Documentos em análise"
+        } else if (enviados == 3) {
             "Todos os documentos foram enviados"
         } else {
             "$enviados de 3 documentos enviados"

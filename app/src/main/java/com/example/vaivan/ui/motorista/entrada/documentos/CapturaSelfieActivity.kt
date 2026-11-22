@@ -29,6 +29,7 @@ import com.example.vaivan.core.util.ImagemUtil
 import com.example.vaivan.core.util.SystemBarUtils.applyTopAndBottomGaps
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.data.repository.UsuarioRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.io.File
@@ -237,6 +238,21 @@ class CapturaSelfieActivity : AppCompatActivity() {
                     ).format(Date())
 
                     documentoRepository.salvarSelfie(userId, url.toString(), dataEnvio)
+
+                    // A foto da verificação facial também vira a foto de perfil (cópia
+                    // própria, menor, em fotos_usuarios: reenviar a selfie não a apaga).
+                    // Falhar aqui não invalida o envio do documento.
+                    arquivoCapturado?.let { original ->
+                        runCatching {
+                            val fotoPerfil = ImagemUtil.comprimir(
+                                this@CapturaSelfieActivity,
+                                Uri.fromFile(original),
+                                ImagemUtil.PERFIL
+                            )
+                            UsuarioRepository(VaivanDatabase.getInstance(this@CapturaSelfieActivity).usuarioDao())
+                                .atualizarFoto(userId, fotoPerfil)
+                        }
+                    }
 
                     arquivoCapturado?.delete()
                     arquivoCapturado = null

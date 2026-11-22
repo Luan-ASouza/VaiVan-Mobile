@@ -125,13 +125,16 @@ O banco exporta o esquema para `app/schemas/` (versionado no Git; a versão 14 �
 
 ## Testes
 
-Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Android): regras de assinatura (`AssinaturaPolicyTest`, `AssinaturaBloqueiosTest`), `PlanoCatalogoTest`, `StatusDocumentoTest`, `ReciboTest`, `GeoUtilTest`, `HorariosDaRotaTest`, `RotaTextosTest`. Regra de negócio nova vai em objeto Kotlin puro (sem Firebase/Android) para poder ser testada assim. Rodar: botão direito em `app/src/test/java` > Run, ou `./gradlew testDebugUnitTest`.
+Testes unitários em `app/src/test/java/com/example/vaivan/` (JUnit 4, sem Android): regras de assinatura (`AssinaturaPolicyTest`, `AssinaturaBloqueiosTest`), `PlanoCatalogoTest`, `StatusDocumentoTest`, `VeiculoPolicyTest`, `ReciboTest`, `GeoUtilTest`, `HorariosDaRotaTest`, `RotaTextosTest`. Regra de negócio nova vai em objeto Kotlin puro (sem Firebase/Android) para poder ser testada assim. Rodar: botão direito em `app/src/test/java` > Run, ou `./gradlew testDebugUnitTest`.
 
 ## Cadastro de motorista, documentos e painel admin
 
 - O roteamento do motorista usa **um único campo**: `usuarios/{uid}.statusMotorista` no Firestore (`PENDENTE`, `EM_ANALISE`, `ATIVO`, `SUSPENSO`). O app só grava `PENDENTE`/`EM_ANALISE`; `ATIVO`/`SUSPENSO` só o administrador (regra `statusMotoristaPermitido()`). Não redirecione com base no Room, para não criar laços de tela.
 - Documentos (`documentos/{motoristaId}_{tipo}`): tipos `CNH` (frente e verso, ou PDF na CNH digital), `COMPROVANTE_RESIDENCIA` e `SELFIE`. O painel (`admin-web/public/painel.js`) usa os mesmos tipos; ao aprovar os três, grava `statusMotorista = ATIVO`. Ao rejeitar, grava o motivo (o app o exibe) e volta o motorista para `PENDENTE`.
+- Telas: `AnaliseDocumentosActivity` ("Em análise") só aparece logo depois de concluir o envio (`VerificarProgressoDocumentos`). Ao entrar de novo com `PENDENTE`/`EM_ANALISE`, a `EntradaMotoristaActivity` abre `DocumentosMotoristaActivity` em modo cadastro (`EXTRA_CADASTRO`): status de cada documento, reenvio e ida automática à Home quando virar `ATIVO`.
+- A selfie enviada também vira a foto de perfil (`UsuarioRepository.atualizarFoto`, cópia comprimida em `fotos_usuarios`).
 - Motorista já aprovado pode trocar um documento (menu "Meus documentos"): ele volta a `EM_ANALISE`, sem tirar o acesso do motorista.
+- **Veículos** (regras em `domain/usecase/veiculo/VeiculoPolicy`, testado; espelhadas em `match /veiculos` e `match /rotas` do `firestore.rules`): `status` = `PENDENTE` → `EM_ANALISE` (CRLV + autorização enviados, gravado pelo app) → `APROVADO`/`REJEITADO` (só o painel, ao aprovar os dois / recusar um). Placa é única (`consultarPlacaEmUso`). Editar placa, marca, modelo, cor, ano ou capacidade devolve o veículo a `PENDENTE` e manda os documentos aprovados de volta à análise. Só veículo `APROVADO` pode ser associado a uma rota (etapa "Veículo" da `CriarRotaActivity`, `AssociarVeiculoARotaUseCase`).
 - O painel é publicado com `firebase deploy --only hosting` (a partir de `admin-web/`).
 
 ## Notificações push

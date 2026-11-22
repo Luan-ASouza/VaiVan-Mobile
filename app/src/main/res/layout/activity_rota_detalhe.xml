@@ -356,6 +356,12 @@
                         <include
                             android:id="@+id/campoCapacidadeRota"
                             layout="@layout/item_perfil_campo" />
+
+                        <View style="@style/DivisorCampoPerfil" />
+
+                        <include
+                            android:id="@+id/campoVeiculoRota"
+                            layout="@layout/item_perfil_campo" />
                     </LinearLayout>
 
                     <!-- Locais -->

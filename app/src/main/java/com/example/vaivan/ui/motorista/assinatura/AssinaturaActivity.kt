@@ -9,7 +9,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -515,10 +514,11 @@ class AssinaturaActivity : BaseActivity() {
             try {
                 bloco()
             } catch (e: AssinaturaBloqueadaException) {
-                AlertDialog.Builder(this@AssinaturaActivity)
-                    .setMessage(e.message)
-                    .setPositiveButton("OK", null)
-                    .show()
+                AssinaturaUi.mostrarBloqueio(
+                    this@AssinaturaActivity,
+                    e.message ?: "Operação indisponível no momento.",
+                    comAtalho = false
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Erro na operação de assinatura", e)
                 Toast.makeText(

@@ -114,6 +114,7 @@ class SelecaoLocalizacaoActivity :
         containerSugestoesBusca = findViewById(R.id.containerSugestoesBusca)
         btnMinhaLocalizacao = findViewById(R.id.btnMinhaLocalizacao)
         btnConfirmar = findViewById(R.id.btnConfirmar)
+        findViewById<View>(R.id.btnVoltarSelecao).setOnClickListener { finish() }
 
         btnConfirmar.isEnabled = false
 

@@ -3,6 +3,8 @@ package com.example.vaivan.data.repository
 import com.example.vaivan.data.local.dao.DocumentoDao
 import com.example.vaivan.data.local.dao.VeiculoDao
 import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.example.vaivan.data.models.StatusDocumento
+import com.example.vaivan.domain.usecase.veiculo.VeiculoPolicy
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -33,6 +35,16 @@ class VeiculoVinculadoARotaException : Exception(
     "Este veículo está vinculado a uma rota. Troque ou remova o veículo da rota antes de excluí-lo."
 )
 
+/** Cadastro bloqueado: outro veículo já usa esta placa. */
+class PlacaDuplicadaException(placa: String) : Exception(
+    "A placa $placa já está cadastrada em outro veículo."
+)
+
+/** Associação bloqueada: só veículo aprovado pode ir para uma rota. */
+class VeiculoNaoAprovadoException : Exception(
+    "Só veículos com os documentos aprovados podem ser associados a uma rota."
+)
+
 class VeiculoRepository(
     private val veiculoDao: VeiculoDao,
     private val firestore: FirebaseFirestore =
@@ -41,6 +53,14 @@ class VeiculoRepository(
     // cascata dos documentos também refletir no Room na hora.
     private val documentoDao: DocumentoDao? = null
 ) {
+
+    companion object {
+        // Valores de VeiculoEntity.status (regras em VeiculoPolicy)
+        const val STATUS_PENDENTE = "PENDENTE"
+        const val STATUS_EM_ANALISE = "EM_ANALISE"
+        const val STATUS_APROVADO = "APROVADO"   // só o painel grava
+        const val STATUS_REJEITADO = "REJEITADO" // só o painel grava
+    }
 
     private val collection =
         firestore.collection("veiculos")
@@ -122,6 +142,25 @@ class VeiculoRepository(
             )
     }
 
+
+    /** Consulta no Firebase se a placa já está em outro veículo (de qualquer motorista).
+     * Compara também a forma com hífen, de cadastros antigos. */
+    suspend fun consultarPlacaEmUso(placa: String, ignorarVeiculoId: String?): Boolean {
+        val normalizada = VeiculoPolicy.normalizarPlaca(placa)
+        val variantes = listOf(normalizada, normalizada.take(3) + "-" + normalizada.drop(3))
+        val snapshot = collection.whereIn("placa", variantes).get().await()
+        return snapshot.documents.any { it.id != ignorarVeiculoId }
+    }
+
+    /** Veículo do motorista apto a ir para uma rota (consulta o Firebase, não o cache). */
+    suspend fun exigirVeiculoAprovado(veiculoId: String, motoristaId: String) {
+        val veiculo = consultarVeiculo(veiculoId)
+        if (veiculo == null || veiculo.motoristaId != motoristaId ||
+            !VeiculoPolicy.podeSerAssociadoARota(veiculo)
+        ) {
+            throw VeiculoNaoAprovadoException()
+        }
+    }
 
     // =========================================================
     // SINCRONIZAÇÃO
@@ -253,30 +292,67 @@ class VeiculoRepository(
     // ESCRITA
     // =========================================================
 
-    /** Salva o veículo no Firebase e atualiza o Room. */
+    /**
+     * Salva o veículo no Firebase e atualiza o Room.
+     *  - Bloqueia placa repetida ([PlacaDuplicadaException]);
+     *  - Veículo novo nasce PENDENTE;
+     *  - Edição de dado crítico (ver [VeiculoPolicy.alterouDadosCriticos]) devolve o
+     *    veículo a PENDENTE e manda os documentos já aprovados de volta à análise.
+     */
     suspend fun salvarVeiculo(
         veiculo: VeiculoEntity
     ): String {
 
+        val placa = VeiculoPolicy.normalizarPlaca(veiculo.placa)
+        val idExistente = veiculo.id.takeIf { it.isNotBlank() }
+
+        if (consultarPlacaEmUso(placa, idExistente)) {
+            throw PlacaDuplicadaException(placa)
+        }
+
         val documentReference =
-            if (veiculo.id.isBlank()) {
+            if (idExistente == null) {
                 collection.document()
             } else {
-                collection.document(
-                    veiculo.id
-                )
+                collection.document(idExistente)
             }
+
+        val anterior = idExistente?.let { consultarVeiculo(it) }
+        val alterouCritico = anterior != null &&
+            VeiculoPolicy.alterouDadosCriticos(anterior, veiculo)
+
+        val status = when {
+            anterior == null -> STATUS_PENDENTE
+            alterouCritico -> STATUS_PENDENTE
+            else -> anterior.status
+        }
 
         val veiculoSalvo =
             veiculo.copy(
                 id = documentReference.id,
+                placa = placa,
+                status = status,
                 lastUpdated =
                     System.currentTimeMillis()
             )
 
-        documentReference
-            .set(veiculoSalvo)
-            .await()
+        val batch = firestore.batch()
+        batch.set(documentReference, veiculoSalvo)
+
+        if (alterouCritico) {
+            documentosAprovadosDoVeiculo(documentReference.id, veiculo.motoristaId).forEach { doc ->
+                batch.update(
+                    doc,
+                    mapOf(
+                        "statusValidacao" to StatusDocumento.EM_ANALISE.name,
+                        "motivoRejeicao" to null,
+                        "lastUpdated" to System.currentTimeMillis()
+                    )
+                )
+            }
+        }
+
+        batch.commit().await()
 
         veiculoDao.upsert(
             veiculoSalvo
@@ -284,6 +360,46 @@ class VeiculoRepository(
 
         return veiculoSalvo.id
     }
+
+    /**
+     * Depois do envio de CRLV/autorização: recalcula o status do veículo a partir dos
+     * documentos (ver [VeiculoPolicy.statusAposEnvio]). Aprovar é sempre do painel.
+     */
+    suspend fun atualizarStatusPelosDocumentos(veiculoId: String, motoristaId: String) {
+        val documentos = collectionDocumentos
+            .whereEqualTo("motoristaId", motoristaId)
+            .whereEqualTo("veiculoId", veiculoId)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val tipo = doc.getString("tipo") ?: return@mapNotNull null
+                tipo to StatusDocumento.fromString(doc.getString("statusValidacao"))
+            }
+            .toMap()
+
+        val novo = VeiculoPolicy.statusAposEnvio(documentos) ?: return
+        val atual = consultarVeiculo(veiculoId) ?: return
+        if (atual.status == novo) return
+
+        val agora = System.currentTimeMillis()
+        collection.document(veiculoId)
+            .update(mapOf("status" to novo, "lastUpdated" to agora))
+            .await()
+        veiculoDao.upsert(atual.copy(status = novo, lastUpdated = agora))
+    }
+
+    private suspend fun documentosAprovadosDoVeiculo(veiculoId: String, motoristaId: String) =
+        collectionDocumentos
+            .whereEqualTo("motoristaId", motoristaId)
+            .whereEqualTo("veiculoId", veiculoId)
+            .get()
+            .await()
+            .documents
+            .filter {
+                StatusDocumento.fromString(it.getString("statusValidacao")) == StatusDocumento.APROVADO
+            }
+            .map { it.reference }
 
 
     // =========================================================

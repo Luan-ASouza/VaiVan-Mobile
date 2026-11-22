@@ -13,7 +13,7 @@ data class VeiculoEntity(
     val cor: String = "",
     val anoFabricacao: Int = 0,
     val capacidadePassageiros: Int = 0,
-    val status: String = "",
+    val status: String = "", // PENDENTE, EM_ANALISE, APROVADO, REJEITADO (VeiculoRepository.STATUS_*)
     val motoristaId: String = "",
     val lastUpdated: Long = 0L
 )

@@ -53,21 +53,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topGap">
 
-        <!-- Voltar — ancorado no topo do sheet, à esquerda -->
+        <!-- Voltar — fixo no topo da tela, à esquerda (não acompanha o sheet) -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btnVoltarMapa"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="14dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="16dp"
             android:contentDescription="Voltar"
             android:src="@drawable/ic_arrowback"
             app:backgroundTint="@color/background_container"
             app:borderWidth="0dp"
             app:elevation="6dp"
             app:fabCustomSize="48dp"
-            app:layout_anchor="@id/painelInferior"
-            app:layout_anchorGravity="top|start"
             app:maxImageSize="18dp"
             app:tint="@color/text_primary" />
 

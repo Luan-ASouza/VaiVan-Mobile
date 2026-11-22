@@ -3,12 +3,16 @@ package com.example.vaivan.ui.motorista.assinatura
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import androidx.appcompat.app.AlertDialog
+import android.view.View
+import android.widget.TextView
+import com.example.vaivan.R
 import com.example.vaivan.data.models.Assinatura
 import com.example.vaivan.data.models.Pagamento
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy
 import com.example.vaivan.domain.usecase.assinatura.AssinaturaPolicy.Estado
+import com.example.vaivan.ui.comum.tema.Folha
 import com.example.vaivan.ui.comum.tema.TomSelo
+import com.google.android.material.button.MaterialButton
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -92,15 +96,33 @@ object AssinaturaUi {
             else -> Color.parseColor("#F6B12F")
         }
 
-    /** Aviso quando uma ação é bloqueada pelo plano, com atalho para a tela de assinatura. */
-    fun mostrarBloqueio(context: Context, mensagem: String) {
-        AlertDialog.Builder(context)
-            .setTitle("Ação indisponível")
-            .setMessage(mensagem)
-            .setPositiveButton("Ver planos") { _, _ ->
+    /**
+     * Aviso quando uma ação é bloqueada pelo plano (bottom sheet no padrão do app).
+     * [comAtalho] = true mostra "Ver planos" (abre a tela de assinatura); dentro da
+     * própria tela de assinatura, false deixa só o "Entendi".
+     */
+    fun mostrarBloqueio(context: Context, mensagem: String, comAtalho: Boolean = true) {
+        val (sheet, view) = Folha.criar(context, R.layout.bottom_sheet_aviso_plano)
+
+        view.findViewById<TextView>(R.id.txtAvisoPlanoTitulo).text =
+            if (comAtalho) "Seu plano não libera esta ação" else "Não foi possível continuar"
+        view.findViewById<TextView>(R.id.txtAvisoPlanoMensagem).text = mensagem
+
+        val btnPrincipal = view.findViewById<MaterialButton>(R.id.btnAvisoPlanoPrincipal)
+        val btnFechar = view.findViewById<MaterialButton>(R.id.btnAvisoPlanoFechar)
+
+        if (comAtalho) {
+            btnPrincipal.setOnClickListener {
+                sheet.dismiss()
                 context.startActivity(Intent(context, AssinaturaActivity::class.java))
             }
-            .setNegativeButton("Fechar", null)
-            .show()
+            btnFechar.setOnClickListener { sheet.dismiss() }
+        } else {
+            btnPrincipal.text = "Entendi"
+            btnPrincipal.setOnClickListener { sheet.dismiss() }
+            btnFechar.visibility = View.GONE
+        }
+
+        sheet.show()
     }
 }

@@ -119,6 +119,9 @@ class VerificarProgressoDocumentos(
     private fun abrirTela(tela: Class<*>, limparPilha: Boolean) {
 
         val intent = Intent(context, tela)
+        if (tela == DocumentosMotoristaActivity::class.java) {
+            intent.putExtra(DocumentosMotoristaActivity.EXTRA_CADASTRO, true)
+        }
 
         if (limparPilha) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

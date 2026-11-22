@@ -23,6 +23,7 @@ import com.example.vaivan.ui.comum.tema.escolherOrigemArquivo
 import com.example.vaivan.core.base.BaseActivity
 import com.example.vaivan.data.local.VaivanDatabase
 import com.example.vaivan.data.repository.DocumentoRepository
+import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.ui.comum.recorte.RecortarImagem
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
@@ -394,6 +395,11 @@ class EnvioDocumentoVeiculoActivity : BaseActivity() {
                 documentoRepository.salvarDocumentoVeiculo(veiculoId, userId, tipo, url, dataEnvio)
                 // Registrado: o arquivo agora pertence ao documento, não é mais descartável
                 referenciaEnviada = null
+                // CRLV + autorização enviados -> veículo "em análise" (aprovar é do painel)
+                runCatching {
+                    VeiculoRepository(VaivanDatabase.getInstance(this@EnvioDocumentoVeiculoActivity).veiculoDao())
+                        .atualizarStatusPelosDocumentos(veiculoId, userId)
+                }.onFailure { Log.w(TAG, "Não foi possível atualizar o status do veículo", it) }
                 txtStatus.text = "Documento registrado com sucesso."
                 finish()
             } catch (erro: Exception) {

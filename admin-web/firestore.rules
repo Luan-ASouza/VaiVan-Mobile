@@ -107,11 +107,29 @@ service cloud.firestore {
     }
 
     // VEÍCULOS
+    // Espelha VeiculoPolicy (app): o motorista só grava PENDENTE/EM_ANALISE;
+    // APROVADO/REJEITADO só o painel. Mudar dado que consta no CRLV/autorização
+    // obriga o veículo a voltar para PENDENTE.
     match /veiculos/{veiculoId} {
-      allow create: if request.auth != null;
+      function alterouDadosCriticos() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['placa', 'marca', 'modelo', 'cor', 'anoFabricacao', 'capacidadePassageiros']);
+      }
+
+      allow create: if logado() &&
+        request.resource.data.motoristaId == request.auth.uid &&
+        request.resource.data.status == 'PENDENTE';
       allow read: if request.auth != null;
-      allow update, delete: if request.auth != null
-                            && request.auth.uid == resource.data.motoristaId;
+      allow update: if ehAdmin() || (
+        logado() &&
+        request.auth.uid == resource.data.motoristaId &&
+        request.resource.data.motoristaId == resource.data.motoristaId &&
+        (request.resource.data.status == resource.data.status ||
+         request.resource.data.status in ['PENDENTE', 'EM_ANALISE']) &&
+        (!alterouDadosCriticos() || request.resource.data.status == 'PENDENTE')
+      );
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.motoristaId;
     }
 
     // PASSAGEIROS
@@ -226,14 +244,28 @@ service cloud.firestore {
           depois.status in ['CANCELADA', 'EXPIRADA'];
       }
 
+      // Só veículo APROVADO e do próprio motorista pode ser associado (VeiculoPolicy).
+      // Sem veículo (null/"") continua permitido.
+      function veiculoDaRotaValido() {
+        let veiculoId = request.resource.data.get('veiculoId', null);
+        return veiculoId == null || veiculoId == '' || (
+          exists(/databases/$(database)/documents/veiculos/$(veiculoId)) &&
+          get(/databases/$(database)/documents/veiculos/$(veiculoId)).data.motoristaId == request.auth.uid &&
+          get(/databases/$(database)/documents/veiculos/$(veiculoId)).data.status in ['APROVADO', 'ATIVO']
+        );
+      }
+
       allow read: if request.auth != null;
       allow create: if logado() &&
         request.resource.data.motoristaId == request.auth.uid &&
-        assinaturaOperacional(request.auth.uid);
+        assinaturaOperacional(request.auth.uid) &&
+        veiculoDaRotaValido();
 
       allow update: if request.auth != null && (
-        // Motorista: tudo na própria rota, como antes
-        resource.data.motoristaId == request.auth.uid ||
+        // Motorista: tudo na própria rota; trocar o veículo exige um aprovado
+        (resource.data.motoristaId == request.auth.uid &&
+         (request.resource.data.get('veiculoId', null) == resource.data.get('veiculoId', null) ||
+          veiculoDaRotaValido())) ||
         // Responsável cancelando: só tira exatamente 1 vaga, e nada mais
         (request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['vagasOcupadas', 'ultimaSolicitacaoCancelada']) &&

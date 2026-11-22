@@ -2,6 +2,7 @@ package com.example.vaivan.ui.motorista.rotas
 
 import com.example.vaivan.data.local.entities.RotaEntity
 import com.example.vaivan.data.repository.RotaRepository
+import com.example.vaivan.domain.usecase.rota.AssociarVeiculoARotaUseCase
 import com.example.vaivan.domain.usecase.rota.AtualizarTrajetoDaRotaUseCase
 import com.example.vaivan.ui.comum.perfil.EdicaoViewModel
 
@@ -16,6 +17,7 @@ import com.example.vaivan.ui.comum.perfil.EdicaoViewModel
 class EditarRotaViewModel(
     private val rotaRepository: RotaRepository,
     private val atualizarTrajetoUseCase: AtualizarTrajetoDaRotaUseCase,
+    private val associarVeiculoUseCase: AssociarVeiculoARotaUseCase,
     private val rotaId: String
 ) : EdicaoViewModel<RotaEntity>() {
 
@@ -26,6 +28,13 @@ class EditarRotaViewModel(
     override suspend fun gravar(item: RotaEntity) {
         // Lido antes de gravar: aqui item.value ainda é a rota sem a mudança
         val anterior = this.item.value
+
+        // Troca de veículo: só aprovado (o use case valida e grava só esse campo)
+        if (anterior != null && anterior.veiculoId.orEmpty() != item.veiculoId.orEmpty()) {
+            associarVeiculoUseCase(item.id, item.motoristaId, item.veiculoId)
+            return
+        }
+
         val trajetoMudou = anterior != null && (
             anterior.origemLatitude != item.origemLatitude ||
                 anterior.origemLongitude != item.origemLongitude ||

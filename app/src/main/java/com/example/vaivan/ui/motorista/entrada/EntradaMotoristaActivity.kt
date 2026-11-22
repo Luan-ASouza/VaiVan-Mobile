@@ -9,7 +9,6 @@ import com.example.vaivan.ui.motorista.HomeMotoristaActivity
 import com.example.vaivan.ui.motorista.entrada.documentos.DocumentosMotoristaActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.vaivan.ui.motorista.entrada.documentos.AnaliseDocumentosActivity
 
 class EntradaMotoristaActivity : AppCompatActivity() {
 
@@ -47,12 +46,11 @@ class EntradaMotoristaActivity : AppCompatActivity() {
                         abrirTela(HomeMotoristaActivity::class.java)
                     }
 
-                    null, "PENDENTE" -> {
-                        abrirTela(DocumentosMotoristaActivity::class.java)
-                    }
-
-                    "EM_ANALISE" -> {
-                        abrirTela(AnaliseDocumentosActivity::class.java)
+                    // A tela "Em análise" só aparece logo depois de concluir o envio
+                    // (VerificarProgressoDocumentos). Ao entrar de novo, o motorista vai
+                    // para os documentos: vê o status de cada um e pode reenviar.
+                    null, "PENDENTE", "EM_ANALISE" -> {
+                        abrirTela(DocumentosMotoristaActivity::class.java, cadastro = true)
                     }
 
                     "SUSPENSO", "INATIVO" -> {
@@ -84,11 +82,12 @@ class EntradaMotoristaActivity : AppCompatActivity() {
             }
     }
 
-    private fun abrirTela(tela: Class<*>) {
+    private fun abrirTela(tela: Class<*>, cadastro: Boolean = false) {
 
         val intent = Intent(this, tela).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TASK
+            if (cadastro) putExtra(DocumentosMotoristaActivity.EXTRA_CADASTRO, true)
         }
 
         startActivity(intent)

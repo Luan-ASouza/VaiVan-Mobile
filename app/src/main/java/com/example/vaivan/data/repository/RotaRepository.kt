@@ -427,6 +427,16 @@ class RotaRepository(
         rotaFinal
     }
 
+    /** Troca (ou remove, com null) o veículo da rota. Quem chama garante que o
+     * veículo está aprovado (AssociarVeiculoARotaUseCase); a regra do Firestore também. */
+    suspend fun salvarVeiculoDaRota(rotaId: String, veiculoId: String?) = withContext(Dispatchers.IO) {
+        val agora = System.currentTimeMillis()
+        collectionRotas.document(rotaId)
+            .update(mapOf("veiculoId" to veiculoId, "lastUpdated" to agora))
+            .await()
+        consultarRota(rotaId)?.let { rotaDao.upsert(it) }
+    }
+
     // =========================================================
     // BUSCA TEMPORÁRIA DE ROTAS
     // =========================================================

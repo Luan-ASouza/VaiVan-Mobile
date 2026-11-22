@@ -38,6 +38,7 @@ import com.example.vaivan.data.repository.AvisoAusenciaRepository
 import com.example.vaivan.data.repository.PassageiroRepository
 import com.example.vaivan.data.repository.RotaRepository
 import com.example.vaivan.data.repository.SolicitacaoInclusaoRepository
+import com.example.vaivan.data.repository.VeiculoRepository
 import com.example.vaivan.data.repository.ViagemRepository
 import com.example.vaivan.domain.usecase.mensalidade.MensalidadePolicy
 import com.example.vaivan.domain.usecase.preco.PrecoPolicy
@@ -171,6 +172,8 @@ class RotaDetalheActivity : BaseActivity() {
     private lateinit var campoEscola: LinhaCampoPerfil
     private lateinit var campoPonto: LinhaCampoPerfil
     private lateinit var campoBairros: LinhaCampoPerfil
+    private lateinit var campoVeiculo: LinhaCampoPerfil
+    private var veiculoExibidoId: String? = null
 
     // Percurso
     private lateinit var txtDistancia: TextView
@@ -328,8 +331,10 @@ class RotaDetalheActivity : BaseActivity() {
         campoEscola = LinhaCampoPerfil(raiz, R.id.campoEscolaRota, "Escola")
         campoPonto = LinhaCampoPerfil(raiz, R.id.campoPontoRota, "Ponto de embarque")
         campoBairros = LinhaCampoPerfil(raiz, R.id.campoBairrosRota, "Bairros atendidos")
+        campoVeiculo = LinhaCampoPerfil(raiz, R.id.campoVeiculoRota, "Veículo")
 
         mapOf(
+            campoVeiculo to CriarRotaActivity.Etapa.VEICULO,
             campoNome to CriarRotaActivity.Etapa.NOME,
             campoSentido to CriarRotaActivity.Etapa.SENTIDO,
             campoTurno to CriarRotaActivity.Etapa.TURNO,
@@ -359,6 +364,7 @@ class RotaDetalheActivity : BaseActivity() {
         campoDias.valor(RotaTextos.dias(rota.diasSemana.split(",")))
         campoCapacidade.valor("${rota.capacidadeTotal} alunos")
         campoEscola.valor(rota.escolaNome.ifBlank { rota.destinoNome })
+        preencherVeiculo(rota.veiculoId)
         campoPonto.rotulo(RotaTextos.rotuloPonto(rota.tipoTrajeto))
         campoPonto.valor(rota.origemNome.ifBlank { rota.origemEndereco }.ifBlank { "Não informado" })
         campoBairros.valor(
@@ -368,6 +374,29 @@ class RotaDetalheActivity : BaseActivity() {
                 else -> "${rota.bairrosAtendidos.size} bairros"
             }
         )
+    }
+
+    /** Veículo da rota (lido uma vez por troca de veículo, direto do Firestore). */
+    private fun preencherVeiculo(veiculoId: String?) {
+        val id = veiculoId?.takeIf { it.isNotBlank() }
+        if (id == null) {
+            veiculoExibidoId = null
+            campoVeiculo.valor("Não definido")
+            return
+        }
+        if (id == veiculoExibidoId) return
+        veiculoExibidoId = id
+        campoVeiculo.valor("…")
+        lifecycleScope.launch {
+            val veiculo = runCatching {
+                VeiculoRepository(VaivanDatabase.getInstance(this@RotaDetalheActivity).veiculoDao())
+                    .consultarVeiculo(id)
+            }.getOrNull()
+            campoVeiculo.valor(
+                veiculo?.let { listOf(it.modelo, it.placa).filter(String::isNotBlank).joinToString(" · ") }
+                    ?: "Não encontrado"
+            )
+        }
     }
 
     private fun confirmarExclusao() {

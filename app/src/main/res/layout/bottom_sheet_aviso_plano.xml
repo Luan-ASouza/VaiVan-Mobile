@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aviso do plano (AssinaturaUi.mostrarBloqueio): ação bloqueada pela
+     assinatura. Mesmo sheet do app (bg_sheet_rounded + alça), com ícone em
+     destaque, texto centralizado e o atalho para os planos no escuro do motorista. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_sheet_rounded"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="@drawable/bg_sheet_handle" />
+
+    <!-- Ícone em destaque -->
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_ponto_timeline"
+        android:backgroundTint="@color/status_warning_fundo">
+
+        <ImageView
+            android:id="@+id/imgAvisoPlano"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_cadeado"
+            app:tint="@color/status_warning_texto" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/txtAvisoPlanoTitulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center"
+        android:text="Recurso do plano"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/txtAvisoPlanoMensagem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp"
+        tools:text="Assine um plano para criar rotas." />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAvisoPlanoPrincipal"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="24dp"
+        android:text="Ver planos"
+        android:textAllCaps="false"
+        android:textColor="@color/text_on_dark"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/rota_destaque"
+        app:cornerRadius="16dp"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAvisoPlanoFechar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:text="Agora não"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/background_screen"
+        app:cornerRadius="16dp"
+        tools:ignore="HardcodedText" />
+</LinearLayout>

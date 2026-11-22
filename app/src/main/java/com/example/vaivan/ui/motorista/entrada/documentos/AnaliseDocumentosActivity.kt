@@ -96,6 +96,9 @@ class AnaliseDocumentosActivity : BaseActivity() {
             Intent(this, tela).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TASK
+                if (tela == DocumentosMotoristaActivity::class.java) {
+                    putExtra(DocumentosMotoristaActivity.EXTRA_CADASTRO, true)
+                }
             }
         )
 

@@ -26,10 +26,16 @@ const btnSair = document.getElementById("btnSair");
 // A CNH é um único documento: frente e verso (ou PDF, na CNH digital).
 const TIPOS_OBRIGATORIOS = ["CNH", "COMPROVANTE_RESIDENCIA", "SELFIE"];
 
+// Documentos do veículo (veiculoId preenchido). Os dois aprovados liberam o
+// veículo (veiculos/{id}.status = APROVADO) — mesma regra de VeiculoPolicy no app.
+const TIPOS_VEICULO = ["CRLV", "AUTORIZACAO_TRANSPORTE_ESCOLAR"];
+
 const ROTULOS_TIPO = {
   CNH: "CNH",
   COMPROVANTE_RESIDENCIA: "Comprovante de residência",
-  SELFIE: "Foto do motorista"
+  SELFIE: "Foto do motorista",
+  CRLV: "CRLV do veículo",
+  AUTORIZACAO_TRANSPORTE_ESCOLAR: "Autorização de transporte escolar"
 };
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -357,7 +363,12 @@ async function aprovarDocumento(id, dados) {
     analisadoPor: auth.currentUser?.uid ?? null
   });
 
-  // Documento de veículo ou sem motorista: nada a liberar
+  if (dados.veiculoId && TIPOS_VEICULO.includes(dados.tipo)) {
+    await atualizarStatusVeiculo(dados);
+    return;
+  }
+
+  // Sem motorista ou tipo desconhecido: nada a liberar
   if (!dados.motoristaId || !TIPOS_OBRIGATORIOS.includes(dados.tipo)) return;
 
   // Se os documentos obrigatórios estiverem todos aprovados, libera o motorista
@@ -376,6 +387,27 @@ async function aprovarDocumento(id, dados) {
   }
 }
 
+// CRLV e autorização aprovados -> veículo APROVADO (pode ser associado a rotas)
+async function atualizarStatusVeiculo(dados) {
+  const resultado = await getDocs(
+    query(
+      collection(db, "documentos"),
+      where("motoristaId", "==", dados.motoristaId),
+      where("veiculoId", "==", dados.veiculoId)
+    )
+  );
+  const aprovados = new Set(
+    resultado.docs
+      .map((d) => d.data())
+      .filter((d) => d.statusValidacao === "APROVADO")
+      .map((d) => d.tipo)
+  );
+
+  if (TIPOS_VEICULO.every((t) => aprovados.has(t))) {
+    await updateDoc(doc(db, "veiculos", dados.veiculoId), { status: "APROVADO", lastUpdated: Date.now() });
+  }
+}
+
 async function rejeitarDocumento(id, dados, motivo) {
   await updateDoc(doc(db, "documentos", id), {
     statusValidacao: "REJEITADO",
@@ -383,6 +415,12 @@ async function rejeitarDocumento(id, dados, motivo) {
     analisadoEm: Date.now(),
     analisadoPor: auth.currentUser?.uid ?? null
   });
+
+  // Documento do veículo recusado: o veículo fica REJEITADO até o reenvio
+  if (dados.veiculoId && TIPOS_VEICULO.includes(dados.tipo)) {
+    await updateDoc(doc(db, "veiculos", dados.veiculoId), { status: "REJEITADO", lastUpdated: Date.now() });
+    return;
+  }
 
   // O motorista volta à situação "pendente" até reenviar o documento
   if (dados.motoristaId && TIPOS_OBRIGATORIOS.includes(dados.tipo)) {

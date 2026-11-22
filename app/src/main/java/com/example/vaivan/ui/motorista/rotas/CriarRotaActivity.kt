@@ -35,6 +35,10 @@ import com.example.vaivan.data.remote.routes.GoogleRoutesClient
 import com.example.vaivan.data.repository.AssinaturaBloqueadaException
 import com.example.vaivan.data.repository.AssinaturaRepository
 import com.example.vaivan.data.repository.RotaRepository
+import com.example.vaivan.data.local.entities.VeiculoEntity
+import com.example.vaivan.data.repository.VeiculoRepository
+import com.example.vaivan.domain.usecase.rota.AssociarVeiculoARotaUseCase
+import com.example.vaivan.domain.usecase.veiculo.VeiculoPolicy
 import com.example.vaivan.domain.usecase.rota.AtualizarTrajetoDaRotaUseCase
 import com.example.vaivan.domain.usecase.rota.RecalcularRotaUseCase
 import com.example.vaivan.ui.comum.perfil.acompanharEdicao
@@ -63,7 +67,7 @@ import kotlinx.coroutines.launch
 class CriarRotaActivity : BaseActivity() {
 
     /** Cada campo da rota = uma tela. A ordem é a do passo a passo. */
-    enum class Etapa { NOME, SENTIDO, ESCOLA, PONTO, BAIRROS, TURNO, DIAS, CAPACIDADE }
+    enum class Etapa { NOME, SENTIDO, ESCOLA, PONTO, BAIRROS, TURNO, DIAS, VEICULO, CAPACIDADE }
 
     companion object {
         private const val EXTRA_ROTA_ID = "extra_rota_id"
@@ -89,6 +93,9 @@ class CriarRotaActivity : BaseActivity() {
         var origemLatitude: Double? = null
         var origemLongitude: Double? = null
 
+        /** null = ainda não escolheu; "" = sem veículo por enquanto. */
+        var veiculoId: String? = null
+
         /** chave normalizada -> nome para mostrar */
         val bairros = linkedMapOf<String, String>()
 
@@ -110,6 +117,7 @@ class CriarRotaActivity : BaseActivity() {
             origemEndereco = rota.origemEndereco
             origemLatitude = rota.origemLatitude
             origemLongitude = rota.origemLongitude
+            veiculoId = rota.veiculoId.orEmpty()
             bairros.clear()
             rota.bairrosAtendidos.forEach { bairros[it] = RotaTextos.bairro(it) }
         }
@@ -121,6 +129,7 @@ class CriarRotaActivity : BaseActivity() {
             Etapa.TURNO -> rota.copy(turno = turno ?: rota.turno)
             Etapa.DIAS -> rota.copy(diasSemana = dias.joinToString(","))
             Etapa.CAPACIDADE -> rota.copy(capacidadeTotal = capacidade.toIntOrNull() ?: rota.capacidadeTotal)
+            Etapa.VEICULO -> rota.copy(veiculoId = veiculoId?.takeIf { it.isNotBlank() })
             Etapa.BAIRROS -> rota.copy(bairrosAtendidos = bairros.keys.toList())
             Etapa.ESCOLA -> escola?.let {
                 rota.copy(
@@ -155,6 +164,10 @@ class CriarRotaActivity : BaseActivity() {
         )
     }
 
+    private val veiculoRepository by lazy {
+        VeiculoRepository(VaivanDatabase.getInstance(this).veiculoDao())
+    }
+
     private val viewModel: EditarRotaViewModel by viewModels {
         viewModelFactory {
             initializer {
@@ -165,11 +178,15 @@ class CriarRotaActivity : BaseActivity() {
                 EditarRotaViewModel(
                     rotaRepository = rotaRepository,
                     atualizarTrajetoUseCase = AtualizarTrajetoDaRotaUseCase(rotaRepository, recalcular),
+                    associarVeiculoUseCase = AssociarVeiculoARotaUseCase(rotaRepository, veiculoRepository),
                     rotaId = rotaIdEdicao.orEmpty()
                 )
             }
         }
     }
+
+    /** Veículos do motorista (Firestore), carregados na etapa Veículo. */
+    private var veiculosDoMotorista: List<VeiculoEntity>? = null
 
     private lateinit var etapa: Etapa
     private var rotaOriginal: RotaEntity? = null
@@ -376,8 +393,57 @@ class CriarRotaActivity : BaseActivity() {
                 painelBairros.visibility = View.VISIBLE
                 atualizarBairros()
             }
+
+            Etapa.VEICULO -> mostrarVeiculos()
         }
     }
+
+    /** Só veículos aprovados aparecem para escolha (VeiculoPolicy). */
+    private fun mostrarVeiculos() {
+        val carregados = veiculosDoMotorista
+        if (carregados == null) {
+            mostrarNota("Carregando seus veículos…")
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            lifecycleScope.launch {
+                veiculosDoMotorista = runCatching { veiculoRepository.consultarVeiculosDoMotorista(uid) }
+                    .getOrElse { emptyList() }
+                if (etapa == Etapa.VEICULO) mostrarEtapa(Etapa.VEICULO)
+            }
+            return
+        }
+
+        val aprovados = carregados.filter { VeiculoPolicy.podeSerAssociadoARota(it) }
+        val opcoes = aprovados.map { it.id to rotuloVeiculo(it) } + ("" to "Definir depois")
+
+        mostrarOpcoes(
+            opcoes,
+            selecionada = rascunho.veiculoId,
+            descricao = { id ->
+                aprovados.firstOrNull { it.id == id }
+                    ?.let { "${it.capacidadePassageiros} lugares" }
+                    ?: "A rota fica sem veículo por enquanto."
+            }
+        ) { escolhido ->
+            rascunho.veiculoId = escolhido
+            // Sugere a capacidade do veículo, se ainda não foi informada
+            aprovados.firstOrNull { it.id == escolhido }?.let { veiculo ->
+                if (rascunho.capacidade.isBlank()) rascunho.capacidade = veiculo.capacidadePassageiros.toString()
+            }
+        }
+
+        val aguardando = carregados.size - aprovados.size
+        when {
+            carregados.isEmpty() ->
+                mostrarNota("Você ainda não cadastrou veículos. Cadastre em Veículos e envie os documentos.")
+            aguardando > 0 ->
+                mostrarNota("$aguardando veículo(s) aguardando aprovação dos documentos não aparecem aqui.")
+        }
+    }
+
+    private fun rotuloVeiculo(veiculo: VeiculoEntity): String =
+        listOf("${veiculo.marca} ${veiculo.modelo}".trim(), veiculo.placa)
+            .filter { it.isNotBlank() }
+            .joinToString(" · ")
 
     private fun titulo(etapa: Etapa): String = when (etapa) {
         Etapa.NOME -> "Nome da rota"
@@ -388,6 +454,7 @@ class CriarRotaActivity : BaseActivity() {
         Etapa.TURNO -> "Turno"
         Etapa.DIAS -> "Dias da semana"
         Etapa.CAPACIDADE -> "Capacidade"
+        Etapa.VEICULO -> "Veículo"
     }
 
     private fun descricao(etapa: Etapa): String = when (etapa) {
@@ -403,6 +470,7 @@ class CriarRotaActivity : BaseActivity() {
         Etapa.TURNO -> "Em que período a rota acontece."
         Etapa.DIAS -> "Em quais dias a van faz esta rota."
         Etapa.CAPACIDADE -> "Quantos alunos cabem na van nesta rota."
+        Etapa.VEICULO -> "A van que faz esta rota. Só aparecem veículos com os documentos aprovados."
     }
 
     private fun mostrarTexto(valor: String, dica: String, tipo: Int) {
@@ -654,6 +722,7 @@ class CriarRotaActivity : BaseActivity() {
         Etapa.BAIRROS -> if (rascunho.bairros.isEmpty()) "*Adicione ao menos um bairro." else null
         Etapa.TURNO -> if (rascunho.turno == null) "*Escolha o turno." else null
         Etapa.DIAS -> if (rascunho.dias.isEmpty()) "*Escolha ao menos um dia." else null
+        Etapa.VEICULO -> if (rascunho.veiculoId == null) "*Escolha o veículo ou \"Definir depois\"." else null
         Etapa.CAPACIDADE -> {
             val capacidade = rascunho.capacidade.toIntOrNull()
             val ocupadas = rotaOriginal?.vagasOcupadas ?: 0
@@ -689,9 +758,13 @@ class CriarRotaActivity : BaseActivity() {
                 // Plano em dia e dentro do limite de rotas
                 AssinaturaRepository().exigirPodeCriarRota(uid)
 
+                // Só veículo aprovado vai para a rota (a regra do Firestore repete a trava)
+                val veiculoId = rascunho.veiculoId?.takeIf { it.isNotBlank() }
+                if (veiculoId != null) veiculoRepository.exigirVeiculoAprovado(veiculoId, uid)
+
                 val rota = rotaRepository.criarRota(
                     motoristaId = uid,
-                    veiculoId = null,
+                    veiculoId = veiculoId,
                     nome = rascunho.nome,
                     tipoTrajeto = rascunho.tipoTrajeto ?: "IDA",
                     origemNome = rascunho.origemNome ?: origemEndereco,
