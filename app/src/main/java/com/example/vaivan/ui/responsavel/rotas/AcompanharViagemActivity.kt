@@ -148,8 +148,10 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
     private var aCaminhoDaEscola = false
 
     /** Duração da animação do marcador da van — a câmera usa o mesmo valor
-     * pra se mover junto, suavemente, igual Uber/99. */
-    private val duracaoAnimacaoMs = 4_000L
+     * pra se mover junto, suavemente, igual Uber/99. Um pouco menor que o
+     * intervalo de publicação do RastreioViagemService (2 s), pra terminar
+     * antes de a próxima posição chegar. */
+    private val duracaoAnimacaoMs = 1_800L
 
     private lateinit var btnRetomarRecentralizacao: View
 
@@ -422,7 +424,7 @@ class AcompanharViagemActivity : BaseActivity(), OnMapReadyCallback {
                 launch {
                     viewModel.localizacaoMotorista.collect { localizacao ->
                         atualizarMarcadorMotorista(localizacao)
-                        // ETA ao vivo vem junto da posição — reaplica a cada 5 s.
+                        // ETA ao vivo vem junto da posição — reaplica a cada 2 s.
                         atualizarEta(viewModel.paradasDoFilho.value)
                         atualizarDesembarqueFinal(viewModel.todasParadas.value)
                     }

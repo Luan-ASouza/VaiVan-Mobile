@@ -18,8 +18,8 @@ import kotlinx.coroutines.tasks.await
  * [com.example.vaivan.data.local.entities.ViagemEntity.responsaveisAutorizados].
  *
  * A rota fica num documento separado da posição de propósito: a posição é
- * reescrita a cada 5 s e a polyline (alguns KB) só muda de vez em quando —
- * juntas, cada responsável baixaria a polyline inteira a cada 5 s à toa.
+ * reescrita a cada 2 s e a polyline (alguns KB) só muda de vez em quando —
+ * juntas, cada responsável baixaria a polyline inteira a cada 2 s à toa.
  */
 class FirestoreLocalizacaoViagemRemoteSource(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()

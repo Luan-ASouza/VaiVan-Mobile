@@ -41,7 +41,7 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Rastreio da viagem em segundo plano (foreground service, tipo "location").
  *
- * É quem publica pro responsável, a cada 5 s, a posição da van e o ETA ao
+ * É quem publica pro responsável, a cada 2 s, a posição da van e o ETA ao
  * vivo de cada parada, e a rota que o Navigation SDK está seguindo (só
  * quando ela muda). Antes isso morava na [NavegacaoViagemActivity] e parava
  * assim que o motorista minimizava o app; aqui continua com a tela fechada,
@@ -58,7 +58,7 @@ class RastreioViagemService : Service() {
         private const val EXTRA_VIAGEM_ID = "viagemId"
         private const val CANAL_ID = "rastreio_viagem"
         private const val NOTIFICACAO_ID = 4201
-        private const val INTERVALO_PUBLICACAO_MS = 5_000L
+        private const val INTERVALO_PUBLICACAO_MS = 2_000L
         private const val ANTECEDENCIA_APROXIMACAO_MS = 5 * 60_000L
 
         /** Debounce: o SDK pode disparar várias trocas de rota em sequência
@@ -347,7 +347,7 @@ class RastreioViagemService : Service() {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Uma escrita perdida não derruba nada; a próxima sai em 5 s.
+            // Uma escrita perdida não derruba nada; a próxima sai em 2 s.
             Log.w(TAG, "Falha ao publicar localização", e)
         }
 
@@ -405,7 +405,7 @@ class RastreioViagemService : Service() {
     }
 
     /** Manda pro Firestore só o trecho que falta da rota atual do SDK. Roda
-     * apenas quando a rota muda (não a cada 5 s): umas poucas escritas por
+     * apenas quando a rota muda (não a cada 2 s): umas poucas escritas por
      * viagem, e nenhuma chamada nova à API do Google. */
     private suspend fun publicarRotaAtual() {
         val viagemId = viagemIdAtual ?: return

@@ -37,6 +37,7 @@ import com.google.android.libraries.navigation.AudioGuidanceSettings
 import com.google.android.libraries.navigation.NavigationApi
 import com.google.android.libraries.navigation.NavigationView
 import com.google.android.libraries.navigation.Navigator
+import com.google.android.libraries.navigation.SimulationOptions
 import com.google.android.libraries.navigation.StylingOptions
 import com.google.android.libraries.navigation.Waypoint
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -64,6 +65,10 @@ class NavegacaoViagemActivity : BaseActivity() {
     companion object {
         const val EXTRA_VIAGEM_ID = "viagemId"
         private const val DURACAO_TIMER_CHEGADA_MS = 120_000L
+
+        /** Velocidade da van simulada (só em debug): 1f = normal, 5f = cinco
+         * vezes mais rápido. */
+        private const val VELOCIDADE_SIMULACAO = 5f
 
         // TODO (debug temporário): remover depois de descobrir por que o card
         // de chegada não aparece. Filtre o Logcat por essa tag.
@@ -755,15 +760,17 @@ class NavegacaoViagemActivity : BaseActivity() {
     private fun iniciarSimulacaoSeDebug() {
         val simulador = navigator?.simulator
         Log.d(TAG_DEBUG, "iniciarSimulacaoSeDebug: navigator=${navigator != null} simulador=${simulador != null}")
-        simulador?.simulateLocationsAlongExistingRoute()
+        simulador?.simulateLocationsAlongExistingRoute(opcoesSimulacao())
     }
+
+    private fun opcoesSimulacao() = SimulationOptions().speedMultiplier(VELOCIDADE_SIMULACAO)
 
     /** Volta o veículo simulado para o início da rota e recomeça a simulação. */
     private fun reiniciarSimulacao() {
         val simulador = navigator?.simulator ?: return
         Log.d(TAG_DEBUG, "reiniciarSimulacao: reiniciando.")
         simulador.unsetUserLocation()
-        simulador.simulateLocationsAlongExistingRoute()
+        simulador.simulateLocationsAlongExistingRoute(opcoesSimulacao())
     }
 
     // =========================================================
